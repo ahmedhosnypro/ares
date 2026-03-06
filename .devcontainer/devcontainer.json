@@ -1,0 +1,57 @@
+{
+	"name": "SQL Server & ASP.NET Web API",
+	"dockerComposeFile": "docker-compose.yml",
+	"service": "devcontainer",
+	"workspaceFolder": "/workspace",
+	"features": {
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers/features/sshd:1": {
+			"version": "latest"
+		}
+	},
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"dotnet.defaultSolutionOrFolder": "${workspaceFolder}"
+			},
+			"extensions": [
+				"ms-dotnettools.csharp",
+				"ms-dotnettools.vscode-dotnet-runtime",
+				"ms-dotnettools.csdevkit",
+				"ms-dotnettools.blazor-tools",
+				"NuGetPackageManager.nugetpackagemanagerplus",
+				"ms-vscode.makefile-tools",
+				"ms-mssql.data-workspace-vscode",
+				"ms-mssql.sql-bindings-vscode",
+				"cweijan.vscode-mysql-client2",
+				"cweijan.dbclient-jdbc",
+				"esbenp.prettier-vscode",
+				"maciejdems.add-to-gitignore",
+				"ms-mssql.mssql",
+				"humao.rest-client"
+			]
+		}
+	},
+	"postCreateCommand": "dotnet --version && dotnet tool install -g dotnet-ef || true",
+	"forwardPorts": [
+		3000,
+		5001,
+		1433
+	],
+	"portsAttributes": {
+		"5000": {
+			"label": "Application HTTP",
+			"onAutoForward": "notify"
+		},
+		"5001": {
+			"label": "Application HTTPS",
+			"onAutoForward": "notify"
+		},
+		"1433": {
+			"label": "SQL Server",
+			"onAutoForward": "notify"
+		}
+	}
+}
