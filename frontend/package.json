@@ -1,0 +1,57 @@
+{
+  "name": "my-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "tsc": "tsc --extendedDiagnostics --noEmit",
+    "tsgo": "tsgo -b --noEmit --extendedDiagnostics",
+    "codescene": "bash health/codescene/codescene.sh",
+    "sonar-scan": "bash health/sonar/run.sh",
+    "sonar-result": "bun run health/sonar/result_only.ts",
+    "sonar-full": "bun run health/sonar/result_with_duplications.ts"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.8",
+    "@mui/material": "^7.3.8",
+    "@mui/x-data-grid": "^8.27.3",
+    "@mui/x-date-pickers": "^8.27.2",
+    "axios": "^1.13.5",
+    "date-fns": "^4.1.0",
+    "next": "16.1.6",
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
+  },
+  "devDependencies": {
+    "@cspell/eslint-plugin": "^9.7.0",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "babel-plugin-react-compiler": "1.0.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "eslint-plugin-sonarjs": "^4.0.0",
+    "globals": "^17.3.0",
+    "typescript": "^5",
+    "typescript-eslint": "^8.56.1"
+  },
+  "ignoreScripts": [
+    "sharp",
+    "unrs-resolver"
+  ],
+  "trustedDependencies": [
+    "sharp",
+    "unrs-resolver"
+  ]
+}

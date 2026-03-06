@@ -1,0 +1,26 @@
+{
+  "typescript.tsdk": "node_modules/typescript/lib",
+  // Show prompt when workspace TS is detected
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.autoClosingTags": false,
+  "kiroAgent.configureMCP": "Disabled",
+  "sqltools.connections": [
+    {
+      "connectionTimeout": 15,
+      "mssqlOptions": {
+        "appName": "SQLTools",
+        "useUTC": true,
+        "encrypt": true,
+        "trustServerCertificate": true
+      },
+      "ssh": "Disabled",
+      "previewLimit": 50,
+      "server": "localhost",
+      "port": 1433,
+      "driver": "MSSQL",
+      "name": "ares",
+      "username": "sa",
+      "password": "YourPassword123!"
+    }
+  ]
+}

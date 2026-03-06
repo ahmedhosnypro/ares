@@ -1,0 +1,15 @@
+{
+    "recommendations": [
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.vscode-dotnet-runtime",
+        "ms-dotnettools.csdevkit",
+        "ms-dotnettools.blazor-tools",
+        "patcx.vscode-nuget-gallery",
+        "ms-mssql.data-workspace-vscode",
+        "ms-mssql.sql-bindings-vscode",
+        "esbenp.prettier-vscode",
+        "maciejdems.add-to-gitignore",
+        "ms-mssql.mssql",
+        "humao.rest-client"
+    ]
+}
