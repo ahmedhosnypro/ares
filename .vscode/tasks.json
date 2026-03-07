@@ -1,0 +1,37 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "sqlproj: Build ARES",
+			"type": "process",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"/workspaces/ares/ARES/ARES.sqlproj"
+			],
+			"problemMatcher": "$sqlproj-problem-matcher",
+			"isBackground": true,
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"detail": "Builds the ARES SQL project"
+		},
+		{
+			"label": "sqlproj: Build ares",
+			"type": "process",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"/workspace/db/ares/ares.sqlproj"
+			],
+			"problemMatcher": "$sqlproj-problem-matcher",
+			"isBackground": true,
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"detail": "Builds the ares SQL project"
+		}
+	]
+}
