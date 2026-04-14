@@ -182,11 +182,11 @@ public class BookingService : IBookingService
         DriverDto? driverDto = null;
         if (booking.Driver != null)
         {
-            var driverFullName = $"{booking.Driver.FirstName} {booking.Driver.LastName}".Trim();
+            var driverFullName = booking.Driver.User != null ? $"{booking.Driver.User.FirstName} {booking.Driver.User.LastName}".Trim() : string.Empty;
             driverDto = new DriverDto(
                 booking.Driver.Id,
                 driverFullName,
-                booking.Driver.Phone ?? string.Empty
+                booking.Driver.User?.PhoneNumber ?? string.Empty
             );
         }
 

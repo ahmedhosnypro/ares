@@ -25,6 +25,12 @@ namespace Backend.Domain.Entities
         public DateTime? PickupDate { get; set; }
         public DateTime? ReturnDate { get; set; }
 
+        [MaxLength(255)]
+        public string? PickupLocation { get; set; }
+
+        [MaxLength(255)]
+        public string? DropoffLocation { get; set; }
+
         public int? TotalDays { get; set; }
 
         public bool RequiresDriver { get; set; } = false;

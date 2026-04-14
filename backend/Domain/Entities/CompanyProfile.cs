@@ -6,6 +6,7 @@ namespace Backend.Domain.Entities
     public class CompanyProfile : AuditableEntity
     {
         public Guid UserId { get; set; }
+        public virtual ApplicationUser User { get; set; } = null!;
         
         [Required]
         [MaxLength(255)]

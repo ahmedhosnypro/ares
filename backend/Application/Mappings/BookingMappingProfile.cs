@@ -42,8 +42,8 @@ public class BookingMappingProfile : Profile
                     $"{src.Vehicle.User.FirstName} {src.Vehicle.User.LastName}"))))
             .ForMember(dest => dest.Driver, opt => opt.MapFrom(src => src.Driver != null ? new DriverDto(
                 src.Driver.Id,
-                $"{src.Driver.FirstName} {src.Driver.LastName}",
-                src.Driver.Phone) : null))
+                src.Driver.User != null ? $"{src.Driver.User.FirstName} {src.Driver.User.LastName}" : string.Empty,
+                src.Driver.User != null && src.Driver.User.PhoneNumber != null ? src.Driver.User.PhoneNumber : string.Empty) : null))
             .ForMember(dest => dest.PickupLocation, opt => opt.Ignore()) // Location handling needs to be done in service
             .ForMember(dest => dest.DropOffLocation, opt => opt.Ignore()) // Location handling needs to be done in service
             .ForMember(dest => dest.From, opt => opt.MapFrom(src => src.PickupDate))
@@ -55,7 +55,7 @@ public class BookingMappingProfile : Profile
         // Driver -> DriverDto
         CreateMap<Driver, DriverDto>()
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
-            .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => $"{src.FirstName} {src.LastName}"))
-            .ForMember(dest => dest.Phone, opt => opt.MapFrom(src => src.Phone));
+            .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.User != null ? $"{src.User.FirstName} {src.User.LastName}" : string.Empty))
+            .ForMember(dest => dest.Phone, opt => opt.MapFrom(src => src.User != null ? src.User.PhoneNumber : string.Empty));
     }
 }

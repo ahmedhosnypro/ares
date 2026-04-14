@@ -28,9 +28,7 @@ namespace Backend.Infrastructure.Data
         public DbSet<Driver> Drivers { get; set; }
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<BookingPayment> Payments { get; set; }
-        public DbSet<DriverApplication> DriverApplications { get; set; }
         public DbSet<Inspector> Inspectors { get; set; }
-        public DbSet<InspectorApplication> InspectorApplications { get; set; }
         public DbSet<VehicleInspection> VehicleInspections { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Notification> Notifications { get; set; }
@@ -41,6 +39,32 @@ namespace Backend.Infrastructure.Data
         public DbSet<BookingCancellation> BookingCancellations { get; set; }
         public DbSet<PaymentMethod> PaymentMethods { get; set; }
         public DbSet<InspectionPhoto> InspectionPhotos { get; set; }
+        public DbSet<VehicleAvailability> VehicleAvailabilities { get; set; }
+        // Explicit interface implementation for IApplicationDbContext
+        IQueryable<Vehicle> IApplicationDbContext.Vehicles => Vehicles;
+        IQueryable<Booking> IApplicationDbContext.Bookings => Bookings;
+        IQueryable<Review> IApplicationDbContext.Reviews => Reviews;
+        IQueryable<Favorite> IApplicationDbContext.Favorites => Favorites;
+        IQueryable<VehicleFeature> IApplicationDbContext.VehicleFeatures => VehicleFeatures;
+        IQueryable<ApplicationUser> IApplicationDbContext.Users => Users;
+        IQueryable<BookingCancellation> IApplicationDbContext.BookingCancellations => BookingCancellations;
+        IQueryable<UserAddress> IApplicationDbContext.UserAddresses => UserAddresses;
+        IQueryable<Verification> IApplicationDbContext.Verifications => Verifications;
+
+        public void AddFavorite(Favorite favorite)
+        {
+            Favorites.Add(favorite);
+        }
+
+        public void AddBookingCancellation(BookingCancellation cancellation)
+        {
+            BookingCancellations.Add(cancellation);
+        }
+
+        public void AddUserAddress(UserAddress userAddress)
+        {
+            UserAddresses.Add(userAddress);
+        }
 
         // Explicit interface implementation for IApplicationDbContext
         IQueryable<Vehicle> IApplicationDbContext.Vehicles => Vehicles;

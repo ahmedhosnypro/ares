@@ -578,13 +578,11 @@ public class BookingManagementPropertyTests : IDisposable
     private Guid CreateTestDriver()
     {
         var driverId = Guid.NewGuid();
+        var userId = CreateTestUser();
         var driver = new Driver
         {
             Id = driverId,
-            FirstName = "Test",
-            LastName = "Driver",
-            Phone = "123-456-7890",
-            NationalId = $"NID{driverId.ToString()[..8].ToUpper()}",
+            UserId = userId,
             LicenseNumber = $"DL{driverId.ToString()[..8].ToUpper()}",
             LicenseExpiryDate = DateTime.UtcNow.AddYears(2),
             IsActive = true,

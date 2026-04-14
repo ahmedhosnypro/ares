@@ -21,6 +21,12 @@ namespace Backend.Infrastructure.Data.Configurations
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder
+                .HasOne(b => b.Driver)
+                .WithMany()
+                .HasForeignKey(b => b.DriverId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder
                 .HasIndex(b => b.BookingNumber)
                 .IsUnique();
 

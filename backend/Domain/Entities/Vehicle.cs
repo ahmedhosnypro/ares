@@ -55,5 +55,7 @@ namespace Backend.Domain.Entities
         public DateTime? ApprovedAt { get; set; }
 
         public ICollection<VehicleImage> Images { get; set; } = new List<VehicleImage>();
+
+        public ICollection<VehicleAvailability> AvailabilityPeriods { get; set; } = new List<VehicleAvailability>();
     }
 }

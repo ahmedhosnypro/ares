@@ -126,7 +126,7 @@ ASPNETCORE_URLS=$AspNetUrls
 [System.IO.File]::WriteAllText($EnvFile, $content, [System.Text.UTF8Encoding]::new($false))
 
 Write-Host ''
-Write-Host "✔ Written to $EnvFile"
+Write-Host "Written to $EnvFile"
 Write-Host ''
 Write-Host 'Next steps:'
 Write-Host '  .\scripts\backend.ps1   →  pick ''migrate update'', then ''run'''

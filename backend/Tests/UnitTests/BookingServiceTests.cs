@@ -381,9 +381,13 @@ public class BookingServiceTests
             Driver = new Driver
             {
                 Id = driverId,
-                FirstName = "Jane",
-                LastName = "Driver",
-                Phone = "123-456-7890"
+                UserId = Guid.NewGuid(),
+                User = new ApplicationUser
+                {
+                    FirstName = "Jane",
+                    LastName = "Driver",
+                    PhoneNumber = "123-456-7890"
+                }
             }
         };
 

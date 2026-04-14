@@ -73,7 +73,6 @@ public class UserProfileMappingProfile : Profile
             .ForMember(dest => dest.LockoutEnd, opt => opt.Ignore())
             .ForMember(dest => dest.LockoutEnabled, opt => opt.Ignore())
             .ForMember(dest => dest.AccessFailedCount, opt => opt.Ignore())
-            .ForMember(dest => dest.RoleId, opt => opt.Ignore())
             .ForMember(dest => dest.Status, opt => opt.Ignore())
             .ForMember(dest => dest.ProfileImage, opt => opt.Ignore())
             .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())

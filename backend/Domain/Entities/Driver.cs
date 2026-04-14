@@ -9,22 +9,9 @@ namespace Backend.Domain.Entities
         public new Guid Id { get; set; }
         
         [Required]
-        [MaxLength(100)]
-        public string FirstName { get; set; } = string.Empty;
+        public Guid UserId { get; set; }
 
-        [Required]
-        [MaxLength(100)]
-        public string LastName { get; set; } = string.Empty;
-
-        [Required]
-        [MaxLength(20)]
-        public string Phone { get; set; } = string.Empty;
-
-        [Required]
-        [MaxLength(50)]
-        public string NationalId { get; set; } = string.Empty;
-
-        public string? NationalIdImage { get; set; }
+        public ApplicationUser? User { get; set; }
 
         [Required]
         [MaxLength(50)]

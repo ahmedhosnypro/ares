@@ -18,7 +18,10 @@ namespace Backend.Domain.Entities
 
         // PhoneNumber is inherited from IdentityUser
 
-        public Guid? RoleId { get; set; }
+        [MaxLength(50)]
+        public string? NationalId { get; set; }
+
+        public string? NationalIdImage { get; set; }
 
         [MaxLength(50)]
         public string? Status { get; set; }
@@ -27,5 +30,9 @@ namespace Backend.Domain.Entities
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+        // Navigation properties
+        public virtual CompanyProfile? CompanyProfile { get; set; }
+        public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     }
 }
