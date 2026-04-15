@@ -1,10 +1,15 @@
 "use client";
 
 import React, { useRef, useState } from "react";
+import Image from "next/image";
 import { Camera, Loader2 } from "lucide-react";
+import { toApiUrl } from "@/src/utils/api-client";
+import { toImageUrl } from "@/src/utils/image-url";
+import { logger } from "@/src/utils/logger";
 
 interface ProfileHeaderProps {
-  readonly userId: string; // ✨ ضفنا الـ userId هنا عشان نستخدمه في الرابط
+  readonly userId: string;
+  readonly accessToken: string;
   readonly photoUrl?: string;
   readonly firstName: string;
   readonly lastName: string;
@@ -13,14 +18,14 @@ interface ProfileHeaderProps {
 }
 
 export default function ProfileHeader({
-  userId, // ✨ استقبلناه هنا
+  userId,
+  accessToken,
   photoUrl,
   firstName,
   lastName,
   email,
   completeness,
 }: ProfileHeaderProps) {
-  
   const [currentPhoto, setCurrentPhoto] = useState(photoUrl);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -36,39 +41,32 @@ export default function ProfileHeader({
     setIsUploading(true);
 
     try {
-      // 1. تجهيز الصورة في كائن FormData زي ما الباك إند بيحبها
       const formData = new FormData();
-      // ⚠️ ملحوظة: لو الباك إند مسمي الحقل 'file' أو اسم تاني، غير كلمة 'photo' للاسم الصح
-      formData.append("photo", file); 
+      formData.append("photo", file);
 
-      // 2. إرسال الطلب للرابط بتاعك
-      const response = await fetch(`/api/users/${userId}/profile/photo`, {
+      const response = await fetch(toApiUrl(`/api/users/${userId}/profile/photo`), {
         method: "POST",
         body: formData,
-        // 💡 تريكة مهمة: إياك تكتب headers هنا لـ Content-Type! 
-        // المتصفح بيحطها لوحده مع الـ FormData وبيظبط الـ boundary.
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
       });
 
       if (!response.ok) {
         throw new Error("فشل في رفع الصورة للسيرفر");
       }
 
-      // 3. استلام الرد من الباك إند (لو الباك إند بيرجعلك رابط الصورة الجديد)
-      const data = await response.json();
-      
-      // لو الباك إند مرجع الرابط، استخدمه.. لو لأ، اعرض الصورة محلياً مؤقتاً
-      const newPhotoUrl = data?.photoUrl || URL.createObjectURL(file);
-      
-      // 4. تحديث الصورة في الواجهة
-      setCurrentPhoto(newPhotoUrl); 
+      const data = (await response.json()) as { profilePhotoUrl?: string; ProfilePhotoUrl?: string; photoUrl?: string };
 
+      const newPhotoUrl = data.profilePhotoUrl || data.ProfilePhotoUrl || data.photoUrl || URL.createObjectURL(file);
+
+      setCurrentPhoto(newPhotoUrl);
     } catch (error) {
-      console.error("Error uploading image:", error);
+      logger.error("Upload profile photo error", error);
       alert("حصلت مشكلة في رفع الصورة، جرب تاني.");
     } finally {
       setIsUploading(false);
-      // تنظيف الـ input عشان لو اليوزر حب يرفع نفس الصورة تاني تشتغل معاه
-      if (fileInputRef.current) fileInputRef.current.value = ""; 
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -78,16 +76,17 @@ export default function ProfileHeader({
 
   return (
     <div className="p-6 text-center">
-      
       {/* الصورة الشخصية */}
-      <div 
+      <div
         onClick={handleImageClick}
         className="group relative mx-auto mb-4 h-24 w-24 cursor-pointer overflow-hidden rounded-full border-4 border-indigo-50 bg-slate-100 transition-colors duration-300 hover:border-indigo-200 dark:border-slate-800 dark:bg-slate-800"
       >
         <input
           type="file"
           ref={fileInputRef}
-          onChange={handleFileChange}
+          onChange={e => {
+            void handleFileChange(e);
+          }}
           className="hidden"
           accept="image/png, image/jpeg, image/jpg, image/webp"
         />
@@ -103,7 +102,7 @@ export default function ProfileHeader({
         </div>
 
         {currentPhoto ? (
-          <img src={currentPhoto} alt={safeName} className="h-full w-full object-cover" />
+          <Image src={toImageUrl(currentPhoto) ?? currentPhoto} alt={safeName} fill className="object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-indigo-100 text-2xl font-black text-indigo-600 transition-colors duration-300 dark:bg-indigo-500/20 dark:text-indigo-400">
             {firstName ? firstName.charAt(0).toUpperCase() : "U"}
@@ -111,9 +110,7 @@ export default function ProfileHeader({
         )}
       </div>
 
-      <h2 className="text-xl font-black text-slate-900 transition-colors duration-300 dark:text-white">
-        {safeName}
-      </h2>
+      <h2 className="text-xl font-black text-slate-900 transition-colors duration-300 dark:text-white">{safeName}</h2>
       <p className="mb-6 text-sm font-medium text-slate-500 transition-colors duration-300 dark:text-slate-400">
         {safeEmail}
       </p>
@@ -127,15 +124,14 @@ export default function ProfileHeader({
             {progress}%
           </span>
         </div>
-        
+
         <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 transition-colors duration-300 dark:bg-slate-800">
           <div
             className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-1000"
-            style={{ width: `${progress}%` }}
+            style={{ width: `${progress.toString()}%` }}
           ></div>
         </div>
       </div>
-      
     </div>
   );
 }

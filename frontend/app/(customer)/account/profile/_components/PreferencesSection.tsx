@@ -1,9 +1,16 @@
 "use client";
 
-import React from "react";
+import { toApiUrl } from "@/src/utils/api-client";
+import { type ProfileData } from "../types";
+import { logger } from "@/src/utils/logger";
 
-export default function PreferencesSection({ fullData }: { readonly fullData: any }) {
-
+export default function PreferencesSection({
+  fullData,
+  accessToken,
+}: {
+  readonly fullData: ProfileData;
+  readonly accessToken: string;
+}) {
   const handlePreferenceChange = async (field: "languagePreference" | "currencyPreference", value: string) => {
     const updatedPayload = {
       firstName: fullData.firstName,
@@ -17,14 +24,16 @@ export default function PreferencesSection({ fullData }: { readonly fullData: an
     };
 
     try {
-      await fetch(`/api/users/${fullData.userId}/profile`, {
+      await fetch(toApiUrl(`/api/users/${fullData.userId}/profile`), {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
         body: JSON.stringify(updatedPayload),
       });
-      // ممكن تضيف رسالة نجاح صغيرة هنا لو حابب
     } catch (error) {
-      console.error(error);
+      logger.error("Update preference error", error);
     }
   };
 
@@ -36,27 +45,45 @@ export default function PreferencesSection({ fullData }: { readonly fullData: an
 
       <div className="space-y-4">
         <div>
-          <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Language</label>
-          <select 
-            defaultValue={fullData?.languagePreference || "en"}
-            onChange={(e) => handlePreferenceChange("languagePreference", e.target.value)}
+          <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            Language
+          </label>
+          <select
+            defaultValue={fullData.languagePreference || "en"}
+            onChange={e => {
+              void handlePreferenceChange("languagePreference", e.target.value);
+            }}
             className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white"
           >
-            <option value="en" className="dark:bg-slate-800">English (US)</option>
-            <option value="ar" className="dark:bg-slate-800">Arabic (EG)</option>
+            <option value="en" className="dark:bg-slate-800">
+              English (US)
+            </option>
+            <option value="ar" className="dark:bg-slate-800">
+              Arabic (EG)
+            </option>
           </select>
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Currency</label>
-          <select 
-            defaultValue={fullData?.currencyPreference || "USD"}
-            onChange={(e) => handlePreferenceChange("currencyPreference", e.target.value)}
+          <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            Currency
+          </label>
+          <select
+            defaultValue={fullData.currencyPreference || "USD"}
+            onChange={e => {
+              void handlePreferenceChange("currencyPreference", e.target.value);
+            }}
             className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white"
           >
-            <option value="USD" className="dark:bg-slate-800">USD ($)</option>
-            <option value="EGP" className="dark:bg-slate-800">EGP (E£)</option>
-            <option value="EUR" className="dark:bg-slate-800">EUR (€)</option>
+            <option value="USD" className="dark:bg-slate-800">
+              USD ($)
+            </option>
+            <option value="EGP" className="dark:bg-slate-800">
+              EGP (E£)
+            </option>
+            <option value="EUR" className="dark:bg-slate-800">
+              EUR (€)
+            </option>
           </select>
         </div>
       </div>

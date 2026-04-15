@@ -16,8 +16,8 @@ Verify the Stripe checkout session status. On success, the backend marks the boo
 
 **URL Params**
 
-| Param       | Description              |
-|-------------|--------------------------|
+| Param       | Description                             |
+| ----------- | --------------------------------------- |
 | `sessionId` | Stripe checkout session ID from the URL |
 
 **Request**: No body.
@@ -25,7 +25,7 @@ Verify the Stripe checkout session status. On success, the backend marks the boo
 **Response**
 
 | Status | Meaning                                              |
-|--------|------------------------------------------------------|
+| ------ | ---------------------------------------------------- |
 | 200    | Payment confirmed — booking status updated to `Paid` |
 | 204    | Session not found or payment not completed           |
 | 400    | Invalid session ID                                   |
@@ -38,8 +38,8 @@ After confirming payment, retrieve the booking `_id` linked to the Stripe sessio
 
 **URL Params**
 
-| Param       | Description              |
-|-------------|--------------------------|
+| Param       | Description                |
+| ----------- | -------------------------- |
 | `sessionId` | Stripe checkout session ID |
 
 **Response — 200 OK**
@@ -51,5 +51,5 @@ After confirming payment, retrieve the booking `_id` linked to the Stripe sessio
 **Error Responses**
 
 | Status | Meaning                              |
-|--------|--------------------------------------|
+| ------ | ------------------------------------ |
 | 204    | No booking found for this session ID |

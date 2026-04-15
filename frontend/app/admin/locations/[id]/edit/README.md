@@ -17,7 +17,7 @@ Load the location's current data.
 **URL Params**
 
 | Param      | Description                        |
-|------------|------------------------------------|
+| ---------- | ---------------------------------- |
 | `id`       | Location `_id`                     |
 | `language` | Language code for the name to load |
 
@@ -49,7 +49,7 @@ Replace the location's cover image.
 **URL Params**
 
 | Param | Description    |
-|-------|----------------|
+| ----- | -------------- |
 | `id`  | Location `_id` |
 
 **Request**: `multipart/form-data` with `image` file field.
@@ -69,16 +69,14 @@ Save all changes.
 **URL Params**
 
 | Param | Description    |
-|-------|----------------|
+| ----- | -------------- |
 | `id`  | Location `_id` |
 
 **Request Body**
 
 ```json
 {
-  "values": [
-    { "language": "string", "name": "string" }
-  ],
+  "values": [{ "language": "string", "name": "string" }],
   "country": "string (_id)",
   "image": "string | null",
   "latitude": "number | null",
@@ -88,8 +86,8 @@ Save all changes.
 
 **Response**
 
-| Status | Meaning              |
-|--------|----------------------|
-| 200    | Location updated     |
-| 400    | Invalid fields       |
-| 404    | Location not found   |
+| Status | Meaning            |
+| ------ | ------------------ |
+| 200    | Location updated   |
+| 400    | Invalid fields     |
+| 404    | Location not found |

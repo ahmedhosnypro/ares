@@ -17,7 +17,7 @@ Fetch cars with their current pricing for the pricing table.
 **URL Params**
 
 | Param  | Description                |
-|--------|----------------------------|
+| ------ | -------------------------- |
 | `page` | 1-based page number        |
 | `size` | Number of results per page |
 
@@ -64,10 +64,10 @@ Full car object (same as Edit Car) with updated price fields.
 
 **Response**
 
-| Status | Meaning         |
-|--------|-----------------|
-| 200    | Car updated     |
-| 400    | Invalid fields  |
+| Status | Meaning        |
+| ------ | -------------- |
+| 200    | Car updated    |
+| 400    | Invalid fields |
 
 ---
 

@@ -17,7 +17,7 @@ Load the current user's profile data to pre-populate the form.
 **URL Params**
 
 | Param | Description |
-|-------|-------------|
+| ----- | ----------- |
 | `id`  | User `_id`  |
 
 **Response — 200 OK**
@@ -56,10 +56,10 @@ Save updated profile fields.
 
 **Response**
 
-| Status | Meaning            |
-|--------|--------------------|
-| 200    | Profile updated    |
-| 400    | Invalid fields     |
+| Status | Meaning         |
+| ------ | --------------- |
+| 200    | Profile updated |
+| 400    | Invalid fields  |
 
 ---
 
@@ -84,7 +84,7 @@ Persist the uploaded avatar as the user's profile photo.
 **URL Params**
 
 | Param    | Description |
-|----------|-------------|
+| -------- | ----------- |
 | `userId` | User `_id`  |
 
 **Request Body**
@@ -145,7 +145,7 @@ Resend email confirmation link if the user wants to change their email.
 
 **Response**
 
-| Status | Meaning                          |
-|--------|----------------------------------|
-| 200    | Confirmation email sent          |
-| 400    | No pending email change          |
+| Status | Meaning                 |
+| ------ | ----------------------- |
+| 200    | Confirmation email sent |
+| 400    | No pending email change |

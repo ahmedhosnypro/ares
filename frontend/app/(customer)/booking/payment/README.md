@@ -99,8 +99,8 @@ Authorize payment for the booking.
 
 **Error Responses**
 
-| Status | Meaning                    |
-|--------|----------------------------|
-| 400    | Bad request                |
-| 401    | Unauthorized               |
+| Status | Meaning                     |
+| ------ | --------------------------- |
+| 400    | Bad request                 |
+| 401    | Unauthorized                |
 | 402    | Payment required / declined |

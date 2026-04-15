@@ -17,7 +17,7 @@ Fetch a paginated list of suppliers.
 **URL Params**
 
 | Param  | Description                |
-|--------|----------------------------|
+| ------ | -------------------------- |
 | `page` | 1-based page number        |
 | `size` | Number of results per page |
 
@@ -53,10 +53,10 @@ Check if a supplier name is unique (used inline before deletion attempts).
 
 **Response**
 
-| Status | Meaning                     |
-|--------|-----------------------------|
-| 200    | Name is available           |
-| 204    | Name already in use         |
+| Status | Meaning             |
+| ------ | ------------------- |
+| 200    | Name is available   |
+| 204    | Name already in use |
 
 ---
 
@@ -66,14 +66,14 @@ Delete a supplier account.
 
 **URL Params**
 
-| Param | Description     |
-|-------|-----------------|
-| `id`  | Supplier `_id`  |
+| Param | Description    |
+| ----- | -------------- |
+| `id`  | Supplier `_id` |
 
 **Response**
 
-| Status | Meaning                                   |
-|--------|-------------------------------------------|
-| 200    | Supplier deleted                          |
-| 400    | Supplier has cars or bookings — blocked   |
-| 404    | Supplier not found                        |
+| Status | Meaning                                 |
+| ------ | --------------------------------------- |
+| 200    | Supplier deleted                        |
+| 400    | Supplier has cars or bookings — blocked |
+| 404    | Supplier not found                      |

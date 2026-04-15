@@ -32,8 +32,8 @@ Initiate password reset — sends a reset link to the provided email.
 
 **Error Responses**
 
-| Status | Meaning                                      |
-|--------|----------------------------------------------|
+| Status | Meaning                                              |
+| ------ | ---------------------------------------------------- |
 | 429    | Too many requests (rate limit: 3 per hour per email) |
 
 ---
@@ -61,7 +61,7 @@ Complete password reset using the token from email.
 
 **Error Responses**
 
-| Status | Meaning                              |
-|--------|--------------------------------------|
+| Status | Meaning                                 |
+| ------ | --------------------------------------- |
 | 400    | Invalid or expired token, weak password |
-| 404    | Token not found                      |
+| 404    | Token not found                         |

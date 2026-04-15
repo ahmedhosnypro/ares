@@ -25,16 +25,16 @@ Send a contact message from the visitor to the platform administrators.
 }
 ```
 
-| Field     | Type   | Required | Description                  |
-|-----------|--------|----------|------------------------------|
-| `from`    | string | ✅       | Sender's email address       |
-| `to`      | string | ✅       | Recipient email address      |
-| `subject` | string | ✅       | Email subject line           |
-| `message` | string | ✅       | Message body                 |
+| Field     | Type   | Required | Description             |
+| --------- | ------ | -------- | ----------------------- |
+| `from`    | string | ✅       | Sender's email address  |
+| `to`      | string | ✅       | Recipient email address |
+| `subject` | string | ✅       | Email subject line      |
+| `message` | string | ✅       | Message body            |
 
 **Response**
 
-| Status | Meaning               |
-|--------|-----------------------|
-| 200    | Email sent            |
+| Status | Meaning                   |
+| ------ | ------------------------- |
+| 200    | Email sent                |
 | 400    | Missing or invalid fields |

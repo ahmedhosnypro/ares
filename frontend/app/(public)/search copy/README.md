@@ -16,10 +16,10 @@ Fetch paginated, filtered cars available for the selected period.
 
 **URL Params**
 
-| Param  | Description                     |
-|--------|---------------------------------|
-| `page` | 1-based page number             |
-| `size` | Number of results per page      |
+| Param  | Description                |
+| ------ | -------------------------- |
+| `page` | 1-based page number        |
+| `size` | Number of results per page |
 
 **Request Body**
 

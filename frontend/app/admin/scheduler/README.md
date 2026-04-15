@@ -16,11 +16,11 @@ Fetch bookings to populate the scheduler timeline.
 
 **URL Params**
 
-| Param      | Description                    |
-|------------|--------------------------------|
-| `page`     | Page number                    |
+| Param      | Description                                    |
+| ---------- | ---------------------------------------------- |
+| `page`     | Page number                                    |
 | `size`     | Large number to load all at once (e.g. `1000`) |
-| `language` | Language code                  |
+| `language` | Language code                                  |
 
 **Request Body**
 

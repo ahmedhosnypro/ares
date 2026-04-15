@@ -22,10 +22,10 @@ Check that the email is not already registered.
 
 **Response**
 
-| Status | Meaning                |
-|--------|------------------------|
-| 200    | Email is available     |
-| 400    | Email already in use   |
+| Status | Meaning              |
+| ------ | -------------------- |
+| 200    | Email is available   |
+| 400    | Email already in use |
 
 ---
 
@@ -76,7 +76,7 @@ Create the user account.
 
 **Error Responses**
 
-| Status | Meaning                    |
-|--------|----------------------------|
-| 400    | Missing required fields    |
-| 409    | Email already registered   |
+| Status | Meaning                  |
+| ------ | ------------------------ |
+| 400    | Missing required fields  |
+| 409    | Email already registered |

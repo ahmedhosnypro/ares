@@ -283,11 +283,16 @@ app.UseSerilogRequestLogging(options =>
 // Enable CORS
 app.UseCors("AllowFrontend");
 
+app.UseStaticFiles();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 app.MapGet("/", () => "Ares Car Rental API - Visit /swagger for API documentation");
+
+var seedOnly = args.Any(arg => string.Equals(arg, "--seed-only", StringComparison.OrdinalIgnoreCase));
+var seedDemoData = string.Equals(Environment.GetEnvironmentVariable("SEED_DEMO_DATA"), "true", StringComparison.OrdinalIgnoreCase);
 
 // Initialize database and seed roles
 using (var scope = app.Services.CreateScope())
@@ -295,13 +300,19 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     try
     {
-        await DbInitializer.InitializeAsync(services);
+        await DbInitializer.InitializeAsync(services, seedDemoData);
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
         logger.LogError(ex, "An error occurred while initializing the database");
     }
+}
+
+if (seedOnly)
+{
+    Log.Information("Seed-only mode completed successfully.");
+    return;
 }
 
 app.Run();

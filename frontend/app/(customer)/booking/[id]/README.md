@@ -17,7 +17,7 @@ Fetch full booking details.
 **URL Params**
 
 | Param      | Description                        |
-|------------|------------------------------------|
+| ---------- | ---------------------------------- |
 | `id`       | Booking `_id`                      |
 | `language` | Language code for localized fields |
 
@@ -45,11 +45,11 @@ Fetch full booking details.
 
 **Error Responses**
 
-| Status | Meaning                           |
-|--------|-----------------------------------|
-| 401    | Not authenticated                 |
-| 403    | Booking does not belong to user   |
-| 404    | Booking not found                 |
+| Status | Meaning                         |
+| ------ | ------------------------------- |
+| 401    | Not authenticated               |
+| 403    | Booking does not belong to user |
+| 404    | Booking not found               |
 
 ---
 
@@ -60,16 +60,16 @@ Cancel an eligible booking.
 **URL Params**
 
 | Param | Description   |
-|-------|---------------|
+| ----- | ------------- |
 | `id`  | Booking `_id` |
 
 **Request**: No body.
 
 **Response**
 
-| Status | Meaning                                       |
-|--------|-----------------------------------------------|
-| 200    | Booking cancelled successfully                |
-| 400    | Booking cannot be cancelled (wrong status)    |
-| 403    | Booking does not belong to the current user   |
-| 404    | Booking not found                             |
+| Status | Meaning                                     |
+| ------ | ------------------------------------------- |
+| 200    | Booking cancelled successfully              |
+| 400    | Booking cannot be cancelled (wrong status)  |
+| 403    | Booking does not belong to the current user |
+| 404    | Booking not found                           |

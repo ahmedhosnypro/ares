@@ -16,16 +16,16 @@ Retrieve paginated list of suppliers with filtering and sorting.
 
 **Query Parameters**
 
-| Param            | Type    | Required | Description                                            |
-|------------------|---------|----------|--------------------------------------------------------|
-| `page`           | integer | ❌       | Page number (default: 1)                               |
-| `limit`          | integer | ❌       | Items per page (default: 20, max: 100)                 |
-| `minRating`      | decimal | ❌       | Minimum rating filter (0–5)                            |
-| `location`       | string  | ❌       | Filter by city or region                               |
+| Param            | Type    | Required | Description                                                |
+| ---------------- | ------- | -------- | ---------------------------------------------------------- |
+| `page`           | integer | ❌       | Page number (default: 1)                                   |
+| `limit`          | integer | ❌       | Items per page (default: 20, max: 100)                     |
+| `minRating`      | decimal | ❌       | Minimum rating filter (0–5)                                |
+| `location`       | string  | ❌       | Filter by city or region                                   |
 | `specialization` | string  | ❌       | `luxury \| electric \| accessible \| commercial \| budget` |
-| `fleetSize`      | string  | ❌       | `small \| medium \| large`                             |
-| `sortBy`         | string  | ❌       | `rating \| name \| fleetSize \| responseTime`          |
-| `sortOrder`      | string  | ❌       | `asc \| desc` (default: `desc`)                        |
+| `fleetSize`      | string  | ❌       | `small \| medium \| large`                                 |
+| `sortBy`         | string  | ❌       | `rating \| name \| fleetSize \| responseTime`              |
+| `sortOrder`      | string  | ❌       | `asc \| desc` (default: `desc`)                            |
 
 **Response (200 OK)**
 
@@ -57,6 +57,6 @@ Compare up to 4 suppliers side-by-side.
 
 **Query Parameters**
 
-| Param         | Type   | Required | Description                                  |
-|---------------|--------|----------|----------------------------------------------|
-| `supplierIds` | string | ✅       | Comma-separated supplier GUIDs (max: 4)      |
+| Param         | Type   | Required | Description                             |
+| ------------- | ------ | -------- | --------------------------------------- |
+| `supplierIds` | string | ✅       | Comma-separated supplier GUIDs (max: 4) |

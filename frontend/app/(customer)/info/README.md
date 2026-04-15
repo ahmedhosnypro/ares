@@ -17,7 +17,7 @@ Load the user's current profile including existing license info.
 **URL Params**
 
 | Param | Description |
-|-------|-------------|
+| ----- | ----------- |
 | `id`  | User `_id`  |
 
 **Response — 200 OK**
@@ -53,7 +53,7 @@ Persist the uploaded license document for the user.
 **URL Params**
 
 | Param | Description |
-|-------|-------------|
+| ----- | ----------- |
 | `id`  | User `_id`  |
 
 **Request Body**
@@ -64,10 +64,10 @@ Persist the uploaded license document for the user.
 
 **Response**
 
-| Status | Meaning             |
-|--------|---------------------|
-| 200    | License updated     |
-| 400    | Invalid request     |
+| Status | Meaning         |
+| ------ | --------------- |
+| 200    | License updated |
+| 400    | Invalid request |
 
 ---
 
@@ -78,7 +78,7 @@ Remove the user's stored license document.
 **URL Params**
 
 | Param | Description |
-|-------|-------------|
+| ----- | ----------- |
 | `id`  | User `_id`  |
 
 ---
@@ -90,12 +90,12 @@ Clean up a temporary license file that was not confirmed.
 **URL Params**
 
 | Param  | Description              |
-|--------|--------------------------|
+| ------ | ------------------------ |
 | `file` | Temp file name to delete |
 
 **Response (all mutation endpoints)**
 
 | Status | Meaning             |
-|--------|---------------------|
+| ------ | ------------------- |
 | 200    | Operation succeeded |
 | 400    | File not found      |

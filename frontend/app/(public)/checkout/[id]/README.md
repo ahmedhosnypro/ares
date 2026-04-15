@@ -17,7 +17,7 @@ Fetch full car details to display on the booking summary.
 **URL Params**
 
 | Param      | Description                        |
-|------------|------------------------------------|
+| ---------- | ---------------------------------- |
 | `id`       | Car `_id`                          |
 | `language` | Language code for localized fields |
 
@@ -51,10 +51,10 @@ Guest only. Check that the driver's email is not blacklisted or already in use.
 
 **Response**
 
-| Status | Meaning                    |
-|--------|----------------------------|
-| 200    | Email is valid             |
-| 400    | Email already exists       |
+| Status | Meaning              |
+| ------ | -------------------- |
+| 200    | Email is valid       |
+| 400    | Email already exists |
 
 ---
 
@@ -142,17 +142,17 @@ Verify PayPal payment completion after the user approves the order.
 
 **URL Params**
 
-| Param       | Description   |
-|-------------|---------------|
-| `bookingId` | Booking `_id` |
+| Param       | Description     |
+| ----------- | --------------- |
+| `bookingId` | Booking `_id`   |
 | `orderId`   | PayPal order ID |
 
 **Response**
 
-| Status | Meaning                        |
-|--------|--------------------------------|
-| 200    | Payment confirmed, booking paid|
-| 400    | Order not found or failed      |
+| Status | Meaning                         |
+| ------ | ------------------------------- |
+| 200    | Payment confirmed, booking paid |
+| 400    | Order not found or failed       |
 
 ---
 
@@ -162,13 +162,13 @@ Delete the temporary booking if the user cancels before completing payment.
 
 **URL Params**
 
-| Param       | Description            |
-|-------------|------------------------|
-| `bookingId` | Temporary booking `_id`|
-| `sessionId` | Stripe session ID      |
+| Param       | Description             |
+| ----------- | ----------------------- |
+| `bookingId` | Temporary booking `_id` |
+| `sessionId` | Stripe session ID       |
 
 **Response**
 
-| Status | Meaning           |
-|--------|-------------------|
-| 200    | Booking deleted   |
+| Status | Meaning         |
+| ------ | --------------- |
+| 200    | Booking deleted |

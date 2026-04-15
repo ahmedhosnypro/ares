@@ -17,7 +17,7 @@ Fetch a paginated list of users.
 **URL Params**
 
 | Param  | Description                |
-|--------|----------------------------|
+| ------ | -------------------------- |
 | `page` | 1-based page number        |
 | `size` | Number of results per page |
 
@@ -63,7 +63,7 @@ Bulk delete selected user accounts.
 
 **Response**
 
-| Status | Meaning                              |
-|--------|--------------------------------------|
-| 200    | Users deleted                        |
-| 400    | One or more users have bookings      |
+| Status | Meaning                         |
+| ------ | ------------------------------- |
+| 200    | Users deleted                   |
+| 400    | One or more users have bookings |

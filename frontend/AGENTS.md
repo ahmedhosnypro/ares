@@ -1,5 +1,3 @@
-# Cursor IDE Rules for Bun Package Manager
-
 ## Package Manager Configuration
 
 - Always use Bun as the package manager instead of npm, yarn, or pnpm
@@ -90,8 +88,14 @@ Code Changes → CodeScene Diagnostics → TypeScript Check → Linting → Code
 ## Logging
 
 - **NEVER use `console` methods directly** - ESLint will error
-- **Always use the logger utility**: `import { logger } from '@/utils/logger'`
-- Logger works exactly like console (e.g., `logger.log()`, `logger.error()`, `logger.warn()`)
-- Logger only logs in development mode (`process.env.NODE_ENV === "development";`)
-- Available methods: `log`, `info`, `warn`, `error`, `debug`, `trace`, `table`, `group`, `groupCollapsed`, `groupEnd`, `time`, `timeEnd`, `timeLog`
-- Usage: `logger.log("message", data)`, `logger.error("error:", error)`, `logger.table(arrayData)`
+- **Always use the logger utility**: `import { logger } from '@/src/utils/logger'`
+- Methods: `logger.info`, `logger.warn`, `logger.error`, `logger.debug`
+- `info`, `warn`, and `debug` are suppressed in production; `error` always logs.
+
+## React & Next.js Patterns
+
+- **Event Types**: NEVER use `FormEvent` (deprecated/removed in React 19). Use `React.SubmitEvent` or `React.SyntheticEvent<HTMLFormElement>`.
+- **FormData**: Always cast results: `(formData.get("name") as string | null) ?? ""` to avoid `@typescript-eslint/no-base-to-string`.
+- **Context/Hooks**: Keep `Context`, `Provider`, and `useHook` in separate files to avoid Fast Refresh warnings.
+- **NextAuth**: In App Router `route.ts`, cast handler: `const handler = NextAuth(authOptions) as (req: Request) => Promise<Response>`.
+- **Arabic Text**: CSpell is configured to ignore Arabic via regex. Use Arabic in strings/comments freely.

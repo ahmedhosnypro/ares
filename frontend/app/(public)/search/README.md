@@ -16,10 +16,10 @@ Fetch location suggestions as the user types.
 
 **Query Parameters**
 
-| Param     | Type   | Required | Description                        |
-|-----------|--------|----------|------------------------------------|
-| `query`   | string | ✅       | Search term (min 3 chars)          |
-| `type`    | string | ❌       | `pickup` \| `dropoff`             |
+| Param   | Type   | Required | Description               |
+| ------- | ------ | -------- | ------------------------- |
+| `query` | string | ✅       | Search term (min 3 chars) |
+| `type`  | string | ❌       | `pickup` \| `dropoff`     |
 
 **Response (200 OK)**
 
@@ -46,19 +46,19 @@ Search for available vehicles by location and rental period.
 
 **Query Parameters**
 
-| Param          | Type   | Required | Description                          |
-|----------------|--------|----------|--------------------------------------|
-| `pickupLocationId` | string | ✅   | Pickup location ID                   |
-| `returnLocationId` | string | ❌   | Return location ID (one-way rental)  |
-| `pickupDate`   | string | ✅       | ISO 8601 datetime                    |
-| `returnDate`   | string | ✅       | ISO 8601 datetime                    |
-| `category`     | string | ❌       | Vehicle category filter              |
-| `transmission` | string | ❌       | `manual` \| `automatic`              |
-| `minPrice`     | number | ❌       | Minimum daily rate                   |
-| `maxPrice`     | number | ❌       | Maximum daily rate                   |
-| `sortBy`       | string | ❌       | `price` \| `distance` \| `rating`    |
-| `page`         | number | ❌       | Page number (default: 1)             |
-| `limit`        | number | ❌       | Items per page (default: 20)         |
+| Param              | Type   | Required | Description                         |
+| ------------------ | ------ | -------- | ----------------------------------- |
+| `pickupLocationId` | string | ✅       | Pickup location ID                  |
+| `returnLocationId` | string | ❌       | Return location ID (one-way rental) |
+| `pickupDate`       | string | ✅       | ISO 8601 datetime                   |
+| `returnDate`       | string | ✅       | ISO 8601 datetime                   |
+| `category`         | string | ❌       | Vehicle category filter             |
+| `transmission`     | string | ❌       | `manual` \| `automatic`             |
+| `minPrice`         | number | ❌       | Minimum daily rate                  |
+| `maxPrice`         | number | ❌       | Maximum daily rate                  |
+| `sortBy`           | string | ❌       | `price` \| `distance` \| `rating`   |
+| `page`             | number | ❌       | Page number (default: 1)            |
+| `limit`            | number | ❌       | Items per page (default: 20)        |
 
 **Response (200 OK)**
 

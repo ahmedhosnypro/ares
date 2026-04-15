@@ -17,7 +17,7 @@ Fetch a paginated list of all locations.
 **URL Params**
 
 | Param      | Description                       |
-|------------|-----------------------------------|
+| ---------- | --------------------------------- |
 | `page`     | 1-based page number               |
 | `size`     | Number of results per page        |
 | `language` | Language code for localized names |
@@ -49,7 +49,7 @@ Fetch countries with their locations for the grouped view.
 **URL Params**
 
 | Param           | Description                                               |
-|-----------------|-----------------------------------------------------------|
+| --------------- | --------------------------------------------------------- |
 | `language`      | Language code for localized names                         |
 | `imageRequired` | `1` to only include countries that have a cover image     |
 | `minLocations`  | Minimum number of locations required to include a country |
@@ -62,9 +62,7 @@ Fetch countries with their locations for the grouped view.
     "_id": "string",
     "name": "string",
     "image": "string | null",
-    "locations": [
-      { "_id": "string", "name": "string" }
-    ]
+    "locations": [{ "_id": "string", "name": "string" }]
   }
 ]
 ```

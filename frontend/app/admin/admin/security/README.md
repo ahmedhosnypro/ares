@@ -7,6 +7,7 @@
 - **Purpose**: Real-time payment security monitoring: live transaction feed, security event log, access audit trail, intrusion detection alerts, and file integrity monitoring.
 
 **Sub-routes**:
+
 - `/admin/security/payment-monitoring` — Real-time security dashboard
 - `/admin/security/payment-monitoring/events` — Security event log
 - `/admin/security/payment-monitoring/access-logs` — Access audit trail
@@ -59,7 +60,7 @@ List file integrity violations with details.
 
 **Error Responses**
 
-| Status | Meaning               |
-|--------|-----------------------|
-| 401    | Unauthorized          |
-| 403    | Insufficient role     |
+| Status | Meaning           |
+| ------ | ----------------- |
+| 401    | Unauthorized      |
+| 403    | Insufficient role |

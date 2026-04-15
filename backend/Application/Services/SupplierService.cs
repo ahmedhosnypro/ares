@@ -1,5 +1,6 @@
 using Backend.Application.DTOs.Common;
 using Backend.Application.DTOs.Supplier;
+using Backend.Application.DTOs.Public;
 using Backend.Application.Exceptions;
 using Backend.Application.Interfaces;
 using Backend.Domain.Entities;
@@ -144,6 +145,63 @@ public class SupplierService : ISupplierService
 
         _logger.LogInformation("Successfully retrieved supplier {SupplierId}", supplierId);
         return supplierDto;
+    }
+
+    public async Task<PagedResult<PublicSupplierDto>> GetPublicSuppliersAsync(
+        int page = 1,
+        int pageSize = 6,
+        CancellationToken cancellationToken = default)
+    {
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 6;
+        if (pageSize > 20) pageSize = 20;
+
+        var pagedSuppliers = await _supplierRepository.GetSuppliersAsync(page, pageSize, cancellationToken);
+        var supplierDtos = new List<PublicSupplierDto>();
+
+        foreach (var supplier in pagedSuppliers.Data)
+        {
+            var companyProfile = await _supplierRepository.GetCompanyProfileAsync(supplier.Id, cancellationToken);
+            supplierDtos.Add(new PublicSupplierDto(
+                Id: supplier.Id,
+                CompanyName: companyProfile?.CompanyName ?? $"{supplier.FirstName} {supplier.LastName}".Trim(),
+                Email: supplier.Email ?? string.Empty,
+                PhoneNumber: supplier.PhoneNumber,
+                ProfileImage: supplier.ProfileImage,
+                Status: supplier.Status,
+                CommercialRegistrationNumber: companyProfile?.CommercialRegistrationNumber,
+                CreatedAt: supplier.CreatedAt));
+        }
+
+        return new PagedResult<PublicSupplierDto>(
+            Data: supplierDtos,
+            Page: pagedSuppliers.Page,
+            PageSize: pagedSuppliers.PageSize,
+            TotalCount: pagedSuppliers.TotalCount,
+            TotalPages: pagedSuppliers.TotalPages);
+    }
+
+    public async Task<PublicSupplierDto?> GetPublicSupplierByIdAsync(
+        Guid supplierId,
+        CancellationToken cancellationToken = default)
+    {
+        var supplier = await _supplierRepository.GetSupplierWithCompanyProfileAsync(supplierId, cancellationToken);
+        if (supplier == null)
+        {
+            return null;
+        }
+
+        var companyProfile = await _supplierRepository.GetCompanyProfileAsync(supplierId, cancellationToken);
+
+        return new PublicSupplierDto(
+            Id: supplier.Id,
+            CompanyName: companyProfile?.CompanyName ?? $"{supplier.FirstName} {supplier.LastName}".Trim(),
+            Email: supplier.Email ?? string.Empty,
+            PhoneNumber: supplier.PhoneNumber,
+            ProfileImage: supplier.ProfileImage,
+            Status: supplier.Status,
+            CommercialRegistrationNumber: companyProfile?.CommercialRegistrationNumber,
+            CreatedAt: supplier.CreatedAt);
     }
 
     /// <summary>

@@ -22,15 +22,15 @@ Check that the new license plate is not in use by a different car.
 
 **URL Params**
 
-| Param          | Description                             |
-|----------------|-----------------------------------------|
+| Param          | Description                               |
+| -------------- | ----------------------------------------- |
 | `id`           | Current car `_id` (to exclude from check) |
-| `licensePlate` | New license plate to validate           |
+| `licensePlate` | New license plate to validate             |
 
 **Response**
 
 | Status | Meaning                           |
-|--------|-----------------------------------|
+| ------ | --------------------------------- |
 | 200    | Plate is available                |
 | 204    | Plate already used by another car |
 
@@ -43,7 +43,7 @@ Upload and set a new car image.
 **URL Params**
 
 | Param | Description |
-|-------|-------------|
+| ----- | ----------- |
 | `id`  | Car `_id`   |
 
 **Request**: `multipart/form-data` with `image` file field.
@@ -98,7 +98,7 @@ Same shape as `POST /api/create-car` plus `_id` field.
 **Response**
 
 | Status | Meaning                      |
-|--------|------------------------------|
+| ------ | ---------------------------- |
 | 200    | Car updated                  |
 | 400    | Invalid fields               |
 | 404    | Car not found                |

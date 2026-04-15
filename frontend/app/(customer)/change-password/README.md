@@ -17,15 +17,15 @@ Check if the user has a password set. Social sign-in users may not have one.
 **URL Params**
 
 | Param | Description |
-|-------|-------------|
+| ----- | ----------- |
 | `id`  | User `_id`  |
 
 **Response**
 
-| Status | Meaning                                        |
-|--------|------------------------------------------------|
-| 200    | User has a password — show current + new fields|
-| 204    | No password set — show new password only       |
+| Status | Meaning                                         |
+| ------ | ----------------------------------------------- |
+| 200    | User has a password — show current + new fields |
+| 204    | No password set — show new password only        |
 
 ---
 
@@ -35,17 +35,17 @@ Verify the user's current password before allowing the change.
 
 **URL Params**
 
-| Param      | Description                              |
-|------------|------------------------------------------|
-| `id`       | User `_id`                               |
-| `password` | Current password (URL-encoded)           |
+| Param      | Description                    |
+| ---------- | ------------------------------ |
+| `id`       | User `_id`                     |
+| `password` | Current password (URL-encoded) |
 
 **Response**
 
-| Status | Meaning                      |
-|--------|------------------------------|
-| 200    | Password matches             |
-| 204    | Password does not match      |
+| Status | Meaning                 |
+| ------ | ----------------------- |
+| 200    | Password matches        |
+| 204    | Password does not match |
 
 ---
 
@@ -64,17 +64,17 @@ Set the new password.
 }
 ```
 
-| Field         | Type    | Required | Description                                                 |
-|---------------|---------|----------|-------------------------------------------------------------|
-| `_id`         | string  | ✅       | User `_id`                                                  |
-| `password`    | string  | ❌       | Current password (required if `strict` is `true`)           |
-| `newPassword` | string  | ✅       | New password                                                |
-| `strict`      | boolean | ✅       | `true` to verify current password, `false` to skip check    |
+| Field         | Type    | Required | Description                                              |
+| ------------- | ------- | -------- | -------------------------------------------------------- |
+| `_id`         | string  | ✅       | User `_id`                                               |
+| `password`    | string  | ❌       | Current password (required if `strict` is `true`)        |
+| `newPassword` | string  | ✅       | New password                                             |
+| `strict`      | boolean | ✅       | `true` to verify current password, `false` to skip check |
 
 **Response**
 
-| Status | Meaning                          |
-|--------|----------------------------------|
-| 200    | Password changed successfully    |
-| 400    | Missing or invalid fields        |
+| Status | Meaning                              |
+| ------ | ------------------------------------ |
+| 200    | Password changed successfully        |
+| 400    | Missing or invalid fields            |
 | 403    | Current password verification failed |

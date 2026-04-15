@@ -31,10 +31,10 @@ Fetch the current bank details.
 }
 ```
 
-| Status | Meaning                   |
-|--------|---------------------------|
-| 200    | Bank details found        |
-| 204    | No bank details set yet   |
+| Status | Meaning                 |
+| ------ | ----------------------- |
+| 200    | Bank details found      |
+| 204    | No bank details set yet |
 
 ---
 
@@ -58,7 +58,7 @@ Create or update the bank details (upsert — creates if none exist, updates oth
 
 **Response**
 
-| Status | Meaning                       |
-|--------|-------------------------------|
-| 200    | Bank details saved            |
-| 400    | Invalid request               |
+| Status | Meaning            |
+| ------ | ------------------ |
+| 200    | Bank details saved |
+| 400    | Invalid request    |

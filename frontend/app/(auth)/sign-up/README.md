@@ -40,8 +40,8 @@ Create a new user account. Returns user ID and verification status.
 
 **Error Responses**
 
-| Status | Meaning                                          |
-|--------|--------------------------------------------------|
+| Status | Meaning                                             |
+| ------ | --------------------------------------------------- |
 | 400    | Invalid email format, weak password, missing fields |
-| 409    | Email already registered                         |
-| 429    | Too many registration attempts (5 per hour per IP) |
+| 409    | Email already registered                            |
+| 429    | Too many registration attempts (5 per hour per IP)  |

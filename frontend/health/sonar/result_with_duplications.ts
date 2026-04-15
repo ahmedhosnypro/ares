@@ -1,6 +1,10 @@
 #!/usr/bin/env bun
 /* eslint-disable no-console */
 
+import { readFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 /**
  * 🔍 Fetch SonarQube issues AND duplication metrics
  *
@@ -157,9 +161,13 @@ function calculateSummary(issues: SonarIssue[]): { errors: number; warnings: num
 
   for (const issue of issues) {
     const severity = SEVERITY_MAP[issue.severity] ?? "warning";
-    if (severity === "error") errors++;
-    else if (severity === "warning") warnings++;
-    else infos++;
+    if (severity === "error") {
+      errors++;
+    } else if (severity === "warning") {
+      warnings++;
+    } else {
+      infos++;
+    }
   }
 
   return { errors, warnings, infos };
@@ -175,15 +183,12 @@ function printIssues(issues: SonarIssue[], projectKey: string): void {
   }
 
   const grouped = groupIssuesByFile(issues, projectKey);
-
-  // Sort files alphabetically
-  const sortedFiles = Array.from(grouped.keys()).sort();
+  const sortedFiles = Array.from(grouped.keys()).sort((a, b) => a.localeCompare(b));
 
   console.log(`\n${COLORS.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${COLORS.NC}`);
   console.log(`${COLORS.CYAN}  CODE QUALITY ISSUES${COLORS.NC}`);
   console.log(`${COLORS.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${COLORS.NC}`);
 
-  // Print issues grouped by file
   for (const filePath of sortedFiles) {
     const fileIssues = grouped.get(filePath);
     if (!fileIssues) continue;
@@ -194,7 +199,6 @@ function printIssues(issues: SonarIssue[], projectKey: string): void {
     }
   }
 
-  // Print summary
   const summary = calculateSummary(issues);
   const totalProblems = summary.errors + summary.warnings + summary.infos;
   console.log("");
@@ -204,22 +208,17 @@ function printIssues(issues: SonarIssue[], projectKey: string): void {
   console.log("");
 }
 
+function getDensityColor(density: number): string {
+  if (density > 3) return COLORS.RED;
+  if (density > 0) return COLORS.YELLOW;
+  return COLORS.GREEN;
+}
+
 /**
  * 📊 Print duplication metrics
  */
 function printDuplicationMetrics(measures: SonarMeasure[]): void {
   const metricsMap = new Map(measures.map(m => [m.metric, m]));
-
-  // Overall code duplication
-  const duplicatedLinesDensity = metricsMap.get("duplicated_lines_density")?.value;
-  const duplicatedLines = metricsMap.get("duplicated_lines")?.value;
-  const duplicatedBlocks = metricsMap.get("duplicated_blocks")?.value;
-  const duplicatedFiles = metricsMap.get("duplicated_files")?.value;
-
-  // New code duplication
-  const newDuplicatedLinesDensity = metricsMap.get("new_duplicated_lines_density")?.periods?.[0]?.value;
-  const newDuplicatedLines = metricsMap.get("new_duplicated_lines")?.periods?.[0]?.value;
-  const newDuplicatedBlocks = metricsMap.get("new_duplicated_blocks")?.periods?.[0]?.value;
 
   console.log(`${COLORS.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${COLORS.NC}`);
   console.log(`${COLORS.CYAN}  CODE DUPLICATION METRICS${COLORS.NC}`);
@@ -227,55 +226,81 @@ function printDuplicationMetrics(measures: SonarMeasure[]): void {
 
   // Overall Code section
   console.log(`${COLORS.MAGENTA}Overall Code:${COLORS.NC}`);
+  const duplicatedLinesDensity = metricsMap.get("duplicated_lines_density")?.value;
   if (duplicatedLinesDensity) {
     const density = parseFloat(duplicatedLinesDensity);
-    const color = density > 3 ? COLORS.RED : density > 0 ? COLORS.YELLOW : COLORS.GREEN;
-    console.log(`  Density:           ${color}${density.toFixed(1)}%${COLORS.NC}`);
-  }
-  if (duplicatedLines) {
-    console.log(`  Duplicated Lines:  ${COLORS.NC}${duplicatedLines}`);
-  }
-  if (duplicatedBlocks) {
-    console.log(`  Duplicated Blocks: ${COLORS.NC}${duplicatedBlocks}`);
-  }
-  if (duplicatedFiles) {
-    console.log(`  Duplicated Files:  ${COLORS.NC}${duplicatedFiles}`);
+    console.log(`  Density:           ${getDensityColor(density)}${density.toFixed(1)}%${COLORS.NC}`);
   }
 
+  const duplicatedLines = metricsMap.get("duplicated_lines")?.value;
+  if (duplicatedLines) console.log(`  Duplicated Lines:  ${COLORS.NC}${duplicatedLines}`);
+
+  const duplicatedBlocks = metricsMap.get("duplicated_blocks")?.value;
+  if (duplicatedBlocks) console.log(`  Duplicated Blocks: ${COLORS.NC}${duplicatedBlocks}`);
+
+  const duplicatedFiles = metricsMap.get("duplicated_files")?.value;
+  if (duplicatedFiles) console.log(`  Duplicated Files:  ${COLORS.NC}${duplicatedFiles}`);
+
   // New Code section
-  if (newDuplicatedLinesDensity ?? newDuplicatedLines ?? newDuplicatedBlocks) {
+  const newDensityRaw = metricsMap.get("new_duplicated_lines_density")?.periods?.[0]?.value;
+  const newLines = metricsMap.get("new_duplicated_lines")?.periods?.[0]?.value;
+  const newBlocks = metricsMap.get("new_duplicated_blocks")?.periods?.[0]?.value;
+
+  if (newDensityRaw || newLines || newBlocks) {
     console.log(`\n${COLORS.MAGENTA}New Code:${COLORS.NC}`);
-    if (newDuplicatedLinesDensity) {
-      const density = parseFloat(newDuplicatedLinesDensity);
-      const color = density > 3 ? COLORS.RED : density > 0 ? COLORS.YELLOW : COLORS.GREEN;
-      console.log(`  Density:           ${color}${density.toFixed(1)}%${COLORS.NC}`);
+    if (newDensityRaw) {
+      const density = parseFloat(newDensityRaw);
+      console.log(`  Density:           ${getDensityColor(density)}${density.toFixed(1)}%${COLORS.NC}`);
     }
-    if (newDuplicatedLines) {
-      console.log(`  Duplicated Lines:  ${COLORS.NC}${newDuplicatedLines}`);
-    }
-    if (newDuplicatedBlocks) {
-      console.log(`  Duplicated Blocks: ${COLORS.NC}${newDuplicatedBlocks}`);
-    }
+    if (newLines) console.log(`  Duplicated Lines:  ${COLORS.NC}${newLines}`);
+    if (newBlocks) console.log(`  Duplicated Blocks: ${COLORS.NC}${newBlocks}`);
   }
 
   console.log("");
+}
+
+async function printFileDuplications(
+  file: { key: string; path: string; measures: SonarMeasure[] },
+  token: string,
+  sonarHost: string
+): Promise<void> {
+  const blocksMeasure = file.measures.find(m => m.metric === "duplicated_blocks");
+  const blockCount = blocksMeasure?.value ? parseInt(blocksMeasure.value) : 0;
+
+  console.log(`${COLORS.NC}${file.path} ${COLORS.YELLOW}(${String(blockCount)} duplicated blocks)${COLORS.NC}`);
+
+  const dupUrl = new URL(`${sonarHost}/api/duplications/show`);
+  dupUrl.searchParams.set("key", file.key);
+
+  const authHeader = "Basic " + btoa(token + ":");
+  const response = await fetch(dupUrl.toString(), { headers: { Authorization: authHeader } });
+
+  if (response.ok) {
+    const dupData = (await response.json()) as SonarDuplicationsResponse;
+    for (const [index, group] of dupData.duplications.entries()) {
+      console.log(`  ${COLORS.MAGENTA}Duplication Group ${String(index + 1)}:${COLORS.NC}`);
+      for (const block of group.blocks) {
+        const refFile = block._ref ? dupData.files[block._ref] : null;
+        const refPath = refFile ? refFile.name || block._ref || "unknown" : file.path;
+        console.log(
+          `    ${COLORS.CYAN}→${COLORS.NC} ${refPath} (lines ${String(block.from)}-${String(block.from + block.size - 1)})`
+        );
+      }
+    }
+  }
 }
 
 /**
  * 🔍 Fetch and print duplicated blocks details
  */
 async function fetchAndPrintDuplicatedBlocks(token: string, projectKey: string, sonarHost: string): Promise<void> {
-  // First, get all files with duplications
   const measuresUrl = new URL(`${sonarHost}/api/measures/component_tree`);
   measuresUrl.searchParams.set("component", projectKey);
   measuresUrl.searchParams.set("metricKeys", "duplicated_blocks");
   measuresUrl.searchParams.set("ps", "500");
 
-  const authHeader = `Basic ${btoa(`${token}:`)}`;
-
-  const response = await fetch(measuresUrl.toString(), {
-    headers: { Authorization: authHeader },
-  });
+  const authHeader = "Basic " + btoa(token + ":");
+  const response = await fetch(measuresUrl.toString(), { headers: { Authorization: authHeader } });
 
   if (!response.ok) {
     console.error(`${COLORS.YELLOW}⚠${COLORS.NC} Could not fetch duplicated blocks details`);
@@ -283,7 +308,6 @@ async function fetchAndPrintDuplicatedBlocks(token: string, projectKey: string, 
   }
 
   interface ComponentTreeResponse {
-    baseComponent: { key: string; name: string };
     components: Array<{
       key: string;
       name: string;
@@ -294,62 +318,20 @@ async function fetchAndPrintDuplicatedBlocks(token: string, projectKey: string, 
   }
 
   const data = (await response.json()) as ComponentTreeResponse;
-
-  // Filter files with duplications (exclude directories - they have qualifier "DIR")
   const filesWithDuplications = data.components.filter(comp => {
     const blocks = comp.measures.find(m => m.metric === "duplicated_blocks");
     const hasBlocks = blocks?.value && parseInt(blocks.value) > 0;
-    // Only include actual files (FIL), not directories (DIR)
-    const isFile = comp.qualifier === "FIL";
-    return hasBlocks && isFile;
+    return hasBlocks && comp.qualifier === "FIL";
   });
 
-  if (filesWithDuplications.length === 0) {
-    return;
-  }
+  if (filesWithDuplications.length === 0) return;
 
   console.log(`${COLORS.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${COLORS.NC}`);
   console.log(`${COLORS.CYAN}  DUPLICATED BLOCKS DETAILS${COLORS.NC}`);
   console.log(`${COLORS.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${COLORS.NC}\n`);
 
-  // Fetch duplication details for each file
   for (const file of filesWithDuplications) {
-    const blocks = file.measures.find(m => m.metric === "duplicated_blocks");
-    const blockCount = blocks?.value ? parseInt(blocks.value) : 0;
-
-    const filePath = file.path;
-    console.log(`${COLORS.NC}${filePath} ${COLORS.YELLOW}(${String(blockCount)} duplicated blocks)${COLORS.NC}`);
-
-    // Fetch duplication details
-    const dupUrl = new URL(`${sonarHost}/api/duplications/show`);
-    dupUrl.searchParams.set("key", file.key);
-
-    const dupResponse = await fetch(dupUrl.toString(), {
-      headers: { Authorization: authHeader },
-    });
-
-    if (dupResponse.ok) {
-      const dupData = (await dupResponse.json()) as SonarDuplicationsResponse;
-
-      for (const [index, group] of dupData.duplications.entries()) {
-        console.log(`  ${COLORS.MAGENTA}Duplication Group ${String(index + 1)}:${COLORS.NC}`);
-
-        for (const block of group.blocks) {
-          if (block._ref) {
-            const refFile = dupData.files[block._ref];
-            const refPath = refFile?.name ?? block._ref;
-            console.log(
-              `    ${COLORS.CYAN}→${COLORS.NC} ${refPath} (lines ${String(block.from)}-${String(block.from + block.size - 1)})`
-            );
-          } else {
-            console.log(
-              `    ${COLORS.CYAN}→${COLORS.NC} ${filePath} (lines ${String(block.from)}-${String(block.from + block.size - 1)})`
-            );
-          }
-        }
-      }
-    }
-
+    await printFileDuplications(file, token, sonarHost);
     console.log("");
   }
 }
@@ -375,13 +357,8 @@ async function fetchIssues(
     url.searchParams.set("p", String(page));
     url.searchParams.set("ps", String(pageSize));
 
-    const authHeader = `Basic ${btoa(`${token}:`)}`;
-
-    const response = await fetch(url.toString(), {
-      headers: {
-        Authorization: authHeader,
-      },
-    });
+    const authHeader = "Basic " + btoa(token + ":");
+    const response = await fetch(url.toString(), { headers: { Authorization: authHeader } });
 
     if (!response.ok) {
       throw new Error(`SonarQube API error: ${String(response.status)} ${response.statusText}`);
@@ -395,10 +372,7 @@ async function fetchIssues(
       `${COLORS.BLUE}ℹ${COLORS.NC} Fetched issues page ${String(page)}/${String(totalPages)} (${String(allIssues.length)}/${String(data.paging.total)} issues)`
     );
 
-    if (allIssues.length >= data.paging.total) {
-      break;
-    }
-
+    if (allIssues.length >= data.paging.total) break;
     page++;
   }
 
@@ -424,13 +398,8 @@ async function fetchDuplicationMetrics(token: string, projectKey: string, sonarH
     ].join(",")
   );
 
-  const authHeader = `Basic ${btoa(`${token}:`)}`;
-
-  const response = await fetch(url.toString(), {
-    headers: {
-      Authorization: authHeader,
-    },
-  });
+  const authHeader = "Basic " + btoa(token + ":");
+  const response = await fetch(url.toString(), { headers: { Authorization: authHeader } });
 
   if (!response.ok) {
     throw new Error(`SonarQube API error: ${String(response.status)} ${response.statusText}`);
@@ -445,8 +414,7 @@ async function fetchDuplicationMetrics(token: string, projectKey: string, sonarH
  */
 async function readTokenFromFile(filePath: string): Promise<string | null> {
   try {
-    const file = Bun.file(filePath);
-    const content = await file.text();
+    const content = await readFile(filePath, "utf8");
     return content.trim();
   } catch {
     return null;
@@ -457,8 +425,8 @@ async function readTokenFromFile(filePath: string): Promise<string | null> {
  * 🚀 Main execution
  */
 async function main(): Promise<void> {
-  const scriptDir = import.meta.dir;
-  const tokenFile = `${scriptDir}/.sonar-token`;
+  const scriptDir = dirname(fileURLToPath(import.meta.url));
+  const tokenFile = join(scriptDir, ".sonar-token");
   const projectKey = "cad";
   const sonarHost = "http://localhost:9000";
 
@@ -466,43 +434,25 @@ async function main(): Promise<void> {
 
   if (!token) {
     console.error(`${COLORS.RED}✖${COLORS.NC} Error: SonarQube token not found`);
-    console.error("\nCreate a .sonar-token file in the health/sonar directory");
     process.exit(1);
   }
 
-  console.error(`\n${COLORS.BLUE}ℹ${COLORS.NC} Fetching data from SonarQube...`);
-  console.error(`   Host: ${sonarHost}`);
-  console.error(`   Project: ${projectKey}\n`);
-
   try {
-    // Fetch both issues and duplication metrics
     const [issues, duplicationMetrics] = await Promise.all([
       fetchIssues(token, projectKey, sonarHost),
       fetchDuplicationMetrics(token, projectKey, sonarHost),
     ]);
 
-    // Print duplication metrics first
     printDuplicationMetrics(duplicationMetrics);
-
-    // Print detailed duplicated blocks
     await fetchAndPrintDuplicatedBlocks(token, projectKey, sonarHost);
-
-    // Print code quality issues
     printIssues(issues, projectKey);
 
-    // Print dashboard link
-    console.log(`${COLORS.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${COLORS.NC}`);
-    console.log(`${COLORS.CYAN}  SONARQUBE DASHBOARD${COLORS.NC}`);
-    console.log(`${COLORS.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${COLORS.NC}\n`);
-    console.log(`  View detailed report: ${COLORS.BLUE}${sonarHost}/dashboard?id=${projectKey}${COLORS.NC}`);
-    console.log(
-      `  Duplications page:    ${COLORS.BLUE}${sonarHost}/component_measures?id=${projectKey}&metric=duplicated_lines_density${COLORS.NC}\n`
-    );
+    console.log(`\n  View detailed report: ${COLORS.BLUE}${sonarHost}/dashboard?id=${projectKey}${COLORS.NC}\n`);
   } catch (error) {
-    console.error(`\n${COLORS.RED}✖${COLORS.NC} Error fetching data:`);
+    console.error(`\n${COLORS.RED}✖${COLORS.NC} Error:`);
     console.error(error instanceof Error ? error.message : String(error));
     process.exit(1);
   }
 }
 
-main();
+void main();

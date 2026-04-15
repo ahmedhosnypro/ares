@@ -1,0 +1,8 @@
+<testsuites id="" name="" tests="2" failures="0" skipped="0" errors="0" time="5.108657999999999">
+<testsuite name="smoke.spec.ts" timestamp="2026-04-15T02:25:21.769Z" hostname="chromium" tests="2" failures="0" skipped="0" time="4.545" errors="0">
+<testcase name="about page renders" classname="smoke.spec.ts" time="2.213">
+</testcase>
+<testcase name="home page renders landing content" classname="smoke.spec.ts" time="2.332">
+</testcase>
+</testsuite>
+</testsuites>

@@ -66,32 +66,6 @@ namespace Backend.Infrastructure.Data
             UserAddresses.Add(userAddress);
         }
 
-        // Explicit interface implementation for IApplicationDbContext
-        IQueryable<Vehicle> IApplicationDbContext.Vehicles => Vehicles;
-        IQueryable<Booking> IApplicationDbContext.Bookings => Bookings;
-        IQueryable<Review> IApplicationDbContext.Reviews => Reviews;
-        IQueryable<Favorite> IApplicationDbContext.Favorites => Favorites;
-        IQueryable<VehicleFeature> IApplicationDbContext.VehicleFeatures => VehicleFeatures;
-        IQueryable<ApplicationUser> IApplicationDbContext.Users => Users;
-        IQueryable<BookingCancellation> IApplicationDbContext.BookingCancellations => BookingCancellations;
-        IQueryable<UserAddress> IApplicationDbContext.UserAddresses => UserAddresses;
-        IQueryable<Verification> IApplicationDbContext.Verifications => Verifications;
-
-        public void AddFavorite(Favorite favorite)
-        {
-            Favorites.Add(favorite);
-        }
-
-        public void AddBookingCancellation(BookingCancellation cancellation)
-        {
-            BookingCancellations.Add(cancellation);
-        }
-
-        public void AddUserAddress(UserAddress userAddress)
-        {
-            UserAddresses.Add(userAddress);
-        }
-
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

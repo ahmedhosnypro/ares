@@ -18,10 +18,10 @@ Verify the admin session on mount. Redirect to `/admin/sign-in` if invalid.
 
 **Response**
 
-| Status | Meaning                          |
-|--------|----------------------------------|
-| 200    | Session valid                    |
-| 401    | Session expired — redirect       |
+| Status | Meaning                    |
+| ------ | -------------------------- |
+| 200    | Session valid              |
+| 401    | Session expired — redirect |
 
 ---
 
@@ -32,7 +32,7 @@ Fetch the count of unread notifications for the badge in the top nav.
 **URL Params**
 
 | Param    | Description |
-|----------|-------------|
+| -------- | ----------- |
 | `userId` | User `_id`  |
 
 **Response — 200 OK**
@@ -49,11 +49,11 @@ Fetch recent bookings for the dashboard overview widget.
 
 **URL Params**
 
-| Param      | Description             |
-|------------|-------------------------|
-| `page`     | Page number (e.g. `1`)  |
-| `size`     | Results per page        |
-| `language` | Language code           |
+| Param      | Description            |
+| ---------- | ---------------------- |
+| `page`     | Page number (e.g. `1`) |
+| `size`     | Results per page       |
+| `language` | Language code          |
 
 **Request Body**
 

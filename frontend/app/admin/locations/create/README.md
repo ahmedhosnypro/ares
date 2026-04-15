@@ -22,10 +22,10 @@ Check that the location name is unique before saving.
 
 **Response**
 
-| Status | Meaning               |
-|--------|-----------------------|
-| 200    | Name is available     |
-| 204    | Name already in use   |
+| Status | Meaning             |
+| ------ | ------------------- |
+| 200    | Name is available   |
+| 204    | Name already in use |
 
 ---
 
@@ -35,11 +35,11 @@ Fetch countries for the country dropdown.
 
 **URL Params**
 
-| Param      | Description                       |
-|------------|-----------------------------------|
+| Param      | Description                              |
+| ---------- | ---------------------------------------- |
 | `page`     | Page number (use large size to load all) |
-| `size`     | Number of results per page        |
-| `language` | Language code                     |
+| `size`     | Number of results per page               |
+| `language` | Language code                            |
 
 ---
 
@@ -71,9 +71,7 @@ Create the location record.
 
 ```json
 {
-  "values": [
-    { "language": "string", "name": "string" }
-  ],
+  "values": [{ "language": "string", "name": "string" }],
   "country": "string (_id)",
   "image": "string | null",
   "latitude": "number | null",
@@ -89,7 +87,7 @@ Create the location record.
 
 **Error Responses**
 
-| Status | Meaning                            |
-|--------|------------------------------------|
-| 400    | Missing required fields            |
-| 409    | Location name already exists       |
+| Status | Meaning                      |
+| ------ | ---------------------------- |
+| 400    | Missing required fields      |
+| 409    | Location name already exists |
