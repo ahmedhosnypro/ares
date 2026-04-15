@@ -17,7 +17,7 @@ Load existing booking data to pre-populate the edit form.
 **URL Params**
 
 | Param      | Description                        |
-|------------|------------------------------------|
+| ---------- | ---------------------------------- |
 | `id`       | Booking `_id`                      |
 | `language` | Language code for localized fields |
 
@@ -65,11 +65,11 @@ Save changes to the booking.
 
 **Response**
 
-| Status | Meaning            |
-|--------|--------------------|
-| 200    | Booking updated    |
-| 400    | Invalid fields     |
-| 404    | Booking not found  |
+| Status | Meaning           |
+| ------ | ----------------- |
+| 200    | Booking updated   |
+| 400    | Invalid fields    |
+| 404    | Booking not found |
 
 ---
 
@@ -92,12 +92,12 @@ Cancel the booking.
 **URL Params**
 
 | Param | Description   |
-|-------|---------------|
+| ----- | ------------- |
 | `id`  | Booking `_id` |
 
 **Response**
 
-| Status | Meaning                                   |
-|--------|-------------------------------------------|
-| 200    | Booking cancelled                         |
-| 400    | Booking status does not allow cancellation|
+| Status | Meaning                                    |
+| ------ | ------------------------------------------ |
+| 200    | Booking cancelled                          |
+| 400    | Booking status does not allow cancellation |

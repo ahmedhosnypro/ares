@@ -17,7 +17,7 @@ Fetch a paginated list of countries.
 **URL Params**
 
 | Param      | Description                       |
-|------------|-----------------------------------|
+| ---------- | --------------------------------- |
 | `page`     | 1-based page number               |
 | `size`     | Number of results per page        |
 | `language` | Language code for localized names |
@@ -46,15 +46,15 @@ Check if a country has locations before attempting deletion.
 **URL Params**
 
 | Param | Description   |
-|-------|---------------|
+| ----- | ------------- |
 | `id`  | Country `_id` |
 
 **Response**
 
-| Status | Meaning                                       |
-|--------|-----------------------------------------------|
-| 200    | Country has locations — cannot delete         |
-| 204    | No locations — safe to delete                 |
+| Status | Meaning                               |
+| ------ | ------------------------------------- |
+| 200    | Country has locations — cannot delete |
+| 204    | No locations — safe to delete         |
 
 ---
 
@@ -65,13 +65,13 @@ Delete a country.
 **URL Params**
 
 | Param | Description   |
-|-------|---------------|
+| ----- | ------------- |
 | `id`  | Country `_id` |
 
 **Response**
 
-| Status | Meaning                              |
-|--------|--------------------------------------|
-| 200    | Country deleted                      |
-| 400    | Country has locations — blocked      |
-| 404    | Country not found                    |
+| Status | Meaning                         |
+| ------ | ------------------------------- |
+| 200    | Country deleted                 |
+| 400    | Country has locations — blocked |
+| 404    | Country not found               |

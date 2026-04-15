@@ -16,11 +16,11 @@ Fetch a paginated, filtered list of bookings.
 
 **URL Params**
 
-| Param      | Description                       |
-|------------|-----------------------------------|
-| `page`     | 1-based page number               |
-| `size`     | Number of results per page        |
-| `language` | Language code for localized fields|
+| Param      | Description                        |
+| ---------- | ---------------------------------- |
+| `page`     | 1-based page number                |
+| `size`     | Number of results per page         |
+| `language` | Language code for localized fields |
 
 **Request Body**
 
@@ -76,7 +76,7 @@ Bulk delete selected bookings.
 
 **Response**
 
-| Status | Meaning             |
-|--------|---------------------|
-| 200    | Bookings deleted    |
-| 400    | Invalid request     |
+| Status | Meaning          |
+| ------ | ---------------- |
+| 200    | Bookings deleted |
+| 400    | Invalid request  |

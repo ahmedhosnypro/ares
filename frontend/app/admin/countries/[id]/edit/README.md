@@ -16,10 +16,10 @@ Load the country's current localized name to pre-populate the form.
 
 **URL Params**
 
-| Param      | Description                       |
-|------------|-----------------------------------|
-| `id`       | Country `_id`                     |
-| `language` | Language code for the name to load|
+| Param      | Description                        |
+| ---------- | ---------------------------------- |
+| `id`       | Country `_id`                      |
+| `language` | Language code for the name to load |
 
 **Response — 200 OK**
 
@@ -51,23 +51,21 @@ Save updated localized names.
 **URL Params**
 
 | Param | Description   |
-|-------|---------------|
+| ----- | ------------- |
 | `id`  | Country `_id` |
 
 **Request Body**
 
 ```json
 {
-  "values": [
-    { "language": "string", "name": "string" }
-  ]
+  "values": [{ "language": "string", "name": "string" }]
 }
 ```
 
 **Response**
 
-| Status | Meaning               |
-|--------|-----------------------|
-| 200    | Country updated       |
-| 400    | Invalid fields        |
-| 404    | Country not found     |
+| Status | Meaning           |
+| ------ | ----------------- |
+| 200    | Country updated   |
+| 400    | Invalid fields    |
+| 404    | Country not found |

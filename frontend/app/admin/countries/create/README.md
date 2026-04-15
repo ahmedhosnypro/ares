@@ -25,10 +25,10 @@ Check that the country name is unique before saving.
 
 **Response**
 
-| Status | Meaning               |
-|--------|-----------------------|
-| 200    | Name is available     |
-| 204    | Name already in use   |
+| Status | Meaning             |
+| ------ | ------------------- |
+| 200    | Name is available   |
+| 204    | Name already in use |
 
 ---
 
@@ -40,9 +40,7 @@ Create the new country record with localized names.
 
 ```json
 {
-  "values": [
-    { "language": "string", "name": "string" }
-  ]
+  "values": [{ "language": "string", "name": "string" }]
 }
 ```
 
@@ -54,7 +52,7 @@ Create the new country record with localized names.
 
 **Error Responses**
 
-| Status | Meaning                             |
-|--------|-------------------------------------|
-| 400    | Missing or invalid localized names  |
-| 409    | Country name already exists         |
+| Status | Meaning                            |
+| ------ | ---------------------------------- |
+| 400    | Missing or invalid localized names |
+| 409    | Country name already exists        |

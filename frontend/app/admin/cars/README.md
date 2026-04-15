@@ -17,7 +17,7 @@ Fetch a paginated list of cars.
 **URL Params**
 
 | Param  | Description                |
-|--------|----------------------------|
+| ------ | -------------------------- |
 | `page` | 1-based page number        |
 | `size` | Number of results per page |
 
@@ -60,15 +60,15 @@ Check if a car has active bookings before attempting deletion.
 **URL Params**
 
 | Param | Description |
-|-------|-------------|
+| ----- | ----------- |
 | `id`  | Car `_id`   |
 
 **Response**
 
-| Status | Meaning                                    |
-|--------|--------------------------------------------|
-| 200    | Car has active bookings — cannot delete    |
-| 204    | No active bookings — safe to delete        |
+| Status | Meaning                                 |
+| ------ | --------------------------------------- |
+| 200    | Car has active bookings — cannot delete |
+| 204    | No active bookings — safe to delete     |
 
 ---
 
@@ -79,13 +79,13 @@ Delete a car (only if no active bookings).
 **URL Params**
 
 | Param | Description |
-|-------|-------------|
+| ----- | ----------- |
 | `id`  | Car `_id`   |
 
 **Response**
 
-| Status | Meaning                   |
-|--------|---------------------------|
-| 200    | Car deleted               |
-| 400    | Car has active bookings   |
-| 404    | Car not found             |
+| Status | Meaning                 |
+| ------ | ----------------------- |
+| 200    | Car deleted             |
+| 400    | Car has active bookings |
+| 404    | Car not found           |

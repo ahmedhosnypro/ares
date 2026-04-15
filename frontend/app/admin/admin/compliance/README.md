@@ -7,6 +7,7 @@
 - **Purpose**: Manage PCI DSS compliance activities: SAQ completion, vulnerability scans, penetration testing, third-party assessments, and compliance report generation.
 
 **Sub-routes**:
+
 - `/admin/compliance/dashboard` — Overview of compliance status
 - `/admin/compliance/saq` — Self-Assessment Questionnaire
 - `/admin/compliance/vulnerability-scans` — Scan tracking and remediation
@@ -48,7 +49,7 @@ List third-party assessments and provide assessor access.
 
 **Error Responses**
 
-| Status | Meaning               |
-|--------|-----------------------|
-| 401    | Unauthorized          |
-| 403    | Insufficient role     |
+| Status | Meaning           |
+| ------ | ----------------- |
+| 401    | Unauthorized      |
+| 403    | Insufficient role |

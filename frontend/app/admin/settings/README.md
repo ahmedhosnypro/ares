@@ -26,10 +26,10 @@ Fetch current app settings.
 }
 ```
 
-| Status | Meaning                 |
-|--------|-------------------------|
-| 200    | Settings found          |
-| 204    | No settings configured  |
+| Status | Meaning                |
+| ------ | ---------------------- |
+| 200    | Settings found         |
+| 204    | No settings configured |
 
 ---
 
@@ -46,14 +46,14 @@ Save updated settings.
 }
 ```
 
-| Field      | Type   | Required | Description                          |
-|------------|--------|----------|--------------------------------------|
-| `language` | string | ✅       | Default language code (e.g. `en`)    |
-| `currency` | string | ✅       | Currency code (e.g. `USD`, `EUR`)    |
+| Field      | Type   | Required | Description                       |
+| ---------- | ------ | -------- | --------------------------------- |
+| `language` | string | ✅       | Default language code (e.g. `en`) |
+| `currency` | string | ✅       | Currency code (e.g. `USD`, `EUR`) |
 
 **Response**
 
-| Status | Meaning             |
-|--------|---------------------|
-| 200    | Settings updated    |
-| 400    | Invalid fields      |
+| Status | Meaning          |
+| ------ | ---------------- |
+| 200    | Settings updated |
+| 400    | Invalid fields   |

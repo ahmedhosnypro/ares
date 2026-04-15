@@ -17,7 +17,7 @@ Fetch the user's full profile.
 **URL Params**
 
 | Param | Description |
-|-------|-------------|
+| ----- | ----------- |
 | `id`  | User `_id`  |
 
 **Response — 200 OK**
@@ -46,12 +46,12 @@ Check if the user has any bookings on record.
 **URL Params**
 
 | Param    | Description |
-|----------|-------------|
+| -------- | ----------- |
 | `driver` | User `_id`  |
 
 **Response**
 
-| Status | Meaning                 |
-|--------|-------------------------|
-| 200    | User has bookings       |
-| 204    | No bookings found       |
+| Status | Meaning           |
+| ------ | ----------------- |
+| 200    | User has bookings |
+| 204    | No bookings found |

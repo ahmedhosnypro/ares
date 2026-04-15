@@ -16,16 +16,16 @@ Check if the driver has any bookings at all (used to show an empty state).
 
 **URL Params**
 
-| Param    | Description  |
-|----------|--------------|
-| `driver` | User `_id`   |
+| Param    | Description |
+| -------- | ----------- |
+| `driver` | User `_id`  |
 
 **Response**
 
-| Status | Meaning                   |
-|--------|---------------------------|
-| 200    | Driver has bookings       |
-| 204    | No bookings found         |
+| Status | Meaning             |
+| ------ | ------------------- |
+| 200    | Driver has bookings |
+| 204    | No bookings found   |
 
 ---
 
@@ -35,11 +35,11 @@ Fetch a paginated, filtered list of bookings for the current user.
 
 **URL Params**
 
-| Param      | Description                       |
-|------------|-----------------------------------|
-| `page`     | 1-based page number               |
-| `size`     | Number of results per page        |
-| `language` | Language code for localized fields|
+| Param      | Description                        |
+| ---------- | ---------------------------------- |
+| `page`     | 1-based page number                |
+| `size`     | Number of results per page         |
+| `language` | Language code for localized fields |
 
 **Request Body**
 

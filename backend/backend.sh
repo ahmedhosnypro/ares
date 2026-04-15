@@ -149,6 +149,7 @@ Commands:
   migrate update [--target <MigrationName|0|latest>]
   migrate list
   migrate remove
+  seed
 
   db drop [--yes]
 
@@ -158,6 +159,7 @@ Examples:
   scripts/backend.sh build
   scripts/backend.sh migrate add --name AddBookingIndexes
   scripts/backend.sh migrate update --target latest
+  scripts/backend.sh seed
   scripts/backend.sh db drop --yes
   scripts/backend.sh menu
 EOF
@@ -223,7 +225,7 @@ action_build() {
 action_run() {
   echo "▶ Running API (Ctrl+C to stop)"
   echo "──────────────────────────────────────"
-  dotnet run --project "$API_PROJ"
+  dotnet run --project "$API_PROJ" --no-launch-profile
 }
 
 action_migrate_add() {
@@ -300,6 +302,15 @@ action_migrate_remove() {
     dotnet ef migrations remove $EF_ARGS
 }
 
+action_seed() {
+  ensure_db_host_resolves || return 1
+  run_with_label "Updating database to latest" \
+    dotnet ef database update $EF_ARGS
+  export SEED_DEMO_DATA=true
+  run_with_label "Seeding database" \
+    dotnet run --project "$API_PROJ" --no-launch-profile -- --seed-only
+}
+
 action_db_drop() {
   ensure_db_host_resolves || return 1
   local force="${1:-}"
@@ -333,6 +344,7 @@ MENU=(
   "migrate update - Apply migrations to the database"
   "migrate list   - List all migrations"
   "migrate remove - Remove the last migration"
+  "seed           - Seed dev/demo data"
   "db drop        - Drop the database"
   "quit           - Exit"
 )
@@ -370,6 +382,7 @@ main() {
           "migrate update"*) action_migrate_update ;;
           "migrate list"*)  action_migrate_list ;;
           "migrate remove"*) action_migrate_remove ;;
+          seed*)            action_seed ;;
           "db drop"*)       action_db_drop ;;
         esac
         exit_code=$?
@@ -390,6 +403,10 @@ main() {
 
     run)
       action_run
+      ;;
+
+    seed)
+      action_seed
       ;;
 
     migrate)

@@ -16,17 +16,17 @@ Retrieve paginated booking history.
 
 **Query Parameters**
 
-| Param        | Type   | Required | Description                                    |
-|--------------|--------|----------|------------------------------------------------|
-| `status`     | string | ❌       | Filter by status (multiple allowed)            |
-| `startDate`  | string | ❌       | Date range start                               |
-| `endDate`    | string | ❌       | Date range end                                 |
-| `supplierId` | string | ❌       | Filter by supplier                             |
-| `search`     | string | ❌       | Search term                                    |
-| `page`       | number | ❌       | Page number                                    |
-| `limit`      | number | ❌       | Items per page                                 |
-| `sortBy`     | string | ❌       | `date \| price \| status`                      |
-| `sortOrder`  | string | ❌       | `asc \| desc`                                  |
+| Param        | Type   | Required | Description                         |
+| ------------ | ------ | -------- | ----------------------------------- |
+| `status`     | string | ❌       | Filter by status (multiple allowed) |
+| `startDate`  | string | ❌       | Date range start                    |
+| `endDate`    | string | ❌       | Date range end                      |
+| `supplierId` | string | ❌       | Filter by supplier                  |
+| `search`     | string | ❌       | Search term                         |
+| `page`       | number | ❌       | Page number                         |
+| `limit`      | number | ❌       | Items per page                      |
+| `sortBy`     | string | ❌       | `date \| price \| status`           |
+| `sortOrder`  | string | ❌       | `asc \| desc`                       |
 
 **Response**: Paginated list of booking items.
 

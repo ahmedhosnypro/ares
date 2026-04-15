@@ -33,10 +33,10 @@ Verify user email address with token from email.
 
 **Error Responses**
 
-| Status | Meaning                     |
-|--------|-----------------------------|
-| 400    | Invalid or expired token    |
-| 404    | Token not found             |
+| Status | Meaning                  |
+| ------ | ------------------------ |
+| 400    | Invalid or expired token |
+| 404    | Token not found          |
 
 ---
 
@@ -62,6 +62,6 @@ Resend the email verification link.
 
 **Error Responses**
 
-| Status | Meaning                                     |
-|--------|---------------------------------------------|
+| Status | Meaning                                              |
+| ------ | ---------------------------------------------------- |
 | 429    | Too many requests (rate limit: 3 per hour per email) |

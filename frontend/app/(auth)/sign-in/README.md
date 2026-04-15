@@ -26,11 +26,11 @@ Authenticate a user with email and password. Returns a JWT token and basic user 
 }
 ```
 
-| Field          | Type    | Required | Description                              |
-|----------------|---------|----------|------------------------------------------|
-| `email`        | string  | ✅       | Registered user email address            |
-| `password`     | string  | ✅       | User password                            |
-| `stayConnected`| boolean | ❌       | Extend session up to 400 days if `true`  |
+| Field           | Type    | Required | Description                             |
+| --------------- | ------- | -------- | --------------------------------------- |
+| `email`         | string  | ✅       | Registered user email address           |
+| `password`      | string  | ✅       | User password                           |
+| `stayConnected` | boolean | ❌       | Extend session up to 400 days if `true` |
 
 ---
 
@@ -55,8 +55,8 @@ Authenticate a user with email and password. Returns a JWT token and basic user 
 
 **Error Responses**
 
-| Status | Meaning                                         |
-|--------|-------------------------------------------------|
-| 401    | Invalid credentials                             |
-| 403    | Account not verified, suspended, or locked      |
-| 429    | Too many attempts (rate limit: 5 per 15 min)    |
+| Status | Meaning                                      |
+| ------ | -------------------------------------------- |
+| 401    | Invalid credentials                          |
+| 403    | Account not verified, suspended, or locked   |
+| 429    | Too many attempts (rate limit: 5 per 15 min) |

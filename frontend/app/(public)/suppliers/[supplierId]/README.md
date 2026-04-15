@@ -24,11 +24,11 @@ Retrieve all vehicles offered by the supplier.
 
 **Query Parameters**
 
-| Param       | Type    | Required | Description                         |
-|-------------|---------|----------|-------------------------------------|
-| `page`      | integer | ❌       | Page number                         |
-| `limit`     | integer | ❌       | Items per page                      |
-| `category`  | string  | ❌       | Filter by vehicle category          |
+| Param       | Type    | Required | Description                            |
+| ----------- | ------- | -------- | -------------------------------------- |
+| `page`      | integer | ❌       | Page number                            |
+| `limit`     | integer | ❌       | Items per page                         |
+| `category`  | string  | ❌       | Filter by vehicle category             |
 | `available` | boolean | ❌       | Show only currently available vehicles |
 
 ---
@@ -45,11 +45,11 @@ Retrieve customer reviews for the supplier.
 
 **Query Parameters**
 
-| Param    | Type    | Required | Description                           |
-|----------|---------|----------|---------------------------------------|
-| `page`   | integer | ❌       | Page number                           |
-| `limit`  | integer | ❌       | Reviews per page (default: 10)        |
-| `sortBy` | string  | ❌       | `date \| rating \| helpfulness`       |
+| Param    | Type    | Required | Description                     |
+| -------- | ------- | -------- | ------------------------------- |
+| `page`   | integer | ❌       | Page number                     |
+| `limit`  | integer | ❌       | Reviews per page (default: 10)  |
+| `sortBy` | string  | ❌       | `date \| rating \| helpfulness` |
 
 ---
 

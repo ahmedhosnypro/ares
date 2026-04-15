@@ -22,10 +22,10 @@ Check that the supplier's email is not already registered.
 
 **Response**
 
-| Status | Meaning                |
-|--------|------------------------|
-| 200    | Email is available     |
-| 400    | Email already in use   |
+| Status | Meaning              |
+| ------ | -------------------- |
+| 200    | Email is available   |
+| 400    | Email already in use |
 
 ---
 
@@ -41,10 +41,10 @@ Check that the supplier's display name is unique.
 
 **Response**
 
-| Status | Meaning               |
-|--------|-----------------------|
-| 200    | Name is available     |
-| 204    | Name already in use   |
+| Status | Meaning             |
+| ------ | ------------------- |
+| 200    | Name is available   |
+| 204    | Name already in use |
 
 ---
 
@@ -68,9 +68,9 @@ Delete the temp logo if the user cancels.
 
 **URL Params**
 
-| Param    | Description              |
-|----------|--------------------------|
-| `avatar` | Temp filename to delete  |
+| Param    | Description             |
+| -------- | ----------------------- |
+| `avatar` | Temp filename to delete |
 
 ---
 
@@ -102,7 +102,7 @@ Create the supplier account. Sends an activation email.
 
 **Error Responses**
 
-| Status | Meaning                        |
-|--------|--------------------------------|
-| 400    | Missing required fields        |
-| 409    | Email or name already in use   |
+| Status | Meaning                      |
+| ------ | ---------------------------- |
+| 400    | Missing required fields      |
+| 409    | Email or name already in use |

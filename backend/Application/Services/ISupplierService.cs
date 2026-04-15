@@ -31,6 +31,28 @@ public interface ISupplierService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets a public list of suppliers for the landing page
+    /// </summary>
+    /// <param name="page">Page number (1-based)</param>
+    /// <param name="pageSize">Number of items per page</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Paginated list of public supplier cards</returns>
+    Task<PagedResult<Backend.Application.DTOs.Public.PublicSupplierDto>> GetPublicSuppliersAsync(
+        int page = 1,
+        int pageSize = 6,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets a single public supplier for detail or landing use
+    /// </summary>
+    /// <param name="supplierId">Supplier ID</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Public supplier card if found</returns>
+    Task<Backend.Application.DTOs.Public.PublicSupplierDto?> GetPublicSupplierByIdAsync(
+        Guid supplierId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Creates a new supplier account
     /// </summary>
     /// <param name="request">Supplier creation request</param>

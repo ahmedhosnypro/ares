@@ -17,7 +17,7 @@ Fetch full car details.
 **URL Params**
 
 | Param      | Description                        |
-|------------|------------------------------------|
+| ---------- | ---------------------------------- |
 | `id`       | Car `_id`                          |
 | `language` | Language code for localized fields |
 
@@ -52,6 +52,6 @@ Fetch full car details.
 
 **Error Responses**
 
-| Status | Meaning        |
-|--------|----------------|
-| 404    | Car not found  |
+| Status | Meaning       |
+| ------ | ------------- |
+| 404    | Car not found |

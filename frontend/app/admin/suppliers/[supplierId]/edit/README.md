@@ -34,9 +34,9 @@ Upload a new supplier logo.
 
 **URL Params**
 
-| Param    | Description     |
-|----------|-----------------|
-| `userId` | Supplier `_id`  |
+| Param    | Description    |
+| -------- | -------------- |
+| `userId` | Supplier `_id` |
 
 **Request Body**
 
@@ -71,10 +71,10 @@ Save all profile changes.
 
 **Response**
 
-| Status | Meaning             |
-|--------|---------------------|
-| 200    | Supplier updated    |
-| 400    | Invalid fields      |
+| Status | Meaning          |
+| ------ | ---------------- |
+| 200    | Supplier updated |
+| 400    | Invalid fields   |
 
 ---
 
@@ -84,8 +84,8 @@ Upload a rental contract PDF for a specific language.
 
 **URL Params**
 
-| Param      | Description             |
-|------------|-------------------------|
+| Param      | Description               |
+| ---------- | ------------------------- |
 | `language` | Language code (e.g. `en`) |
 
 **Request**: `multipart/form-data` with `file` field.
@@ -105,6 +105,6 @@ Remove a contract for a language.
 **Response (contract endpoints)**
 
 | Status | Meaning             |
-|--------|---------------------|
+| ------ | ------------------- |
 | 200    | Operation succeeded |
 | 400    | File not found      |

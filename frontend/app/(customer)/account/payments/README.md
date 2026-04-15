@@ -16,16 +16,16 @@ Retrieve paginated payment transaction history.
 
 **Query Parameters**
 
-| Param           | Type   | Required | Description                         |
-|-----------------|--------|----------|-------------------------------------|
-| `startDate`     | date   | ❌       | Filter from date                    |
-| `endDate`       | date   | ❌       | Filter to date                      |
-| `status`        | string | ❌       | Filter by status                    |
-| `paymentMethod` | string | ❌       | Filter by method type               |
-| `page`          | number | ❌       | Page number (default: 1)            |
-| `pageSize`      | number | ❌       | Items per page (default: 20)        |
-| `sortBy`        | string | ❌       | Sort field (default: `createdAt`)   |
-| `sortOrder`     | string | ❌       | `asc \| desc` (default: `desc`)     |
+| Param           | Type   | Required | Description                       |
+| --------------- | ------ | -------- | --------------------------------- |
+| `startDate`     | date   | ❌       | Filter from date                  |
+| `endDate`       | date   | ❌       | Filter to date                    |
+| `status`        | string | ❌       | Filter by status                  |
+| `paymentMethod` | string | ❌       | Filter by method type             |
+| `page`          | number | ❌       | Page number (default: 1)          |
+| `pageSize`      | number | ❌       | Items per page (default: 20)      |
+| `sortBy`        | string | ❌       | Sort field (default: `createdAt`) |
+| `sortOrder`     | string | ❌       | `asc \| desc` (default: `desc`)   |
 
 **Response**: Paginated transaction list.
 

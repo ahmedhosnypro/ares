@@ -17,7 +17,7 @@ Get the count of unread notifications for the badge in the top nav.
 **URL Params**
 
 | Param    | Description |
-|----------|-------------|
+| -------- | ----------- |
 | `userId` | User `_id`  |
 
 **Response — 200 OK**
@@ -35,7 +35,7 @@ Fetch a paginated list of notifications.
 **URL Params**
 
 | Param    | Description                |
-|----------|----------------------------|
+| -------- | -------------------------- |
 | `userId` | User `_id`                 |
 | `page`   | 1-based page number        |
 | `size`   | Number of results per page |
@@ -97,6 +97,6 @@ Delete selected notifications.
 **Response (all mutation endpoints)**
 
 | Status | Meaning             |
-|--------|---------------------|
+| ------ | ------------------- |
 | 200    | Operation succeeded |
 | 400    | Invalid request     |

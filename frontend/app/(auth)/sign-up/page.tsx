@@ -2,9 +2,42 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Mail, Lock, User, Eye, EyeOff, AlertCircle, Loader2, CarFront, CheckCircle2 } from "lucide-react";
+import Image from "next/image";
+import { toApiUrl } from "@/src/utils/api-client";
+import {
+  Box,
+  TextField,
+  Button,
+  Typography,
+  Checkbox,
+  FormControlLabel,
+  Alert,
+  AlertTitle,
+  InputAdornment,
+  IconButton,
+  Paper,
+  Avatar,
+  CircularProgress,
+  Link as MuiLink,
+  useTheme,
+  useMediaQuery,
+  Grid,
+} from "@mui/material";
+import {
+  Email as EmailIcon,
+  Lock as LockIcon,
+  Person as PersonIcon,
+  Visibility,
+  VisibilityOff,
+  DirectionsCar as CarIcon,
+  ErrorOutline as ErrorIcon,
+  CheckCircle as CheckCircleIcon,
+} from "@mui/icons-material";
 
 export default function RegisterPage() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
+
   // States
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -13,15 +46,13 @@ export default function RegisterPage() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [isSuccess, setIsSuccess] = useState(false); 
+  const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
-    // تأكيد أولي إن اليوزر وافق على الشروط
+
     if (!acceptedTerms || !acceptedPrivacy) {
       setErrorMessage("You must accept both the Terms of Service and Privacy Policy to continue.");
       return;
@@ -31,8 +62,7 @@ export default function RegisterPage() {
     setErrorMessage("");
 
     try {
-      // 🚀 هنا بنستخدم fetch العادية عشان نكلم الباك إند يكريت الحساب
-      const response = await fetch("/api/auth/register", {
+      const response = await fetch(toApiUrl("/api/auth/register"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -47,7 +77,6 @@ export default function RegisterPage() {
         }),
       });
 
-      // معالجة الأخطاء بناءً على الـ API Contract
       if (!response.ok) {
         if (response.status === 400) {
           throw new Error("Invalid details. Please ensure your email is correct and your password is strong.");
@@ -60,254 +89,484 @@ export default function RegisterPage() {
         }
       }
 
-      // النجاح (201 Created)
-      setIsSuccess(true); 
-
-    } catch (error: any) {
-      setErrorMessage(error.message);
+      setIsSuccess(true);
+    } catch (error: unknown) {
+      setErrorMessage(error instanceof Error ? error.message : String(error));
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <main className="flex min-h-screen bg-white transition-colors duration-300 dark:bg-slate-950">
-      
-      {/* الجانب الأيسر: فورم التسجيل */}
-      <div className="flex w-full flex-col justify-center px-4 py-12 sm:px-6 lg:w-1/2 lg:px-20 xl:px-24">
-        <div className="mx-auto w-full max-w-sm lg:max-w-md">
-          
-          {/* اللوجو / الهيدر */}
-          <div className="mb-8">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 dark:shadow-indigo-900/50">
-                <CarFront className="h-6 w-6" />
-              </div>
-              <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">ARES</h1>
-            </div>
-            {!isSuccess && (
-              <>
-                <h2 className="mt-6 text-2xl font-bold text-slate-900 dark:text-white">
-                  Create an account
-                </h2>
-                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                  Join us and start your premium rental experience today.
-                </p>
-              </>
-            )}
-          </div>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
+        background: "linear-gradient(135deg, #f4f6f8 0%, rgba(15, 91, 91, 0.05) 100%)",
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          flex: 1,
+          flexDirection: { xs: "column", lg: "row" },
+        }}
+      >
+        {/* Left Side: Registration Form */}
+        <Box
+          sx={{
+            flex: { xs: "1 1 auto", lg: "0 0 50%" },
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            p: { xs: 2, sm: 4, lg: 8 },
+          }}
+        >
+          <Box
+            sx={{
+              width: "100%",
+              maxWidth: 520,
+              mx: "auto",
+              bgcolor: "#ffffff",
+              borderRadius: "24px",
+              p: { xs: 4, sm: 6 },
+              boxShadow: "0 24px 60px rgba(15, 91, 91, 0.12)",
+              border: "1px solid rgba(15, 91, 91, 0.1)",
+            }}
+          >
+            {/* Logo & Header */}
+            <Box sx={{ mb: 4 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+                <Avatar
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    bgcolor: "primary.main",
+                    boxShadow: "0 8px 16px rgba(15, 91, 91, 0.3)",
+                  }}
+                >
+                  <CarIcon sx={{ fontSize: 28 }} />
+                </Avatar>
+                <Typography
+                  variant="h4"
+                  component="h1"
+                  sx={{
+                    fontWeight: 900,
+                    letterSpacing: "-0.02em",
+                    color: "text.primary",
+                  }}
+                >
+                  ARES
+                </Typography>
+              </Box>
 
-          {/* شاشة النجاح (بتظهر لما الـ API يرجع 201) */}
-          {isSuccess ? (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-8 text-center dark:border-emerald-500/20 dark:bg-emerald-500/10">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
-                <CheckCircle2 className="h-8 w-8" />
-              </div>
-              <h3 className="mb-2 text-xl font-bold text-slate-900 dark:text-white">Account Created!</h3>
-              <p className="mb-8 text-sm text-slate-600 dark:text-slate-400">
-                Welcome to ARES, {firstName}. Your account has been successfully created. We've sent a verification link to <span className="font-bold text-slate-900 dark:text-white">{email}</span>.
-              </p>
-              <Link 
-                href="/login"
-                className="inline-flex w-full items-center justify-center rounded-xl bg-indigo-600 px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition-all hover:bg-indigo-700 active:scale-[0.98] dark:bg-indigo-600 dark:hover:bg-indigo-500 dark:shadow-indigo-900/50"
-              >
-                Go to Sign In
-              </Link>
-            </div>
-          ) : (
-            <>
-              {/* رسالة الخطأ */}
-              {errorMessage && (
-                <div className="mb-6 flex items-start gap-3 rounded-xl border border-rose-100 bg-rose-50 p-4 text-rose-600 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-400">
-                  <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
-                  <p className="text-sm font-medium leading-relaxed">{errorMessage}</p>
-                </div>
+              {!isSuccess && (
+                <>
+                  <Typography
+                    variant="h5"
+                    component="h2"
+                    sx={{
+                      fontWeight: 700,
+                      mb: 1,
+                      color: "text.primary",
+                    }}
+                  >
+                    Create an account
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Join us and start your premium rental experience today.
+                  </Typography>
+                </>
               )}
+            </Box>
 
-              {/* الفورم */}
-              <form onSubmit={handleRegister} className="space-y-5">
-                
-                {/* الاسم الأول والأخير (جنب بعض) */}
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                  <div>
-                    <label htmlFor="firstName" className="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-300">
-                      First Name
-                    </label>
-                    <div className="relative">
-                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                        <User className="h-5 w-5 text-slate-400" />
-                      </div>
-                      <input
+            {/* Success Screen */}
+            {isSuccess ? (
+              <Box
+                sx={{
+                  textAlign: "center",
+                  p: 4,
+                  borderRadius: 3,
+                  bgcolor: "success.light",
+                  border: "1px solid",
+                  borderColor: "success.main",
+                }}
+              >
+                <Avatar
+                  sx={{
+                    width: 64,
+                    height: 64,
+                    bgcolor: "success.main",
+                    mx: "auto",
+                    mb: 2,
+                  }}
+                >
+                  <CheckCircleIcon sx={{ fontSize: 40 }} />
+                </Avatar>
+                <Typography variant="h6" fontWeight="bold" gutterBottom>
+                  Account Created!
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Welcome to ARES, {firstName}. Your account has been successfully created. We&apos;ve sent a
+                  verification link to <strong>{email}</strong>.
+                </Typography>
+                <Button
+                  component={Link}
+                  href="/sign-in"
+                  variant="contained"
+                  fullWidth
+                  size="large"
+                  sx={{
+                    borderRadius: "999px",
+                    py: 1.75,
+                    fontWeight: 700,
+                    textTransform: "none",
+                  }}
+                >
+                  Go to Sign In
+                </Button>
+              </Box>
+            ) : (
+              <>
+                {/* Error Message */}
+                {errorMessage && (
+                  <Alert
+                    severity="error"
+                    icon={<ErrorIcon />}
+                    sx={{
+                      mb: 3,
+                      borderRadius: 2,
+                      "& .MuiAlert-message": {
+                        width: "100%",
+                      },
+                    }}
+                  >
+                    <AlertTitle sx={{ fontWeight: 600 }}>Error</AlertTitle>
+                    {errorMessage}
+                  </Alert>
+                )}
+
+                {/* Form */}
+                <Box
+                  component="form"
+                  onSubmit={(e: React.SyntheticEvent<HTMLFormElement>) => {
+                    void handleRegister(e);
+                  }}
+                  noValidate
+                >
+                  {/* First Name & Last Name */}
+                  <Grid container spacing={2} sx={{ mb: 3 }}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <TextField
+                        fullWidth
                         id="firstName"
+                        name="firstName"
+                        label="First Name"
                         type="text"
                         required
                         value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                        className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-sm text-slate-900 outline-none transition-all focus:border-indigo-600 focus:bg-white focus:ring-4 focus:ring-indigo-600/10 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:focus:border-indigo-500"
+                        onChange={e => {
+                          setFirstName(e.target.value);
+                        }}
                         placeholder="John"
+                        slotProps={{
+                          input: {
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <PersonIcon color="action" />
+                              </InputAdornment>
+                            ),
+                          },
+                        }}
                       />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label htmlFor="lastName" className="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-300">
-                      Last Name
-                    </label>
-                    <div className="relative">
-                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                        <User className="h-5 w-5 text-slate-400" />
-                      </div>
-                      <input
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <TextField
+                        fullWidth
                         id="lastName"
+                        name="lastName"
+                        label="Last Name"
                         type="text"
                         required
                         value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-sm text-slate-900 outline-none transition-all focus:border-indigo-600 focus:bg-white focus:ring-4 focus:ring-indigo-600/10 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:focus:border-indigo-500"
+                        onChange={e => {
+                          setLastName(e.target.value);
+                        }}
                         placeholder="Doe"
+                        slotProps={{
+                          input: {
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <PersonIcon color="action" />
+                              </InputAdornment>
+                            ),
+                          },
+                        }}
                       />
-                    </div>
-                  </div>
-                </div>
+                    </Grid>
+                  </Grid>
 
-                {/* حقل الإيميل */}
-                <div>
-                  <label htmlFor="email" className="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-300">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                      <Mail className="h-5 w-5 text-slate-400" />
-                    </div>
-                    <input
-                      id="email"
-                      type="email"
-                      autoComplete="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-sm text-slate-900 outline-none transition-all focus:border-indigo-600 focus:bg-white focus:ring-4 focus:ring-indigo-600/10 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:focus:border-indigo-500"
-                      placeholder="name@example.com"
+                  {/* Email Field */}
+                  <TextField
+                    fullWidth
+                    id="email"
+                    name="email"
+                    label="Email Address"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={email}
+                    onChange={e => {
+                      setEmail(e.target.value);
+                    }}
+                    placeholder="name@example.com"
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <EmailIcon color="action" />
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                    sx={{ mb: 3 }}
+                  />
+
+                  {/* Password Field */}
+                  <TextField
+                    fullWidth
+                    id="password"
+                    name="password"
+                    label="Password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    required
+                    value={password}
+                    onChange={e => {
+                      setPassword(e.target.value);
+                    }}
+                    placeholder="Create a strong password"
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <LockIcon color="action" />
+                          </InputAdornment>
+                        ),
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              aria-label="toggle password visibility"
+                              onClick={() => {
+                                setShowPassword(!showPassword);
+                              }}
+                              edge="end"
+                            >
+                              {showPassword ? <VisibilityOff /> : <Visibility />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                    sx={{ mb: 2 }}
+                  />
+
+                  {/* Terms & Privacy Checkboxes */}
+                  <Box sx={{ mb: 3 }}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={acceptedTerms}
+                          onChange={e => {
+                            setAcceptedTerms(e.target.checked);
+                          }}
+                          color="primary"
+                        />
+                      }
+                      label={
+                        <Typography variant="body2" color="text.secondary">
+                          I accept the{" "}
+                          <MuiLink
+                            component={Link}
+                            href="/terms"
+                            sx={{
+                              fontWeight: 700,
+                              textDecoration: "none",
+                              "&:hover": {
+                                textDecoration: "underline",
+                              },
+                            }}
+                          >
+                            Terms of Service
+                          </MuiLink>
+                        </Typography>
+                      }
                     />
-                  </div>
-                </div>
-
-                {/* حقل الباسورد */}
-                <div>
-                  <label htmlFor="password" className="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-300">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                      <Lock className="h-5 w-5 text-slate-400" />
-                    </div>
-                    <input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      autoComplete="new-password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-12 text-sm text-slate-900 outline-none transition-all focus:border-indigo-600 focus:bg-white focus:ring-4 focus:ring-indigo-600/10 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:focus:border-indigo-500"
-                      placeholder="Create a strong password"
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={acceptedPrivacy}
+                          onChange={e => {
+                            setAcceptedPrivacy(e.target.checked);
+                          }}
+                          color="primary"
+                        />
+                      }
+                      label={
+                        <Typography variant="body2" color="text.secondary">
+                          I accept the{" "}
+                          <MuiLink
+                            component={Link}
+                            href="/privacy"
+                            sx={{
+                              fontWeight: 700,
+                              textDecoration: "none",
+                              "&:hover": {
+                                textDecoration: "underline",
+                              },
+                            }}
+                          >
+                            Privacy Policy
+                          </MuiLink>
+                        </Typography>
+                      }
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                    >
-                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                    </button>
-                  </div>
-                </div>
+                  </Box>
 
-                {/* Checkboxes: Terms & Privacy */}
-                <div className="space-y-3 pt-2">
-                  <div className="flex items-start">
-                    <div className="flex h-5 items-center">
-                      <input
-                        id="terms"
-                        type="checkbox"
-                        required
-                        checked={acceptedTerms}
-                        onChange={(e) => setAcceptedTerms(e.target.checked)}
-                        className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 dark:border-slate-600 dark:bg-slate-800 dark:ring-offset-slate-950"
-                      />
-                    </div>
-                    <label htmlFor="terms" className="ml-3 text-sm text-slate-600 dark:text-slate-400">
-                      I accept the{" "}
-                      <Link href="/terms" className="font-bold text-indigo-600 transition-colors hover:text-indigo-500 dark:text-indigo-400">
-                        Terms of Service
-                      </Link>
-                    </label>
-                  </div>
-                  
-                  <div className="flex items-start">
-                    <div className="flex h-5 items-center">
-                      <input
-                        id="privacy"
-                        type="checkbox"
-                        required
-                        checked={acceptedPrivacy}
-                        onChange={(e) => setAcceptedPrivacy(e.target.checked)}
-                        className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 dark:border-slate-600 dark:bg-slate-800 dark:ring-offset-slate-950"
-                      />
-                    </div>
-                    <label htmlFor="privacy" className="ml-3 text-sm text-slate-600 dark:text-slate-400">
-                      I accept the{" "}
-                      <Link href="/privacy" className="font-bold text-indigo-600 transition-colors hover:text-indigo-500 dark:text-indigo-400">
-                        Privacy Policy
-                      </Link>
-                    </label>
-                  </div>
-                </div>
-
-                {/* زرار التسجيل */}
-                <div className="pt-2">
-                  <button
+                  {/* Submit Button */}
+                  <Button
                     type="submit"
-                    disabled={isLoading || !email || !password || !firstName || !lastName || !acceptedTerms || !acceptedPrivacy}
-                    className="group relative flex w-full justify-center rounded-xl bg-indigo-600 px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition-all hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-600/30 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-600 dark:hover:bg-indigo-500 dark:shadow-indigo-900/50"
+                    fullWidth
+                    variant="contained"
+                    size="large"
+                    disabled={
+                      isLoading || !email || !password || !firstName || !lastName || !acceptedTerms || !acceptedPrivacy
+                    }
+                    sx={{
+                      py: 1.75,
+                      fontSize: "1rem",
+                      fontWeight: 700,
+                      textTransform: "none",
+                      borderRadius: "999px",
+                      boxShadow: "0 8px 16px rgba(15, 91, 91, 0.3)",
+                      "&:hover": {
+                        boxShadow: "0 12px 20px rgba(15, 91, 91, 0.4)",
+                      },
+                    }}
                   >
-                    {isLoading ? (
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                    ) : (
-                      "Create Account"
-                    )}
-                  </button>
-                </div>
-              </form>
+                    {isLoading ? <CircularProgress size={24} color="inherit" /> : "Create Account"}
+                  </Button>
+                </Box>
 
-              {/* رابط تسجيل الدخول */}
-              <p className="mt-8 text-center text-sm text-slate-500 dark:text-slate-400">
-                Already have an account?{" "}
-                <Link href="/login" className="font-bold text-indigo-600 transition-colors hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">
-                  Sign in
-                </Link>
-              </p>
-            </>
-          )}
-        </div>
-      </div>
+                {/* Sign In Link */}
+                <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 4 }}>
+                  Already have an account?{" "}
+                  <MuiLink
+                    component={Link}
+                    href="/sign-in"
+                    sx={{
+                      fontWeight: 700,
+                      textDecoration: "none",
+                      "&:hover": {
+                        textDecoration: "underline",
+                      },
+                    }}
+                  >
+                    Sign in
+                  </MuiLink>
+                </Typography>
+              </>
+            )}
+          </Box>
+        </Box>
 
-      {/* الجانب الأيمن: صورة ديكور (بتختفي في الشاشات الصغيرة) */}
-      <div className="relative hidden w-0 flex-1 lg:block">
-        <div className="absolute inset-0 bg-slate-900 dark:bg-slate-900/50">
-          <img
-            className="absolute inset-0 h-full w-full object-cover opacity-80 mix-blend-overlay"
-            src="https://images.unsplash.com/photo-1503376760366-5a4d1e1f1807?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80"
-            alt="Luxury Car Fleet"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
-          
-          <div className="absolute bottom-0 left-0 right-0 p-12 text-white">
-            <h3 className="mb-2 text-3xl font-black tracking-tight">Your Journey Begins Here</h3>
-            <p className="max-w-lg text-lg text-slate-300">
-              Join thousands of satisfied customers and gain access to the most exclusive vehicle fleet in the region.
-            </p>
-          </div>
-        </div>
-      </div>
-    </main>
+        {/* Right Side: Decorative Image */}
+        {!isMobile && (
+          <Box
+            sx={{
+              flex: { lg: "0 0 50%" },
+              position: "relative",
+              display: { xs: "none", lg: "block" },
+            }}
+          >
+            <Paper
+              elevation={0}
+              sx={{
+                position: "relative",
+                height: "100%",
+                borderRadius: 0,
+                overflow: "hidden",
+                bgcolor: "transparent",
+              }}
+            >
+              <Box
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  "& img": {
+                    objectFit: "cover",
+                    opacity: 0.6,
+                  },
+                }}
+              >
+                <Image
+                  src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80"
+                  alt="Luxury Car Fleet"
+                  fill
+                  sizes="50vw"
+                  priority
+                />
+              </Box>
+
+              {/* Teal to Dark Gradient Overlay */}
+              <Box
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  background:
+                    "linear-gradient(135deg, rgba(15, 91, 91, 0.85) 0%, rgba(16, 33, 43, 0.90) 100%)",
+                }}
+              />
+
+              {/* Text Content */}
+              <Box
+                sx={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  p: 6,
+                  color: "white",
+                }}
+              >
+                <Typography
+                  variant="h3"
+                  component="h3"
+                  sx={{
+                    fontWeight: 900,
+                    mb: 2,
+                    letterSpacing: "-0.02em",
+                  }}
+                >
+                  Your Journey Begins Here
+                </Typography>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    maxWidth: 500,
+                    color: "grey.300",
+                    fontWeight: 400,
+                    lineHeight: 1.6,
+                  }}
+                >
+                  Join thousands of satisfied customers and gain access to the most exclusive vehicle fleet in the
+                  region.
+                </Typography>
+              </Box>
+            </Paper>
+          </Box>
+        )}
+      </Box>
+    </Box>
   );
 }

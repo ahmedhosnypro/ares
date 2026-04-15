@@ -1,6 +1,10 @@
 #!/usr/bin/env bun
 /* eslint-disable no-console */
 
+import { readFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 /**
  * 🔍 Fetch SonarQube issues and display them in ESLint format
  *
@@ -141,7 +145,7 @@ function printIssues(issues: SonarIssue[], projectKey: string): void {
   const grouped = groupIssuesByFile(issues, projectKey);
 
   // Sort files alphabetically
-  const sortedFiles = Array.from(grouped.keys()).sort();
+  const sortedFiles = Array.from(grouped.keys()).sort((a, b) => a.localeCompare(b));
 
   // Print issues grouped by file
   for (const filePath of sortedFiles) {
@@ -185,7 +189,7 @@ async function fetchIssues(
     url.searchParams.set("p", String(page));
     url.searchParams.set("ps", String(pageSize));
 
-    const authHeader = `Basic ${btoa(`${token}:`)}`;
+    const authHeader = "Basic " + btoa(token + ":");
 
     const response = await fetch(url.toString(), {
       headers: {
@@ -220,8 +224,7 @@ async function fetchIssues(
  */
 async function readTokenFromFile(filePath: string): Promise<string | null> {
   try {
-    const file = Bun.file(filePath);
-    const content = await file.text();
+    const content = await readFile(filePath, "utf8");
     return content.trim();
   } catch {
     return null;
@@ -232,8 +235,8 @@ async function readTokenFromFile(filePath: string): Promise<string | null> {
  * 🚀 Main execution
  */
 async function main(): Promise<void> {
-  const scriptDir = import.meta.dir;
-  const tokenFile = `${scriptDir}/.sonar-token`;
+  const scriptDir = dirname(fileURLToPath(import.meta.url));
+  const tokenFile = join(scriptDir, ".sonar-token");
   const projectKey = "cad";
   const sonarHost = "http://localhost:9000";
 
@@ -259,4 +262,4 @@ async function main(): Promise<void> {
   }
 }
 
-main();
+void main();

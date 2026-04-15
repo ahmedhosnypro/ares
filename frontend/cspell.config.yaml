@@ -1,6 +1,18 @@
 version: "0.2"
-language: en
+language: en,ar
+import:
+  - "@cspell/dict-ar/cspell-ext.json"
+ignoreRegExpList:
+  - "/[\\u0600-\\u06FF]+/"
 words:
+  - NEXTAUTH
+  - scannerwork
+  - kiro
+  - SonarQube
+  - SONARQUBE
+  - shinawy
+  - Segoe
+  - Superhost
   - sonarjs
   - azsce
   - aesjs
@@ -25,3 +37,14 @@ words:
   - nums
   - precharged
   - vaul
+  - Shubra
+  - Kheima
+  - Mansoura
+  - Ismailia
+  - Ashmoun
+  - Qena
+  - Sohag
+  - Hurghada
+  - Sharm
+  - glassmorphism
+  - Français

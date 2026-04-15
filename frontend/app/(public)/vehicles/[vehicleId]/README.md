@@ -16,11 +16,11 @@ Retrieve comprehensive vehicle details.
 
 **Query Parameters**
 
-| Param        | Type   | Required | Description                   |
-|--------------|--------|----------|-------------------------------|
-| `pickupDate` | string | ❌       | ISO 8601 — for pricing calc   |
-| `returnDate` | string | ❌       | ISO 8601 — for pricing calc   |
-| `currency`   | string | ❌       | Preferred currency code       |
+| Param        | Type   | Required | Description                 |
+| ------------ | ------ | -------- | --------------------------- |
+| `pickupDate` | string | ❌       | ISO 8601 — for pricing calc |
+| `returnDate` | string | ❌       | ISO 8601 — for pricing calc |
+| `currency`   | string | ❌       | Preferred currency code     |
 
 **Error Responses**: 404 Not Found, 500 Server Error
 
@@ -42,13 +42,13 @@ Calculate pricing for a specific rental period.
 
 **Query Parameters**
 
-| Param                | Type   | Required | Description                     |
-|----------------------|--------|----------|---------------------------------|
-| `pickupDate`         | string | ✅       | ISO 8601 rental start           |
-| `returnDate`         | string | ✅       | ISO 8601 rental end             |
-| `insuranceOptions`   | string | ❌       | Selected insurance type         |
-| `additionalServices` | string | ❌       | Comma-separated service list    |
-| `currency`           | string | ❌       | Preferred currency              |
+| Param                | Type   | Required | Description                  |
+| -------------------- | ------ | -------- | ---------------------------- |
+| `pickupDate`         | string | ✅       | ISO 8601 rental start        |
+| `returnDate`         | string | ✅       | ISO 8601 rental end          |
+| `insuranceOptions`   | string | ❌       | Selected insurance type      |
+| `additionalServices` | string | ❌       | Comma-separated service list |
+| `currency`           | string | ❌       | Preferred currency           |
 
 **Error Responses**: 400 Invalid dates, 404 Not Found
 

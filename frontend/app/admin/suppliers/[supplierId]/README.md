@@ -17,7 +17,7 @@ Fetch the supplier's full profile.
 **URL Params**
 
 | Param | Description    |
-|-------|----------------|
+| ----- | -------------- |
 | `id`  | Supplier `_id` |
 
 **Response — 200 OK**
@@ -44,7 +44,7 @@ Fetch the cars owned by this supplier.
 **URL Params**
 
 | Param  | Description                |
-|--------|----------------------------|
+| ------ | -------------------------- |
 | `page` | 1-based page number        |
 | `size` | Number of results per page |
 
@@ -58,9 +58,7 @@ Fetch the cars owned by this supplier.
 
 ```json
 {
-  "resultData": [
-    { "_id": "string", "name": "string", "price": "number", "available": "boolean" }
-  ],
+  "resultData": [{ "_id": "string", "name": "string", "price": "number", "available": "boolean" }],
   "pageInfo": [{ "totalRecords": "number" }]
 }
 ```

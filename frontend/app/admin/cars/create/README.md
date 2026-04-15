@@ -28,16 +28,16 @@ Check that the license plate is not already in use.
 
 **URL Params**
 
-| Param          | Description             |
-|----------------|-------------------------|
-| `licensePlate` | License plate to check  |
+| Param          | Description            |
+| -------------- | ---------------------- |
+| `licensePlate` | License plate to check |
 
 **Response**
 
-| Status | Meaning                     |
-|--------|-----------------------------|
-| 200    | Plate is available          |
-| 204    | Plate already in use        |
+| Status | Meaning              |
+| ------ | -------------------- |
+| 200    | Plate is available   |
+| 204    | Plate already in use |
 
 ---
 
@@ -61,9 +61,9 @@ Delete a temporary car image if the user cancels the upload.
 
 **URL Params**
 
-| Param   | Description              |
-|---------|--------------------------|
-| `image` | Temp filename to delete  |
+| Param   | Description             |
+| ------- | ----------------------- |
+| `image` | Temp filename to delete |
 
 ---
 
@@ -110,7 +110,7 @@ Create the new car record.
 
 **Error Responses**
 
-| Status | Meaning                        |
-|--------|--------------------------------|
-| 400    | Missing required fields        |
-| 409    | License plate already in use   |
+| Status | Meaning                      |
+| ------ | ---------------------------- |
+| 400    | Missing required fields      |
+| 409    | License plate already in use |

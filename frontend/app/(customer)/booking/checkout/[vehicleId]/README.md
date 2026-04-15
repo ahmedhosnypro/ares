@@ -142,7 +142,7 @@ Calculate the complete booking total with all selected options.
 
 **Error Responses**
 
-| Status | Meaning              |
-|--------|----------------------|
-| 401    | Unauthorized         |
+| Status | Meaning                     |
+| ------ | --------------------------- |
+| 401    | Unauthorized                |
 | 409    | Vehicle no longer available |

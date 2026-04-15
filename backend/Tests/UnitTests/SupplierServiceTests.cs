@@ -1,4 +1,5 @@
 using Backend.Application.DTOs.Common;
+using Backend.Application.DTOs.Public;
 using Backend.Application.DTOs.Supplier;
 using Backend.Application.Exceptions;
 using Backend.Application.Interfaces;
@@ -300,6 +301,68 @@ public class SupplierServiceTests
         Assert.NotNull(result);
         Assert.Equal(supplierId, result.Id);
         Assert.Null(result.CompanyProfile);
+    }
+
+    [Fact]
+    public async Task GetPublicSuppliersAsync_WithValidPagination_ShouldReturnPublicCards()
+    {
+        var suppliers = CreateTestSuppliers(3);
+        var pagedResult = new PagedResult<ApplicationUser>(
+            Data: suppliers,
+            Page: 1,
+            PageSize: 3,
+            TotalCount: 3,
+            TotalPages: 1);
+
+        _supplierRepositoryMock.Setup(x => x.GetSuppliersAsync(1, 3, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(pagedResult);
+
+        foreach (var supplier in suppliers)
+        {
+            _supplierRepositoryMock.Setup(x => x.GetCompanyProfileAsync(supplier.Id, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new CompanyProfile
+                {
+                    UserId = supplier.Id,
+                    CompanyName = $"Company {supplier.FirstName}",
+                    CommercialRegistrationNumber = "CR-001",
+                    TaxId = "TAX-001"
+                });
+        }
+
+        var result = await _supplierService.GetPublicSuppliersAsync(1, 3);
+
+        Assert.Equal(3, result.Data.Count);
+        Assert.All(result.Data, supplier => Assert.NotEmpty(supplier.CompanyName));
+        Assert.All(result.Data, supplier => Assert.NotEmpty(supplier.Email));
+        Assert.All(result.Data, supplier => Assert.NotEqual(Guid.Empty, supplier.Id));
+    }
+
+    [Fact]
+    public async Task GetPublicSupplierByIdAsync_WithExistingSupplier_ShouldReturnPublicCard()
+    {
+        var supplierId = Guid.NewGuid();
+        var supplier = CreateTestSupplier(supplierId, "supplier@example.com", "John", "Doe");
+        supplier.ProfileImage = "uploads/seed/suppliers/supplier-logo.png";
+
+        _supplierRepositoryMock.Setup(x => x.GetSupplierWithCompanyProfileAsync(supplierId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(supplier);
+
+        _supplierRepositoryMock.Setup(x => x.GetCompanyProfileAsync(supplierId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CompanyProfile
+            {
+                UserId = supplierId,
+                CompanyName = "Test Company",
+                CommercialRegistrationNumber = "CR-123",
+                TaxId = "TAX-123"
+            });
+
+        var result = await _supplierService.GetPublicSupplierByIdAsync(supplierId);
+
+        Assert.NotNull(result);
+        Assert.Equal(supplierId, result!.Id);
+        Assert.Equal("Test Company", result.CompanyName);
+        Assert.Equal("supplier@example.com", result.Email);
+        Assert.Equal("uploads/seed/suppliers/supplier-logo.png", result.ProfileImage);
     }
 
     #endregion

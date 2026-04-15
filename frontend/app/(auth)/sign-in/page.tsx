@@ -3,44 +3,66 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signIn } from "next-auth/react"; // 🚀 السطر السحري بتاع NextAuth
-import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader2, CarFront } from "lucide-react";
+import Image from "next/image";
+import { signIn } from "next-auth/react";
+import {
+  Box,
+  TextField,
+  Button,
+  Typography,
+  Checkbox,
+  FormControlLabel,
+  Alert,
+  AlertTitle,
+  InputAdornment,
+  IconButton,
+  Paper,
+  CircularProgress,
+  Link as MuiLink,
+  useTheme,
+  useMediaQuery,
+} from "@mui/material";
+import {
+  Email as EmailIcon,
+  Lock as LockIcon,
+  Visibility,
+  VisibilityOff,
+  ErrorOutline as ErrorIcon,
+} from "@mui/icons-material";
 
 export default function LoginPage() {
   const router = useRouter();
-  
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
+
   // States
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [stayConnected, setStayConnected] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     setErrorMessage("");
 
     try {
-      // 🚀 استخدام NextAuth بدل الـ fetch اليدوي والـ localStorage
       const res = await signIn("credentials", {
-        redirect: false, // بنعملها false عشان نعرض الإيرور في نفس الصفحة من غير ريفريش
+        redirect: false,
         email,
         password,
-        stayConnected: stayConnected.toString(), // NextAuth بيفضل يبعت الداتا كـ String
+        stayConnected: stayConnected.toString(),
       });
 
       if (res?.error) {
-        // NextAuth هيرجعلك الإيرور اللي إحنا برمجناه في ملف الـ route بناءً على رد الباك إند
         setErrorMessage(res.error);
       } else if (res?.ok) {
-        // الدخول نجح، بنوجه اليوزر للبروفايل
         router.push("/account/profile");
-        router.refresh(); // ريفريش عشان הـ layout يحس بالـ Session الجديدة وتظهر بياناته
+        router.refresh();
       }
-    } catch (error) {
+    } catch {
       setErrorMessage("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
@@ -48,159 +70,352 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen bg-white transition-colors duration-300 dark:bg-slate-950">
-      
-      {/* الجانب الأيسر: فورم تسجيل الدخول */}
-      <div className="flex w-full flex-col justify-center px-4 py-12 sm:px-6 lg:w-1/2 lg:px-20 xl:px-24">
-        <div className="mx-auto w-full max-w-sm lg:max-w-md">
-          
-          {/* اللوجو / الهيدر */}
-          <div className="mb-8">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 dark:shadow-indigo-900/50">
-                <CarFront className="h-6 w-6" />
-              </div>
-              <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">ARES</h1>
-            </div>
-            <h2 className="mt-6 text-2xl font-bold text-slate-900 dark:text-white">
-              Welcome back
-            </h2>
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              Please enter your details to sign in to your account.
-            </p>
-          </div>
-
-          {/* رسالة الخطأ */}
-          {errorMessage && (
-            <div className="mb-6 flex items-start gap-3 rounded-xl border border-rose-100 bg-rose-50 p-4 text-rose-600 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-400">
-              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
-              <p className="text-sm font-medium leading-relaxed">{errorMessage}</p>
-            </div>
-          )}
-
-          {/* الفورم */}
-          <form onSubmit={handleLogin} className="space-y-6">
-            
-            {/* حقل الإيميل */}
-            <div>
-              <label htmlFor="email" className="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-300">
-                Email Address
-              </label>
-              <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                  <Mail className="h-5 w-5 text-slate-400" />
-                </div>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-sm text-slate-900 outline-none transition-all focus:border-indigo-600 focus:bg-white focus:ring-4 focus:ring-indigo-600/10 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:focus:border-indigo-500"
-                  placeholder="name@example.com"
-                />
-              </div>
-            </div>
-
-            {/* حقل الباسورد */}
-            <div>
-              <label htmlFor="password" className="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-300">
-                Password
-              </label>
-              <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                  <Lock className="h-5 w-5 text-slate-400" />
-                </div>
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-12 text-sm text-slate-900 outline-none transition-all focus:border-indigo-600 focus:bg-white focus:ring-4 focus:ring-indigo-600/10 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:focus:border-indigo-500"
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+    <Box
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
+        background: "linear-gradient(135deg, #f4f6f8 0%, rgba(15, 91, 91, 0.05) 100%)",
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          flex: 1,
+          flexDirection: { xs: "column", lg: "row" },
+        }}
+      >
+        {/* Left Side: Login Form */}
+        <Box
+          sx={{
+            flex: { xs: "1 1 auto", lg: "0 0 50%" },
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            p: { xs: 2, sm: 4, lg: 8 },
+          }}
+        >
+          <Box
+            sx={{
+              width: "100%",
+              maxWidth: 480,
+              mx: "auto",
+              bgcolor: "#ffffff",
+              borderRadius: "24px",
+              p: { xs: 4, sm: 6 },
+              boxShadow: "0 24px 60px rgba(15, 91, 91, 0.12)",
+              border: "1px solid rgba(15, 91, 91, 0.1)",
+            }}
+          >
+            {/* Logo & Header */}
+            <Box sx={{ mb: 6 }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", mb: 4 }}>
+                <Box
+                  sx={{
+                    position: "relative",
+                    width: 200,
+                    height: 60,
+                    display: "flex",
+                    alignItems: "center",
+                  }}
                 >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
-              </div>
-            </div>
+                  <Image
+                    src="/img/favicon/logo_transparent.png"
+                    alt="Ares Logo"
+                    fill
+                    style={{ objectFit: "contain" }}
+                    priority
+                  />
+                </Box>
+              </Box>
 
-            {/* الإعدادات الإضافية (تذكرني + نسيت كلمة المرور) */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="stayConnected"
-                  name="stayConnected"
-                  type="checkbox"
-                  checked={stayConnected}
-                  onChange={(e) => setStayConnected(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 dark:border-slate-600 dark:bg-slate-800 dark:ring-offset-slate-950"
+              <Typography
+                variant="h4"
+                component="h2"
+                sx={{
+                  fontWeight: 700,
+                  mb: 1,
+                  color: "text.primary",
+                }}
+              >
+                Welcome back
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Please enter your details to sign in to your account.
+              </Typography>
+            </Box>
+
+            {/* Error Message */}
+            {errorMessage && (
+              <Alert
+                severity="error"
+                icon={<ErrorIcon />}
+                sx={{
+                  mb: 3,
+                  borderRadius: 2,
+                  "& .MuiAlert-message": {
+                    width: "100%",
+                  },
+                }}
+              >
+                <AlertTitle sx={{ fontWeight: 600 }}>Error</AlertTitle>
+                {errorMessage}
+              </Alert>
+            )}
+
+            {/* Form */}
+            <Box
+              component="form"
+              onSubmit={(e: React.SyntheticEvent<HTMLFormElement>) => {
+                void handleLogin(e);
+              }}
+              noValidate
+            >
+              {/* Email Field */}
+              <TextField
+                fullWidth
+                id="email"
+                name="email"
+                label="Email Address"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={e => {
+                  setEmail(e.target.value);
+                }}
+                placeholder="name@example.com"
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <EmailIcon color="action" />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+                sx={{ mb: 3 }}
+              />
+
+              {/* Password Field */}
+              <TextField
+                fullWidth
+                id="password"
+                name="password"
+                label="Password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={e => {
+                  setPassword(e.target.value);
+                }}
+                placeholder="••••••••"
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <LockIcon color="action" />
+                      </InputAdornment>
+                    ),
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="toggle password visibility"
+                          onClick={() => {
+                            setShowPassword(!showPassword);
+                          }}
+                          edge="end"
+                        >
+                          {showPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+                sx={{ mb: 2 }}
+              />
+
+              {/* Remember Me & Forgot Password */}
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  mb: 3,
+                }}
+              >
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={stayConnected}
+                      onChange={e => {
+                        setStayConnected(e.target.checked);
+                      }}
+                      color="primary"
+                    />
+                  }
+                  label={
+                    <Typography variant="body2" color="text.secondary">
+                      Stay connected
+                    </Typography>
+                  }
                 />
-                <label htmlFor="stayConnected" className="ml-2 block text-sm text-slate-600 dark:text-slate-400">
-                  Stay connected
-                </label>
-              </div>
 
-              <div className="text-sm">
-                <Link href="/forgot-password" className="font-bold text-indigo-600 transition-colors hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">
+                <MuiLink
+                  component={Link}
+                  href="/forgot-password"
+                  variant="body2"
+                  sx={{
+                    fontWeight: 600,
+                    textDecoration: "none",
+                    "&:hover": {
+                      textDecoration: "underline",
+                    },
+                  }}
+                >
                   Forgot password?
-                </Link>
-              </div>
-            </div>
+                </MuiLink>
+              </Box>
 
-            {/* زرار الدخول */}
-            <div>
-              <button
+              {/* Submit Button */}
+              <Button
                 type="submit"
+                fullWidth
+                variant="contained"
+                size="large"
                 disabled={isLoading || !email || !password}
-                className="group relative flex w-full justify-center rounded-xl bg-indigo-600 px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition-all hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-600/30 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-600 dark:hover:bg-indigo-500 dark:shadow-indigo-900/50"
+                sx={{
+                  py: 1.75,
+                  fontSize: "1rem",
+                  fontWeight: 700,
+                  textTransform: "none",
+                  borderRadius: "999px",
+                  boxShadow: "0 8px 16px rgba(15, 91, 91, 0.3)",
+                  "&:hover": {
+                    boxShadow: "0 12px 20px rgba(15, 91, 91, 0.4)",
+                  },
+                }}
               >
                 {isLoading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <CircularProgress size={24} color="inherit" />
                 ) : (
                   "Sign in to account"
                 )}
-              </button>
-            </div>
-          </form>
+              </Button>
+            </Box>
 
-          {/* رابط إنشاء حساب */}
-          <p className="mt-8 text-center text-sm text-slate-500 dark:text-slate-400">
-            Don&apos;t have an account?{" "}
-            <Link href="/register" className="font-bold text-indigo-600 transition-colors hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">
-              Create a free account
-            </Link>
-          </p>
-        </div>
-      </div>
+            {/* Sign Up Link */}
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              align="center"
+              sx={{ mt: 4 }}
+            >
+              Don&apos;t have an account?{" "}
+              <MuiLink
+                component={Link}
+                href="/register"
+                sx={{
+                  fontWeight: 700,
+                  textDecoration: "none",
+                  "&:hover": {
+                    textDecoration: "underline",
+                  },
+                }}
+              >
+                Create a free account
+              </MuiLink>
+            </Typography>
+          </Box>
+        </Box>
 
-      {/* الجانب الأيمن: صورة ديكور (بتختفي في الشاشات الصغيرة) */}
-      <div className="relative hidden w-0 flex-1 lg:block">
-        <div className="absolute inset-0 bg-slate-900 dark:bg-slate-900/50">
-          <img
-            className="absolute inset-0 h-full w-full object-cover opacity-80 mix-blend-overlay"
-            src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80"
-            alt="Luxury Car Rental"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
-          
-          <div className="absolute bottom-0 left-0 right-0 p-12 text-white">
-            <h3 className="mb-2 text-3xl font-black tracking-tight">Premium Vehicle Rentals</h3>
-            <p className="max-w-lg text-lg text-slate-300">
-              Experience the ultimate driving journey with our collection of top-tier vehicles, tailored just for you.
-            </p>
-          </div>
-        </div>
-      </div>
-    </main>
+        {/* Right Side: Decorative Image */}
+        {!isMobile && (
+          <Box
+            sx={{
+              flex: { lg: "0 0 50%" },
+              position: "relative",
+              display: { xs: "none", lg: "block" },
+            }}
+          >
+            <Paper
+              elevation={0}
+              sx={{
+                position: "relative",
+                height: "100%",
+                borderRadius: 0,
+                overflow: "hidden",
+                bgcolor: "transparent",
+              }}
+            >
+              <Box
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  "& img": {
+                    objectFit: "cover",
+                    opacity: 0.6,
+                  },
+                }}
+              >
+                <Image
+                  src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80"
+                  alt="Luxury Car"
+                  fill
+                  sizes="50vw"
+                  priority
+                />
+              </Box>
+
+              {/* Teal to Dark Gradient Overlay */}
+              <Box
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  background:
+                    "linear-gradient(135deg, rgba(15, 91, 91, 0.85) 0%, rgba(16, 33, 43, 0.90) 100%)",
+                }}
+              />
+
+              {/* Text Content */}
+              <Box
+                sx={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  p: 6,
+                  color: "white",
+                }}
+              >
+                <Typography
+                  variant="h3"
+                  component="h3"
+                  sx={{
+                    fontWeight: 900,
+                    mb: 2,
+                    letterSpacing: "-0.02em",
+                  }}
+                >
+                  Drive Your Ambition
+                </Typography>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    maxWidth: 500,
+                    color: "grey.300",
+                    fontWeight: 400,
+                    lineHeight: 1.6,
+                  }}
+                >
+                  Experience the ultimate driving journey with our collection of
+                  top-tier vehicles, tailored just for you.
+                </Typography>
+              </Box>
+            </Paper>
+          </Box>
+        )}
+      </Box>
+    </Box>
   );
 }

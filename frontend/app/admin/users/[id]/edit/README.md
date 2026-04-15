@@ -35,10 +35,10 @@ Save profile changes.
 
 **Response**
 
-| Status | Meaning           |
-|--------|-------------------|
-| 200    | User updated      |
-| 400    | Invalid fields    |
+| Status | Meaning        |
+| ------ | -------------- |
+| 200    | User updated   |
+| 400    | Invalid fields |
 
 ---
 
@@ -49,7 +49,7 @@ Update the user's avatar.
 **URL Params**
 
 | Param    | Description |
-|----------|-------------|
+| -------- | ----------- |
 | `userId` | User `_id`  |
 
 **Request Body**

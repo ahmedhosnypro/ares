@@ -35,7 +35,7 @@ Fetch cars that are available for the selected supplier, dates, and locations.
 **URL Params**
 
 | Param  | Description                |
-|--------|----------------------------|
+| ------ | -------------------------- |
 | `page` | 1-based page number        |
 | `size` | Number of results per page |
 
@@ -69,7 +69,7 @@ Search for users/drivers to assign to the booking.
 **URL Params**
 
 | Param  | Description                |
-|--------|----------------------------|
+| ------ | -------------------------- |
 | `page` | 1-based page number        |
 | `size` | Number of results per page |
 
@@ -126,7 +126,7 @@ Save the new booking.
 
 **Error Responses**
 
-| Status | Meaning                            |
-|--------|------------------------------------|
-| 400    | Missing required fields            |
+| Status | Meaning                               |
+| ------ | ------------------------------------- |
+| 400    | Missing required fields               |
 | 409    | Car not available for selected period |

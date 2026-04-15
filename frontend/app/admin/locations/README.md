@@ -17,7 +17,7 @@ Fetch a paginated list of locations.
 **URL Params**
 
 | Param      | Description                       |
-|------------|-----------------------------------|
+| ---------- | --------------------------------- |
 | `page`     | 1-based page number               |
 | `size`     | Number of results per page        |
 | `language` | Language code for localized names |
@@ -49,15 +49,15 @@ Check if a location has cars or bookings before deletion.
 **URL Params**
 
 | Param | Description    |
-|-------|----------------|
+| ----- | -------------- |
 | `id`  | Location `_id` |
 
 **Response**
 
-| Status | Meaning                                         |
-|--------|-------------------------------------------------|
-| 200    | Location has cars/bookings — cannot delete      |
-| 204    | No cars or bookings — safe to delete            |
+| Status | Meaning                                    |
+| ------ | ------------------------------------------ |
+| 200    | Location has cars/bookings — cannot delete |
+| 204    | No cars or bookings — safe to delete       |
 
 ---
 
@@ -67,8 +67,8 @@ Delete a location.
 
 **Response**
 
-| Status | Meaning                                    |
-|--------|--------------------------------------------|
-| 200    | Location deleted                           |
-| 400    | Location has cars or bookings — blocked    |
-| 404    | Location not found                         |
+| Status | Meaning                                 |
+| ------ | --------------------------------------- |
+| 200    | Location deleted                        |
+| 400    | Location has cars or bookings — blocked |
+| 404    | Location not found                      |
