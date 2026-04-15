@@ -48,6 +48,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   }
 }
+   
+
 
 // 3. الكومبوننت الأساسي للصفحة (Server Component)
 export default async function BookingDetailsPage({ params }: Readonly<PageProps>) {
