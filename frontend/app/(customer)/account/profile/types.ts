@@ -1,19 +1,22 @@
 export interface ProfileAddress {
-  readonly street?: string;
-  readonly city?: string;
-  readonly country?: string;
+  readonly street: string;
+  readonly city: string;
+  readonly state: string;
+  readonly postalCode: string;
+  readonly country: string;
 }
 
 export interface EmergencyContact {
-  readonly name?: string;
-  readonly phone?: string;
+  readonly name: string;
+  readonly phone: string;
+  readonly relationship: string;
 }
 
 export interface VerificationStatusData {
   readonly email: boolean;
   readonly phone: boolean;
   readonly driverLicense: boolean;
-  readonly kyc: "none" | "basic" | "standard" | "enhanced";
+  readonly kyc: string;
 }
 
 export interface ProfileData {
@@ -21,13 +24,15 @@ export interface ProfileData {
   readonly firstName: string;
   readonly lastName: string;
   readonly email: string;
-  readonly phone?: string;
+  readonly emailVerified: boolean;
+  readonly phone: string;
+  readonly phoneVerified: boolean;
   readonly profileCompleteness: number;
   readonly profilePhotoUrl?: string;
-  readonly address?: ProfileAddress;
-  readonly emergencyContact?: EmergencyContact;
+  readonly address: ProfileAddress;
+  readonly emergencyContact: EmergencyContact;
   readonly verificationStatus: VerificationStatusData;
   readonly dateOfBirth?: string;
-  readonly languagePreference?: string;
-  readonly currencyPreference?: string;
+  readonly languagePreference: string;
+  readonly currencyPreference: string;
 }

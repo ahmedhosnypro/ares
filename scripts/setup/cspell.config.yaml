@@ -1,0 +1,25 @@
+version: "0.2"
+language: en
+import:
+  - "@cspell/dict-ar/cspell-ext.json"
+words:
+  - tsgo
+  - tsconfig
+  - dotnet
+  - mssql
+  - sqlcmd
+  - nextauth
+  - NEXTAUTH
+  - ASPNETCORE
+  - Bun
+  - prompts
+  - ora
+  - zod
+  - Ares
+  - devcontainer
+  - kiro
+  - shinawy
+  - Substep
+  - pids
+  - Passw
+  - changeme

@@ -70,11 +70,11 @@ public class UserProfileService : IUserProfileService
                 userAddress.Country ?? string.Empty)
             : new AddressDto(string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
 
-        // Build emergency contact DTO (placeholder - would need separate entity in production)
+        // Build emergency contact DTO from user fields
         var emergencyContactDto = new EmergencyContactDto(
-            string.Empty,
-            string.Empty,
-            string.Empty);
+            user.EmergencyContactName ?? string.Empty,
+            user.EmergencyContactPhone ?? string.Empty,
+            user.EmergencyContactRelationship ?? string.Empty);
 
         // Calculate verification status
         var verificationStatus = CalculateVerificationStatus(user, verifications);
@@ -94,12 +94,12 @@ public class UserProfileService : IUserProfileService
             EmailVerified: user.EmailConfirmed,
             Phone: user.PhoneNumber ?? string.Empty,
             PhoneVerified: user.PhoneNumberConfirmed,
-            DateOfBirth: null, // Would need to add to ApplicationUser entity
+            DateOfBirth: user.DateOfBirth,
             ProfilePhotoUrl: user.ProfileImage,
             Address: addressDto,
             EmergencyContact: emergencyContactDto,
-            LanguagePreference: "en", // Would need to add to ApplicationUser entity
-            CurrencyPreference: "USD", // Would need to add to ApplicationUser entity
+            LanguagePreference: string.IsNullOrWhiteSpace(user.LanguagePreference) ? "en" : user.LanguagePreference,
+            CurrencyPreference: string.IsNullOrWhiteSpace(user.CurrencyPreference) ? "USD" : user.CurrencyPreference,
             ProfileCompleteness: profileCompleteness,
             VerificationStatus: verificationStatus);
 
@@ -135,6 +135,14 @@ public class UserProfileService : IUserProfileService
         // Update basic user information
         user.FirstName = request.FirstName;
         user.LastName = request.LastName;
+        user.DateOfBirth = request.DateOfBirth;
+        user.LanguagePreference = string.IsNullOrWhiteSpace(request.LanguagePreference) ? "en" : request.LanguagePreference;
+        user.CurrencyPreference = string.IsNullOrWhiteSpace(request.CurrencyPreference) ? "USD" : request.CurrencyPreference;
+
+        // Update emergency contact
+        user.EmergencyContactName = request.EmergencyContact.Name;
+        user.EmergencyContactPhone = request.EmergencyContact.Phone;
+        user.EmergencyContactRelationship = request.EmergencyContact.Relationship;
 
         // Check if phone changed
         if (user.PhoneNumber != request.Phone)
@@ -247,6 +255,37 @@ public class UserProfileService : IUserProfileService
     }
 
     /// <summary>
+    /// Changes user password after verifying the current password
+    /// </summary>
+    public async Task ChangePasswordAsync(
+        Guid userId,
+        ChangePasswordRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Changing password for user {UserId}", userId);
+
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+        {
+            throw new NotFoundException($"User with ID {userId} not found");
+        }
+
+        var result = await _userManager.ChangePasswordAsync(
+            user,
+            request.CurrentPassword,
+            request.NewPassword);
+
+        if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            _logger.LogWarning("Password change failed for user {UserId}: {Errors}", userId, errors);
+            throw new ValidationException("password", errors);
+        }
+
+        _logger.LogInformation("Password changed successfully for user {UserId}", userId);
+    }
+
+    /// <summary>
     /// Calculates verification status based on user and verification records
     /// Validates: Requirements 6.11
     /// </summary>
@@ -314,7 +353,7 @@ public class UserProfileService : IUserProfileService
         var totalFields = 0;
         var filledFields = 0;
 
-        // Required fields (always counted)
+        // Required fields
         totalFields += 4; // FirstName, LastName, Email, Phone
         if (!string.IsNullOrWhiteSpace(user.FirstName)) filledFields++;
         if (!string.IsNullOrWhiteSpace(user.LastName)) filledFields++;
@@ -322,11 +361,12 @@ public class UserProfileService : IUserProfileService
         if (!string.IsNullOrWhiteSpace(user.PhoneNumber)) filledFields++;
 
         // Optional fields
-        totalFields += 6; // ProfileImage, Address (5 fields), EmergencyContact (3 fields counted as 1)
+        totalFields += 5; // ProfileImage, DateOfBirth, Address, EmergencyContact, Preferences
 
         if (!string.IsNullOrWhiteSpace(user.ProfileImage)) filledFields++;
+        if (user.DateOfBirth.HasValue) filledFields++;
 
-        // Address completeness (count as 1 if all address fields filled)
+        // Address completeness (count as 1 if core fields filled)
         if (address != null &&
             !string.IsNullOrWhiteSpace(address.AddressLine) &&
             !string.IsNullOrWhiteSpace(address.City) &&
@@ -335,22 +375,25 @@ public class UserProfileService : IUserProfileService
             filledFields++;
         }
 
-        // Emergency contact (count as 1 if all fields filled)
-        if (!string.IsNullOrWhiteSpace(emergencyContact.Name) &&
-            !string.IsNullOrWhiteSpace(emergencyContact.Phone) &&
-            !string.IsNullOrWhiteSpace(emergencyContact.Relationship))
+        // Emergency contact (count as 1 if name and phone filled)
+        if (!string.IsNullOrWhiteSpace(user.EmergencyContactName) &&
+            !string.IsNullOrWhiteSpace(user.EmergencyContactPhone))
         {
             filledFields++;
         }
 
-        // Verification status (count as 1 if email and phone verified)
+        // Preferences set to non-default values counts as 1
+        if (!string.IsNullOrWhiteSpace(user.LanguagePreference) &&
+            !string.IsNullOrWhiteSpace(user.CurrencyPreference))
+        {
+            filledFields++;
+        }
+
+        // Verification status
         totalFields += 2;
         if (user.EmailConfirmed) filledFields++;
         if (user.PhoneNumberConfirmed) filledFields++;
 
-        // Calculate percentage
-        var completeness = (int)Math.Round((double)filledFields / totalFields * 100);
-
-        return completeness;
+        return (int)Math.Round((double)filledFields / totalFields * 100);
     }
 }

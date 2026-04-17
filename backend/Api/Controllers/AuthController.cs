@@ -231,4 +231,70 @@ public class AuthController : ControllerBase
         await _authService.VerifyEmailAsync(userId, token, cancellationToken);
         return Ok(new { Message = "Email verified successfully." });
     }
+
+    /// <summary>
+    /// Refresh access token using refresh token
+    /// </summary>
+    /// <param name="request">Refresh token request</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>New access token and refresh token</returns>
+    /// <response code="200">Token refreshed successfully</response>
+    /// <response code="401">Invalid or expired refresh token</response>
+    /// <remarks>
+    /// Exchanges a valid refresh token for a new access token and refresh token pair.
+    /// The old refresh token is automatically revoked (token rotation).
+    /// 
+    /// **Token Rotation**: Each refresh generates a new refresh token and revokes the old one for security.
+    /// 
+    /// **Sample Request**:
+    /// ```json
+    /// {
+    ///   "refreshToken": "base64-encoded-refresh-token"
+    /// }
+    /// ```
+    /// </remarks>
+    [HttpPost("refresh-token")]
+    [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<LoginResponse>> RefreshToken(
+        [FromBody] RefreshTokenRequest request,
+        CancellationToken cancellationToken)
+    {
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var response = await _authService.RefreshTokenAsync(request, ipAddress, cancellationToken);
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Revoke refresh token
+    /// </summary>
+    /// <param name="request">Refresh token to revoke</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Success confirmation</returns>
+    /// <response code="200">Token revoked successfully</response>
+    /// <response code="401">Invalid token or not authorized</response>
+    /// <response code="404">Token not found</response>
+    /// <remarks>
+    /// Revokes a refresh token, preventing it from being used for token refresh.
+    /// Useful for logout functionality or security purposes.
+    /// 
+    /// **Sample Request**:
+    /// ```json
+    /// {
+    ///   "refreshToken": "base64-encoded-refresh-token"
+    /// }
+    /// ```
+    /// </remarks>
+    [HttpPost("revoke-token")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RevokeToken(
+        [FromBody] RefreshTokenRequest request,
+        CancellationToken cancellationToken)
+    {
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+        await _authService.RevokeTokenAsync(request.RefreshToken, ipAddress, cancellationToken);
+        return Ok(new { Message = "Token revoked successfully" });
+    }
 }

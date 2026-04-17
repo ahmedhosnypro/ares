@@ -1,65 +1,126 @@
+import { Box, Chip, Divider, List, ListItem, ListItemIcon, ListItemText, Typography } from "@mui/material";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
+import EmailRoundedIcon from "@mui/icons-material/EmailRounded";
+import PhoneRoundedIcon from "@mui/icons-material/PhoneRounded";
+import BadgeRoundedIcon from "@mui/icons-material/BadgeRounded";
+
 interface VerificationStatusProps {
-  readonly status?: {
-    readonly email: boolean;
-    readonly phone: boolean;
-    readonly driverLicense: boolean;
-    readonly kyc: "none" | "basic" | "standard" | "enhanced";
-  };
+  readonly emailVerified: boolean;
+  readonly phoneVerified: boolean;
+  readonly licenseVerified: boolean;
 }
 
-// الكومبوننت المنفصل بعد إضافة الدارك مود وتأثيرات الانتقال
-function VerificationItem({
-  label,
-  isVerified,
-  actionText,
-}: {
+interface VerificationItemProps {
   readonly label: string;
   readonly isVerified: boolean;
   readonly actionText: string;
-}) {
-  return (
-    <div className="flex items-center justify-between border-b border-slate-50 py-3 transition-colors duration-300 last:border-0 dark:border-slate-800/50">
-      <div className="flex items-center gap-3">
-        {/* أيقونة الحالة: أخضر لو متوثق، أصفر/برتقالي لو لأ */}
-        <div
-          className={`flex h-6 w-6 items-center justify-center rounded-full transition-colors duration-300 ${
-            isVerified
-              ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
-              : "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
-          }`}
-        >
-          {isVerified ? "✓" : "!"}
-        </div>
-        <span className="text-sm font-bold text-slate-700 transition-colors duration-300 dark:text-slate-300">
-          {label}
-        </span>
-      </div>
+  readonly icon: React.ReactNode;
+  readonly isLast: boolean;
+}
 
-      {/* زرار الأكشن بيظهر بس لو الحساب مش متوثق */}
-      {!isVerified && (
-        <button className="text-xs font-black text-indigo-600 transition-colors duration-300 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300">
-          {actionText}
-        </button>
-      )}
-    </div>
+function VerificationItem({ label, isVerified, actionText, icon, isLast }: VerificationItemProps) {
+  return (
+    <>
+      <ListItem
+        sx={{ px: 0, py: 1.5 }}
+        secondaryAction={
+          !isVerified ? (
+            <Chip
+              label={actionText}
+              size="small"
+              color="warning"
+              variant="outlined"
+              clickable
+              sx={{ fontWeight: 700, fontSize: "0.7rem" }}
+            />
+          ) : (
+            <Chip
+              label="Verified"
+              size="small"
+              color="success"
+              variant="outlined"
+              sx={{ fontWeight: 700, fontSize: "0.7rem" }}
+            />
+          )
+        }
+      >
+        <ListItemIcon sx={{ minWidth: 36 }}>
+          <Box
+            sx={{
+              width: 28,
+              height: 28,
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              bgcolor: isVerified ? "success.light" : "warning.light",
+              color: isVerified ? "success.dark" : "warning.dark",
+            }}
+          >
+            {isVerified ? (
+              <CheckCircleRoundedIcon sx={{ fontSize: 16 }} />
+            ) : (
+              <WarningAmberRoundedIcon sx={{ fontSize: 16 }} />
+            )}
+          </Box>
+        </ListItemIcon>
+        <ListItemText
+          primary={
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center" }}>{icon}</Box>
+              <Typography variant="body2" fontWeight={600} color="text.primary">
+                {label}
+              </Typography>
+            </Box>
+          }
+        />
+      </ListItem>
+      {!isLast && <Divider sx={{ borderColor: "border.light" }} />}
+    </>
   );
 }
 
-export default function VerificationStatus({ status }: VerificationStatusProps) {
-  const safeStatus = status || { email: false, phone: false, driverLicense: false, kyc: "none" };
+export default function VerificationStatus({ emailVerified, phoneVerified, licenseVerified }: VerificationStatusProps) {
+  const items = [
+    {
+      label: "Email Address",
+      isVerified: emailVerified,
+      actionText: "Verify",
+      icon: <EmailRoundedIcon sx={{ fontSize: 15 }} />,
+    },
+    {
+      label: "Phone Number",
+      isVerified: phoneVerified,
+      actionText: "Verify",
+      icon: <PhoneRoundedIcon sx={{ fontSize: 15 }} />,
+    },
+    {
+      label: "Driver's License",
+      isVerified: licenseVerified,
+      actionText: "Upload",
+      icon: <BadgeRoundedIcon sx={{ fontSize: 15 }} />,
+    },
+  ];
 
   return (
-    <div className="p-6">
-      {/* العنوان والخط الفاصل */}
-      <h3 className="mb-4 border-b border-slate-100 pb-2 text-lg font-black text-slate-900 transition-colors duration-300 dark:border-slate-800 dark:text-white">
+    <Box sx={{ p: 3 }}>
+      <Typography variant="subtitle1" fontWeight={700} color="text.primary" gutterBottom>
         Verification Status
-      </h3>
-
-      <div className="flex flex-col">
-        <VerificationItem label="Email Address" isVerified={safeStatus.email} actionText="Verify" />
-        <VerificationItem label="Phone Number" isVerified={safeStatus.phone} actionText="Verify" />
-        <VerificationItem label="Driver's License" isVerified={safeStatus.driverLicense} actionText="Upload" />
-      </div>
-    </div>
+      </Typography>
+      <Divider sx={{ mb: 1, borderColor: "border.light" }} />
+      <List disablePadding>
+        {items.map((item, index) => (
+          <VerificationItem
+            key={item.label}
+            label={item.label}
+            isVerified={item.isVerified}
+            actionText={item.actionText}
+            icon={item.icon}
+            isLast={index === items.length - 1}
+          />
+        ))}
+      </List>
+    </Box>
   );
 }

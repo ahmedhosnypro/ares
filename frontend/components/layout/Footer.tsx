@@ -2,17 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import {
-  Box,
-  Button,
-  Container,
-  Divider,
-  Grid,
-  Stack,
-  TextField,
-  Typography,
-  Link as MuiLink,
-} from "@mui/material";
+import { Box, Button, Container, Divider, Grid, Stack, TextField, Typography, Link as MuiLink } from "@mui/material";
 import FacebookIcon from "@mui/icons-material/Facebook";
 import TwitterIcon from "@mui/icons-material/Twitter";
 import InstagramIcon from "@mui/icons-material/Instagram";
@@ -22,16 +12,7 @@ import PhoneIcon from "@mui/icons-material/Phone";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 
 export default function Footer() {
-  const topCities = [
-    "Cairo",
-    "Alexandria",
-    "Giza",
-    "Sharm El Sheikh",
-    "Hurghada",
-    "Luxor",
-    "Aswan",
-    "Port Said",
-  ];
+  const topCities = ["Cairo", "Alexandria", "Giza", "Sharm El Sheikh", "Hurghada", "Luxor", "Aswan", "Port Said"];
 
   const fleetTypes = [
     "Economy Cars",
@@ -146,13 +127,17 @@ export default function Footer() {
                   alt="Ares Logo"
                   fill
                   sizes="140px"
-                  style={{ objectFit: "contain" }}
+                  style={{
+                    objectFit: "contain",
+                    filter: "brightness(0) invert(1)",
+                    mixBlendMode: "screen",
+                  }}
                 />
               </Box>
             </Box>
             <Typography variant="body2" mb={3} sx={{ lineHeight: 1.7 }}>
-              Your trusted partner for car rentals worldwide. Quality vehicles, transparent pricing,
-              and exceptional service.
+              Your trusted partner for car rentals worldwide. Quality vehicles, transparent pricing, and exceptional
+              service.
             </Typography>
             <Stack spacing={1.5}>
               <Stack direction="row" spacing={1} alignItems="center">
@@ -176,7 +161,7 @@ export default function Footer() {
               Top Cities
             </Typography>
             <Stack spacing={1}>
-              {topCities.map((city) => (
+              {topCities.map(city => (
                 <MuiLink
                   key={city}
                   href={`/search?city=${city}`}
@@ -197,7 +182,7 @@ export default function Footer() {
               Fleet Types
             </Typography>
             <Stack spacing={1}>
-              {fleetTypes.slice(0, 6).map((type) => (
+              {fleetTypes.slice(0, 6).map(type => (
                 <MuiLink
                   key={type}
                   href={`/search?type=${type}`}
@@ -218,7 +203,7 @@ export default function Footer() {
               Company
             </Typography>
             <Stack spacing={1}>
-              {company.map((item) => (
+              {company.map(item => (
                 <MuiLink
                   key={item.label}
                   href={item.href}
@@ -239,7 +224,7 @@ export default function Footer() {
               Support
             </Typography>
             <Stack spacing={1}>
-              {support.map((item) => (
+              {support.map(item => (
                 <MuiLink
                   key={item.label}
                   href={item.href}
@@ -260,7 +245,7 @@ export default function Footer() {
               Legal
             </Typography>
             <Stack spacing={1}>
-              {legal.map((item) => (
+              {legal.map(item => (
                 <MuiLink
                   key={item.label}
                   href={item.href}
@@ -279,12 +264,7 @@ export default function Footer() {
         <Divider sx={{ borderColor: "grey.800", mb: 4 }} />
 
         {/* Bottom Footer */}
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          justifyContent="space-between"
-          alignItems="center"
-          spacing={3}
-        >
+        <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" alignItems="center" spacing={3}>
           {/* Copyright */}
           <Typography variant="body2" color="grey.500">
             © {new Date().getFullYear()} ARES Rentals. All rights reserved.
@@ -295,7 +275,7 @@ export default function Footer() {
             <Typography variant="caption" color="grey.500">
               We accept:
             </Typography>
-            {paymentMethods.map((method) => (
+            {paymentMethods.map(method => (
               <Box
                 key={method}
                 sx={{

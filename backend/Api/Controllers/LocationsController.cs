@@ -47,6 +47,40 @@ public class LocationsController : ControllerBase
     }
 
     /// <summary>
+    /// Get paginated locations (for frontend compatibility)
+    /// </summary>
+    /// <param name="page">Page number</param>
+    /// <param name="size">Page size</param>
+    /// <param name="language">Language code (for future i18n support)</param>
+    /// <param name="s">Search keyword</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Paginated list of locations with name field</returns>
+    [HttpGet("{page:int}/{size:int}/{language}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetLocationsForFrontend(
+        int page,
+        int size,
+        string language,
+        [FromQuery] string? s,
+        CancellationToken cancellationToken)
+    {
+        if (page < 1)
+        {
+            return BadRequest(new { message = "Page must be greater than 0" });
+        }
+
+        if (size < 1 || size > 100)
+        {
+            return BadRequest(new { message = "Page size must be between 1 and 100" });
+        }
+
+        var result = await _locationService.GetLocationsForFrontendAsync(page, size, s ?? string.Empty, cancellationToken);
+
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Get paginated locations
     /// </summary>
     /// <param name="page">Page number</param>

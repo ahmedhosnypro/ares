@@ -1,102 +1,83 @@
-import { Metadata } from "next";
-/* eslint-disable react-refresh/only-export-components */
+import { type Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { toApiUrl } from "@/src/utils/api-client";
+import { fetchBookingDetails } from "./_components/booking-api";
+import BookingDetailsView from "./_components/BookingDetailsView";
+import { cancelBookingAction } from "./_actions/cancel-booking";
+import { canCancelBooking, getFeedback, type SearchParamValue } from "./_components/booking-utils";
+import { renderErrorState, renderSignInRequired } from "./_components/BookingRenderHelpers";
 
-// 1. تعريف الـ Props بتاعة الصفحة
+export const dynamic = "force-dynamic";
+
 interface PageProps {
-  // في Next.js 15+ الـ params بقت Promise ولازم نعملها await
   readonly params: Promise<{ readonly id: string }>;
+  readonly searchParams: Promise<Record<string, SearchParamValue>>;
 }
 
-// 2. دالة الـ Metadata اللي شرحناها (عشان الـ SEO واسم التاب في المتصفح)
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  try {
-    const resolvedParams = await params;
-    const session = await getServerSession(authOptions);
-    if (!session?.accessToken) {
-      return {
-        title: "Booking Details | Rent Your Dream Car",
-      };
-    }
+export const generateMetadata = async ({ params }: Readonly<Pick<PageProps, "params">>): Promise<Metadata> => {
+  const { id } = await params;
+  const session = await getServerSession(authOptions);
 
-    // بنجيب بيانات الحجز عشان نكتب اسم العربية في عنوان الصفحة
-    const response = await fetch(toApiUrl(`/api/booking/${resolvedParams.id}/en`), {
-      headers: {
-        Authorization: `Bearer ${session.accessToken}`,
-      },
-      cache: "no-store",
-    });
-    const data = (await response.json()) as {
-      resultData?: { car?: { name?: string }; Car?: { name?: string } };
-      data?: { car?: { name?: string }; Car?: { name?: string } };
-    };
-    const booking =
-      data.resultData || data.data || (data as unknown as { car?: { name?: string }; Car?: { name?: string } });
-
-    const carName = booking.car?.name || booking.Car?.name || "Details";
-
-    return {
-      title: `Booking ${carName} | Rent Your Dream Car`,
-      description: `View details for your rental booking of ${carName}.`,
-    };
-  } catch {
-    // خطة بديلة لو السيرفر وقع
+  if (!session?.accessToken) {
     return {
       title: "Booking Details | Rent Your Dream Car",
+      description: "View your booking details and reservation summary.",
     };
   }
-}
-   
 
+  try {
+    const result = await fetchBookingDetails(id, session.accessToken);
+    const carName = result.booking?.car?.name;
+    const title = carName ? `Booking ${carName} | Rent Your Dream Car` : "Booking Details | Rent Your Dream Car";
 
-// 3. الكومبوننت الأساسي للصفحة (Server Component)
-export default async function BookingDetailsPage({ params }: Readonly<PageProps>) {
-  // بنفك الـ Promise عشان ناخد الـ ID بتاع الحجز
-  const resolvedParams = await params;
-  const bookingId = resolvedParams.id;
+    return {
+      title,
+      description: "View your booking details and reservation summary.",
+    };
+  } catch {
+    return {
+      title: "Booking Details | Rent Your Dream Car",
+      description: "View your booking details and reservation summary.",
+    };
+  }
+};
+
+export default async function BookingDetailsPage({ params, searchParams }: Readonly<PageProps>) {
+  const [{ id }, resolvedSearchParams] = await Promise.all([params, searchParams]);
+  const session = await getServerSession(authOptions);
+
+  if (!session?.accessToken) {
+    return renderSignInRequired();
+  }
+
+  const bookingResult = await fetchBookingDetails(id, session.accessToken).catch(() => ({
+    booking: null,
+    status: 500,
+  }));
+
+  if (!bookingResult.booking) {
+    if (bookingResult.status === 404) {
+      return renderErrorState("Booking not found", "The booking you are looking for does not exist.");
+    }
+
+    if (bookingResult.status === 403) {
+      return renderErrorState("Access denied", "You are not allowed to view this booking.");
+    }
+
+    if (bookingResult.status === 401) {
+      return renderErrorState("Session expired", "Please sign in again to continue.");
+    }
+
+    return renderErrorState("Unable to load booking", "Please try again in a moment.");
+  }
 
   return (
-    <main className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-4xl">
-        {/* Header Section */}
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-black text-slate-900">Booking Overview</h1>
-            <p className="text-slate-500 mt-2 font-mono text-sm">
-              Ref ID: <span className="font-bold text-indigo-600">{bookingId}</span>
-            </p>
-          </div>
-
-          {/* زرار الرجوع للوراء */}
-          <a
-            href="/bookings"
-            className="rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm border border-slate-200 hover:bg-slate-50 hover:text-indigo-600 transition-all"
-          >
-            &larr; Back to Bookings
-          </a>
-        </div>
-
-        {/* Main Content Container 
-          (هنا هنحط الديزاين بتاع الفاتورة وتفاصيل الاستلام والتسليم)
-        */}
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 overflow-hidden relative">
-          {/* خلفية تجميلية خفيفة */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-bl-full -z-10 opacity-50"></div>
-
-          <div className="text-center py-16">
-            <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 mb-4 animate-bounce">
-              <span className="text-2xl">🚗</span>
-            </div>
-            <h2 className="text-2xl font-black text-slate-800 mb-2">Page Structure Ready!</h2>
-            <p className="text-slate-500 max-w-md mx-auto">
-              We successfully connected the card button to this page and fetched the ID:
-              <strong className="text-indigo-600 block mt-2">{bookingId}</strong>
-            </p>
-          </div>
-        </div>
-      </div>
-    </main>
+    <BookingDetailsView
+      booking={bookingResult.booking}
+      routeBookingId={id}
+      canCancel={canCancelBooking(bookingResult.booking.status)}
+      onCancel={cancelBookingAction.bind(null, id)}
+      feedback={getFeedback(resolvedSearchParams)}
+    />
   );
 }

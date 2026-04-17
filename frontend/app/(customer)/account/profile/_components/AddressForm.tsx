@@ -1,179 +1,366 @@
 "use client";
 
 import React, { useState } from "react";
-import { toApiUrl } from "@/src/utils/api-client";
-import { type ProfileData } from "../types";
-import { logger } from "@/src/utils/logger";
+import { Alert, Box, Button, CircularProgress, Divider, Grid, TextField, Typography } from "@mui/material";
+import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
+import MuiPhoneNumber from "mui-phone-number";
+import CountrySelect from "@/components/input/CountrySelect";
+import { addressSchema, type AddressFormData } from "@/lib/validation/schemas";
+import { toApiUrl } from "@/utils/api-client";
+import { logger } from "@/utils/logger";
+
+interface AddressFormProps {
+  readonly userId: string;
+  readonly accessToken: string;
+  readonly addressStreet: string;
+  readonly addressCity: string;
+  readonly addressState: string;
+  readonly addressPostalCode: string;
+  readonly addressCountry: string;
+  readonly emergencyName: string;
+  readonly emergencyPhone: string;
+  readonly emergencyRelationship: string;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly phone: string;
+  readonly dateOfBirth?: string;
+  readonly languagePreference: string;
+  readonly currencyPreference: string;
+}
+
+type FieldErrors = Partial<Record<keyof AddressFormData, string>>;
 
 export default function AddressForm({
-  fullData,
+  userId,
   accessToken,
-}: {
-  readonly fullData: ProfileData;
-  readonly accessToken: string;
-}) {
+  addressStreet: initialStreet,
+  addressCity: initialCity,
+  addressState: initialState,
+  addressPostalCode: initialPostalCode,
+  addressCountry: initialCountry,
+  emergencyName: initialEmergencyName,
+  emergencyPhone: initialEmergencyPhone,
+  emergencyRelationship: initialEmergencyRelationship,
+  firstName,
+  lastName,
+  phone,
+  dateOfBirth,
+  languagePreference,
+  currencyPreference,
+}: AddressFormProps) {
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
+  const [serverError, setServerError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [touched, setTouched] = useState<Partial<Record<keyof AddressFormData, boolean>>>({});
+
+  const [street, setStreet] = useState(initialStreet);
+  const [city, setCity] = useState(initialCity);
+  const [state, setState] = useState(initialState);
+  const [postalCode, setPostalCode] = useState(initialPostalCode);
+  const [country, setCountry] = useState(initialCountry);
+  const [emergencyName, setEmergencyName] = useState(initialEmergencyName);
+  const [emergencyPhone, setEmergencyPhone] = useState(initialEmergencyPhone);
+  const [emergencyRelationship, setEmergencyRelationship] = useState(initialEmergencyRelationship);
+
+  const validateField = (field: keyof AddressFormData, value: string) => {
+    const result = addressSchema.shape[field].safeParse(value);
+    setFieldErrors(prev => ({
+      ...prev,
+      [field]: result.success ? undefined : result.error.issues[0]?.message,
+    }));
+  };
+
+  const handleBlur = (field: keyof AddressFormData, value: string) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+    validateField(field, value);
+  };
+
+  const handleEmergencyPhoneChange = (value: string | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const raw = typeof value === "string" ? value : value.target.value;
+    setEmergencyPhone(raw);
+    if (touched.emergencyPhone) validateField("emergencyPhone", raw);
+  };
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
     setSuccessMsg("");
-    setErrorMsg("");
+    setServerError("");
 
-    const formData = new FormData(e.currentTarget);
-    const street = (formData.get("street") as string | null) ?? "";
-    const city = (formData.get("city") as string | null) ?? "";
-    const country = (formData.get("country") as string | null) ?? "";
-    const contactName = (formData.get("contactName") as string | null) ?? "";
-    const contactPhone = (formData.get("contactPhone") as string | null) ?? "";
-
-    // نجهز العنوان وجهة الاتصال الجديدة ودمجهم مع الداتا القديمة
-    const updatedPayload = {
-      firstName: fullData.firstName,
-      lastName: fullData.lastName,
-      phone: fullData.phone,
-      dateOfBirth: fullData.dateOfBirth,
-      languagePreference: fullData.languagePreference,
-      currencyPreference: fullData.currencyPreference,
-      address: {
-        ...fullData.address,
-        street,
-        city,
-        country,
-      },
-      emergencyContact: {
-        ...fullData.emergencyContact,
-        name: contactName,
-        phone: contactPhone,
-      },
+    const payload: AddressFormData = {
+      street,
+      city,
+      state,
+      postalCode,
+      country,
+      emergencyName,
+      emergencyPhone,
+      emergencyRelationship,
     };
+    const result = addressSchema.safeParse(payload);
 
+    if (!result.success) {
+      const errors: FieldErrors = {};
+      for (const issue of result.error.issues) {
+        const key = issue.path[0] as keyof AddressFormData;
+        if (!errors[key]) errors[key] = issue.message;
+      }
+      setFieldErrors(errors);
+      setTouched({
+        street: true,
+        city: true,
+        state: true,
+        postalCode: true,
+        country: true,
+        emergencyName: true,
+        emergencyPhone: true,
+        emergencyRelationship: true,
+      });
+      return;
+    }
+
+    setLoading(true);
     try {
-      const response = await fetch(toApiUrl(`/api/users/${fullData.userId}/profile`), {
+      const response = await fetch(toApiUrl(`/api/users/${userId}/profile`), {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify(updatedPayload),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          phone,
+          dateOfBirth: dateOfBirth ?? null,
+          languagePreference,
+          currencyPreference,
+          address: { street, city, state, postalCode, country },
+          emergencyContact: { name: emergencyName, phone: emergencyPhone, relationship: emergencyRelationship },
+        }),
       });
 
-      if (response.ok) {
-        setSuccessMsg("Address saved successfully!");
-      } else {
-        throw new Error("Failed to update");
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as {
+          validationErrors?: { message: string }[];
+          message?: string;
+        } | null;
+        const msg = body?.validationErrors?.[0]?.message ?? body?.message ?? "Failed to update";
+        throw new Error(msg);
       }
+      setSuccessMsg("Address saved successfully.");
     } catch (error) {
       logger.error("Address update error", error);
-      setErrorMsg("Failed to save address.");
+      setServerError(error instanceof Error ? error.message : "Failed to save address.");
     } finally {
       setLoading(false);
     }
   };
 
-  const safeAddress = fullData.address || {};
-  const safeContact = fullData.emergencyContact || {};
-
-  const renderStatus = () => {
-    if (successMsg) return <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{successMsg}</p>;
-    if (errorMsg) return <p className="text-sm font-bold text-red-600 dark:text-red-400">{errorMsg}</p>;
-    return <div />;
-  };
-
   return (
-    <div>
-      <h2 className="mb-6 border-b border-slate-100 pb-4 text-xl font-bold text-slate-900 dark:border-slate-800 dark:text-white">
+    <Box>
+      <Typography variant="h6" fontWeight={700} color="text.primary" gutterBottom>
         Address & Emergency Contact
-      </h2>
+      </Typography>
+      <Divider sx={{ mb: 3, borderColor: "border.light" }} />
 
-      <form
+      <Box
+        component="form"
         onSubmit={e => {
-          void handleSubmit(e);
+          void handleSubmit(e as React.SyntheticEvent<HTMLFormElement>);
         }}
-        className="space-y-8"
+        noValidate
       >
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <label htmlFor="street" className="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-300">
-              Street Address
-            </label>
-            <input
-              type="text"
+        <Grid container spacing={2.5}>
+          <Grid size={{ xs: 12 }}>
+            <TextField
               id="street"
-              name="street"
-              defaultValue={safeAddress.street || ""}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white"
+              label="Street Address"
+              value={street}
+              onChange={e => {
+                setStreet(e.target.value);
+                if (touched.street) validateField("street", e.target.value);
+              }}
+              onBlur={() => {
+                handleBlur("street", street);
+              }}
+              error={touched.street && !!fieldErrors.street}
+              helperText={touched.street ? fieldErrors.street : undefined}
+              autoComplete="street-address"
             />
-          </div>
-          <div>
-            <label htmlFor="city" className="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-300">
-              City
-            </label>
-            <input
-              type="text"
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
               id="city"
-              name="city"
-              defaultValue={safeAddress.city || ""}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white"
+              label="City"
+              value={city}
+              onChange={e => {
+                setCity(e.target.value);
+                if (touched.city) validateField("city", e.target.value);
+              }}
+              onBlur={() => {
+                handleBlur("city", city);
+              }}
+              error={touched.city && !!fieldErrors.city}
+              helperText={touched.city ? fieldErrors.city : undefined}
+              autoComplete="address-level2"
             />
-          </div>
-          <div>
-            <label htmlFor="country" className="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-300">
-              Country
-            </label>
-            <input
-              type="text"
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              id="state"
+              label="State / Governorate"
+              value={state}
+              onChange={e => {
+                setState(e.target.value);
+                if (touched.state) validateField("state", e.target.value);
+              }}
+              onBlur={() => {
+                handleBlur("state", state);
+              }}
+              error={touched.state && !!fieldErrors.state}
+              helperText={touched.state ? fieldErrors.state : undefined}
+              autoComplete="address-level1"
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              id="postalCode"
+              label="Postal Code"
+              value={postalCode}
+              onChange={e => {
+                setPostalCode(e.target.value);
+                if (touched.postalCode) validateField("postalCode", e.target.value);
+              }}
+              onBlur={() => {
+                handleBlur("postalCode", postalCode);
+              }}
+              error={touched.postalCode && !!fieldErrors.postalCode}
+              helperText={touched.postalCode ? fieldErrors.postalCode : undefined}
+              autoComplete="postal-code"
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <CountrySelect
               id="country"
-              name="country"
-              defaultValue={safeAddress.country || ""}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white"
+              value={country}
+              onChange={v => {
+                setCountry(v);
+                if (touched.country) validateField("country", v);
+              }}
+              label="Country"
+              error={touched.country && !!fieldErrors.country}
+              helperText={touched.country ? fieldErrors.country : undefined}
             />
-          </div>
-        </div>
+          </Grid>
+        </Grid>
 
-        <div className="border-t border-slate-100 pt-6 dark:border-slate-800">
-          <h3 className="mb-4 text-lg font-bold text-slate-800 dark:text-white">Emergency Contact</h3>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <div>
-              <label htmlFor="contactName" className="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-300">
-                Contact Name
-              </label>
-              <input
-                type="text"
-                id="contactName"
-                name="contactName"
-                defaultValue={safeContact.name || ""}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white"
-              />
-            </div>
-            <div>
-              <label htmlFor="contactPhone" className="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-300">
-                Phone Number
-              </label>
-              <input
-                type="tel"
-                id="contactPhone"
-                name="contactPhone"
-                defaultValue={safeContact.phone || ""}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white"
-              />
-            </div>
-          </div>
-        </div>
+        {/* Emergency contact */}
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="subtitle2" fontWeight={700} color="text.primary" gutterBottom>
+            Emergency Contact
+          </Typography>
+          <Divider sx={{ mb: 2.5, borderColor: "border.light" }} />
 
-        <div className="flex items-center justify-between pt-4">
-          {renderStatus()}
-          <button
+          <Grid container spacing={2.5}>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                id="emergencyName"
+                label="Contact Name"
+                value={emergencyName}
+                onChange={e => {
+                  setEmergencyName(e.target.value);
+                  if (touched.emergencyName) validateField("emergencyName", e.target.value);
+                }}
+                onBlur={() => {
+                  handleBlur("emergencyName", emergencyName);
+                }}
+                error={touched.emergencyName && !!fieldErrors.emergencyName}
+                helperText={touched.emergencyName ? fieldErrors.emergencyName : undefined}
+                autoComplete="name"
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <MuiPhoneNumber
+                id="emergencyPhone"
+                label="Phone Number"
+                defaultCountry="eg"
+                value={emergencyPhone}
+                onChange={handleEmergencyPhoneChange}
+                onBlur={() => {
+                  handleBlur("emergencyPhone", emergencyPhone);
+                }}
+                fullWidth
+                variant="outlined"
+                error={touched.emergencyPhone && !!fieldErrors.emergencyPhone}
+                helperText={(touched.emergencyPhone && fieldErrors.emergencyPhone) || "Include country code"}
+                autoComplete="tel"
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                id="emergencyRelationship"
+                label="Relationship"
+                value={emergencyRelationship}
+                onChange={e => {
+                  setEmergencyRelationship(e.target.value);
+                  if (touched.emergencyRelationship) validateField("emergencyRelationship", e.target.value);
+                }}
+                onBlur={() => {
+                  handleBlur("emergencyRelationship", emergencyRelationship);
+                }}
+                error={touched.emergencyRelationship && !!fieldErrors.emergencyRelationship}
+                helperText={touched.emergencyRelationship ? fieldErrors.emergencyRelationship : undefined}
+                placeholder="e.g. Spouse, Parent, Sibling"
+              />
+            </Grid>
+          </Grid>
+        </Box>
+
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            mt: 3,
+            pt: 2,
+            borderTop: t => `1px solid ${t.palette.border.light}`,
+            flexWrap: "wrap",
+            gap: 2,
+          }}
+        >
+          <Box sx={{ flex: 1 }}>
+            {successMsg && (
+              <Alert severity="success" sx={{ py: 0.5 }}>
+                {successMsg}
+              </Alert>
+            )}
+            {serverError && (
+              <Alert severity="error" sx={{ py: 0.5 }}>
+                {serverError}
+              </Alert>
+            )}
+          </Box>
+          <Button
             type="submit"
+            variant="contained"
+            color="primary"
             disabled={loading}
-            className="rounded-xl bg-slate-900 px-6 py-3 text-sm font-bold text-white transition-all duration-300 hover:bg-indigo-600 disabled:opacity-50 dark:bg-indigo-600 dark:hover:bg-indigo-500"
+            startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <SaveRoundedIcon />}
+            sx={{
+              px: 3,
+              py: 1.25,
+              fontWeight: 700,
+              boxShadow: t => t.palette.shadow.button,
+              "&:hover": { boxShadow: t => t.palette.shadow.buttonHover },
+            }}
           >
             {loading ? "Saving..." : "Save Address"}
-          </button>
-        </div>
-      </form>
-    </div>
+          </Button>
+        </Box>
+      </Box>
+    </Box>
   );
 }

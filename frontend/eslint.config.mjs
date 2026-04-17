@@ -44,6 +44,7 @@ const eslintConfig = defineConfig([
     "bun.lock",
     "*.lock",
     "*.log",
+    "draft/**",
   ]),
   eslint.configs.recommended,
   sonarjs.configs.recommended,
@@ -116,6 +117,23 @@ const eslintConfig = defineConfig([
           cspellOptionsRoot: import.meta.url,
         },
       ],
+    },
+  },
+
+  // Disable react-refresh rule for Next.js special files
+  {
+    files: [
+      "**/page.tsx",
+      "**/layout.tsx",
+      "**/loading.tsx",
+      "**/error.tsx",
+      "**/not-found.tsx",
+      "**/template.tsx",
+      "**/default.tsx",
+      "**/route.ts",
+    ],
+    rules: {
+      "react-refresh/only-export-components": "off",
     },
   },
 

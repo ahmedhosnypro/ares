@@ -4,7 +4,7 @@ import {
   fetchPublicLocations,
   formatDateInputValue,
   type PublicLocation,
-} from "@/src/utils/public-data";
+} from "@/utils/public-data";
 
 export const dynamic = "force-dynamic";
 

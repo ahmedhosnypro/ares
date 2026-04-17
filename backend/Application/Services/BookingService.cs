@@ -132,8 +132,8 @@ public class BookingService : IBookingService
                 b.Vehicle?.User?.Id ?? Guid.Empty,
                 $"{b.Vehicle?.User?.FirstName} {b.Vehicle?.User?.LastName}".Trim()
             ),
-            new LocationDto(Guid.Empty, "Pickup Location"), // Placeholder until location fields are added
-            new LocationDto(Guid.Empty, "Drop-off Location"), // Placeholder until location fields are added
+            new LocationDto(Guid.Empty, b.PickupLocation ?? "Pickup Location"),
+            new LocationDto(Guid.Empty, b.DropoffLocation ?? "Drop-off Location"),
             b.PickupDate ?? DateTime.MinValue,
             b.ReturnDate ?? DateTime.MinValue,
             b.TotalPrice ?? 0,
@@ -194,8 +194,8 @@ public class BookingService : IBookingService
             booking.Id,
             vehicleDto,
             driverDto,
-            new LocationDto(Guid.Empty, "Pickup Location"), // Placeholder until location fields are added
-            new LocationDto(Guid.Empty, "Drop-off Location"), // Placeholder until location fields are added
+            new LocationDto(Guid.Empty, booking.PickupLocation ?? "Pickup Location"),
+            new LocationDto(Guid.Empty, booking.DropoffLocation ?? "Drop-off Location"),
             booking.PickupDate ?? DateTime.MinValue,
             booking.ReturnDate ?? DateTime.MinValue,
             booking.TotalPrice ?? 0,

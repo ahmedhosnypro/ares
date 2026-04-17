@@ -1,6 +1,12 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { getApiBaseUrl } from "@/src/utils/api-client";
+import { getApiBaseUrl } from "@/utils/api-client";
+import { logger } from "@/utils/logger";
+
+// Validate NEXTAUTH_SECRET at build time
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error("NEXTAUTH_SECRET is not set in environment variables");
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -18,47 +24,55 @@ export const authOptions: NextAuthOptions = {
 
         const baseUrl = getApiBaseUrl();
 
-        // بنبعت الداتا للـ API بتاعك زي ما اتفقنا مع الباك إند
-        const res = await fetch(`${baseUrl}/api/auth/login`, {
-          method: "POST",
-          body: JSON.stringify({
-            email: credentials.email,
-            password: credentials.password,
-            stayConnected: credentials.stayConnected === "true",
-          }),
-          headers: { "Content-Type": "application/json" },
-        });
+        try {
+          // بنبعت الداتا للـ API بتاعك زي ما اتفقنا مع الباك إند
+          const res = await fetch(`${baseUrl}/api/auth/login`, {
+            method: "POST",
+            body: JSON.stringify({
+              email: credentials.email,
+              password: credentials.password,
+              stayConnected: credentials.stayConnected === "true",
+            }),
+            headers: { "Content-Type": "application/json" },
+          });
 
-        const data = (await res.json()) as {
-          user?: {
-            id: string;
-            email: string;
-            firstName: string;
-            lastName: string;
-            roles: string[];
-            emailVerified: boolean;
+          const data = (await res.json()) as {
+            user?: {
+              id: string;
+              email: string;
+              firstName: string;
+              lastName: string;
+              roles: string[];
+              emailVerified: boolean;
+            };
+            token?: string;
+            message?: string;
           };
-          token?: string;
-          message?: string;
-        };
 
-        // لو الباك إند رد بنجاح (200 OK)
-        if (res.ok && data.user && data.token) {
-          return {
-            id: data.user.id,
-            email: data.user.email,
-            firstName: data.user.firstName,
-            lastName: data.user.lastName,
-            roles: data.user.roles,
-            emailVerified: data.user.emailVerified,
-            accessToken: data.token, // التوكن اللي هنحتاجه بعدين في الـ fetch
-          };
-        } else {
-          // معالجة الإيرورز عشان تظهر في صفحة اللوجين
-          if (res.status === 401) throw new Error("Invalid email or password");
-          if (res.status === 403) throw new Error("Account suspended or locked");
-          if (res.status === 429) throw new Error("Too many attempts. Try again later");
-          throw new Error(data.message || "An unexpected error occurred");
+          // لو الباك إند رد بنجاح (200 OK)
+          if (res.ok && data.user && data.token) {
+            return {
+              id: data.user.id,
+              email: data.user.email,
+              firstName: data.user.firstName,
+              lastName: data.user.lastName,
+              roles: data.user.roles,
+              emailVerified: data.user.emailVerified,
+              accessToken: data.token, // التوكن اللي هنحتاجه بعدين في الـ fetch
+            };
+          } else {
+            // معالجة الإيرورز عشان تظهر في صفحة اللوجين
+            if (res.status === 401) throw new Error("Invalid email or password");
+            if (res.status === 403) throw new Error("Account suspended or locked");
+            if (res.status === 429) throw new Error("Too many attempts. Try again later");
+            throw new Error(data.message || "An unexpected error occurred");
+          }
+        } catch (error) {
+          logger.error("NextAuth authorize error:", error);
+          if (error instanceof Error) {
+            throw error;
+          }
+          throw new Error("Network error. Please check your connection.", { cause: error });
         }
       },
     }),
@@ -88,7 +102,7 @@ export const authOptions: NextAuthOptions = {
     },
   },
   pages: {
-    signIn: "/login", // بنعرفه إن دي صفحة اللوجين بتاعتنا
+    signIn: "/sign-in", // Updated to match your actual sign-in page path
   },
   session: {
     strategy: "jwt",

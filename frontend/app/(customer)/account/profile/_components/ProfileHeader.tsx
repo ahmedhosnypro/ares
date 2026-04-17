@@ -2,10 +2,11 @@
 
 import React, { useRef, useState } from "react";
 import Image from "next/image";
-import { Camera, Loader2 } from "lucide-react";
-import { toApiUrl } from "@/src/utils/api-client";
-import { toImageUrl } from "@/src/utils/image-url";
-import { logger } from "@/src/utils/logger";
+import { Avatar, Box, CircularProgress, IconButton, LinearProgress, Typography } from "@mui/material";
+import CameraAltRoundedIcon from "@mui/icons-material/CameraAltRounded";
+import { toApiUrl } from "@/utils/api-client";
+import { toImageUrl } from "@/utils/image-url";
+import { logger } from "@/utils/logger";
 
 interface ProfileHeaderProps {
   readonly userId: string;
@@ -52,18 +53,19 @@ export default function ProfileHeader({
         },
       });
 
-      if (!response.ok) {
-        throw new Error("فشل في رفع الصورة للسيرفر");
-      }
+      if (!response.ok) throw new Error("Upload failed");
 
-      const data = (await response.json()) as { profilePhotoUrl?: string; ProfilePhotoUrl?: string; photoUrl?: string };
+      const data = (await response.json()) as {
+        profilePhotoUrl?: string;
+        ProfilePhotoUrl?: string;
+        photoUrl?: string;
+      };
 
-      const newPhotoUrl = data.profilePhotoUrl || data.ProfilePhotoUrl || data.photoUrl || URL.createObjectURL(file);
+      const newPhotoUrl = data.profilePhotoUrl ?? data.ProfilePhotoUrl ?? data.photoUrl ?? URL.createObjectURL(file);
 
       setCurrentPhoto(newPhotoUrl);
     } catch (error) {
       logger.error("Upload profile photo error", error);
-      alert("حصلت مشكلة في رفع الصورة، جرب تاني.");
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -72,66 +74,110 @@ export default function ProfileHeader({
 
   const safeName = firstName || lastName ? `${firstName} ${lastName}`.trim() : "Valued Customer";
   const safeEmail = email || "No email provided";
-  const progress = completeness || 0;
+  const progress = completeness;
+  const initials = firstName ? firstName.charAt(0).toUpperCase() : "U";
+  const resolvedPhoto = currentPhoto ? (toImageUrl(currentPhoto) ?? currentPhoto) : null;
 
   return (
-    <div className="p-6 text-center">
-      {/* الصورة الشخصية */}
-      <div
-        onClick={handleImageClick}
-        className="group relative mx-auto mb-4 h-24 w-24 cursor-pointer overflow-hidden rounded-full border-4 border-indigo-50 bg-slate-100 transition-colors duration-300 hover:border-indigo-200 dark:border-slate-800 dark:bg-slate-800"
-      >
+    <Box sx={{ p: 3, textAlign: "center" }}>
+      {/* Avatar with upload overlay */}
+      <Box sx={{ position: "relative", display: "inline-block", mb: 2 }}>
         <input
           type="file"
           ref={fileInputRef}
           onChange={e => {
             void handleFileChange(e);
           }}
-          className="hidden"
+          style={{ display: "none" }}
           accept="image/png, image/jpeg, image/jpg, image/webp"
         />
 
-        {isUploading && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
-            <Loader2 className="h-6 w-6 animate-spin text-white" />
-          </div>
-        )}
+        <Avatar
+          sx={{
+            width: 88,
+            height: 88,
+            bgcolor: "primary.main",
+            color: "primary.contrastText",
+            fontSize: "2rem",
+            fontWeight: 800,
+            border: t => `3px solid ${t.palette.border.main}`,
+            cursor: "pointer",
+            overflow: "hidden",
+            position: "relative",
+          }}
+          onClick={handleImageClick}
+        >
+          {resolvedPhoto ? (
+            <Image src={resolvedPhoto} alt={safeName} fill sizes="88px" style={{ objectFit: "cover" }} />
+          ) : (
+            initials
+          )}
+        </Avatar>
 
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-900/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-          <Camera className="h-8 w-8 text-white drop-shadow-md" />
-        </div>
+        {/* Upload overlay */}
+        <IconButton
+          onClick={handleImageClick}
+          size="small"
+          aria-label="Change profile photo"
+          sx={{
+            position: "absolute",
+            bottom: 0,
+            right: 0,
+            bgcolor: "primary.main",
+            color: "primary.contrastText",
+            width: 28,
+            height: 28,
+            border: t => `2px solid ${t.palette.background.paper}`,
+            "&:hover": {
+              bgcolor: "primary.dark",
+            },
+          }}
+        >
+          {isUploading ? (
+            <CircularProgress size={14} sx={{ color: "primary.contrastText" }} />
+          ) : (
+            <CameraAltRoundedIcon sx={{ fontSize: 14 }} />
+          )}
+        </IconButton>
+      </Box>
 
-        {currentPhoto ? (
-          <Image src={toImageUrl(currentPhoto) ?? currentPhoto} alt={safeName} fill className="object-cover" />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-indigo-100 text-2xl font-black text-indigo-600 transition-colors duration-300 dark:bg-indigo-500/20 dark:text-indigo-400">
-            {firstName ? firstName.charAt(0).toUpperCase() : "U"}
-          </div>
-        )}
-      </div>
-
-      <h2 className="text-xl font-black text-slate-900 transition-colors duration-300 dark:text-white">{safeName}</h2>
-      <p className="mb-6 text-sm font-medium text-slate-500 transition-colors duration-300 dark:text-slate-400">
+      {/* Name & email */}
+      <Typography variant="h6" fontWeight={800} color="text.primary" sx={{ lineHeight: 1.2 }}>
+        {safeName}
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
         {safeEmail}
-      </p>
+      </Typography>
 
-      <div className="text-left">
-        <div className="mb-2 flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-500 transition-colors duration-300 dark:text-slate-400">
+      {/* Profile completeness */}
+      <Box sx={{ textAlign: "left" }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.75 }}>
+          <Typography
+            variant="caption"
+            fontWeight={700}
+            color="text.secondary"
+            sx={{ textTransform: "uppercase", letterSpacing: "0.08em" }}
+          >
             Profile Completion
-          </span>
-          <span className="text-xs font-black text-indigo-600 transition-colors duration-300 dark:text-indigo-400">
+          </Typography>
+          <Typography variant="caption" fontWeight={800} color="primary.main">
             {progress}%
-          </span>
-        </div>
-
-        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 transition-colors duration-300 dark:bg-slate-800">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-1000"
-            style={{ width: `${progress.toString()}%` }}
-          ></div>
-        </div>
-      </div>
-    </div>
+          </Typography>
+        </Box>
+        <LinearProgress
+          variant="determinate"
+          value={progress}
+          color="primary"
+          sx={{
+            height: 6,
+            borderRadius: 999,
+            bgcolor: "border.light",
+            "& .MuiLinearProgress-bar": {
+              borderRadius: 999,
+            },
+          }}
+        />
+      </Box>
+    </Box>
   );
 }

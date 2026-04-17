@@ -13,5 +13,6 @@ public record LocationDto(
     decimal? Latitude,
     decimal? Longitude,
     bool IsPrimary,
+    string? ImageUrl,
     DateTime CreatedAt,
     DateTime UpdatedAt);

@@ -2,6 +2,9 @@
 const nextConfig = {
   allowedDevOrigins: ["127.0.0.1", "localhost"],
   images: {
+    // Disable image optimization for localhost URLs to avoid 400 errors
+    // The Next.js Image Optimization API can't reach localhost:5000 from the server side
+    unoptimized: process.env.NODE_ENV === "development",
     remotePatterns: [
       {
         protocol: "http",
@@ -35,12 +38,17 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "shinawy.github.io", // ده القديم بتاعك سيبه زي ما هو
+        hostname: "shinawy.github.io",
         pathname: "/**",
       },
       {
         protocol: "https",
-        hostname: "images.unsplash.com", // ده اللي ضفناه عشان الصور الجديدة
+        hostname: "images.unsplash.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "flagcdn.com",
         pathname: "/**",
       },
     ],

@@ -1,21 +1,19 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { CssBaseline, ThemeProvider } from "@mui/material";
-import { appTheme } from "@/src/theme";
+import { AppThemeProvider } from "@/providers/ThemeProvider";
 import EmotionCacheProvider from "@/lib/emotion-cache";
+import type { PaletteMode } from "@mui/material/styles";
 
 interface MuiProviderProps {
   readonly children: ReactNode;
+  readonly initialTheme?: PaletteMode;
 }
 
-export default function MuiProvider({ children }: MuiProviderProps) {
+export default function MuiProvider({ children, initialTheme }: MuiProviderProps) {
   return (
     <EmotionCacheProvider>
-      <ThemeProvider theme={appTheme}>
-        <CssBaseline enableColorScheme />
-        {children}
-      </ThemeProvider>
+      <AppThemeProvider initialTheme={initialTheme}>{children}</AppThemeProvider>
     </EmotionCacheProvider>
   );
 }

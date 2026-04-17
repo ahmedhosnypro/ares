@@ -35,5 +35,8 @@ namespace Backend.Domain.Entities
         public decimal? Longitude { get; set; }
 
         public bool IsPrimary { get; set; } = false;
+
+        [MaxLength(500)]
+        public string? ImageUrl { get; set; }
     }
 }

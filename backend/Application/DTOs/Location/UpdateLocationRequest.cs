@@ -25,4 +25,7 @@ public record UpdateLocationRequest(
     
     decimal? Longitude,
     
-    bool IsPrimary = false);
+    bool IsPrimary = false,
+    
+    [MaxLength(500)]
+    string? ImageUrl = null);

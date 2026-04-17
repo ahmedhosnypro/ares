@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "./theme-transition.css";
 import AuthProvider from "@/providers/AuthProvider";
 import MuiProvider from "@/providers/MuiProvider";
 import Header from "../components/layout/Header";
+import { getServerTheme } from "@/lib/server-theme-detection";
+import ThemeWatcher from "./_components/ThemeWatcher";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,7 +18,6 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const metadata: Metadata = {
   title: "Ares | Business-first car rental",
   description:
@@ -30,9 +32,7 @@ export const metadata: Metadata = {
       { url: "/img/favicon/favicon-128x128.png", sizes: "128x128", type: "image/png" },
       { url: "/img/favicon/favicon.ico", sizes: "any" },
     ],
-    apple: [
-      { url: "/img/favicon/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
-    ],
+    apple: [{ url: "/img/favicon/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
     other: [
       { rel: "android-chrome", url: "/img/favicon/android-chrome-192x192.png", sizes: "192x192" },
       { rel: "android-chrome", url: "/img/favicon/android-chrome-512x512.png", sizes: "512x512" },
@@ -40,18 +40,23 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Detect theme preference on server
+  const initialTheme = await getServerTheme();
+
   return (
-    <html lang="en">
+    <html lang="en" data-theme={initialTheme}>
       <head>
         <link rel="manifest" href="/site.webmanifest" />
+        <meta name="color-scheme" content="light dark" />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <MuiProvider>
+      <body className={`${geistSans.variable} ${geistMono.variable} preload`}>
+        <ThemeWatcher />
+        <MuiProvider initialTheme={initialTheme}>
           <AuthProvider>
             <Header />
             {children}

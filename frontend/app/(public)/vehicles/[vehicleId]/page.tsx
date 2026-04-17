@@ -1,151 +1,239 @@
-import Gallery from "@/app/(public)/vehicles/[vehicleId]/components/vehicle-details/Gallery";
-import VehicleInfo from "@/app/(public)/vehicles/[vehicleId]/components/vehicle-details/VehicleInfo";
-import ReviewSection from "@/app/(public)/vehicles/[vehicleId]/components/vehicle-details/ReviewSection";
-import BookingCard from "@/app/(public)/vehicles/[vehicleId]/components/vehicle-details/BookingCard";
-import { VehicleBookingProvider } from "@/context/VehicleBookingProvider";
-import { toApiUrl } from "@/src/utils/api-client";
-import { logger } from "@/src/utils/logger";
+import { notFound } from "next/navigation";
+import { Box, Container, Grid, Paper, Stack, Typography } from "@mui/material";
+import Gallery from "@/app/(public)/vehicles/[vehicleId]/_components/vehicle-details/Gallery";
+import VehicleInfo from "@/app/(public)/vehicles/[vehicleId]/_components/vehicle-details/VehicleInfo";
+import ReviewSection from "@/app/(public)/vehicles/[vehicleId]/_components/vehicle-details/ReviewSection";
+import BookingCard from "@/app/(public)/vehicles/[vehicleId]/_components/vehicle-details/BookingCard";
+import {
+  type BookingLocationOption,
+  type VehicleDetailsViewModel,
+  type VehicleReviewViewModel,
+} from "@/app/(public)/vehicles/[vehicleId]/_components/vehicle-details/types";
+import { toApiUrl } from "@/utils/api-client";
+import { logger } from "@/utils/logger";
 
 interface PageProps {
-  params: Promise<{ vehicleId: string }>;
+  readonly params: Promise<{ vehicleId: string }>;
 }
 
-interface Spec {
-  label: string;
-  value: string;
+interface ApiVehicleImageDto {
+  readonly id?: string;
+  readonly imageUrl?: string;
+  readonly isPrimary?: boolean;
 }
 
-interface VehicleDetail {
-  name: string;
-  description: string;
-  price: number;
-  image?: string;
-  images?: string[];
-  specs?: Spec[];
+interface ApiVehicleFeatureDto {
+  readonly id?: string;
+  readonly featureName?: string;
+  readonly featureDescription?: string;
 }
 
-interface VehicleReview {
-  _id: string;
-  userName: string;
-  rating: number;
-  comment: string;
-  date: string;
+interface ApiVehicleDto {
+  readonly vehicleId?: string;
+  readonly make?: string;
+  readonly model?: string;
+  readonly year?: number;
+  readonly color?: string;
+  readonly transmission?: string;
+  readonly fuelType?: string;
+  readonly seats?: number;
+  readonly pricePerDay?: number;
+  readonly locationCity?: string;
+  readonly description?: string;
+  readonly status?: string;
+  readonly availabilityStatus?: string;
+  readonly images?: readonly ApiVehicleImageDto[];
+  readonly features?: readonly ApiVehicleFeatureDto[];
+  readonly supplier?: { readonly name?: string };
+  readonly averageRating?: number;
+  readonly reviewCount?: number;
 }
 
-export default async function VehicleDetailsPage({ params }: Readonly<PageProps>) {
-  const resolvedParams = await params;
-  const vehicleId = resolvedParams.vehicleId;
+interface ApiReviewDto {
+  readonly reviewId?: string;
+  readonly userName?: string;
+  readonly rating?: number;
+  readonly comment?: string;
+  readonly createdAt?: string;
+}
 
-  // 🚀 Pro Tip: نجيب كل الداتا مع بعض في نفس الوقت (Concurrent Fetching) عشان الأداء
-  let vehicle: VehicleDetail | null = null;
-  let reviews: VehicleReview[] = [];
-  let images: string[] = [];
+interface ApiLocationsResponse {
+  readonly resultData?: readonly {
+    readonly _id?: string;
+    readonly name?: string;
+    readonly city?: string;
+  }[];
+}
+
+interface ApiPagedResponse<T> {
+  readonly data?: readonly T[];
+  readonly resultData?: readonly T[];
+}
+
+function asString(value: unknown, fallback = ""): string {
+  return typeof value === "string" ? value : fallback;
+}
+
+function asNumber(value: unknown, fallback = 0): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+function normalizeVehicle(vehicle: ApiVehicleDto): VehicleDetailsViewModel {
+  return {
+    vehicleId: asString(vehicle.vehicleId),
+    make: asString(vehicle.make),
+    model: asString(vehicle.model),
+    year: asNumber(vehicle.year),
+    color: asString(vehicle.color),
+    transmission: asString(vehicle.transmission),
+    fuelType: asString(vehicle.fuelType),
+    seats: asNumber(vehicle.seats),
+    pricePerDay: asNumber(vehicle.pricePerDay),
+    locationCity: asString(vehicle.locationCity),
+    description: asString(vehicle.description),
+    status: asString(vehicle.status),
+    availabilityStatus: asString(vehicle.availabilityStatus),
+    images: (vehicle.images ?? [])
+      .map(image => ({
+        id: asString(image.id),
+        imageUrl: asString(image.imageUrl),
+        isPrimary: Boolean(image.isPrimary),
+      }))
+      .filter(image => image.imageUrl !== ""),
+    features: (vehicle.features ?? [])
+      .map(feature => ({
+        id: asString(feature.id),
+        featureName: asString(feature.featureName),
+        featureDescription: asString(feature.featureDescription),
+      }))
+      .filter(feature => feature.featureName !== ""),
+    supplierName: asString(vehicle.supplier?.name),
+    averageRating: asNumber(vehicle.averageRating),
+    reviewCount: asNumber(vehicle.reviewCount),
+  };
+}
+
+function normalizeReviews(reviews: readonly ApiReviewDto[]): readonly VehicleReviewViewModel[] {
+  return reviews.map(review => ({
+    reviewId: asString(review.reviewId),
+    userName: asString(review.userName, "Customer"),
+    rating: asNumber(review.rating),
+    comment: asString(review.comment),
+    createdAt: asString(review.createdAt),
+  }));
+}
+
+function normalizeLocations(payload: ApiLocationsResponse): readonly BookingLocationOption[] {
+  return (payload.resultData ?? [])
+    .map(location => ({
+      id: asString(location._id),
+      label: asString(location.name),
+      city: asString(location.city),
+    }))
+    .filter(location => location.id !== "" && location.label !== "");
+}
+
+async function fetchVehicleDetails(vehicleId: string): Promise<VehicleDetailsViewModel | null> {
+  const response = await fetch(toApiUrl(`/api/vehicles/${vehicleId}`), { cache: "no-store" });
+  if (!response.ok) {
+    return null;
+  }
+  const payload = (await response.json()) as ApiVehicleDto;
+  return normalizeVehicle(payload);
+}
+
+async function fetchVehicleReviews(vehicleId: string): Promise<readonly VehicleReviewViewModel[]> {
+  const response = await fetch(toApiUrl(`/api/vehicles/${vehicleId}/reviews?page=1&pageSize=8&sortBy=date`), {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    return [];
+  }
+  const payload = (await response.json()) as ApiPagedResponse<ApiReviewDto>;
+  const reviews = payload.data ?? payload.resultData ?? [];
+  return normalizeReviews(reviews);
+}
+
+async function fetchLocations(): Promise<readonly BookingLocationOption[]> {
+  const response = await fetch(toApiUrl("/api/locations/1/50/en"), { cache: "no-store" });
+  if (!response.ok) {
+    return [];
+  }
+  const payload = (await response.json()) as ApiLocationsResponse;
+  return normalizeLocations(payload);
+}
+
+export default async function VehicleDetailsPage({ params }: PageProps) {
+  const { vehicleId } = await params;
+
+  let pageData: {
+    vehicle: VehicleDetailsViewModel | null;
+    reviews: readonly VehicleReviewViewModel[];
+    locations: readonly BookingLocationOption[];
+  } | null = null;
 
   try {
-    const [vehicleRes, reviewsRes, imagesRes] = await Promise.all([
-      fetch(toApiUrl(`/api/vehicles/${vehicleId}`), { cache: "no-store" }),
-      fetch(toApiUrl(`/api/vehicles/${vehicleId}/reviews`), { cache: "no-store" }),
-      fetch(toApiUrl(`/api/vehicles/${vehicleId}/images`), { cache: "no-store" }),
+    const [vehicle, reviews, locations] = await Promise.all([
+      fetchVehicleDetails(vehicleId),
+      fetchVehicleReviews(vehicleId),
+      fetchLocations(),
     ]);
-
-    if (vehicleRes.ok) {
-      const vData = (await vehicleRes.json()) as { resultData?: VehicleDetail; data?: VehicleDetail };
-      vehicle = vData.resultData || vData.data || (vData as unknown as VehicleDetail);
-    }
-    if (reviewsRes.ok) {
-      const rData = (await reviewsRes.json()) as { resultData?: unknown; data?: unknown; reviews?: unknown };
-      const rawReviews = (rData.resultData || rData.data || rData.reviews || []) as Record<string, unknown>[];
-      reviews = Array.isArray(rawReviews)
-        ? rawReviews.map(review => ({
-            _id: ([review["_id"], review["id"], review["Id"], ""] as unknown[]).find(
-              v => typeof v === "string"
-            ) as string,
-            userName: ([review["userName"], review["user"], review["driverName"], "User"] as unknown[]).find(
-              v => typeof v === "string"
-            ) as string,
-            rating: (() => {
-              if (typeof review["rating"] === "number") return review["rating"];
-              if (typeof review["stars"] === "number") return review["stars"];
-              return 0;
-            })(),
-            comment: ([review["comment"], review["text"], ""] as unknown[]).find(v => typeof v === "string") as string,
-            date: ([review["date"], review["createdAt"], ""] as unknown[]).find(v => typeof v === "string") as string,
-          }))
-        : [];
-    }
-    if (imagesRes.ok) {
-      const iData = (await imagesRes.json()) as { images?: unknown[]; resultData?: unknown[]; data?: unknown[] };
-      const rawImages = iData.images || iData.resultData || iData.data || (iData as unknown as unknown[]);
-      images = Array.isArray(rawImages)
-        ? rawImages
-            .map(image => {
-              if (typeof image === "string") return image;
-              if (image && typeof image === "object") {
-                const imgObj = image as Record<string, unknown>;
-                const url = imgObj["url"] ?? imgObj["Url"];
-                return typeof url === "string" ? url : "";
-              }
-              return "";
-            })
-            .filter(Boolean)
-        : [];
-    }
+    pageData = { vehicle, reviews, locations };
   } catch (error) {
-    logger.error("Error fetching vehicle details", error);
+    logger.error("Vehicle details page error", error);
   }
 
-  if (!vehicle) {
+  if (!pageData) {
     return (
-      <div className="flex min-h-[70vh] items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <h1 className="text-2xl font-bold text-slate-500 dark:text-slate-400">Vehicle not found</h1>
-      </div>
+      <Box component="main" sx={{ minHeight: "60vh", display: "grid", placeItems: "center", px: 2 }}>
+        <Typography variant="h6" color="text.secondary" textAlign="center">
+          We were unable to load this vehicle right now.
+        </Typography>
+      </Box>
     );
   }
 
-  // تجميع الصور (لو الـ API بتاع الصور مرجعش حاجة، ناخد الصورة الأساسية)
-  let finalImages: string[];
-  if (images.length > 0) {
-    finalImages = images;
-  } else if (vehicle.images && vehicle.images.length > 0) {
-    finalImages = vehicle.images;
-  } else if (vehicle.image) {
-    finalImages = [vehicle.image];
-  } else {
-    finalImages = [];
+  const { vehicle, reviews, locations } = pageData;
+
+  if (!vehicle) {
+    notFound();
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 py-8 transition-colors duration-300 dark:bg-slate-950 md:py-12">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-8 lg:flex-row">
-          {/* العمود الشمال (الصور + التفاصيل + التقييمات) */}
-          <div className="w-full space-y-8 lg:w-2/3">
-            {/* Gallery Card */}
-            <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white p-4 shadow-sm transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900">
-              <Gallery images={finalImages} />
-            </div>
+    <Box component="main" sx={{ minHeight: "100vh", bgcolor: "background.default", py: { xs: 4, md: 6 } }}>
+      <Container maxWidth="xl">
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, lg: 8 }}>
+            <Stack spacing={3}>
+              <Paper elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3, p: 2 }}>
+                <Gallery images={vehicle.images} vehicleLabel={`${vehicle.make} ${vehicle.model}`} />
+              </Paper>
 
-            {/* Info Card */}
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900 sm:p-8">
-              <VehicleInfo vehicle={vehicle} vehicleId={vehicleId} />
-            </div>
+              <Paper
+                elevation={0}
+                sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3, p: { xs: 2, md: 3 } }}
+              >
+                <VehicleInfo vehicle={vehicle} />
+              </Paper>
 
-            {/* Reviews Card */}
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900 sm:p-8">
-              <ReviewSection reviews={reviews} />
-            </div>
-          </div>
+              <Paper
+                elevation={0}
+                sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3, p: { xs: 2, md: 3 } }}
+              >
+                <ReviewSection reviews={reviews} />
+              </Paper>
+            </Stack>
+          </Grid>
 
-          {/* العمود اليمين (كارت الحجز) */}
-          <div className="w-full lg:w-1/3">
-            <div className="sticky top-24 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/40 transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
-              <VehicleBookingProvider>
-                <BookingCard vehicleId={vehicleId} basePrice={vehicle.price || 0} />
-              </VehicleBookingProvider>
-            </div>
-          </div>
-        </div>
-      </div>
-    </main>
+          <Grid size={{ xs: 12, lg: 4 }}>
+            <Box sx={{ position: { lg: "sticky" }, top: { lg: 96 } }}>
+              <Paper elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3 }}>
+                <BookingCard vehicle={vehicle} locationOptions={locations} />
+              </Paper>
+            </Box>
+          </Grid>
+        </Grid>
+      </Container>
+    </Box>
   );
 }

@@ -1,92 +1,143 @@
 "use client";
 
-import { toApiUrl } from "@/src/utils/api-client";
-import { type ProfileData } from "../types";
-import { logger } from "@/src/utils/logger";
+import {
+  Box,
+  Divider,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  type SelectChangeEvent,
+  Typography,
+} from "@mui/material";
+import { useState } from "react";
+import { toApiUrl } from "@/utils/api-client";
+import { logger } from "@/utils/logger";
+
+interface PreferencesSectionProps {
+  readonly userId: string;
+  readonly accessToken: string;
+  readonly languagePreference: string;
+  readonly currencyPreference: string;
+  // pass-through fields for full PUT payload
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly phone: string;
+  readonly dateOfBirth?: string;
+  readonly addressStreet: string;
+  readonly addressCity: string;
+  readonly addressState: string;
+  readonly addressPostalCode: string;
+  readonly addressCountry: string;
+  readonly emergencyName: string;
+  readonly emergencyPhone: string;
+  readonly emergencyRelationship: string;
+}
 
 export default function PreferencesSection({
-  fullData,
+  userId,
   accessToken,
-}: {
-  readonly fullData: ProfileData;
-  readonly accessToken: string;
-}) {
-  const handlePreferenceChange = async (field: "languagePreference" | "currencyPreference", value: string) => {
-    const updatedPayload = {
-      firstName: fullData.firstName,
-      lastName: fullData.lastName,
-      phone: fullData.phone,
-      dateOfBirth: fullData.dateOfBirth,
-      address: fullData.address,
-      emergencyContact: fullData.emergencyContact,
-      languagePreference: field === "languagePreference" ? value : fullData.languagePreference,
-      currencyPreference: field === "currencyPreference" ? value : fullData.currencyPreference,
-    };
+  languagePreference,
+  currencyPreference,
+  firstName,
+  lastName,
+  phone,
+  dateOfBirth,
+  addressStreet,
+  addressCity,
+  addressState,
+  addressPostalCode,
+  addressCountry,
+  emergencyName,
+  emergencyPhone,
+  emergencyRelationship,
+}: PreferencesSectionProps) {
+  const [language, setLanguage] = useState(languagePreference);
+  const [currency, setCurrency] = useState(currencyPreference);
 
+  const sendUpdate = async (lang: string, curr: string) => {
     try {
-      await fetch(toApiUrl(`/api/users/${fullData.userId}/profile`), {
+      await fetch(toApiUrl(`/api/users/${userId}/profile`), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify(updatedPayload),
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          phone,
+          dateOfBirth: dateOfBirth ?? null,
+          address: {
+            street: addressStreet,
+            city: addressCity,
+            state: addressState,
+            postalCode: addressPostalCode,
+            country: addressCountry,
+          },
+          emergencyContact: {
+            name: emergencyName,
+            phone: emergencyPhone,
+            relationship: emergencyRelationship,
+          },
+          languagePreference: lang,
+          currencyPreference: curr,
+        }),
       });
     } catch (error) {
       logger.error("Update preference error", error);
     }
   };
 
+  const handleLanguageChange = (e: SelectChangeEvent) => {
+    const value = e.target.value;
+    setLanguage(value);
+    void sendUpdate(value, currency);
+  };
+
+  const handleCurrencyChange = (e: SelectChangeEvent) => {
+    const value = e.target.value;
+    setCurrency(value);
+    void sendUpdate(language, value);
+  };
+
   return (
-    <div className="p-6">
-      <h3 className="mb-4 border-b border-slate-100 pb-2 text-lg font-black text-slate-900 dark:border-slate-800 dark:text-white">
+    <Box sx={{ p: 3 }}>
+      <Typography variant="subtitle1" fontWeight={700} color="text.primary" gutterBottom>
         Preferences
-      </h3>
+      </Typography>
+      <Divider sx={{ mb: 2.5, borderColor: "border.light" }} />
 
-      <div className="space-y-4">
-        <div>
-          <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            Language
-          </label>
-          <select
-            defaultValue={fullData.languagePreference || "en"}
-            onChange={e => {
-              void handlePreferenceChange("languagePreference", e.target.value);
-            }}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white"
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+        <FormControl fullWidth size="small">
+          <InputLabel id="language-label">Language</InputLabel>
+          <Select
+            labelId="language-label"
+            id="language-select"
+            value={language}
+            label="Language"
+            onChange={handleLanguageChange}
           >
-            <option value="en" className="dark:bg-slate-800">
-              English (US)
-            </option>
-            <option value="ar" className="dark:bg-slate-800">
-              Arabic (EG)
-            </option>
-          </select>
-        </div>
+            <MenuItem value="en">English (US)</MenuItem>
+            <MenuItem value="ar">Arabic (EG)</MenuItem>
+          </Select>
+        </FormControl>
 
-        <div>
-          <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            Currency
-          </label>
-          <select
-            defaultValue={fullData.currencyPreference || "USD"}
-            onChange={e => {
-              void handlePreferenceChange("currencyPreference", e.target.value);
-            }}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white"
+        <FormControl fullWidth size="small">
+          <InputLabel id="currency-label">Currency</InputLabel>
+          <Select
+            labelId="currency-label"
+            id="currency-select"
+            value={currency}
+            label="Currency"
+            onChange={handleCurrencyChange}
           >
-            <option value="USD" className="dark:bg-slate-800">
-              USD ($)
-            </option>
-            <option value="EGP" className="dark:bg-slate-800">
-              EGP (E£)
-            </option>
-            <option value="EUR" className="dark:bg-slate-800">
-              EUR (€)
-            </option>
-          </select>
-        </div>
-      </div>
-    </div>
+            <MenuItem value="USD">USD ($)</MenuItem>
+            <MenuItem value="EGP">EGP (E£)</MenuItem>
+            <MenuItem value="EUR">EUR (€)</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
+    </Box>
   );
 }

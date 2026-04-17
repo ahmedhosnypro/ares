@@ -91,6 +91,23 @@ public class UsersController : ControllerBase
         [FromBody] UpdateProfileRequest request,
         CancellationToken cancellationToken = default)
     {
+        // Validate request
+        var validator = new Backend.Application.Validators.UpdateProfileRequestValidator();
+        var validationResult = await validator.ValidateAsync(request, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            return BadRequest(new
+            {
+                StatusCode = 400,
+                Message = "Validation failed",
+                ValidationErrors = validationResult.Errors.Select(e => new
+                {
+                    Field = e.PropertyName,
+                    Message = e.ErrorMessage
+                })
+            });
+        }
+
         // Get authenticated user ID
         var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
         if (userIdClaim == null)
@@ -169,6 +186,49 @@ public class UsersController : ControllerBase
             Success = true,
             ProfilePhotoUrl = photoUrl
         });
+    }
+
+    /// <summary>
+    /// Change user password
+    /// </summary>
+    [HttpPost("{userId}/profile/change-password")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> ChangePassword(
+        Guid userId,
+        [FromBody] Backend.Application.DTOs.UserProfile.ChangePasswordRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        // Validate request
+        var validator = new Backend.Application.Validators.ChangePasswordRequestValidator();
+        var validationResult = await validator.ValidateAsync(request, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            return BadRequest(new
+            {
+                StatusCode = 400,
+                Message = "Validation failed",
+                ValidationErrors = validationResult.Errors.Select(e => new
+                {
+                    Field = e.PropertyName,
+                    Message = e.ErrorMessage
+                })
+            });
+        }
+
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        if (userIdClaim == null)
+            return Unauthorized(new { Message = "User not authenticated" });
+
+        var authenticatedUserId = Guid.Parse(userIdClaim.Value);
+        if (userId != authenticatedUserId)
+            return Forbid();
+
+        await _userProfileService.ChangePasswordAsync(userId, request, cancellationToken);
+        _logger.LogInformation("Password changed for user {UserId}", userId);
+        return Ok(new { Message = "Password changed successfully." });
     }
 
     // User Management Endpoints (Admin Only)

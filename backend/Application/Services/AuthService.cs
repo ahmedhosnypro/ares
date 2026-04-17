@@ -1,7 +1,10 @@
 using Backend.Application.DTOs.Auth;
 using Backend.Application.Exceptions;
+using Backend.Application.Interfaces;
 using Backend.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Backend.Application.Services;
@@ -12,17 +15,23 @@ public class AuthService : IAuthService
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly ILogger<AuthService> _logger;
+    private readonly IApplicationDbContext _context;
+    private readonly IConfiguration _configuration;
 
     public AuthService(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
         IJwtTokenService jwtTokenService,
-        ILogger<AuthService> logger)
+        ILogger<AuthService> logger,
+        IApplicationDbContext context,
+        IConfiguration configuration)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _jwtTokenService = jwtTokenService;
         _logger = logger;
+        _context = context;
+        _configuration = configuration;
     }
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
@@ -125,10 +134,28 @@ public class AuthService : IAuthService
         var token = _jwtTokenService.GenerateToken(user, roles, stayConnected);
         var expiresAt = _jwtTokenService.GetTokenExpiration(stayConnected);
 
+        // Generate and store refresh token
+        var ipAddress = "0.0.0.0"; // Will be set from controller
+        var refreshToken = CreateRefreshToken(ipAddress);
+        
+        // Initialize refresh tokens list if null
+        if (user.RefreshTokens == null)
+        {
+            user.RefreshTokens = new List<RefreshToken>();
+        }
+        
+        user.RefreshTokens.Add(refreshToken);
+
+        // Remove old refresh tokens
+        RemoveOldRefreshTokens(user);
+
+        await _userManager.UpdateAsync(user);
+
         _logger.LogInformation("User logged in successfully: {UserId}, Email: {Email}", user.Id, user.Email);
 
         return new LoginResponse(
             Token: token,
+            RefreshToken: refreshToken.Token,
             ExpiresAt: expiresAt,
             User: new UserDto(
                 Id: user.Id,
@@ -216,5 +243,131 @@ public class AuthService : IAuthService
 
         _logger.LogInformation("Email verified successfully for user: {UserId}", userId);
         return true;
+    }
+
+    public async Task<LoginResponse> RefreshTokenAsync(
+        RefreshTokenRequest request,
+        string? ipAddress,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Refresh token attempt from IP: {IpAddress}", ipAddress);
+
+        // Find user with the refresh token
+        var users = await _context.Users
+            .Where(u => u.RefreshTokens.Any(t => t.Token == request.RefreshToken))
+            .ToListAsync(cancellationToken);
+
+        var user = users.FirstOrDefault();
+
+        if (user == null)
+        {
+            _logger.LogWarning("Refresh token failed: Invalid token");
+            throw new UnauthorizedException("Invalid refresh token");
+        }
+
+        var refreshToken = user.RefreshTokens.Single(x => x.Token == request.RefreshToken);
+
+        if (!refreshToken.IsActive)
+        {
+            _logger.LogWarning("Refresh token failed: Token not active for user {UserId}", user.Id);
+            throw new UnauthorizedException("Invalid refresh token");
+        }
+
+        // Replace old refresh token with a new one (rotation)
+        var newRefreshToken = RotateRefreshToken(refreshToken, ipAddress);
+        user.RefreshTokens.Add(newRefreshToken);
+
+        // Remove old refresh tokens from user
+        RemoveOldRefreshTokens(user);
+
+        await _userManager.UpdateAsync(user);
+
+        // Generate new JWT
+        var roles = await _userManager.GetRolesAsync(user);
+        var jwtToken = _jwtTokenService.GenerateToken(user, roles);
+        var expiresAt = _jwtTokenService.GetTokenExpiration();
+
+        _logger.LogInformation("Token refreshed successfully for user: {UserId}", user.Id);
+
+        return new LoginResponse(
+            Token: jwtToken,
+            RefreshToken: newRefreshToken.Token,
+            ExpiresAt: expiresAt,
+            User: new UserDto(
+                Id: user.Id,
+                Email: user.Email!,
+                FirstName: user.FirstName ?? string.Empty,
+                LastName: user.LastName ?? string.Empty,
+                Roles: roles.ToList(),
+                EmailVerified: user.EmailConfirmed
+            )
+        );
+    }
+
+    public async Task RevokeTokenAsync(string token, string? ipAddress, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Revoke token attempt from IP: {IpAddress}", ipAddress);
+
+        // Find user with the refresh token
+        var users = await _context.Users
+            .Where(u => u.RefreshTokens.Any(t => t.Token == token))
+            .ToListAsync(cancellationToken);
+
+        var user = users.FirstOrDefault();
+
+        if (user == null)
+        {
+            _logger.LogWarning("Revoke token failed: Token not found");
+            throw new NotFoundException("Token not found");
+        }
+
+        var refreshToken = user.RefreshTokens.Single(x => x.Token == token);
+
+        if (!refreshToken.IsActive)
+        {
+            _logger.LogWarning("Revoke token failed: Token not active");
+            throw new UnauthorizedException("Token is not active");
+        }
+
+        RevokeRefreshToken(refreshToken, ipAddress, "Revoked without replacement");
+
+        await _userManager.UpdateAsync(user);
+
+        _logger.LogInformation("Token revoked successfully for user: {UserId}", user.Id);
+    }
+
+    private RefreshToken CreateRefreshToken(string? ipAddress)
+    {
+        return new RefreshToken
+        {
+            Token = _jwtTokenService.GenerateRefreshToken(),
+            ExpiresAt = _jwtTokenService.GetRefreshTokenExpiration(),
+            CreatedAt = DateTime.UtcNow,
+            CreatedByIp = ipAddress
+        };
+    }
+
+    private RefreshToken RotateRefreshToken(RefreshToken refreshToken, string? ipAddress)
+    {
+        var newRefreshToken = CreateRefreshToken(ipAddress);
+        RevokeRefreshToken(refreshToken, ipAddress, "Replaced by new token", newRefreshToken.Token);
+        return newRefreshToken;
+    }
+
+    private void RevokeRefreshToken(RefreshToken token, string? ipAddress, string? reason = null, string? replacedByToken = null)
+    {
+        token.RevokedAt = DateTime.UtcNow;
+        token.RevokedByIp = ipAddress;
+        token.ReasonRevoked = reason;
+        token.ReplacedByToken = replacedByToken;
+    }
+
+    private void RemoveOldRefreshTokens(ApplicationUser user)
+    {
+        // Remove refresh tokens older than X days (keep for audit trail)
+        var ttl = int.Parse(_configuration["Jwt:RefreshTokenTTL"] ?? "90");
+        user.RefreshTokens.RemoveAll(x => 
+            !x.IsActive && 
+            x.CreatedAt.AddDays(ttl) <= DateTime.UtcNow);
     }
 }

@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using Backend.Domain.Entities;
 using Microsoft.Extensions.Configuration;
@@ -56,6 +57,14 @@ public class JwtTokenService : IJwtTokenService
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
+    public string GenerateRefreshToken()
+    {
+        var randomNumber = new byte[64];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(randomNumber);
+        return Convert.ToBase64String(randomNumber);
+    }
+
     public DateTime GetTokenExpiration(bool stayConnected = false)
     {
         if (stayConnected)
@@ -64,7 +73,13 @@ public class JwtTokenService : IJwtTokenService
             return DateTime.UtcNow.AddDays(extendedDays);
         }
 
-        var expirationMinutes = int.Parse(_configuration["Jwt:ExpirationMinutes"] ?? "60");
+        var expirationMinutes = int.Parse(_configuration["Jwt:ExpirationMinutes"] ?? "15");
         return DateTime.UtcNow.AddMinutes(expirationMinutes);
+    }
+
+    public DateTime GetRefreshTokenExpiration()
+    {
+        var expirationDays = int.Parse(_configuration["Jwt:RefreshTokenExpirationDays"] ?? "7");
+        return DateTime.UtcNow.AddDays(expirationDays);
     }
 }

@@ -15,6 +15,12 @@ public interface ILocationService
         int pageSize,
         CancellationToken cancellationToken = default);
 
+    Task<object> GetLocationsForFrontendAsync(
+        int page,
+        int pageSize,
+        string keyword,
+        CancellationToken cancellationToken = default);
+
     Task<LocationDto> CreateLocationAsync(
         CreateLocationRequest request,
         CancellationToken cancellationToken = default);

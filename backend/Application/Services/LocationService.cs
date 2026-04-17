@@ -58,6 +58,7 @@ public class LocationService : ILocationService
             Latitude: location.Latitude,
             Longitude: location.Longitude,
             IsPrimary: location.IsPrimary,
+            ImageUrl: location.ImageUrl,
             CreatedAt: location.CreatedAt,
             UpdatedAt: location.UpdatedAt
         )).ToList();
@@ -68,6 +69,54 @@ public class LocationService : ILocationService
             PageSize: pagedResult.PageSize,
             TotalCount: pagedResult.TotalCount,
             TotalPages: pagedResult.TotalPages);
+    }
+
+    public async Task<object> GetLocationsForFrontendAsync(
+        int page,
+        int pageSize,
+        string keyword,
+        CancellationToken cancellationToken = default)
+    {
+        var filter = string.IsNullOrWhiteSpace(keyword) 
+            ? null 
+            : (System.Linq.Expressions.Expression<Func<UserAddress, bool>>)(l => 
+                (l.City != null && l.City.Contains(keyword)) ||
+                (l.Governorate != null && l.Governorate.Contains(keyword)) ||
+                (l.Country != null && l.Country.Contains(keyword)) ||
+                (l.AddressLine != null && l.AddressLine.Contains(keyword)));
+
+        var pagedResult = await _locationRepository.GetPagedAsync(
+            page,
+            pageSize,
+            filter: filter,
+            orderBy: q => q.OrderBy(l => l.City).ThenBy(l => l.AddressLine),
+            cancellationToken);
+
+        var resultData = pagedResult.Data.Select(location => new
+        {
+            _id = location.Id.ToString(),
+            name = BuildDisplayText(location),
+            latitude = location.Latitude,
+            longitude = location.Longitude,
+            city = location.City,
+            governorate = location.Governorate,
+            country = location.Country,
+            addressLine = location.AddressLine,
+            postalCode = location.PostalCode,
+            isPrimary = location.IsPrimary,
+            imageUrl = location.ImageUrl
+        }).ToList();
+
+        var pageInfo = new[]
+        {
+            new { totalRecords = pagedResult.TotalCount }
+        };
+
+        return new
+        {
+            resultData,
+            pageInfo
+        };
     }
 
     public async Task<LocationDto> CreateLocationAsync(
@@ -85,7 +134,8 @@ public class LocationService : ILocationService
             PostalCode = request.PostalCode,
             Latitude = request.Latitude,
             Longitude = request.Longitude,
-            IsPrimary = request.IsPrimary
+            IsPrimary = request.IsPrimary,
+            ImageUrl = request.ImageUrl
         };
 
         var createdLocation = await _locationRepository.AddAsync(location, cancellationToken);
@@ -101,6 +151,7 @@ public class LocationService : ILocationService
             Latitude: createdLocation.Latitude,
             Longitude: createdLocation.Longitude,
             IsPrimary: createdLocation.IsPrimary,
+            ImageUrl: createdLocation.ImageUrl,
             CreatedAt: createdLocation.CreatedAt,
             UpdatedAt: createdLocation.UpdatedAt);
     }
@@ -125,6 +176,7 @@ public class LocationService : ILocationService
         location.Latitude = request.Latitude;
         location.Longitude = request.Longitude;
         location.IsPrimary = request.IsPrimary;
+        location.ImageUrl = request.ImageUrl;
 
         await _locationRepository.UpdateAsync(location, cancellationToken);
         await _locationRepository.SaveChangesAsync(cancellationToken);
@@ -139,6 +191,7 @@ public class LocationService : ILocationService
             Latitude: location.Latitude,
             Longitude: location.Longitude,
             IsPrimary: location.IsPrimary,
+            ImageUrl: location.ImageUrl,
             CreatedAt: location.CreatedAt,
             UpdatedAt: location.UpdatedAt);
     }
