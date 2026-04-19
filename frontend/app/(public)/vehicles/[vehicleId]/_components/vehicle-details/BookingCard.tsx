@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Alert, Box, Button, FormControl, InputLabel, MenuItem, Select, Stack, Typography } from "@mui/material";
@@ -74,6 +75,7 @@ function getFallbackVehicle(vehicleId?: string, basePrice?: number): VehicleDeta
 
 export default function BookingCard({ vehicle, locationOptions, vehicleId, basePrice }: BookingCardProps) {
   const { data: session } = useSession();
+  const router = useRouter();
 
   const resolvedVehicle: VehicleDetailsViewModel = useMemo(
     () => vehicle ?? getFallbackVehicle(vehicleId, basePrice),
@@ -199,7 +201,11 @@ export default function BookingCard({ vehicle, locationOptions, vehicleId, baseP
       }
 
       const payload = (await response.json()) as BookingApiSuccess;
-      setSubmitSuccess(payload.bookingNumber ? `Booking created: ${payload.bookingNumber}` : "Booking created.");
+      if (payload.bookingId) {
+        router.push(`/booking/checkout/${payload.bookingId}`);
+      } else {
+        setSubmitSuccess(payload.bookingNumber ? `Booking created: ${payload.bookingNumber}` : "Booking created.");
+      }
     } catch (error) {
       logger.error("Booking submit failed", error);
       setSubmitError("Unable to create booking right now.");

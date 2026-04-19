@@ -397,7 +397,7 @@ interface SuccessViewProps {
   readonly email: string;
 }
 
-function SuccessView({ firstName, email }: SuccessViewProps) {
+function SuccessView({ firstName, email: _email }: SuccessViewProps) {
   return (
     <Box
       sx={{
