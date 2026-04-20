@@ -17,6 +17,7 @@ public class AuthService : IAuthService
     private readonly ILogger<AuthService> _logger;
     private readonly IApplicationDbContext _context;
     private readonly IConfiguration _configuration;
+    private readonly IEmailService _emailService;
 
     public AuthService(
         UserManager<ApplicationUser> userManager,
@@ -24,7 +25,8 @@ public class AuthService : IAuthService
         IJwtTokenService jwtTokenService,
         ILogger<AuthService> logger,
         IApplicationDbContext context,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IEmailService emailService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
@@ -32,6 +34,7 @@ public class AuthService : IAuthService
         _logger = logger;
         _context = context;
         _configuration = configuration;
+        _emailService = emailService;
     }
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
@@ -53,7 +56,7 @@ public class AuthService : IAuthService
             Email = request.Email,
             FirstName = request.FirstName,
             LastName = request.LastName,
-            EmailConfirmed = true // Automatically confirmed for now since email sending isn't implemented
+            EmailConfirmed = false
         };
 
         var result = await _userManager.CreateAsync(user, request.Password);
@@ -72,17 +75,38 @@ public class AuthService : IAuthService
         // Assign default Customer role
         await _userManager.AddToRoleAsync(user, "Customer");
 
-        // Generate email confirmation token (kept for future use)
+        // Generate email confirmation token
         var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
         
-        // TODO: Send email verification email with token
-        _logger.LogInformation("User registered successfully: {UserId}, Email: {Email}", user.Id, user.Email);
+        // Encode the token for use in URL
+        var encodedToken = System.Web.HttpUtility.UrlEncode(emailToken);
+        
+        // Construct frontend verification URL
+        // In a real scenario, the frontend URL should come from configuration
+        var frontendUrl = _configuration["Frontend:Url"] ?? "http://localhost:3000";
+        var verificationUrl = $"{frontendUrl}/verify-email?userId={user.Id}&token={encodedToken}";
+
+        // Send email verification email
+        var subject = "Verify your email - Ares Car Rental";
+        var message = $@"Hello {user.FirstName},
+
+Please confirm your email address by clicking the link below:
+{verificationUrl}
+
+If you did not request this account, please ignore this email.
+
+Best regards,
+Ares Car Rental Team";
+
+        await _emailService.SendEmailAsync(user.Email, subject, message);
+
+        _logger.LogInformation("User registered successfully: {UserId}, Email: {Email}. Verification email sent.", user.Id, user.Email);
 
         return new AuthResponse(
             UserId: user.Id,
             Email: user.Email!,
-            EmailVerified: true,
-            Message: "Registration successful. You can now log in."
+            EmailVerified: false,
+            Message: "Registration successful. Please check your email to verify your account before logging in."
         );
     }
 
@@ -183,8 +207,29 @@ public class AuthService : IAuthService
         // Generate password reset token
         var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
 
-        // TODO: Send password reset email with token
-        _logger.LogInformation("Password reset token generated for user: {UserId}", user.Id);
+        // Encode the token and email for use in URL
+        var encodedToken = System.Web.HttpUtility.UrlEncode(resetToken);
+        var encodedEmail = System.Web.HttpUtility.UrlEncode(user.Email);
+
+        // Construct frontend reset URL
+        var frontendUrl = _configuration["Frontend:Url"] ?? "http://localhost:3000";
+        var resetUrl = $"{frontendUrl}/reset-password?email={encodedEmail}&token={encodedToken}";
+
+        // Send password reset email
+        var subject = "Reset your password - Ares Car Rental";
+        var message = $@"Hello {user.FirstName},
+
+We received a request to reset your password. Please click the link below to set a new password:
+{resetUrl}
+
+If you did not request this, please ignore this email.
+
+Best regards,
+Ares Car Rental Team";
+
+        await _emailService.SendEmailAsync(user.Email!, subject, message);
+
+        _logger.LogInformation("Password reset token generated and email sent for user: {UserId}", user.Id);
 
         return true;
     }

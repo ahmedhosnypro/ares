@@ -413,10 +413,10 @@ function SuccessView({ firstName, email: _email }: SuccessViewProps) {
         <CheckCircleIcon sx={{ fontSize: 40 }} />
       </Avatar>
       <Typography variant="h6" fontWeight="bold" gutterBottom>
-        Account Created!
+        Check your email!
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Welcome to ARES, {firstName}. Your account has been created successfully and you can now log in.
+        Welcome to ARES, {firstName}. We've sent a verification link to your email. Please click the link to verify your account before logging in.
       </Typography>
       <Button
         component={Link}

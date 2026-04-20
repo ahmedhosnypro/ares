@@ -1,7 +1,6 @@
+import React from "react";
+import ForgotPasswordForm from "./ForgotPasswordForm";
+
 export default function ForgotPasswordPage() {
-  return (
-    <main>
-      <h1>Forgot Password Page</h1>
-    </main>
-  );
+  return <ForgotPasswordForm />;
 }

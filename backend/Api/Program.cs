@@ -98,6 +98,7 @@ builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<ISupplierRepository, SupplierRepository>();
 
 // Register Application Services
+builder.Services.AddScoped<IEmailService, DevelopmentEmailService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ILocationService, LocationService>();
 builder.Services.AddScoped<IVehicleService, VehicleService>();
