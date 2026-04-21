@@ -83,4 +83,39 @@ public class NotificationsController : ControllerBase
 
         return Ok(new { Message = "Notification marked as read successfully" });
     }
+
+    /// <summary>
+    /// Get the count of unread notifications for a user
+    /// </summary>
+    /// <param name="userId">User ID from route parameter</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Count of unread notifications</returns>
+    [HttpGet("/api/notification-counter/{userId}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetNotificationCounter(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var authenticatedUserIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        if (authenticatedUserIdClaim == null)
+        {
+            return Unauthorized(new { Message = "User not authenticated" });
+        }
+
+        var authenticatedUserId = Guid.Parse(authenticatedUserIdClaim.Value);
+        
+        // Ensure user can only check their own notifications unless they are an admin
+        var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+        if (authenticatedUserId != userId && userRole != "Admin")
+        {
+            _logger.LogWarning("User {AuthenticatedUserId} attempted to access notification counter for {TargetUserId}", authenticatedUserId, userId);
+            return Forbid();
+        }
+
+        var count = await _notificationService.GetUnreadCountAsync(userId, cancellationToken);
+
+        return Ok(new { count });
+    }
 }

@@ -38,6 +38,7 @@ public class UserManagementService : IUserManagementService
     public async Task<PagedResult<UserManagementDto>> GetUsersAsync(
         int page = 1,
         int pageSize = 20,
+        UserFilterRequest? filter = null,
         CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Getting paginated users list - Page: {Page}, PageSize: {PageSize}", page, pageSize);
@@ -47,11 +48,44 @@ public class UserManagementService : IUserManagementService
         if (pageSize < 1) pageSize = 20;
         if (pageSize > 100) pageSize = 100; // Limit max page size
 
+        List<Guid>? userIdsInRole = null;
+        if (filter != null && !string.IsNullOrWhiteSpace(filter.Role))
+        {
+            var usersInRole = await _userManager.GetUsersInRoleAsync(filter.Role);
+            userIdsInRole = usersInRole.Select(u => u.Id).ToList();
+            if (userIdsInRole.Count == 0)
+            {
+                // No users in this role, return empty
+                return new PagedResult<UserManagementDto>(new List<UserManagementDto>(), page, pageSize, 0, 0);
+            }
+        }
+
+        // Build filter expression
+        System.Linq.Expressions.Expression<Func<ApplicationUser, bool>>? predicate = null;
+        
+        var hasRoleFilter = userIdsInRole != null;
+        var hasStatusFilter = !string.IsNullOrEmpty(filter?.Status);
+        var hasSearchTerm = !string.IsNullOrEmpty(filter?.SearchTerm);
+
+        if (hasRoleFilter || hasStatusFilter || hasSearchTerm)
+        {
+            var searchTerm = filter?.SearchTerm;
+            var status = filter?.Status;
+
+            predicate = u => 
+                (!hasRoleFilter || userIdsInRole!.Contains(u.Id)) &&
+                (!hasStatusFilter || u.Status == status) &&
+                (!hasSearchTerm || 
+                    (u.FirstName != null && u.FirstName.Contains(searchTerm!)) || 
+                    (u.LastName != null && u.LastName.Contains(searchTerm!)) || 
+                    (u.Email != null && u.Email.Contains(searchTerm!)));
+        }
+
         // Get paginated users
         var pagedUsers = await _userRepository.GetPagedAsync(
             page,
             pageSize,
-            filter: null, // No filter for now, could be extended
+            filter: predicate,
             orderBy: query => query.OrderBy(u => u.CreatedAt),
             cancellationToken);
 

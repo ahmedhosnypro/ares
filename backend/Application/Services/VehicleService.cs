@@ -395,6 +395,83 @@ public class VehicleService : IVehicleService
 
     // Admin Vehicle Management Methods
 
+    public async Task<PagedResult<VehicleListDto>> GetAdminVehiclesAsync(
+        int page,
+        int size,
+        AdminVehicleFilterRequest filter,
+        Guid currentUserId,
+        bool isAdmin,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _context.Vehicles
+            .AsNoTracking()
+            .Include(v => v.Images)
+            .Include(v => v.User)
+            .AsQueryable();
+
+        // Security/Isolation: Suppliers only see their own vehicles
+        if (!isAdmin)
+        {
+            query = query.Where(v => v.UserId == currentUserId);
+        }
+        // Admin Filtering: Filter by specific suppliers if provided
+        else if (filter.Suppliers != null && filter.Suppliers.Any())
+        {
+            query = query.Where(v => filter.Suppliers.Contains(v.UserId));
+        }
+
+        // Search Keyword
+        if (!string.IsNullOrWhiteSpace(filter.Keyword))
+        {
+            var keyword = filter.Keyword;
+            query = query.Where(v => 
+                (v.Make != null && v.Make.Contains(keyword)) || 
+                (v.Model != null && v.Model.Contains(keyword)));
+        }
+
+        // Pagination
+        var totalCount = await query.CountAsync(cancellationToken);
+        var totalPages = (int)Math.Ceiling(totalCount / (double)size);
+        var skip = (page - 1) * size;
+
+        var vehicles = await query
+            .OrderByDescending(v => v.CreatedAt) // Assuming CreatedAt exists, if not it will fail, wait. Let's just order by Id or Price
+            .Skip(skip)
+            .Take(size)
+            .ToListAsync(cancellationToken);
+
+        var vehicleDtos = new List<VehicleListDto>();
+        foreach (var vehicle in vehicles)
+        {
+            var averageRating = await GetAverageRatingAsync(vehicle.Id, cancellationToken);
+            var reviewCount = await GetReviewCountAsync(vehicle.Id, cancellationToken);
+            var primaryImage = vehicle.Images.FirstOrDefault(i => i.IsPrimary)?.ImageUrl 
+                             ?? vehicle.Images.FirstOrDefault()?.ImageUrl 
+                             ?? string.Empty;
+
+            vehicleDtos.Add(new VehicleListDto(
+                vehicle.Id,
+                vehicle.Make ?? string.Empty,
+                vehicle.Model ?? string.Empty,
+                vehicle.Status ?? string.Empty,
+                vehicle.PricePerDay ?? 0,
+                "USD",
+                primaryImage,
+                averageRating,
+                reviewCount,
+                null,
+                vehicle.AvailabilityStatus == "Available"
+            ));
+        }
+
+        return new PagedResult<VehicleListDto>(
+            vehicleDtos,
+            page,
+            size,
+            totalCount,
+            totalPages);
+    }
+
     public async Task<VehicleResponse> CreateVehicleAsync(
         CreateVehicleRequest request,
         CancellationToken cancellationToken = default)

@@ -9,6 +9,7 @@ namespace Backend.Infrastructure.Data;
 
 public static class DbInitializer
 {
+    private const string AdminEmail = "admin@ares.local";
     private const string CustomerEmail = "customer.demo@ares.local";
     private const string SupplierEmail = "supplier.demo@ares.local";
     private const string SupplierTwoEmail = "supplier.two@ares.local";
@@ -16,6 +17,7 @@ public static class DbInitializer
     private const string SupplierFourEmail = "supplier.four@ares.local";
     private const string DemoPassword = "P@ssword123!";
 
+    private static readonly Guid AdminId = Guid.Parse("99999999-aaaa-bbbb-cccc-999999999999");
     private static readonly Guid CustomerId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
     private static readonly Guid SupplierId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
     private static readonly Guid SupplierTwoId = Guid.Parse("abababab-abab-abab-abab-abababababab");
@@ -100,6 +102,16 @@ public static class DbInitializer
         UserManager<ApplicationUser> userManager,
         ILogger logger)
     {
+        var admin = await EnsureUserAsync(
+            userManager,
+            AdminId,
+            AdminEmail,
+            "System",
+            "Admin",
+            FormatValidPhone("+201000000000"),
+            null,
+            "Admin");
+
         var supplier = await EnsureUserAsync(
             userManager,
             SupplierId,

@@ -103,6 +103,17 @@ public interface IVehicleService
     // Admin Vehicle Management Methods
 
     /// <summary>
+    /// Gets a paginated list of vehicles for the admin/supplier dashboard
+    /// </summary>
+    Task<PagedResult<VehicleListDto>> GetAdminVehiclesAsync(
+        int page,
+        int size,
+        AdminVehicleFilterRequest filter,
+        Guid currentUserId,
+        bool isAdmin,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Creates a new vehicle (Admin/Supplier only)
     /// </summary>
     /// <param name="request">Vehicle creation request</param>

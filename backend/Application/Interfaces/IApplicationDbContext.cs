@@ -16,6 +16,7 @@ public interface IApplicationDbContext
     IQueryable<BookingCancellation> BookingCancellations { get; }
     IQueryable<UserAddress> UserAddresses { get; }
     IQueryable<Verification> Verifications { get; }
+    IQueryable<Notification> Notifications { get; }
     
     void AddFavorite(Favorite favorite);
     void AddBookingCancellation(BookingCancellation cancellation);

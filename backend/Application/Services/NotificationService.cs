@@ -59,4 +59,11 @@ public class NotificationService : INotificationService
         await _notificationRepository.AddAsync(notification, cancellationToken);
         await _notificationRepository.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task<int> GetUnreadCountAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _notificationRepository.GetUnreadCountAsync(userId, cancellationToken);
+    }
 }

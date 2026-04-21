@@ -18,6 +18,7 @@ public interface IUserManagementService
     Task<PagedResult<UserManagementDto>> GetUsersAsync(
         int page = 1,
         int pageSize = 20,
+        UserFilterRequest? filter = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>

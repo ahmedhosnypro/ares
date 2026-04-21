@@ -39,4 +39,12 @@ public class NotificationRepository : Repository<Notification>, INotificationRep
             await SaveChangesAsync(cancellationToken);
         }
     }
+
+    public async Task<int> GetUnreadCountAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .CountAsync(n => n.UserId == userId && !n.IsRead, cancellationToken);
+    }
 }

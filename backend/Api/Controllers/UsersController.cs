@@ -249,11 +249,12 @@ public class UsersController : ControllerBase
     public async Task<ActionResult<PagedResult<UserManagementDto>>> GetUsers(
         int page,
         int size,
+        [FromBody(EmptyBodyBehavior = Microsoft.AspNetCore.Mvc.ModelBinding.EmptyBodyBehavior.Allow)] UserFilterRequest? request,
         CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Admin requesting paginated users list - Page: {Page}, Size: {Size}", page, size);
 
-        var result = await _userManagementService.GetUsersAsync(page, size, cancellationToken);
+        var result = await _userManagementService.GetUsersAsync(page, size, request, cancellationToken);
 
         _logger.LogInformation(
             "Successfully retrieved {Count} users from page {Page} of {TotalPages}",
@@ -371,5 +372,46 @@ public class AdminUsersController : ControllerBase
         _logger.LogInformation("Successfully updated user {UserId}", id);
 
         return Ok(response);
+    }
+
+    /// <summary>
+    /// Toggle user status between Active and Blocked (Admin only)
+    /// </summary>
+    /// <param name="id">User ID to toggle status</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Status change result</returns>
+    [HttpPut("{id}/toggle-status")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> ToggleUserStatus(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Admin toggling status for user {UserId}", id);
+
+        var user = await _userManagementService.GetUserByIdAsync(id, cancellationToken);
+        if (user == null)
+        {
+            return NotFound(new { Message = $"User with ID {id} not found" });
+        }
+
+        var newStatus = user.Status == "Active" ? "Blocked" : "Active";
+        
+        var request = new UpdateUserRequest(
+            FirstName: user.FirstName,
+            LastName: user.LastName,
+            PhoneNumber: user.PhoneNumber,
+            Status: newStatus,
+            Roles: user.Roles
+        );
+
+        await _userManagementService.UpdateUserAsync(id, request, cancellationToken);
+        
+        _logger.LogInformation("Successfully toggled status for user {UserId} to {NewStatus}", id, newStatus);
+        
+        return Ok(new { Message = $"User status changed to {newStatus}", Status = newStatus });
     }
 }

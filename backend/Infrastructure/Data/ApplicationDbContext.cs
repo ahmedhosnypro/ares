@@ -51,6 +51,7 @@ namespace Backend.Infrastructure.Data
         IQueryable<BookingCancellation> IApplicationDbContext.BookingCancellations => BookingCancellations;
         IQueryable<UserAddress> IApplicationDbContext.UserAddresses => UserAddresses;
         IQueryable<Verification> IApplicationDbContext.Verifications => Verifications;
+        IQueryable<Notification> IApplicationDbContext.Notifications => Notifications;
 
         public void AddFavorite(Favorite favorite)
         {

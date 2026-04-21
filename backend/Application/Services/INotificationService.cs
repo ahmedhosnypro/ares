@@ -19,6 +19,16 @@ public interface INotificationService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets the count of unread notifications for a specific user
+    /// </summary>
+    /// <param name="userId">User ID</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Count of unread notifications</returns>
+    Task<int> GetUnreadCountAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Marks a notification as read
     /// </summary>
     /// <param name="notificationId">Notification ID</param>

@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import {
   Alert,
   AlertTitle,
@@ -91,7 +91,13 @@ export default function SignInForm() {
         setServerError(res.error);
         logger.error("Login error:", res.error);
       } else if (res?.ok) {
-        router.push("/account/profile");
+        // Fetch session to determine roles
+        const session = await getSession();
+        if (session?.user?.roles?.includes("Admin") || session?.user?.roles?.includes("Supplier")) {
+          router.push("/admin");
+        } else {
+          router.push("/");
+        }
         router.refresh();
       }
     } catch (error) {

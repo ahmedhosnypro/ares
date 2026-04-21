@@ -26,4 +26,14 @@ public interface INotificationRepository : IRepository<Notification>
     Task MarkAsReadAsync(
         Guid notificationId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the count of unread notifications for a user
+    /// </summary>
+    /// <param name="userId">User ID</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Count of unread notifications</returns>
+    Task<int> GetUnreadCountAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default);
 }

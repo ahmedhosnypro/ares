@@ -1,6 +1,7 @@
 using Backend.Application.DTOs.Auth;
 using Backend.Application.Exceptions;
 using Backend.Application.Services;
+using Backend.Application.Interfaces;
 using Backend.Domain.Entities;
 using FsCheck;
 using FsCheck.Xunit;
@@ -40,11 +41,18 @@ public class AuthenticationPropertyTests
         _jwtTokenServiceMock = new Mock<IJwtTokenService>();
         _loggerMock = new Mock<ILogger<AuthService>>();
 
+        var contextMock = new Mock<IApplicationDbContext>();
+        var configurationMock = new Mock<IConfiguration>();
+        var emailServiceMock = new Mock<IEmailService>();
+
         _authService = new AuthService(
             _userManagerMock.Object,
             _signInManagerMock.Object,
             _jwtTokenServiceMock.Object,
-            _loggerMock.Object);
+            _loggerMock.Object,
+            contextMock.Object,
+            configurationMock.Object,
+            emailServiceMock.Object);
     }
 
     #region Property 1: Registration creates account with required response fields

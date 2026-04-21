@@ -288,6 +288,39 @@ public class VehiclesController : ControllerBase
     // Admin Vehicle Management Endpoints
 
     /// <summary>
+    /// Search vehicles for Admin/Supplier dashboard
+    /// </summary>
+    [HttpPost("search/{page}/{size}")]
+    [Authorize(Roles = "Admin,Supplier")]
+    [ProducesResponseType(typeof(PagedResult<VehicleListDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<PagedResult<VehicleListDto>>> GetAdminVehicles(
+        int page,
+        int size,
+        [FromBody] AdminVehicleFilterRequest filter,
+        CancellationToken cancellationToken = default)
+    {
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        if (userIdClaim == null)
+        {
+            return Unauthorized(new { Message = "User not authenticated" });
+        }
+
+        var currentUserId = Guid.Parse(userIdClaim.Value);
+        var isAdmin = User.IsInRole("Admin");
+
+        var result = await _vehicleService.GetAdminVehiclesAsync(
+            page,
+            size,
+            filter,
+            currentUserId,
+            isAdmin,
+            cancellationToken);
+
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Create a new vehicle (Admin/Supplier only)
     /// </summary>
     /// <param name="request">Vehicle creation request</param>
