@@ -378,6 +378,15 @@ public class VehiclesController : ControllerBase
         [FromBody] UpdateVehicleRequest request,
         CancellationToken cancellationToken = default)
     {
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        if (userIdClaim == null)
+        {
+            return Unauthorized(new { Message = "User not authenticated" });
+        }
+
+        var currentUserId = Guid.Parse(userIdClaim.Value);
+        var isAdmin = User.IsInRole("Admin");
+
         var validator = new UpdateVehicleRequestValidator();
         var validationResult = await validator.ValidateAsync(request, cancellationToken);
 
@@ -395,7 +404,7 @@ public class VehiclesController : ControllerBase
             });
         }
 
-        var result = await _vehicleService.UpdateVehicleAsync(id, request, cancellationToken);
+        var result = await _vehicleService.UpdateVehicleAsync(id, request, currentUserId, isAdmin, cancellationToken);
         return Ok(result);
     }
 
@@ -405,7 +414,7 @@ public class VehiclesController : ControllerBase
     /// <param name="id">Vehicle ID</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Vehicle deletion response</returns>
-    [HttpDelete("/api/delete-car/{id}")]
+    [HttpDelete("/api/admin/cars/{id}/delete")]
     [Authorize(Roles = "Admin,Supplier")]
     [ProducesResponseType(typeof(VehicleResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -417,7 +426,16 @@ public class VehiclesController : ControllerBase
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        var result = await _vehicleService.DeleteVehicleAsync(id, cancellationToken);
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        if (userIdClaim == null)
+        {
+            return Unauthorized(new { Message = "User not authenticated" });
+        }
+
+        var currentUserId = Guid.Parse(userIdClaim.Value);
+        var isAdmin = User.IsInRole("Admin");
+
+        var result = await _vehicleService.DeleteVehicleAsync(id, currentUserId, isAdmin, cancellationToken);
         return Ok(result);
     }
 
@@ -427,7 +445,7 @@ public class VehiclesController : ControllerBase
     /// <param name="id">Vehicle ID</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Boolean indicating if vehicle has active bookings</returns>
-    [HttpGet("/api/check-car/{id}")]
+    [HttpGet("/api/admin/cars/{id}/check-bookings")]
     [Authorize(Roles = "Admin,Supplier")]
     [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

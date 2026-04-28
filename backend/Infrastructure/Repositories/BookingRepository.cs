@@ -86,11 +86,12 @@ public class BookingRepository : PaginatedRepository<Booking>, IBookingRepositor
         Guid vehicleId,
         CancellationToken cancellationToken = default)
     {
+        var activeStatuses = new[] { "Pending", "Deposit", "Paid", "Reserved", "Active", "PickedUp" };
         return await _dbSet
             .AnyAsync(b =>
                 b.VehicleId == vehicleId &&
                 b.Status != null &&
-                b.Status != "Cancelled",
+                activeStatuses.Contains(b.Status),
                 cancellationToken);
     }
 

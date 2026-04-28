@@ -414,6 +414,9 @@ public class VehicleService : IVehicleService
         {
             query = query.Where(v => v.UserId == currentUserId);
         }
+        
+        // Filter out soft-deleted vehicles
+        query = query.Where(v => v.IsActive);
         // Admin Filtering: Filter by specific suppliers if provided
         else if (filter.Suppliers != null && filter.Suppliers.Any())
         {
@@ -526,12 +529,20 @@ public class VehicleService : IVehicleService
     public async Task<VehicleResponse> UpdateVehicleAsync(
         Guid vehicleId,
         UpdateVehicleRequest request,
+        Guid currentUserId,
+        bool isAdmin,
         CancellationToken cancellationToken = default)
     {
         var vehicle = await _vehicleRepository.GetByIdAsync(vehicleId, cancellationToken);
         if (vehicle == null)
         {
             throw new NotFoundException($"Vehicle with ID {vehicleId} not found");
+        }
+
+        // Security check: Only owner or admin can update
+        if (!isAdmin && vehicle.UserId != currentUserId)
+        {
+            throw new ForbiddenException("You do not have permission to update this vehicle");
         }
 
         // Check if license plate already exists for another vehicle
@@ -599,12 +610,20 @@ public class VehicleService : IVehicleService
 
     public async Task<VehicleResponse> DeleteVehicleAsync(
         Guid vehicleId,
+        Guid currentUserId,
+        bool isAdmin,
         CancellationToken cancellationToken = default)
     {
         var vehicle = await _vehicleRepository.GetByIdAsync(vehicleId, cancellationToken);
         if (vehicle == null)
         {
             throw new NotFoundException($"Vehicle with ID {vehicleId} not found");
+        }
+
+        // Security check: Only owner or admin can delete
+        if (!isAdmin && vehicle.UserId != currentUserId)
+        {
+            throw new ForbiddenException("You do not have permission to delete this vehicle");
         }
 
         // Check if vehicle has active bookings

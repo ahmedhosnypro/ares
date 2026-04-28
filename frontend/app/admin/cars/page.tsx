@@ -82,6 +82,35 @@ export default function AdminCarsPage() {
     setPage(value);
   };
 
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this vehicle?")) return;
+    
+    try {
+      if (session?.accessToken) {
+        // First check if it has active bookings
+        const hasBookings = await apiFetchJson<bool>(`api/admin/cars/${id}/check-bookings`, {
+          accessToken: session.accessToken
+        });
+
+        if (hasBookings) {
+          alert("Cannot delete vehicle with active bookings.");
+          return;
+        }
+
+        await apiFetchJson(`api/admin/cars/${id}/delete`, {
+          method: "DELETE",
+          accessToken: session.accessToken
+        });
+        
+        alert("Vehicle deleted successfully");
+        fetchVehicles(page);
+      }
+    } catch (error: any) {
+      console.error("Delete failed:", error);
+      alert(error.message || "Failed to delete vehicle");
+    }
+  };
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
@@ -91,6 +120,7 @@ export default function AdminCarsPage() {
         <Button 
           variant="contained" 
           startIcon={<AddIcon />}
+          onClick={() => router.push('/admin/cars/create')}
           sx={{ borderRadius: 2, fontWeight: 'bold' }}
         >
           Add New Vehicle
@@ -145,7 +175,7 @@ export default function AdminCarsPage() {
                       <IconButton color="primary" onClick={() => router.push(`/admin/cars/${vehicle.vehicleId}`)}>
                         <EditIcon fontSize="small" />
                       </IconButton>
-                      <IconButton color="error">
+                      <IconButton color="error" onClick={() => handleDelete(vehicle.vehicleId)}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </TableCell>

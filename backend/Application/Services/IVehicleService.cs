@@ -133,16 +133,22 @@ public interface IVehicleService
     Task<VehicleResponse> UpdateVehicleAsync(
         Guid vehicleId,
         UpdateVehicleRequest request,
+        Guid currentUserId,
+        bool isAdmin,
         CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Soft deletes a vehicle (Admin/Supplier only)
     /// </summary>
     /// <param name="vehicleId">Vehicle ID</param>
+    /// <param name="currentUserId">Current User ID</param>
+    /// <param name="isAdmin">Whether current user is Admin</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Vehicle deletion response</returns>
     Task<VehicleResponse> DeleteVehicleAsync(
         Guid vehicleId,
+        Guid currentUserId,
+        bool isAdmin,
         CancellationToken cancellationToken = default);
 
     /// <summary>
