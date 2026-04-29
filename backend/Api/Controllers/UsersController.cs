@@ -231,7 +231,25 @@ public class UsersController : ControllerBase
         return Ok(new { Message = "Password changed successfully." });
     }
 
-    // User Management Endpoints (Admin Only)
+}
+/// <summary>
+/// Controller for admin user management operations
+/// </summary>
+[ApiController]
+[Route("api/admin/users")]
+[Authorize(Roles = "Admin")]
+public class AdminUsersController : ControllerBase
+{
+    private readonly IUserManagementService _userManagementService;
+    private readonly ILogger<AdminUsersController> _logger;
+
+    public AdminUsersController(
+        IUserManagementService userManagementService,
+        ILogger<AdminUsersController> logger)
+    {
+        _userManagementService = userManagementService;
+        _logger = logger;
+    }
 
     /// <summary>
     /// Get paginated list of users (Admin only)
@@ -242,7 +260,6 @@ public class UsersController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Paginated list of users</returns>
     [HttpPost("{page}/{size}")]
-    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(PagedResult<UserManagementDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -273,7 +290,6 @@ public class UsersController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>User details if found</returns>
     [HttpGet("{id}")]
-    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(UserManagementDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -293,26 +309,6 @@ public class UsersController : ControllerBase
 
         _logger.LogInformation("Successfully retrieved user {UserId}", id);
         return Ok(user);
-    }
-}
-
-/// <summary>
-/// Controller for admin user management operations
-/// </summary>
-[ApiController]
-[Route("api/admin/users")]
-[Authorize(Roles = "Admin")]
-public class AdminUsersController : ControllerBase
-{
-    private readonly IUserManagementService _userManagementService;
-    private readonly ILogger<AdminUsersController> _logger;
-
-    public AdminUsersController(
-        IUserManagementService userManagementService,
-        ILogger<AdminUsersController> logger)
-    {
-        _userManagementService = userManagementService;
-        _logger = logger;
     }
 
     /// <summary>
@@ -339,8 +335,8 @@ public class AdminUsersController : ControllerBase
         _logger.LogInformation("Successfully created user {UserId} with email {Email}", response.UserId, request.Email);
 
         return CreatedAtAction(
-            nameof(UsersController.GetUser),
-            "Users",
+            nameof(GetUser),
+            "AdminUsers",
             new { id = response.UserId },
             response);
     }

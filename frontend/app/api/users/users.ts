@@ -18,7 +18,7 @@ async function authHeaders() {
  * GET paginated users
  */
 export async function getUsers(page = 1, size = 10) {
-  const res = await fetch(`${BASE_URL}/users/${page}/${size}`, {
+  const res = await fetch(`${BASE_URL}/admin/users/${page}/${size}`, {
     method: "POST",
     headers: await authHeaders(),
     body: JSON.stringify({
@@ -69,7 +69,7 @@ export const createUser = async (payload: {
  * GET user by id
  */
 export async function getUserById(id: string) {
-  const res = await fetch(`${BASE_URL}/users/${id}`, {
+  const res = await fetch(`${BASE_URL}/admin/users/${id}`, {
     method: "GET",
     headers: await authHeaders(),
   });
@@ -83,7 +83,7 @@ export async function getUserById(id: string) {
     console.error("Invalid JSON response:", text);
   }
 
-  console.log("URL:", `${BASE_URL}/user/${id}`);
+  console.log("URL:", `${BASE_URL}/admin/users/${id}`);
   console.log("STATUS:", res.status);
   console.log("RESPONSE:", data);
 

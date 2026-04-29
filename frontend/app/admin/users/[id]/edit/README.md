@@ -4,19 +4,19 @@
 
 - **Route**: `/admin/users/[id]/edit`
 - **Access**: 🔒 Admin only
-- **Purpose**: Edit a customer's profile — name, phone, birth date, language, and email notification preference. Admins can also update the user's avatar.
+- **Purpose**: Edit a user's profile details including name, phone number, status, and assigned roles.
 
 ---
 
 ## API Endpoints
 
-### `GET /api/user/:id`
+### `GET /api/admin/users/:id`
 
 Load existing user data to pre-populate the form.
 
 ---
 
-### `POST /api/update-user`
+### `PUT /api/admin/users/:id/edit`
 
 Save profile changes.
 
@@ -24,54 +24,32 @@ Save profile changes.
 
 ```json
 {
-  "_id": "string",
-  "fullName": "string",
-  "phone": "string | null",
-  "birthDate": "string (ISO 8601) | null",
-  "language": "string",
-  "enableEmailNotifications": "boolean"
+  "firstName": "string",
+  "lastName": "string",
+  "phoneNumber": "string | null",
+  "status": "string",
+  "roles": ["string"]
 }
 ```
 
 **Response**
 
-| Status | Meaning        |
-| ------ | -------------- |
-| 200    | User updated   |
-| 400    | Invalid fields |
+| Status | Meaning               |
+| ------ | --------------------- |
+| 200    | User updated          |
+| 400    | Validation error      |
+| 404    | User not found        |
+| 409    | Email/Phone conflict  |
 
 ---
 
-### `POST /api/update-avatar/:userId`
+### `PUT /api/admin/users/:id/toggle-status`
 
-Update the user's avatar.
+Toggle the user's status between 'Active' and 'Blocked'.
 
-**URL Params**
+**Response**
 
-| Param    | Description |
-| -------- | ----------- |
-| `userId` | User `_id`  |
-
-**Request Body**
-
-```json
-{ "avatar": "string (temp filename)" }
-```
-
----
-
-### `POST /api/delete-avatar/:userId`
-
-Remove the user's avatar.
-
----
-
-### `POST /api/update-email-notifications`
-
-Toggle the user's email notification preference.
-
-**Request Body**
-
-```json
-{ "_id": "string", "enableEmailNotifications": "boolean" }
-```
+| Status | Meaning               |
+| ------ | --------------------- |
+| 200    | Status updated        |
+| 404    | User not found        |

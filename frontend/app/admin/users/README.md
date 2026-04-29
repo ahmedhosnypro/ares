@@ -4,13 +4,13 @@
 
 - **Route**: `/admin/users`
 - **Access**: 🔒 Admin only
-- **Purpose**: Paginated list of customer accounts. Supports searching by name or email and bulk deleting users who have no bookings.
+- **Purpose**: Paginated list of user accounts. Supports searching by name or email and toggling active/blocked status.
 
 ---
 
 ## API Endpoints
 
-### `POST /api/users/:page/:size`
+### `POST /api/admin/users/:page/:size`
 
 Fetch a paginated list of users.
 
@@ -32,38 +32,15 @@ Fetch a paginated list of users.
 
 **Response — 200 OK**
 
-```json
-{
-  "resultData": [
-    {
-      "_id": "string",
-      "fullName": "string",
-      "email": "string",
-      "phone": "string | null",
-      "birthDate": "string | null",
-      "active": "boolean",
-      "avatar": "string | null"
-    }
-  ],
-  "pageInfo": [{ "totalRecords": "number" }]
-}
-```
+Returns a paginated list of users (`PagedResult<UserManagementDto>`).
 
 ---
 
-### `POST /api/delete-users`
+### `PUT /api/admin/users/:id/toggle-status`
 
-Bulk delete selected user accounts.
+Toggle the status of a user between 'Active' and 'Blocked'.
 
-**Request Body**
+**Response — 200 OK**
 
-```json
-{ "ids": ["string"] }
-```
+Status successfully changed.
 
-**Response**
-
-| Status | Meaning                         |
-| ------ | ------------------------------- |
-| 200    | Users deleted                   |
-| 400    | One or more users have bookings |

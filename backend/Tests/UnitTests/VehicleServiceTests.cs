@@ -1281,7 +1281,7 @@ public class VehicleServiceTests : IDisposable
             .ReturnsAsync(1);
 
         // Act
-        var result = await _vehicleService.UpdateVehicleAsync(vehicleId, request);
+        var result = await _vehicleService.UpdateVehicleAsync(vehicleId, request, Guid.Empty, true);
 
         // Assert
         Assert.NotNull(result);
@@ -1358,7 +1358,7 @@ public class VehicleServiceTests : IDisposable
             .ReturnsAsync(1);
 
         // Act
-        var result = await _vehicleService.UpdateVehicleAsync(vehicleId, request);
+        var result = await _vehicleService.UpdateVehicleAsync(vehicleId, request, Guid.Empty, true);
 
         // Assert
         Assert.NotNull(result);
@@ -1407,7 +1407,7 @@ public class VehicleServiceTests : IDisposable
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<NotFoundException>(
-            () => _vehicleService.UpdateVehicleAsync(vehicleId, request));
+            () => _vehicleService.UpdateVehicleAsync(vehicleId, request, Guid.Empty, true));
 
         Assert.Equal($"Vehicle with ID {vehicleId} not found", exception.Message);
         _vehicleRepositoryMock.Verify(x => x.UpdateAsync(It.IsAny<Vehicle>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -1455,7 +1455,7 @@ public class VehicleServiceTests : IDisposable
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ConflictException>(
-            () => _vehicleService.UpdateVehicleAsync(vehicleId, request));
+            () => _vehicleService.UpdateVehicleAsync(vehicleId, request, Guid.Empty, true));
 
         Assert.Equal("Vehicle with license plate NEW123 already exists", exception.Message);
         _vehicleRepositoryMock.Verify(x => x.UpdateAsync(It.IsAny<Vehicle>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -1489,7 +1489,7 @@ public class VehicleServiceTests : IDisposable
             .ReturnsAsync(1);
 
         // Act
-        var result = await _vehicleService.DeleteVehicleAsync(vehicleId);
+        var result = await _vehicleService.DeleteVehicleAsync(vehicleId, Guid.Empty, true);
 
         // Assert
         Assert.NotNull(result);
@@ -1530,7 +1530,7 @@ public class VehicleServiceTests : IDisposable
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ConflictException>(
-            () => _vehicleService.DeleteVehicleAsync(vehicleId));
+            () => _vehicleService.DeleteVehicleAsync(vehicleId, Guid.Empty, true));
 
         Assert.Equal("Cannot delete vehicle with active bookings", exception.Message);
         _vehicleRepositoryMock.Verify(x => x.UpdateAsync(It.IsAny<Vehicle>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -1548,7 +1548,7 @@ public class VehicleServiceTests : IDisposable
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<NotFoundException>(
-            () => _vehicleService.DeleteVehicleAsync(vehicleId));
+            () => _vehicleService.DeleteVehicleAsync(vehicleId, Guid.Empty, true));
 
         Assert.Equal($"Vehicle with ID {vehicleId} not found", exception.Message);
         _bookingRepositoryMock.Verify(x => x.HasActiveBookingsAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -1704,7 +1704,7 @@ public class VehicleServiceTests : IDisposable
             .ReturnsAsync(1);
 
         // Act
-        var result = await _vehicleService.UpdateVehicleAsync(vehicleId, request);
+        var result = await _vehicleService.UpdateVehicleAsync(vehicleId, request, Guid.Empty, true);
 
         // Assert
         Assert.NotNull(result);
