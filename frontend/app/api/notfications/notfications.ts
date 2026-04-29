@@ -63,3 +63,23 @@ export const getNotificationCount = async (userId: string, token: string) => {
   if (!res.ok) throw new Error("Failed to get notification count");
   return res.json();
 };
+
+/**
+ * إنشاء تنبيهات تجريبية للمستخدم (للاختبار)
+ */
+export const seedNotifications = async (token: string) => {
+  const res = await fetch(`${BASE_URL}/api/notifications/seed`, {
+    method: "POST",
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to seed notifications: ${res.status}`);
+  }
+
+  return res.json();
+};

@@ -8,7 +8,7 @@ import {
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import { useSession } from "next-auth/react";
-import { getNotifications, markNotificationAsRead } from "@/app/api/notfications/notfications";
+import { getNotifications, markNotificationAsRead, seedNotifications } from "@/app/api/notfications/notfications";
 
 // Type definition based on your Schema
 type Notification = {
@@ -26,6 +26,7 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [seeding, setSeeding] = useState(false);
 
   const token = session?.accessToken;
 
@@ -71,6 +72,20 @@ export default function NotificationsPage() {
     }
   };
 
+  const handleSeed = async () => {
+    if (!token) return;
+    try {
+      setSeeding(true);
+      await seedNotifications(token);
+      await fetchData();
+    } catch (err) {
+      console.error("Seed failed:", err);
+      setError("Failed to create dummy notifications.");
+    } finally {
+      setSeeding(false);
+    }
+  };
+
   // 1. Loading State (Session)
   if (status === "loading") {
     return (
@@ -99,11 +114,18 @@ export default function NotificationsPage() {
           <NotificationsActiveIcon color="primary" fontSize="large" /> 
           Notifications
         </Typography>
-        <Chip 
-          label={`${unreadCount} Unread`} 
-          color={unreadCount > 0 ? "primary" : "default"} 
-          sx={{ fontWeight: 'bold' }}
-        />
+        <Stack direction="row" spacing={2} alignItems="center">
+          <Chip 
+            label={`${unreadCount} Unread`} 
+            color={unreadCount > 0 ? "primary" : "default"} 
+            sx={{ fontWeight: 'bold' }}
+          />
+          <Tooltip title="Create dummy notifications for testing">
+            <IconButton onClick={handleSeed} disabled={seeding} color="primary" sx={{ bgcolor: 'action.hover' }}>
+              {seeding ? <CircularProgress size={20} /> : <span style={{ fontSize: '18px' }}>🔄</span>}
+            </IconButton>
+          </Tooltip>
+        </Stack>
       </Stack>
 
       {/* Error Alert */}
