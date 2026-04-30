@@ -416,13 +416,12 @@ public class VehicleService : IVehicleService
         }
         
         // Filter out soft-deleted vehicles
-        query = query.Where(v => v.IsActive);
-
         // Admin Filtering: Filter by specific suppliers if provided
         if (filter.Suppliers != null && filter.Suppliers.Any())
         {
             query = query.Where(v => filter.Suppliers.Contains(v.UserId));
         }
+        query = query.Where(v => v.IsActive);
 
         // Search Keyword
         if (!string.IsNullOrWhiteSpace(filter.Keyword))

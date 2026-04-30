@@ -38,4 +38,4 @@ obj/
 # Misc
 *.pid
 logs
-TestResults
+TestResultsfrontend/*.zip
