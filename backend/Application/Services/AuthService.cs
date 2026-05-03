@@ -128,6 +128,13 @@ public class AuthService : IAuthService
             throw new ForbiddenException("Email not verified. Please verify your email before logging in.");
         }
 
+        // Check if account is blocked by admin
+        if (user.Status == "Blocked")
+        {
+            _logger.LogWarning("Login failed: Account blocked - {Email}", request.Email);
+            throw new ForbiddenException("Your account has been blocked by an administrator. Please contact support.");
+        }
+
         // Check if account is locked
         if (await _userManager.IsLockedOutAsync(user))
         {
@@ -315,6 +322,12 @@ public class AuthService : IAuthService
         {
             _logger.LogWarning("Refresh token failed: Token not active for user {UserId}", user.Id);
             throw new UnauthorizedException("Invalid refresh token");
+        }
+
+        if (user.Status == "Blocked")
+        {
+            _logger.LogWarning("Refresh token failed: Account blocked for user {UserId}", user.Id);
+            throw new ForbiddenException("Your account has been blocked by an administrator.");
         }
 
         // Replace old refresh token with a new one (rotation)

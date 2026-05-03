@@ -63,7 +63,7 @@ export const authOptions: NextAuthOptions = {
           } else {
             // معالجة الإيرورز عشان تظهر في صفحة اللوجين
             if (res.status === 401) throw new Error("Invalid email or password");
-            if (res.status === 403) throw new Error("Account suspended or locked");
+            if (res.status === 403) throw new Error(data.message || "Account suspended or locked");
             if (res.status === 429) throw new Error("Too many attempts. Try again later");
             throw new Error(data.message || "An unexpected error occurred");
           }
