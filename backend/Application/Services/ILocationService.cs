@@ -29,4 +29,12 @@ public interface ILocationService
         Guid locationId,
         UpdateLocationRequest request,
         CancellationToken cancellationToken = default);
+
+    Task<LocationDto> GetLocationByIdAsync(
+        Guid locationId,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> DeleteLocationAsync(
+        Guid locationId,
+        CancellationToken cancellationToken = default);
 }

@@ -163,4 +163,49 @@ public class LocationsController : ControllerBase
             return NotFound(new { message = $"Location with ID {id} not found" });
         }
     }
+
+    /// <summary>
+    /// Get location by ID (Admin only)
+    /// </summary>
+    [HttpGet("/api/admin/locations/{id:guid}")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetLocationById(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var location = await _locationService.GetLocationByIdAsync(id, cancellationToken);
+            return Ok(location);
+        }
+        catch (ArgumentException ex) when (ex.Message.Contains("not found"))
+        {
+            return NotFound(new { message = $"Location with ID {id} not found" });
+        }
+    }
+
+    /// <summary>
+    /// Delete a location (Admin only)
+    /// </summary>
+    [HttpDelete("/api/admin/locations/{id:guid}/delete")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteLocation(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _locationService.DeleteLocationAsync(id, cancellationToken);
+        if (!result)
+        {
+            return NotFound(new { message = $"Location with ID {id} not found" });
+        }
+        return Ok(new { message = "Location deleted successfully" });
+    }
 }

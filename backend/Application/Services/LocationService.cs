@@ -196,6 +196,47 @@ public class LocationService : ILocationService
             UpdatedAt: location.UpdatedAt);
     }
 
+    public async Task<LocationDto> GetLocationByIdAsync(
+        Guid locationId,
+        CancellationToken cancellationToken = default)
+    {
+        var location = await _locationRepository.GetByIdAsync(locationId, cancellationToken);
+        if (location == null)
+        {
+            throw new ArgumentException($"Location with ID {locationId} not found.", nameof(locationId));
+        }
+
+        return new LocationDto(
+            Id: location.Id,
+            AddressLine: location.AddressLine,
+            City: location.City,
+            Governorate: location.Governorate,
+            Country: location.Country,
+            PostalCode: location.PostalCode,
+            Latitude: location.Latitude,
+            Longitude: location.Longitude,
+            IsPrimary: location.IsPrimary,
+            ImageUrl: location.ImageUrl,
+            CreatedAt: location.CreatedAt,
+            UpdatedAt: location.UpdatedAt);
+    }
+
+    public async Task<bool> DeleteLocationAsync(
+        Guid locationId,
+        CancellationToken cancellationToken = default)
+    {
+        var location = await _locationRepository.GetByIdAsync(locationId, cancellationToken);
+        if (location == null)
+        {
+            return false;
+        }
+
+        await _locationRepository.DeleteAsync(location, cancellationToken);
+        await _locationRepository.SaveChangesAsync(cancellationToken);
+        
+        return true;
+    }
+
     private static string BuildDisplayText(Domain.Entities.UserAddress location)
     {
         var parts = new List<string>();
