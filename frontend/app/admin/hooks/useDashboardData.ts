@@ -65,19 +65,44 @@ export function useDashboardData() {
 
         // 2. الحجوزات الأخيرة (إذا كان الـ endpoint موجودًا، وإلا استخدم mock)
         try {
-          const recent = await apiFetchJson<RecentBooking[]>("api/bookings/recent?limit=5", {
+          const bookingsData = await apiFetchJson<any>("api/admin/bookings/search/1/5", {
+            method: "POST",
             accessToken: session.accessToken,
+            body: JSON.stringify({
+              userId: null,
+              suppliers: session.user?.roles?.includes("Supplier") ? [session.user.id] : null,
+              statuses: null,
+              carId: null,
+              filter: {
+                from: null,
+                to: null,
+                keyword: null,
+                pickupLocation: null,
+                dropOffLocation: null
+              },
+              page: 1,
+              size: 5,
+              language: "en"
+            })
           });
-          setRecentBookings(recent);
+          
+          const bookingsList = bookingsData?.resultData || bookingsData?.data || bookingsData?.items;
+          if (bookingsList) {
+            const mappedBookings = bookingsList.map((b: any) => ({
+              id: (b.id || b._id || "").toString().substring(0, 8).toUpperCase(),
+              customer: b.driver?.fullName || "Guest",
+              car: b.car?.name || "Vehicle",
+              date: b.from ? new Date(b.from).toLocaleDateString() : "",
+              status: b.status || "Pending",
+              amount: b.price || 0
+            }));
+            setRecentBookings(mappedBookings);
+          } else {
+            setRecentBookings([]);
+          }
         } catch (err) {
-          console.warn("Using mock recentBookings");
-          setRecentBookings([
-            { id: "BKG-001", customer: "Ahmed Ali", car: "Mercedes S-Class", date: "Oct 24, 2026", status: "Active", amount: 450 },
-            { id: "BKG-002", customer: "Sara Mahmoud", car: "BMW X5", date: "Oct 23, 2026", status: "Completed", amount: 320 },
-            { id: "BKG-003", customer: "Omar Hassan", car: "Audi A6", date: "Oct 22, 2026", status: "Pending", amount: 280 },
-            { id: "BKG-004", customer: "Nour Youssef", car: "Range Rover", date: "Oct 21, 2026", status: "Cancelled", amount: 500 },
-            { id: "BKG-005", customer: "Khaled Saed", car: "Porsche 911", date: "Oct 20, 2026", status: "Completed", amount: 850 },
-          ]);
+          console.error("Failed to fetch recent bookings:", err);
+          setRecentBookings([]);
         }
 
         // 3. الحجوزات القادمة

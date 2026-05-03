@@ -210,7 +210,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
                 },
               }}
             >
-              <MenuItem onClick={handleClose}>
+              <MenuItem onClick={() => { handleClose(); router.push('/account/profile'); }}>
                 <Avatar sx={{ width: 32, height: 32, mr: 1 }} /> Profile
               </MenuItem>
               <Divider />
