@@ -61,15 +61,124 @@ function StatCard({ label, value, color }: any) {
   );
 }
 
+// ── MOBILE USER CARD ────────────────────
+function UserMobileCard({
+  u,
+  theme,
+  fetchUsers,
+}: {
+  u: any;
+  theme: any;
+  fetchUsers: () => void;
+}) {
+  const status = (u.status || "").toLowerCase();
+  const isActive = status === "active";
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        p: 2,
+        mb: 2,
+        borderRadius: 3,
+        border: "1px solid",
+        borderColor: "divider",
+      }}
+    >
+      {/* Top row: avatar + name/email + status chip */}
+      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.5}>
+        <Stack direction="row" spacing={1.5} alignItems="center" flex={1} minWidth={0}>
+          <Avatar
+            sx={{
+              bgcolor: theme.palette.primary.light,
+              fontWeight: 700,
+              width: 40,
+              height: 40,
+              fontSize: 15,
+              flexShrink: 0,
+            }}
+          >
+            {u.firstName?.[0]}
+            {u.lastName?.[0]}
+          </Avatar>
+          <Box minWidth={0}>
+            <Typography fontWeight={600} fontSize={14} noWrap>
+              {u.firstName} {u.lastName}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" noWrap display="block">
+              {u.email}
+            </Typography>
+          </Box>
+        </Stack>
+
+        <Chip
+          label={status}
+          size="small"
+          sx={{
+            ml: 1,
+            flexShrink: 0,
+            textTransform: "capitalize",
+            bgcolor: isActive
+              ? alpha(theme.palette.success.main, 0.15)
+              : alpha(theme.palette.error.main, 0.15),
+            color: isActive ? theme.palette.success.main : theme.palette.error.main,
+            fontWeight: 700,
+            fontSize: 11,
+          }}
+        />
+      </Stack>
+
+      {/* Role row */}
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ textTransform: "capitalize", display: "block", mb: 1.5 }}
+      >
+        Role: <strong>{u.roles?.join(", ") || "—"}</strong>
+      </Typography>
+
+      {/* Actions */}
+      <Stack direction="row" spacing={1}>
+        <Tooltip title="View">
+          <IconButton component={Link} href={`/admin/users/${u.id}`} size="small">
+            <VisibilityOutlinedIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+
+        <Tooltip title="Edit">
+          <IconButton component={Link} href={`/admin/users/${u.id}/edit`} size="small">
+            <EditOutlinedIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+
+        <Tooltip title={isActive ? "Block User" : "Activate User"}>
+          <IconButton
+            size="small"
+            onClick={async () => {
+              await toggleUserStatus(u.id);
+              fetchUsers();
+            }}
+            sx={{ color: isActive ? "error.main" : "success.main" }}
+          >
+            {isActive ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
+          </IconButton>
+        </Tooltip>
+      </Stack>
+    </Paper>
+  );
+}
+
 // ── PAGE ───────────────────────────────
 export default function UsersPage() {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState("all");
   const [page, setPage] = useState(1);
 
   const PAGE_SIZE = 10;
@@ -80,7 +189,6 @@ export default function UsersPage() {
       setLoading(true);
       const data = await getUsers(1, 100);
 
-      // ✅ Normalize status here
       const normalized = (data?.data || []).map((u: any) => ({
         ...u,
         status: (u.status || "").toLowerCase(),
@@ -105,9 +213,12 @@ export default function UsersPage() {
 
       const matchStatus = statusFilter === "all" || u.status === statusFilter;
 
-      return matchSearch && matchStatus;
+      const matchRole =
+        roleFilter === "all" || u.roles.includes(roleFilter.toLowerCase());
+
+      return matchSearch && matchStatus && matchRole;
     });
-  }, [users, search, statusFilter]);
+  }, [users, search, statusFilter, roleFilter]);
 
   // ── STATS ─────────────────────────────
   const totalUsers = users.length;
@@ -122,19 +233,33 @@ export default function UsersPage() {
   const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
-    <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, maxWidth: 1300, mx: "auto" }}>
+    <Box sx={{ p: { xs: 1.5, sm: 3, md: 4 }, maxWidth: 1300, mx: "auto" }}>
       {/* HEADER */}
       <Stack direction="row" justifyContent="space-between" mb={4} alignItems="center">
         <Box>
-          <Typography variant="h4" fontWeight={800}>
+          <Typography
+            variant="h4"
+            fontWeight={800}
+            sx={{ fontSize: { xs: "1.5rem", sm: "2rem", md: "2.125rem" } }}
+          >
             Users Directory
           </Typography>
           <Typography color="text.secondary">Manage platform users</Typography>
         </Box>
 
         {/* ACTION BUTTON */}
-        <Stack direction="row" spacing={2}>
-          <Link href="/admin/users/create" style={{ textDecoration: "none" }}>
+        <Stack
+          direction="row"
+          spacing={2}
+          sx={{ width: { xs: "100%", sm: "auto" } }}
+        >
+          <Link
+            href="/admin/users/create"
+            style={{
+              textDecoration: "none",
+              width: isMobile ? "100%" : "auto",
+            }}
+          >
             <Box
               sx={{
                 px: 2.5,
@@ -147,6 +272,7 @@ export default function UsersPage() {
                 boxShadow: 3,
                 display: "flex",
                 alignItems: "center",
+                justifyContent: "center",
                 gap: 1,
                 transition: "0.2s",
                 "&:hover": {
@@ -175,11 +301,7 @@ export default function UsersPage() {
       </Grid>
 
       {/* FILTER */}
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        spacing={2}
-        mb={3}
-      >
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mb={3}>
         <TextField
           fullWidth
           placeholder="Search..."
@@ -203,22 +325,57 @@ export default function UsersPage() {
         </FormControl>
       </Stack>
 
-      {/* TABLE */}
+      {/* TABLE / MOBILE CARDS */}
       {loading ? (
         <Box display="flex" justifyContent="center" py={10}>
           <CircularProgress />
         </Box>
+      ) : isMobile ? (
+        /* ── MOBILE: card list ── */
+        <Box>
+          {pageData.length > 0 ? (
+            pageData.map((u) => (
+              <UserMobileCard key={u.id} u={u} theme={theme} fetchUsers={fetchUsers} />
+            ))
+          ) : (
+            <Box py={8} textAlign="center" sx={{ opacity: 0.6 }}>
+              <SearchIcon sx={{ fontSize: 60, mb: 2, color: "text.disabled" }} />
+              <Typography variant="h6" fontWeight={700} color="text.secondary">
+                No users found
+              </Typography>
+              <Typography variant="body2" color="text.disabled">
+                Try adjusting your search or filters to find what you're looking for.
+              </Typography>
+            </Box>
+          )}
+
+          {/* PAGINATION mobile */}
+          <Stack direction="column" alignItems="center" spacing={1} mt={2} mb={1}>
+            <Typography variant="caption">
+              Showing {pageData.length} of {filtered.length}
+            </Typography>
+            <Pagination
+              count={totalPages}
+              page={page}
+              onChange={(_, v) => setPage(v)}
+              size="small"
+              siblingCount={0}
+              boundaryCount={1}
+            />
+          </Stack>
+        </Box>
       ) : (
+        /* ── DESKTOP: table ── */
         <Paper sx={{ borderRadius: 3 }}>
-          <TableContainer>
-            <Table sx={{ minWidth: { xs: 0, sm: 500 } }}>
+          <TableContainer sx={{ overflowX: "auto" }}>
+            <Table sx={{ minWidth: 500 }}>
               <TableHead>
                 <TableRow>
                   <TableCell>User</TableCell>
-                  {/* Hide Contact column on xs */}
                   <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>
                     Contact
                   </TableCell>
+                  <TableCell>Role</TableCell>
                   <TableCell>Status</TableCell>
                   <TableCell align="right">Actions</TableCell>
                 </TableRow>
@@ -232,7 +389,6 @@ export default function UsersPage() {
 
                     return (
                       <TableRow key={u.id} hover>
-                        {/* USER */}
                         <TableCell>
                           <Stack direction="row" spacing={2} alignItems="center">
                             <Avatar sx={{ bgcolor: theme.palette.primary.light, fontWeight: 700 }}>
@@ -250,7 +406,15 @@ export default function UsersPage() {
                         {/* CONTACT */}
                         <TableCell>{u.email}</TableCell>
 
-                        {/* STATUS */}
+                        <TableCell>
+                          <Typography
+                            variant="body2"
+                            sx={{ textTransform: "capitalize", fontWeight: 500 }}
+                          >
+                            {u.roles?.join(", ") || "—"}
+                          </Typography>
+                        </TableCell>
+
                         <TableCell>
                           <Chip
                             label={status}
@@ -265,7 +429,6 @@ export default function UsersPage() {
                           />
                         </TableCell>
 
-                        {/* ACTIONS */}
                         <TableCell align="right">
                           <Stack direction="row" justifyContent="flex-end" spacing={1}>
                             <Tooltip title="View">
@@ -299,9 +462,8 @@ export default function UsersPage() {
                     );
                   })
                 ) : (
-                  /* ── EMPTY STATE ────────────────────────── */
                   <TableRow>
-                    <TableCell colSpan={4} align="center" sx={{ py: 10 }}>
+                    <TableCell colSpan={5} align="center" sx={{ py: 10 }}>
                       <Box sx={{ textAlign: "center", opacity: 0.6 }}>
                         <SearchIcon sx={{ fontSize: 60, mb: 2, color: "text.disabled" }} />
                         <Typography variant="h6" fontWeight={700} color="text.secondary">

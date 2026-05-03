@@ -22,6 +22,7 @@ import {
   Pagination,
   Tooltip,
   useTheme,
+  useMediaQuery,
   alpha,
   Dialog,
   DialogTitle,
@@ -107,7 +108,7 @@ const StatCard = memo(function StatCard({ label, value, color, icon }: any) {
           <Typography variant="overline" color="text.secondary" fontWeight={700} lineHeight={1.2}>
             {label}
           </Typography>
-          <Typography variant="h4" fontWeight={800} sx={{ color, lineHeight: 1.1 }}>
+          <Typography variant="h4" fontWeight={800} sx={{ color, lineHeight: 1.1, fontSize: { xs: "1.6rem", sm: "2.125rem" } }}>
             {value}
           </Typography>
         </Box>
@@ -175,11 +176,106 @@ const ActionButtons = memo(function ActionButtons({
   );
 });
 
+// ── MOBILE VEHICLE CARD ──
+const VehicleMobileCard = memo(function VehicleMobileCard({
+  v,
+  theme,
+  onDelete,
+  onNavigate,
+}: {
+  v: any;
+  theme: any;
+  onDelete: (id: string, available: boolean, hasBookings?: boolean) => void;
+  onNavigate: (path: string) => void;
+}) {
+  const status = getStatusConfig(v);
+  const statusColor = theme.palette[status.colorKey].main;
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        p: 2,
+        mb: 2,
+        borderRadius: 3,
+        border: "1px solid",
+        borderColor: "divider",
+        transition: "background 0.15s",
+        "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.03) },
+      }}
+    >
+      <Stack direction="row" alignItems="center" spacing={1.5} mb={1.5}>
+        <Box
+          sx={{
+            width: 52,
+            height: 52,
+            borderRadius: 2,
+            overflow: "hidden",
+            flexShrink: 0,
+            bgcolor: alpha(theme.palette.primary.main, 0.08),
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {v.imageUrl ? (
+            <img
+              src={v.imageUrl.startsWith("http") ? v.imageUrl : `http://localhost:5000/${v.imageUrl}`}
+              alt={`${v.make} ${v.model}`}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          ) : (
+            <CarIcon fontSize="small" />
+          )}
+        </Box>
+
+        <Box flex={1} minWidth={0}>
+          <Typography fontWeight={700} fontSize={15} noWrap>
+            {v.make} {v.model}
+          </Typography>
+          <Stack direction="row" spacing={0.8} alignItems="center">
+            <Typography variant="caption" color="text.secondary">
+              {v.category || "General"}
+            </Typography>
+            <Typography variant="caption" color="text.disabled">·</Typography>
+            <Typography variant="caption" fontWeight={700} color="primary.main">
+              ${v.dailyRate}/day
+            </Typography>
+          </Stack>
+        </Box>
+
+        <Chip
+          label={status.label}
+          size="small"
+          sx={{
+            textTransform: "capitalize",
+            borderRadius: 2,
+            bgcolor: alpha(statusColor, 0.15),
+            color: statusColor,
+            fontWeight: 700,
+            fontSize: 11,
+            flexShrink: 0,
+          }}
+        />
+      </Stack>
+
+      <ActionButtons
+        vehicleId={v.vehicleId}
+        available={v.available}
+        hasActiveBookings={v.hasActiveBookings}
+        onDelete={onDelete}
+        onNavigate={onNavigate}
+      />
+    </Paper>
+  );
+});
+
 // ── MAIN PAGE ──
 export default function AdminCarsPage() {
   const theme = useTheme();
   const router = useRouter();
   const { data: session } = useSession();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [openDelete, setOpenDelete] = useState(false);
@@ -238,7 +334,7 @@ export default function AdminCarsPage() {
   const handleNavigate = useCallback((path: string) => router.push(path), [router]);
 
   return (
-    <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, maxWidth: 1300, mx: "auto" }}>
+    <Box sx={{ p: { xs: 1.5, sm: 3, md: 4 }, maxWidth: 1300, mx: "auto" }}>
       {/* HEADER */}
       <Stack
         direction={{ xs: "column", sm: "row" }}
@@ -248,10 +344,10 @@ export default function AdminCarsPage() {
         gap={2}
       >
         <Box>
-          <Typography variant="h4" fontWeight={800} sx={{ fontSize: { xs: "1.6rem", sm: "2rem" } }}>
+          <Typography variant="h4" fontWeight={800} sx={{ fontSize: { xs: "1.5rem", sm: "1.6rem", md: "2rem" } }}>
             Fleet Inventory
           </Typography>
-          <Typography color="text.secondary">Manage fleet vehicles</Typography>
+          <Typography color="text.secondary" variant="body2">Manage fleet vehicles</Typography>
         </Box>
 
         <Box
@@ -313,18 +409,67 @@ export default function AdminCarsPage() {
         />
       </Stack>
 
-      {/* TABLE */}
+      {/* TABLE / MOBILE CARDS */}
       {loading ? (
         <Box display="flex" justifyContent="center" py={10}>
           <CircularProgress />
         </Box>
+      ) : isMobile ? (
+        /* ── MOBILE: card list ── */
+        <Box>
+          {filtered.length > 0 ? (
+            filtered.map((v: any) => (
+              <VehicleMobileCard
+                key={v.vehicleId}
+                v={v}
+                theme={theme}
+                onDelete={handleDelete}
+                onNavigate={handleNavigate}
+              />
+            ))
+          ) : (
+            <Box py={8} textAlign="center" sx={{ opacity: 0.6 }}>
+              <Avatar
+                sx={{
+                  width: 64,
+                  height: 64,
+                  mx: "auto",
+                  mb: 2,
+                  bgcolor: (theme) => alpha(theme.palette.text.disabled, 0.1),
+                }}
+              >
+                <SearchIcon sx={{ fontSize: 32, color: "text.disabled" }} />
+              </Avatar>
+              <Typography variant="h6" fontWeight={700} color="text.secondary">
+                No vehicles found
+              </Typography>
+            </Box>
+          )}
+
+          {/* PAGINATION mobile */}
+          <Stack direction="column" alignItems="center" spacing={1} mt={2} mb={1}>
+            <Typography variant="caption" color="text.secondary">
+              Showing <strong>{filtered.length}</strong> of {total} vehicles
+            </Typography>
+            <Pagination
+              count={totalPages}
+              page={page}
+              onChange={(_, v) => setPage(v)}
+              size="small"
+              siblingCount={0}
+              boundaryCount={1}
+              sx={{ "& .MuiPaginationItem-root": { borderRadius: 2 } }}
+            />
+          </Stack>
+        </Box>
       ) : (
+        /* ── DESKTOP: table ── */
         <Paper
           elevation={0}
           sx={{ borderRadius: 4, border: "1px solid", borderColor: "divider", overflow: "hidden" }}
         >
-          <TableContainer>
-            <Table>
+          <TableContainer sx={{ overflowX: "auto" }}>
+            <Table sx={{ minWidth: 500 }}>
               <TableHead>
                 <TableRow
                   sx={{
@@ -519,7 +664,9 @@ export default function AdminCarsPage() {
       <Dialog
         open={openDelete}
         onClose={handleCloseDelete}
-        PaperProps={{ sx: { borderRadius: 3, p: 1, minWidth: 350 } }}
+        fullWidth
+        maxWidth="xs"
+        PaperProps={{ sx: { borderRadius: 3, p: 1, mx: { xs: 2, sm: "auto" } } }}
       >
         <DialogTitle sx={{ fontWeight: 700 }}>Delete Vehicle</DialogTitle>
         <DialogContent>
@@ -527,11 +674,11 @@ export default function AdminCarsPage() {
           <br />
           <strong>This action cannot be undone.</strong>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDelete} variant="outlined" sx={{ borderRadius: 2 }}>
+        <DialogActions sx={{ flexWrap: "wrap", gap: 1, pb: 2, px: 2 }}>
+          <Button onClick={handleCloseDelete} variant="outlined" sx={{ borderRadius: 2, flex: { xs: 1, sm: "none" } }}>
             Cancel
           </Button>
-          <Button onClick={confirmDelete} color="error" variant="contained" sx={{ borderRadius: 2, fontWeight: 700 }}>
+          <Button onClick={confirmDelete} color="error" variant="contained" sx={{ borderRadius: 2, fontWeight: 700, flex: { xs: 1, sm: "none" } }}>
             Delete
           </Button>
         </DialogActions>
@@ -543,6 +690,7 @@ export default function AdminCarsPage() {
         autoHideDuration={4000}
         onClose={handleCloseError}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        sx={{ maxWidth: { xs: "calc(100% - 32px)", sm: "auto" }, left: { xs: 16, sm: "auto" } }}
       >
         <Alert severity="error" onClose={handleCloseError}>
           {errorMsg}
