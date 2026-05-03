@@ -22,8 +22,9 @@ export async function getUsers(page = 1, size = 10) {
     method: "POST",
     headers: await authHeaders(),
     body: JSON.stringify({
-      keyword: null,
-      types: ["user"],
+      searchTerm: null,
+      role: null,
+      status: null,
     }),
   });
 
