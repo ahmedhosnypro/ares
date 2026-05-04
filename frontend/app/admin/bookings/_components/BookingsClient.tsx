@@ -49,12 +49,10 @@ import { logger } from "@/utils/logger";
 const getStatusConfig = (status?: string) => {
   const s = status?.toLowerCase() || "";
   // Map various status strings to color schemes
-  if (s === "confirmed" || s === "active" || s === "pickup") 
+  if (s === "confirmed" || s === "active" || s === "pickup")
     return { label: status || "Confirmed", colorKey: "success" as const };
-  if (s === "completed") 
-    return { label: status || "Completed", colorKey: "info" as const };
-  if (s === "cancelled" || s === "returned") 
-    return { label: status || "Cancelled", colorKey: "error" as const };
+  if (s === "completed") return { label: status || "Completed", colorKey: "info" as const };
+  if (s === "cancelled" || s === "returned") return { label: status || "Cancelled", colorKey: "error" as const };
   return { label: status || "Pending", colorKey: "warning" as const };
 };
 
