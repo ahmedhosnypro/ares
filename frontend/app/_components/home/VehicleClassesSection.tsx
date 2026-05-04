@@ -17,10 +17,10 @@ export default function VehicleClassesSection({ defaultLocationId }: VehicleClas
 
   return (
     <Box>
-      <Typography variant="h4" fontWeight="bold" textAlign="center" mb={1}>
+      <Typography variant="h4" sx={{ fontWeight: "bold", textAlign: "center", mb: 1 }}>
         Choose your ride
       </Typography>
-      <Typography variant="body1" color="text.secondary" textAlign="center" mb={5}>
+      <Typography variant="body1" color="text.secondary" sx={{ textAlign: "center", mb: 5 }}>
         We have a wide range of vehicles to fit your needs.
       </Typography>
       <Grid container spacing={4}>
@@ -80,14 +80,14 @@ export default function VehicleClassesSection({ defaultLocationId }: VehicleClas
                   pb: 3,
                 }}
               >
-                <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>
+                <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
                   {vc.title}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                   {vc.spec}
                 </Typography>
                 <Divider sx={{ mb: 3 }} />
-                <Typography variant="h5" fontWeight="bold" color="primary" sx={{ mb: 3 }}>
+                <Typography variant="h5" color="primary" sx={{ fontWeight: "bold", mb: 3 }}>
                   From {vc.price} / day
                 </Typography>
                 <Box sx={{ mt: "auto" }}>

@@ -51,7 +51,7 @@ export default function Footer() {
   const paymentMethods = ["Visa", "Mastercard", "PayPal", "Apple Pay", "Google Pay"];
 
   return (
-    <Box component="footer" sx={{ bgcolor: "grey.900", color: "grey.300", pt: 8, pb: 4 }}>
+    <Box component="footer" sx={{ bgcolor: "footer.background", color: "footer.text", pt: 8, pb: 4 }}>
       <Container maxWidth="xl">
         {/* Newsletter Section */}
         <Box
@@ -63,10 +63,10 @@ export default function Footer() {
             mb: 8,
           }}
         >
-          <Grid container spacing={4} alignItems="center">
+          <Grid container spacing={4} sx={{ alignItems: "center" }}>
             <Grid size={{ xs: 12, md: 6 }}>
               <Stack spacing={2}>
-                <Typography variant="h4" fontWeight="bold">
+                <Typography variant="h4" sx={{ fontWeight: "bold" }}>
                   Subscribe to our newsletter
                 </Typography>
                 <Typography variant="body1" sx={{ opacity: 0.9 }}>
@@ -109,7 +109,7 @@ export default function Footer() {
         </Box>
 
         {/* Main Footer Content */}
-        <Grid container spacing={4} mb={6}>
+        <Grid container spacing={4} sx={{ mb: 6 }}>
           {/* Company Info */}
           <Grid size={{ xs: 12, md: 3 }}>
             <Box sx={{ mb: 2 }}>
@@ -136,20 +136,20 @@ export default function Footer() {
                 />
               </Box>
             </Box>
-            <Typography variant="body2" mb={3} sx={{ lineHeight: 1.7 }}>
+            <Typography variant="body2" sx={{ mb: 3, lineHeight: 1.7 }}>
               Your trusted partner for car rentals worldwide. Quality vehicles, transparent pricing, and exceptional
               service.
             </Typography>
             <Stack spacing={1.5}>
-              <Stack direction="row" spacing={1} alignItems="center">
+              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 <PhoneIcon fontSize="small" />
                 <Typography variant="body2">+20 123 456 7890</Typography>
               </Stack>
-              <Stack direction="row" spacing={1} alignItems="center">
+              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 <EmailIcon fontSize="small" />
                 <Typography variant="body2">support@ares-rentals.com</Typography>
               </Stack>
-              <Stack direction="row" spacing={1} alignItems="flex-start">
+              <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start" }}>
                 <LocationOnIcon fontSize="small" />
                 <Typography variant="body2">Cairo, Egypt</Typography>
               </Stack>
@@ -158,7 +158,7 @@ export default function Footer() {
 
           {/* Top Cities */}
           <Grid size={{ xs: 6, sm: 6, md: 2 }}>
-            <Typography variant="h6" fontWeight="bold" color="white" gutterBottom>
+            <Typography variant="h6" sx={{ fontWeight: "bold" }} color="footer.title" gutterBottom>
               Top Cities
             </Typography>
             <Stack spacing={1}>
@@ -179,7 +179,7 @@ export default function Footer() {
 
           {/* Fleet Types */}
           <Grid size={{ xs: 6, sm: 6, md: 2 }}>
-            <Typography variant="h6" fontWeight="bold" color="white" gutterBottom>
+            <Typography variant="h6" sx={{ fontWeight: "bold" }} color="footer.title" gutterBottom>
               Fleet Types
             </Typography>
             <Stack spacing={1}>
@@ -200,7 +200,7 @@ export default function Footer() {
 
           {/* Company */}
           <Grid size={{ xs: 6, sm: 4, md: 1.5 }}>
-            <Typography variant="h6" fontWeight="bold" color="white" gutterBottom>
+            <Typography variant="h6" sx={{ fontWeight: "bold" }} color="footer.title" gutterBottom>
               Company
             </Typography>
             <Stack spacing={1}>
@@ -221,7 +221,7 @@ export default function Footer() {
 
           {/* Support */}
           <Grid size={{ xs: 6, sm: 4, md: 1.5 }}>
-            <Typography variant="h6" fontWeight="bold" color="white" gutterBottom>
+            <Typography variant="h6" sx={{ fontWeight: "bold" }} color="footer.title" gutterBottom>
               Support
             </Typography>
             <Stack spacing={1}>
@@ -242,7 +242,7 @@ export default function Footer() {
 
           {/* Legal */}
           <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-            <Typography variant="h6" fontWeight="bold" color="white" gutterBottom>
+            <Typography variant="h6" sx={{ fontWeight: "bold" }} color="footer.title" gutterBottom>
               Legal
             </Typography>
             <Stack spacing={1}>
@@ -262,18 +262,22 @@ export default function Footer() {
           </Grid>
         </Grid>
 
-        <Divider sx={{ borderColor: "grey.800", mb: 4 }} />
+        <Divider sx={{ borderColor: "footer.divider", mb: 4 }} />
 
         {/* Bottom Footer */}
-        <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" alignItems="center" spacing={3}>
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          sx={{ justifyContent: "space-between", alignItems: "center" }}
+          spacing={3}
+        >
           {/* Copyright */}
-          <Typography variant="body2" color="grey.500">
+          <Typography variant="body2" color="footer.text">
             © {new Date().getFullYear()} ARES Rentals. All rights reserved.
           </Typography>
 
           {/* Payment Methods */}
-          <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
-            <Typography variant="caption" color="grey.500">
+          <Stack direction="row" spacing={2} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+            <Typography variant="caption" color="footer.text">
               We accept:
             </Typography>
             {paymentMethods.map(method => (
@@ -282,13 +286,13 @@ export default function Footer() {
                 sx={{
                   px: 2,
                   py: 0.5,
-                  bgcolor: "grey.800",
+                  bgcolor: "footer.socialBg",
                   borderRadius: 1,
                   border: "1px solid",
-                  borderColor: "grey.700",
+                  borderColor: "footer.divider",
                 }}
               >
-                <Typography variant="caption" fontWeight="bold" color="grey.400">
+                <Typography variant="caption" sx={{ fontWeight: "bold" }} color="footer.socialText">
                   {method}
                 </Typography>
               </Box>
@@ -314,12 +318,12 @@ export default function Footer() {
                   width: 40,
                   height: 40,
                   borderRadius: 1,
-                  bgcolor: "grey.800",
-                  color: "grey.400",
+                  bgcolor: "footer.socialBg",
+                  color: "footer.socialText",
                   transition: "all 0.2s ease",
                   "&:hover": {
                     bgcolor: "primary.main",
-                    color: "white",
+                    color: "primary.contrastText",
                     transform: "translateY(-2px)",
                   },
                 }}

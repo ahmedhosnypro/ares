@@ -32,10 +32,12 @@ export default function VehicleInfo({ vehicle }: VehicleInfoProps) {
         <Stack
           direction={{ xs: "column", sm: "row" }}
           spacing={1.5}
-          alignItems={{ sm: "center" }}
-          justifyContent="space-between"
+          sx={{
+            alignItems: { sm: "center" },
+            justifyContent: "space-between",
+          }}
         >
-          <Typography variant="h4" fontWeight={800} color="text.primary">
+          <Typography variant="h4" color="text.primary" sx={{ fontWeight: 800 }}>
             {title || "Vehicle Details"}
           </Typography>
           <Chip
@@ -45,7 +47,7 @@ export default function VehicleInfo({ vehicle }: VehicleInfoProps) {
           />
         </Stack>
 
-        <Stack direction="row" spacing={1} alignItems="center">
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
           <Rating value={vehicle.averageRating} precision={0.5} readOnly />
           <Typography variant="body2" color="text.secondary">
             {vehicle.averageRating.toFixed(1)} ({vehicle.reviewCount} reviews)
@@ -62,7 +64,7 @@ export default function VehicleInfo({ vehicle }: VehicleInfoProps) {
       <Divider />
 
       <Stack spacing={1}>
-        <Typography variant="h6" fontWeight={700}>
+        <Typography variant="h6" sx={{ fontWeight: 700 }}>
           About this vehicle
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.8 }}>
@@ -72,7 +74,7 @@ export default function VehicleInfo({ vehicle }: VehicleInfoProps) {
 
       {specs.length > 0 ? (
         <Stack spacing={1.5}>
-          <Typography variant="h6" fontWeight={700}>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>
             Key specifications
           </Typography>
           <Grid container spacing={1.5}>
@@ -91,7 +93,7 @@ export default function VehicleInfo({ vehicle }: VehicleInfoProps) {
                   <Typography variant="caption" color="text.secondary">
                     {spec.label}
                   </Typography>
-                  <Typography variant="body1" fontWeight={700} color="text.primary">
+                  <Typography variant="body1" color="text.primary" sx={{ fontWeight: 700 }}>
                     {spec.value}
                   </Typography>
                 </Box>
@@ -103,14 +105,14 @@ export default function VehicleInfo({ vehicle }: VehicleInfoProps) {
 
       {vehicle.features.length > 0 ? (
         <Stack spacing={1.5}>
-          <Typography variant="h6" fontWeight={700}>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>
             Included features
           </Typography>
           <Grid container spacing={1.5}>
             {vehicle.features.map(feature => (
               <Grid key={feature.id || feature.featureName} size={{ xs: 12, sm: 6 }}>
                 <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: 1.5 }}>
-                  <Typography variant="subtitle2" fontWeight={700} color="text.primary">
+                  <Typography variant="subtitle2" color="text.primary" sx={{ fontWeight: 700 }}>
                     {feature.featureName}
                   </Typography>
                   {feature.featureDescription ? (
@@ -126,11 +128,17 @@ export default function VehicleInfo({ vehicle }: VehicleInfoProps) {
       ) : null}
 
       {vehicle.supplierName ? (
-        <Typography variant="body2" color="text.secondary">
-          Listed by{" "}
-          <Box component="span" color="text.primary" fontWeight={700}>
-            {vehicle.supplierName}
-          </Box>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{
+            "& .supplierName": {
+              color: "text.primary",
+              fontWeight: 700,
+            },
+          }}
+        >
+          Listed by <span className="supplierName">{vehicle.supplierName}</span>
         </Typography>
       ) : null}
     </Stack>

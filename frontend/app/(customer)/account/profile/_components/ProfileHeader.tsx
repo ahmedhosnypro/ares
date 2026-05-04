@@ -142,7 +142,7 @@ export default function ProfileHeader({
       </Box>
 
       {/* Name & email */}
-      <Typography variant="h6" fontWeight={800} color="text.primary" sx={{ lineHeight: 1.2 }}>
+      <Typography variant="h6" color="text.primary" sx={{ lineHeight: 1.2, fontWeight: 800 }}>
         {safeName}
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
@@ -154,13 +154,12 @@ export default function ProfileHeader({
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.75 }}>
           <Typography
             variant="caption"
-            fontWeight={700}
             color="text.secondary"
-            sx={{ textTransform: "uppercase", letterSpacing: "0.08em" }}
+            sx={{ textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}
           >
             Profile Completion
           </Typography>
-          <Typography variant="caption" fontWeight={800} color="primary.main">
+          <Typography variant="caption" color="primary.main" sx={{ fontWeight: 800 }}>
             {progress}%
           </Typography>
         </Box>

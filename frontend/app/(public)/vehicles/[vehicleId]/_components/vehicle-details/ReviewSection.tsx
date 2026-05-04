@@ -21,8 +21,8 @@ function formatReviewDate(value: string): string {
 export default function ReviewSection({ reviews }: ReviewSectionProps) {
   return (
     <Stack spacing={2}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Typography variant="h5" fontWeight={800}>
+      <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+        <Typography variant="h5" sx={{ fontWeight: 800 }}>
           Customer reviews
         </Typography>
         {reviews.length > 0 ? (
@@ -37,8 +37,8 @@ export default function ReviewSection({ reviews }: ReviewSectionProps) {
           {reviews.map(review => (
             <Paper key={review.reviewId || `${review.userName}-${review.createdAt}`} variant="outlined" sx={{ p: 2 }}>
               <Stack spacing={1}>
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={1} justifyContent="space-between">
-                  <Typography variant="subtitle1" fontWeight={700}>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ justifyContent: "space-between" }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
                     {review.userName}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">

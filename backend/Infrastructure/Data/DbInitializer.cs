@@ -267,10 +267,15 @@ public static class DbInitializer
 
         await EnsureVehicleImageAsync(context, Guid.Parse("44444444-4444-4444-4444-444444444441"), sedanVehicle.Id, "uploads/seed/vehicles/mini.png", "uploads/seed/vehicles/mini.png", true, 1);
         await EnsureVehicleImageAsync(context, Guid.Parse("44444444-4444-4444-4444-444444444442"), sedanVehicle.Id, "uploads/seed/vehicles/midi.png", "uploads/seed/vehicles/midi.png", false, 2);
+        await EnsureVehicleImageAsync(context, Guid.Parse("44444444-4444-4444-4444-444444444443"), sedanVehicle.Id, "uploads/seed/vehicles/maxi.png", "uploads/seed/vehicles/maxi.png", false, 3);
+        
         await EnsureVehicleImageAsync(context, Guid.Parse("55555555-5555-5555-5555-555555555551"), suvVehicle.Id, "uploads/seed/vehicles/midi.png", "uploads/seed/vehicles/midi.png", true, 1);
         await EnsureVehicleImageAsync(context, Guid.Parse("55555555-5555-5555-5555-555555555552"), suvVehicle.Id, "uploads/seed/vehicles/maxi.png", "uploads/seed/vehicles/maxi.png", false, 2);
+        await EnsureVehicleImageAsync(context, Guid.Parse("55555555-5555-5555-5555-555555555553"), suvVehicle.Id, "uploads/seed/vehicles/mini.png", "uploads/seed/vehicles/mini.png", false, 3);
+        
         await EnsureVehicleImageAsync(context, Guid.Parse("66666666-6666-6666-6666-666666666661"), compactVehicle.Id, "uploads/seed/vehicles/maxi.png", "uploads/seed/vehicles/maxi.png", true, 1);
         await EnsureVehicleImageAsync(context, Guid.Parse("66666666-6666-6666-6666-666666666662"), compactVehicle.Id, "uploads/seed/vehicles/mini.png", "uploads/seed/vehicles/mini.png", false, 2);
+        await EnsureVehicleImageAsync(context, Guid.Parse("66666666-6666-6666-6666-666666666663"), compactVehicle.Id, "uploads/seed/vehicles/midi.png", "uploads/seed/vehicles/midi.png", false, 3);
 
         await EnsureVehicleFeatureAsync(context, Guid.Parse("77777777-7777-7777-7777-777777777771"), sedanVehicle.Id, "Comfort", "Air Conditioning", "Dual-zone automatic climate control");
         await EnsureVehicleFeatureAsync(context, Guid.Parse("77777777-7777-7777-7777-777777777772"), sedanVehicle.Id, "Safety", "Rear Camera", "Parking camera with sensors");

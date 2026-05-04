@@ -14,7 +14,7 @@ export async function getServerTheme(): Promise<PaletteMode> {
     const themeCookie = cookieStore.get("theme-mode");
 
     if (themeCookie?.value === "dark" || themeCookie?.value === "light") {
-      return themeCookie.value as PaletteMode;
+      return themeCookie.value;
     }
 
     // Fallback: try to detect from user-agent or accept headers

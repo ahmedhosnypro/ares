@@ -34,12 +34,12 @@ Save profile changes.
 
 **Response**
 
-| Status | Meaning               |
-| ------ | --------------------- |
-| 200    | User updated          |
-| 400    | Validation error      |
-| 404    | User not found        |
-| 409    | Email/Phone conflict  |
+| Status | Meaning              |
+| ------ | -------------------- |
+| 200    | User updated         |
+| 400    | Validation error     |
+| 404    | User not found       |
+| 409    | Email/Phone conflict |
 
 ---
 
@@ -49,7 +49,7 @@ Toggle the user's status between 'Active' and 'Blocked'.
 
 **Response**
 
-| Status | Meaning               |
-| ------ | --------------------- |
-| 200    | Status updated        |
-| 404    | User not found        |
+| Status | Meaning        |
+| ------ | -------------- |
+| 200    | Status updated |
+| 404    | User not found |

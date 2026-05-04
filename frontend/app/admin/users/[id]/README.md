@@ -39,4 +39,3 @@ Returns `UserManagementDto` object containing user information:
   "updatedAt": "string"
 }
 ```
-

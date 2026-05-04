@@ -2,6 +2,8 @@ type ApiFetchOptions = RequestInit & {
   accessToken?: string;
 };
 
+import { logger } from "@/utils/logger";
+
 export function getApiBaseUrl(): string {
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   if (!baseUrl) {
@@ -35,11 +37,11 @@ export async function apiFetchJson<T>(endpoint: string, options: ApiFetchOptions
 
   if (!response.ok) {
     // 1. هنقرا تفاصيل المشكلة اللي الباك إند باعتها
-    const errorBody = await response.text(); 
-    
+    const errorBody = await response.text();
+
     // 2. هنطبعها في الكونسول عشان نشوفها
-    console.error(`🚨 Backend Error Details:`, errorBody);
-    
+    logger.error("Backend Error Details", errorBody);
+
     // 3. هنرمي الإيرور بالتفاصيل الجديدة
     throw new Error(`API Error ${String(response.status)}: ${response.statusText} \nDetails: ${errorBody}`);
   }

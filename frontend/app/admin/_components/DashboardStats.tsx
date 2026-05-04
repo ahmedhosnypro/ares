@@ -2,21 +2,38 @@
 
 import { useEffect, useState } from "react";
 import { Grid, Card, CardContent, Box, Typography, Avatar, Chip, CircularProgress, useTheme } from "@mui/material";
-import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
-import EventAvailableIcon from '@mui/icons-material/EventAvailable';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
-import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import TrendingDownIcon from '@mui/icons-material/TrendingDown';
+import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
+import EventAvailableIcon from "@mui/icons-material/EventAvailable";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
+import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import { useSession } from "next-auth/react";
 import { apiFetchJson } from "@/utils/api-client";
+import { logger } from "@/utils/logger";
+
+interface DashboardSummary {
+  totalBookings: number;
+  totalVehicles: number;
+  totalRevenue: number;
+  totalUsers: number;
+}
+
+interface StatItem {
+  title: string;
+  value: string;
+  change: string;
+  isUp: boolean;
+  icon: React.ReactNode;
+  color: "primary" | "success" | "warning" | "error";
+}
 
 export default function DashboardStats() {
   const theme = useTheme(); // سحبنا الـ Theme عشان نعرف إحنا Dark ولا Light
-  const isDark = theme.palette.mode === 'dark';
-  
+  const isDark = theme.palette.mode === "dark";
+
   const { data: session, status } = useSession();
-  const [summaryData, setSummaryData] = useState<any[]>([]);
+  const [summaryData, setSummaryData] = useState<StatItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,77 +42,137 @@ export default function DashboardStats() {
     const fetchDashboardData = async () => {
       try {
         if (session?.accessToken) {
-          const data = await apiFetchJson<any>("api/dashboard/summary", {
-            accessToken: session.accessToken
+          const data = await apiFetchJson<DashboardSummary>("api/dashboard/summary", {
+            accessToken: session.accessToken,
           });
           setSummaryData([
-            { title: "Total Bookings", value: data.totalBookings.toString(), change: "+12.5%", isUp: true, icon: <EventAvailableIcon />, color: "primary" },
-            { title: "Active Vehicles", value: data.totalVehicles.toString(), change: "+4.2%", isUp: true, icon: <DirectionsCarIcon />, color: "success" },
-            { title: "Total Revenue", value: `$${data.totalRevenue.toLocaleString()}`, change: "+18.2%", isUp: true, icon: <AttachMoneyIcon />, color: "warning" },
-            { title: "Total Users", value: data.totalUsers.toString(), change: "-2.1%", isUp: false, icon: <PeopleAltIcon />, color: "error" },
+            {
+              title: "Total Bookings",
+              value: data.totalBookings.toString(),
+              change: "+12.5%",
+              isUp: true,
+              icon: <EventAvailableIcon />,
+              color: "primary",
+            },
+            {
+              title: "Active Vehicles",
+              value: data.totalVehicles.toString(),
+              change: "+4.2%",
+              isUp: true,
+              icon: <DirectionsCarIcon />,
+              color: "success",
+            },
+            {
+              title: "Total Revenue",
+              value: `$${data.totalRevenue.toLocaleString()}`,
+              change: "+18.2%",
+              isUp: true,
+              icon: <AttachMoneyIcon />,
+              color: "warning",
+            },
+            {
+              title: "Total Users",
+              value: data.totalUsers.toString(),
+              change: "-2.1%",
+              isUp: false,
+              icon: <PeopleAltIcon />,
+              color: "error",
+            },
           ]);
         }
-      } catch (error) {
+      } catch (_error) {
+        logger.error("Failed to fetch dashboard summary:", _error);
         setSummaryData([
-          { title: "Total Bookings", value: "1,284", change: "+12.5%", isUp: true, icon: <EventAvailableIcon />, color: "primary" },
-          { title: "Active Vehicles", value: "342", change: "+4.2%", isUp: true, icon: <DirectionsCarIcon />, color: "success" },
-          { title: "Total Revenue", value: "$45,231", change: "+18.2%", isUp: true, icon: <AttachMoneyIcon />, color: "warning" },
+          {
+            title: "Total Bookings",
+            value: "1,284",
+            change: "+12.5%",
+            isUp: true,
+            icon: <EventAvailableIcon />,
+            color: "primary",
+          },
+          {
+            title: "Active Vehicles",
+            value: "342",
+            change: "+4.2%",
+            isUp: true,
+            icon: <DirectionsCarIcon />,
+            color: "success",
+          },
+          {
+            title: "Total Revenue",
+            value: "$45,231",
+            change: "+18.2%",
+            isUp: true,
+            icon: <AttachMoneyIcon />,
+            color: "warning",
+          },
           { title: "Total Users", value: "892", change: "-2.1%", isUp: false, icon: <PeopleAltIcon />, color: "error" },
         ]);
       } finally {
         setLoading(false);
       }
     };
-    fetchDashboardData();
+    void fetchDashboardData();
   }, [session?.accessToken, status]);
 
-  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>;
+  if (loading)
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
+        <CircularProgress />
+      </Box>
+    );
 
   return (
     <Grid container spacing={3}>
       {summaryData.map((stat, index) => (
-        <Grid item xs={12} sm={6} md={3} key={index}>
-          <Card 
-            elevation={0} 
-            sx={{ 
-              borderRadius: '16px', 
-              bgcolor: 'background.paper', // هيقلب أبيض في الفاتح ورمادي غامق في الدارك
-              border: '1px solid',
-              borderColor: 'divider', // خط فاصل متناسق مع المود
-              boxShadow: isDark ? '0 4px 20px rgba(0,0,0,0.4)' : '0 4px 20px rgba(0,0,0,0.03)', 
-              transition: 'all 0.2s', 
-              '&:hover': { transform: 'translateY(-4px)' } 
+        <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
+          <Card
+            elevation={0}
+            sx={{
+              borderRadius: "16px",
+              bgcolor: "background.paper", // هيقلب أبيض في الفاتح ورمادي غامق في الدارك
+              border: "1px solid",
+              borderColor: "divider", // خط فاصل متناسق مع المود
+              boxShadow: "shadow.card",
+              transition: "all 0.2s",
+              "&:hover": { transform: "translateY(-4px)" },
             }}
           >
-            <CardContent sx={{ p: '24px !important' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                <Avatar 
-                  sx={{ 
+            <CardContent sx={{ p: "24px !important" }}>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
+                <Avatar
+                  sx={{
                     // لو دارك هنخلي الخلفية شفافة شوية من اللون الأساسي، ولو لايت هتبقى أفتح
-                    bgcolor: isDark ? `${stat.color}.dark` : `${stat.color}.light`, 
-                    color: isDark ? '#fff' : `${stat.color}.dark`,
-                    width: 48, 
-                    height: 48, 
-                    borderRadius: '12px' 
+                    bgcolor: isDark ? `${stat.color}.dark` : `${stat.color}.light`,
+                    color: isDark ? "common.white" : `${stat.color}.dark`,
+                    width: 48,
+                    height: 48,
+                    borderRadius: "12px",
                   }}
                 >
                   {stat.icon}
                 </Avatar>
-                <Chip 
-                  icon={stat.isUp ? <TrendingUpIcon sx={{ fontSize: 16 }}/> : <TrendingDownIcon sx={{ fontSize: 16 }}/>} 
-                  label={stat.change} 
-                  size="small" 
+                <Chip
+                  icon={
+                    stat.isUp ? <TrendingUpIcon sx={{ fontSize: 16 }} /> : <TrendingDownIcon sx={{ fontSize: 16 }} />
+                  }
+                  label={stat.change}
+                  size="small"
                   color={stat.isUp ? "success" : "error"}
                   variant={isDark ? "filled" : "outlined"} // في الدارك الـ filled أحسن
-                  sx={{ fontWeight: 'bold', borderRadius: '8px' }} 
+                  sx={{ fontWeight: "bold", borderRadius: "8px" }}
                 />
               </Box>
               {/* text.primary هيخلي اللون أسود في اللايت، وأبيض في الدارك تلقائياً */}
-              <Typography variant="h4" fontWeight="800" sx={{ mb: 0.5, color: 'text.primary' }}>
+              <Typography variant="h4" sx={{ color: "text.primary", fontWeight: "800", mb: 0.5 }}>
                 {stat.value}
               </Typography>
               {/* text.secondary للون الرمادي المريح للعين */}
-              <Typography variant="body2" fontWeight="600" sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <Typography
+                variant="body2"
+                sx={{ color: "text.secondary", fontWeight: "600", letterSpacing: "0.5px", textTransform: "uppercase" }}
+              >
                 {stat.title}
               </Typography>
             </CardContent>

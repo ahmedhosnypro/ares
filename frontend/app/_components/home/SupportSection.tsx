@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Box, Button, Grid, List, ListItem, ListItemIcon, ListItemText, Paper, Typography } from "@mui/material";
+import { Box, Button, Grid, List, ListItem, ListItemIcon, ListItemText, Paper, Typography, alpha } from "@mui/material";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import type { PublicLandingSupport } from "@/utils/public-data";
 
@@ -36,7 +36,7 @@ export default function SupportSection({ support }: Readonly<SupportSectionProps
               height: "100%",
             }}
           >
-            <Typography variant="h3" fontWeight="bold" mb={2} sx={{ fontSize: { xs: "2rem", md: "3rem" } }}>
+            <Typography variant="h3" sx={{ fontWeight: "bold", mb: 2, fontSize: { xs: "2rem", md: "3rem" } }}>
               {supportTitle}
             </Typography>
             <Typography
@@ -70,8 +70,10 @@ export default function SupportSection({ support }: Readonly<SupportSectionProps
                       primary={item}
                       slotProps={{
                         primary: {
-                          fontWeight: "bold",
-                          fontSize: "1.05rem",
+                          sx: {
+                            fontWeight: "bold",
+                            fontSize: "1.05rem",
+                          },
                         },
                       }}
                     />
@@ -118,7 +120,11 @@ export default function SupportSection({ support }: Readonly<SupportSectionProps
               position: "relative",
               overflow: "hidden",
               // Subtle gradient overlay instead of hard split
-              background: "linear-gradient(135deg, rgba(25, 118, 210, 0.15) 0%, rgba(25, 118, 210, 0.05) 100%)",
+              background: theme =>
+                `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.15)} 0%, ${alpha(
+                  theme.palette.primary.main,
+                  0.05
+                )} 100%)`,
             }}
           >
             {/* Optional: subtle pattern or texture */}
@@ -129,7 +135,7 @@ export default function SupportSection({ support }: Readonly<SupportSectionProps
                 left: 0,
                 right: 0,
                 bottom: 0,
-                backgroundImage: "url('/img/map.jpg')",
+                backgroundImage: "url('/img/view-on-map.png')",
                 backgroundSize: "cover",
                 backgroundPosition: "center",
                 opacity: 0.08, // Very subtle background image
@@ -148,14 +154,14 @@ export default function SupportSection({ support }: Readonly<SupportSectionProps
                 width: "100%",
                 bgcolor: "background.paper",
                 // Softer, more modern shadow
-                boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12)",
+                boxShadow: theme => `0 8px 32px ${alpha(theme.palette.common.black, 0.12)}`,
               }}
             >
               <Typography
                 variant="h6"
-                fontWeight="bold"
-                mb={2}
                 sx={{
+                  fontWeight: "bold",
+                  mb: 2,
                   fontSize: { xs: "1.1rem", md: "1.25rem" },
                   lineHeight: 1.4,
                 }}

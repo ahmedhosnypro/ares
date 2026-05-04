@@ -16,6 +16,7 @@ declare module "@mui/material/styles" {
       dark: string;
       gradient: string;
       tealGradient: string;
+      blur: string;
     };
     border: {
       light: string;
@@ -34,6 +35,7 @@ declare module "@mui/material/styles" {
       dark?: string;
       gradient?: string;
       tealGradient?: string;
+      blur?: string;
     };
     border?: {
       light?: string;
@@ -76,6 +78,7 @@ const getLightPalette = (): PaletteOptions => {
       dark: "rgba(0, 0, 0, 0.4)",
       gradient: `linear-gradient(135deg, ${m3Light.background} 0%, ${m3Light.primaryContainer} 100%)`,
       tealGradient: `linear-gradient(135deg, ${m3Light.primary}E6 0%, ${m3Light.secondary}E6 100%)`,
+      blur: "rgba(255, 255, 255, 0.8)",
     },
     border: {
       light: m3Light.outlineVariant,
@@ -118,6 +121,7 @@ const getDarkPalette = (): PaletteOptions => {
       dark: "rgba(0, 0, 0, 0.7)",
       gradient: `linear-gradient(135deg, ${m3Dark.background} 0%, ${m3Dark.primaryContainer}26 100%)`,
       tealGradient: `linear-gradient(135deg, ${m3Dark.primary}F2 0%, ${m3Dark.secondary}FA 100%)`,
+      blur: "rgba(26, 31, 35, 0.8)",
     },
     border: {
       light: m3Dark.outlineVariant,

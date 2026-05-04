@@ -78,13 +78,13 @@ export default async function CheckoutPage({ params }: PageProps) {
   return (
     <Box component="main" sx={{ minHeight: "100vh", bgcolor: "background.default", py: { xs: 4, md: 8 } }}>
       <Container maxWidth="lg">
-        <Typography variant="h4" fontWeight={900} mb={4}>
+        <Typography variant="h4" sx={{ fontWeight: 900, mb: 4 }}>
           Checkout
         </Typography>
 
         <Grid container spacing={4}>
           {/* Order Summary */}
-          <Grid size={{ xs: 12, md: 5 }} order={{ xs: 1, md: 2 }}>
+          <Grid size={{ xs: 12, md: 5 }} sx={{ order: { xs: 1, md: 2 } }}>
             <Paper
               elevation={0}
               sx={{
@@ -96,7 +96,7 @@ export default async function CheckoutPage({ params }: PageProps) {
                 top: 24,
               }}
             >
-              <Typography variant="h6" fontWeight={800} mb={3}>
+              <Typography variant="h6" sx={{ fontWeight: 800, mb: 3 }}>
                 Order Summary
               </Typography>
 
@@ -105,7 +105,7 @@ export default async function CheckoutPage({ params }: PageProps) {
                   <Typography variant="subtitle2" color="text.secondary">
                     Vehicle
                   </Typography>
-                  <Typography variant="body1" fontWeight={700}>
+                  <Typography variant="body1" sx={{ fontWeight: 700 }}>
                     {booking.car.make} {booking.car.model}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
@@ -120,10 +120,10 @@ export default async function CheckoutPage({ params }: PageProps) {
                     <Typography variant="subtitle2" color="text.secondary">
                       Pickup
                     </Typography>
-                    <Typography variant="body2" fontWeight={600}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
                       {pickupDate.toLocaleDateString()}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary" noWrap display="block">
+                    <Typography variant="caption" color="text.secondary" noWrap sx={{ display: "block" }}>
                       {booking.pickupLocation.label}
                     </Typography>
                   </Grid>
@@ -131,10 +131,10 @@ export default async function CheckoutPage({ params }: PageProps) {
                     <Typography variant="subtitle2" color="text.secondary">
                       Return
                     </Typography>
-                    <Typography variant="body2" fontWeight={600}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
                       {returnDate.toLocaleDateString()}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary" noWrap display="block">
+                    <Typography variant="caption" color="text.secondary" noWrap sx={{ display: "block" }}>
                       {booking.dropOffLocation.label}
                     </Typography>
                   </Grid>
@@ -142,20 +142,20 @@ export default async function CheckoutPage({ params }: PageProps) {
 
                 <Divider />
 
-                <Stack direction="row" justifyContent="space-between">
+                <Stack direction="row" sx={{ justifyContent: "space-between" }}>
                   <Typography variant="body2" color="text.secondary">
                     Rental Duration
                   </Typography>
-                  <Typography variant="body2" fontWeight={600}>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
                     {days} {days === 1 ? "Day" : "Days"}
                   </Typography>
                 </Stack>
 
-                <Stack direction="row" justifyContent="space-between" pt={1}>
-                  <Typography variant="h6" fontWeight={800}>
+                <Stack direction="row" sx={{ justifyContent: "space-between", pt: 1 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 800 }}>
                     Total Amount
                   </Typography>
-                  <Typography variant="h6" fontWeight={900} color="primary.main">
+                  <Typography variant="h6" sx={{ fontWeight: 900 }} color="primary.main">
                     {formatCurrency(booking.price)}
                   </Typography>
                 </Stack>
@@ -164,7 +164,7 @@ export default async function CheckoutPage({ params }: PageProps) {
           </Grid>
 
           {/* Payment Form */}
-          <Grid size={{ xs: 12, md: 7 }} order={{ xs: 2, md: 1 }}>
+          <Grid size={{ xs: 12, md: 7 }} sx={{ order: { xs: 2, md: 1 } }}>
             <PaymentForm bookingId={booking.id} amount={booking.price} accessToken={session.accessToken} />
           </Grid>
         </Grid>

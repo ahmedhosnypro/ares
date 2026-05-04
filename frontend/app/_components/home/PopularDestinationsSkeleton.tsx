@@ -4,7 +4,7 @@ export default function PopularDestinationsSkeleton() {
   return (
     <Box sx={{ py: { xs: 6, md: 10 }, bgcolor: "grey.50" }}>
       <Container maxWidth="xl">
-        <Stack spacing={2} alignItems="center" mb={6}>
+        <Stack spacing={2} sx={{ alignItems: "center", mb: 6 }}>
           <Skeleton variant="text" width={400} height={60} animation="wave" />
           <Skeleton variant="text" width={600} height={24} animation="wave" />
         </Stack>

@@ -68,11 +68,11 @@ export default function BookingFilters({ onFilterChange }: Readonly<BookingFilte
       <Box>
         <Typography
           variant="body2"
-          fontWeight={700}
           color="text.secondary"
           sx={{
             mb: 1.5,
             fontSize: { xs: "0.75rem", md: "0.875rem" },
+            fontWeight: 700,
           }}
         >
           Filter by Status:

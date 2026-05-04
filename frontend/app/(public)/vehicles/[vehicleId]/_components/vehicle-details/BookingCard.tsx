@@ -223,7 +223,7 @@ export default function BookingCard({ vehicle, locationOptions, vehicleId, baseP
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <Stack spacing={2} sx={{ p: { xs: 2, md: 3 } }}>
         <Stack spacing={0.5}>
-          <Typography variant="h6" fontWeight={800}>
+          <Typography variant="h6" sx={{ fontWeight: 800 }}>
             Reserve this vehicle
           </Typography>
           <Typography variant="body2" color="text.secondary">
@@ -312,11 +312,11 @@ export default function BookingCard({ vehicle, locationOptions, vehicleId, baseP
         )}
 
         <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: 2, bgcolor: "background.default" }}>
-          <Stack direction="row" justifyContent="space-between">
+          <Stack direction="row" sx={{ justifyContent: "space-between" }}>
             <Typography variant="body2" color="text.secondary">
               Estimated total ({days} {days === 1 ? "day" : "days"})
             </Typography>
-            <Typography variant="subtitle1" fontWeight={800}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
               {isPricingLoading ? "Updating..." : formatCurrency(totalPrice)}
             </Typography>
           </Stack>
@@ -337,7 +337,7 @@ export default function BookingCard({ vehicle, locationOptions, vehicleId, baseP
         </Button>
 
         {!session?.accessToken && (
-          <Typography variant="caption" color="text.secondary" textAlign="center">
+          <Typography variant="caption" color="text.secondary" sx={{ textAlign: "center" }}>
             You need to{" "}
             <Box component={Link} href="/login" sx={{ color: "primary.main", textDecoration: "none", fontWeight: 700 }}>
               sign in

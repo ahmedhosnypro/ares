@@ -23,7 +23,7 @@ export default async function ProfilePage() {
         <Container maxWidth="sm">
           <ProfileCard>
             <CardContent sx={{ p: { xs: 4, sm: 6 }, textAlign: "center" }}>
-              <Typography variant="h5" fontWeight={700} color="text.primary" gutterBottom>
+              <Typography variant="h5" color="text.primary" gutterBottom sx={{ fontWeight: 700 }}>
                 Sign in required
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
@@ -147,7 +147,7 @@ export default async function ProfilePage() {
       <Container maxWidth="lg">
         {/* Page heading */}
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" fontWeight={800} color="text.primary" gutterBottom>
+          <Typography variant="h4" color="text.primary" gutterBottom sx={{ fontWeight: 800 }}>
             Account Settings
           </Typography>
           <Typography variant="body2" color="text.secondary">

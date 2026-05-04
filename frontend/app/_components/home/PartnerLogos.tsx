@@ -32,7 +32,7 @@ export default function PartnerLogos({ suppliers = [] }: Readonly<PartnerLogosPr
         }}
       >
         <Box>
-          <Typography variant="h5" fontWeight="bold" textAlign="center" mb={4}>
+          <Typography variant="h5" sx={{ fontWeight: "bold", textAlign: "center", mb: 4 }}>
             {partners.length > 0 ? "Trusted rental partners" : "Connecting you to the biggest brands"}
           </Typography>
 
@@ -69,8 +69,8 @@ export default function PartnerLogos({ suppliers = [] }: Readonly<PartnerLogosPr
               >
                 <Typography
                   variant="body2"
-                  fontWeight="bold"
                   sx={{
+                    fontWeight: "bold",
                     filter: "grayscale(100%)",
                     opacity: 0.9,
                     fontSize: { xs: "0.75rem", sm: "0.875rem" },

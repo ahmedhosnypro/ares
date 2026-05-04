@@ -199,7 +199,13 @@ export default function SearchForm({
               <TextField
                 {...params}
                 label="Pickup location"
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{
+                  ...params.slotProps,
+                  inputLabel: {
+                    ...params.slotProps.inputLabel,
+                    shrink: true,
+                  },
+                }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: 1.5,

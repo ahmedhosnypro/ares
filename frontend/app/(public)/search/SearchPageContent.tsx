@@ -17,6 +17,7 @@ import {
   Skeleton,
   Stack,
   Typography,
+  alpha,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
@@ -66,10 +67,14 @@ function VehicleCard({ vehicle }: Readonly<{ vehicle: PublicVehicleCard }>) {
             sx={{
               position: "relative",
               aspectRatio: "16/9",
-              bgcolor: "grey.50",
+              bgcolor: "background.default",
               overflow: "hidden",
               // Consistent background for all images
-              background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
+              background: theme =>
+                `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${alpha(
+                  theme.palette.primary.main,
+                  0.05
+                )} 100%)`,
             }}
           >
             {imageUrl ? (
@@ -101,7 +106,7 @@ function VehicleCard({ vehicle }: Readonly<{ vehicle: PublicVehicleCard }>) {
                 />
               </>
             ) : (
-              <Stack alignItems="center" justifyContent="center" sx={{ height: "100%", color: "text.secondary" }}>
+              <Stack sx={{ height: "100%", color: "text.secondary", alignItems: "center", justifyContent: "center" }}>
                 <StarRoundedIcon fontSize="large" />
                 <Typography variant="caption">No image yet</Typography>
               </Stack>
@@ -116,7 +121,7 @@ function VehicleCard({ vehicle }: Readonly<{ vehicle: PublicVehicleCard }>) {
                 fontWeight: 600,
                 fontSize: { xs: "0.75rem", md: "0.75rem" },
                 borderRadius: "999px",
-                boxShadow: `0 4px 12px ${theme.palette.secondary.main}4D`,
+                boxShadow: theme => `0 4px 12px ${alpha(theme.palette.secondary.main, 0.3)}`,
               }}
             />
           </Box>
@@ -124,7 +129,7 @@ function VehicleCard({ vehicle }: Readonly<{ vehicle: PublicVehicleCard }>) {
           <CardContent sx={{ p: 3 }}>
             <Stack spacing={2}>
               <Box>
-                <Typography variant="h5" fontWeight={800} sx={{ fontSize: { xs: "1.125rem", md: "1.25rem" } }}>
+                <Typography variant="h5" sx={{ fontSize: { xs: "1.125rem", md: "1.25rem" }, fontWeight: 800 }}>
                   {vehicle.make} {vehicle.model}
                 </Typography>
                 <Typography
@@ -139,7 +144,7 @@ function VehicleCard({ vehicle }: Readonly<{ vehicle: PublicVehicleCard }>) {
                 </Typography>
               </Box>
 
-              <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+              <Stack direction="row" spacing={2} sx={{ alignItems: "center", justifyContent: "space-between" }}>
                 <Box>
                   <Typography
                     variant="caption"
@@ -153,14 +158,13 @@ function VehicleCard({ vehicle }: Readonly<{ vehicle: PublicVehicleCard }>) {
                   </Typography>
                   <Typography
                     variant="h5"
-                    fontWeight={900}
                     color="primary.main"
-                    sx={{ fontSize: { xs: "1.25rem", md: "1.5rem" } }}
+                    sx={{ fontSize: { xs: "1.25rem", md: "1.5rem" }, fontWeight: 900 }}
                   >
                     {formatCurrency(vehicle.dailyRate, vehicle.currency)}
                   </Typography>
                 </Box>
-                <Stack alignItems="flex-end" spacing={0.5}>
+                <Stack spacing={0.5} sx={{ alignItems: "flex-end" }}>
                   <Rating value={vehicle.rating} precision={0.1} readOnly size="small" />
                   <Typography
                     variant="caption"
@@ -176,8 +180,8 @@ function VehicleCard({ vehicle }: Readonly<{ vehicle: PublicVehicleCard }>) {
               </Stack>
 
               <Divider />
-              <Stack direction="row" alignItems="center" justifyContent="space-between">
-                <Stack direction="row" spacing={1} alignItems="center">
+              <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+                <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                   <Avatar sx={{ width: 30, height: 30, bgcolor: "primary.main" }}>
                     <MapRoundedIcon sx={{ fontSize: 16 }} />
                   </Avatar>
@@ -206,17 +210,17 @@ function VehicleCard({ vehicle }: Readonly<{ vehicle: PublicVehicleCard }>) {
                     borderRadius: "8px",
                     transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                     "&:hover": {
-                      bgcolor: "primary.50",
+                      bgcolor: theme => alpha(theme.palette.primary.main, 0.08),
                     },
                   }}
                 >
                   <Typography
                     variant="body2"
-                    fontWeight={700}
                     color="primary.main"
                     sx={{
                       fontSize: { xs: "0.875rem", md: "0.875rem" },
                       transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                      fontWeight: 700,
                     }}
                   >
                     View details →
@@ -246,9 +250,9 @@ function SearchResults({ vehicles }: Readonly<{ vehicles: readonly PublicVehicle
           bgcolor: "background.paper",
         }}
       >
-        <Stack spacing={2} alignItems="center">
+        <Stack spacing={2} sx={{ alignItems: "center" }}>
           <SearchRoundedIcon color="primary" sx={{ fontSize: 44 }} />
-          <Typography variant="h5" fontWeight={800}>
+          <Typography variant="h5" sx={{ fontWeight: 800 }}>
             No cars matched that search
           </Typography>
           <Typography variant="body1" color="text.secondary">
@@ -322,16 +326,16 @@ export default function SearchPageContent({
       <Box
         sx={{
           borderBottom: "1px solid",
-          borderColor: theme.palette.border.main,
-          bgcolor: "rgba(255, 255, 255, 0.8)",
+          borderColor: "divider",
+          bgcolor: theme => alpha(theme.palette.background.paper, 0.8),
           backdropFilter: "blur(10px)",
           py: { xs: 3, lg: 4 }, // Much smaller vertical padding
         }}
       >
         <Container maxWidth="xl">
-          <Stack spacing={3} alignItems="center">
+          <Stack spacing={3} sx={{ alignItems: "center" }}>
             {/* Compact hero - properly responsive title */}
-            <Box textAlign="center">
+            <Box sx={{ textAlign: "center" }}>
               <Typography
                 variant="h3"
                 sx={{

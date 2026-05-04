@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Container, Typography } from "@mui/material";
+import { Box, Container, Typography, alpha } from "@mui/material";
 
 interface HeroSectionProps {
   readonly heroTitle: string;
@@ -56,11 +56,10 @@ export default function HeroSection({ heroTitle, heroDescription }: HeroSectionP
       <Container maxWidth="md" sx={{ position: "relative", zIndex: 2, px: 3 }}>
         <Typography
           variant="h2"
-          component="h1"
-          fontWeight={800}
           sx={{
             mb: 2,
-            textShadow: "0 2px 10px rgba(0,0,0,0.5)",
+            fontWeight: 800,
+            textShadow: theme => `0 2px 10px ${alpha(theme.palette.common.black, 0.5)}`,
             fontSize: { xs: "2.5rem", md: "4.5rem" },
           }}
         >
@@ -70,7 +69,7 @@ export default function HeroSection({ heroTitle, heroDescription }: HeroSectionP
           variant="h6"
           sx={{
             opacity: 0.9,
-            textShadow: "0 1px 5px rgba(0,0,0,0.5)",
+            textShadow: theme => `0 1px 5px ${alpha(theme.palette.common.black, 0.5)}`,
             mb: 4,
             fontWeight: 400,
             fontSize: { xs: "1rem", md: "1.5rem" },

@@ -29,7 +29,7 @@ import {
   CheckCircle as CheckCircleIcon,
   DirectionsCar as CarIcon,
   Email as EmailIcon,
-  ErrorOutline as ErrorIcon,
+  ErrorOutlined as ErrorIcon,
   Lock as LockIcon,
   Person as PersonIcon,
   Visibility,
@@ -266,7 +266,7 @@ function RegistrationForm({
             color={passwordStrength.color}
             sx={{ height: 4, borderRadius: 999, mb: 0.5 }}
           />
-          <Typography variant="caption" color={`${passwordStrength.color}.main`} fontWeight={600}>
+          <Typography variant="caption" color={`${passwordStrength.color}.main`} sx={{ fontWeight: 600 }}>
             {passwordStrength.label}
           </Typography>
         </Box>
@@ -412,11 +412,12 @@ function SuccessView({ firstName, email: _email }: SuccessViewProps) {
       <Avatar sx={{ width: 64, height: 64, bgcolor: "success.main", mx: "auto", mb: 2 }}>
         <CheckCircleIcon sx={{ fontSize: 40 }} />
       </Avatar>
-      <Typography variant="h6" fontWeight="bold" gutterBottom>
+      <Typography variant="h6" sx={{ fontWeight: "bold" }} gutterBottom>
         Check your email!
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Welcome to ARES, {firstName}. We've sent a verification link to your email. Please click the link to verify your account before logging in.
+        Welcome to ARES, {firstName}. We&apos;ve sent a verification link to your email. Please click the link to verify
+        your account before logging in.
       </Typography>
       <Button
         component={Link}
@@ -677,11 +678,14 @@ export default function SignUpForm() {
                 />
               </Box>
               <Box sx={{ position: "absolute", inset: 0, background: theme.palette.overlay.tealGradient }} />
-              <Box sx={{ position: "absolute", bottom: 0, left: 0, right: 0, p: 6, color: "white" }}>
+              <Box sx={{ position: "absolute", bottom: 0, left: 0, right: 0, p: 6, color: "common.white" }}>
                 <Typography variant="h3" component="h3" sx={{ fontWeight: 900, mb: 2, letterSpacing: "-0.02em" }}>
                   Your Journey Begins Here
                 </Typography>
-                <Typography variant="h6" sx={{ maxWidth: 500, color: "grey.300", fontWeight: 400, lineHeight: 1.6 }}>
+                <Typography
+                  variant="h6"
+                  sx={{ maxWidth: 500, color: "text.secondary", fontWeight: 400, lineHeight: 1.6 }}
+                >
                   Join thousands of satisfied customers and gain access to the most exclusive vehicle fleet in the
                   region.
                 </Typography>

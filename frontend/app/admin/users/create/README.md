@@ -34,7 +34,7 @@ Returns `UserManagementResponse` containing details of the created user.
 
 **Error Responses**
 
-| Status | Meaning                   |
-| ------ | ------------------------- |
-| 400    | Missing/Invalid fields    |
-| 409    | Email/Phone already exists|
+| Status | Meaning                    |
+| ------ | -------------------------- |
+| 400    | Missing/Invalid fields     |
+| 409    | Email/Phone already exists |

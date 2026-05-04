@@ -25,11 +25,14 @@ export default function PopularDestinationsServer({ destinations }: PopularDesti
   return (
     <Box sx={{ py: { xs: 6, md: 10 }, bgcolor: "background.paper" }}>
       <Container maxWidth="xl">
-        <Stack spacing={2} alignItems="center" mb={6}>
-          <Typography variant="h3" fontWeight="bold" textAlign="center" sx={{ fontSize: { xs: "2rem", md: "3rem" } }}>
+        <Stack spacing={2} sx={{ alignItems: "center", mb: 6 }}>
+          <Typography
+            variant="h3"
+            sx={{ fontSize: { xs: "2rem", md: "3rem" }, fontWeight: "bold", textAlign: "center" }}
+          >
             Browse by Destination
           </Typography>
-          <Typography variant="body1" color="text.secondary" textAlign="center" sx={{ maxWidth: 600 }}>
+          <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 600, textAlign: "center" }}>
             Explore our most popular rental locations with competitive rates and premium vehicles.
           </Typography>
         </Stack>
@@ -118,17 +121,17 @@ export default function PopularDestinationsServer({ destinations }: PopularDesti
                         fontWeight: "bold",
                       }}
                     >
-                      <Typography variant="caption" fontWeight="bold">
+                      <Typography variant="caption" sx={{ fontWeight: "bold" }}>
                         From ${dest.startingPrice}/day
                       </Typography>
                     </Box>
                   </Box>
 
                   <CardContent sx={{ p: 3 }}>
-                    <Typography variant="h6" fontWeight="bold" gutterBottom>
+                    <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
                       {dest.city}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" mb={2}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                       {dest.country}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">

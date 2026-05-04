@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, ChangeEvent, SyntheticEvent } from "react";
 import {
   Box,
   Typography,
@@ -17,14 +17,15 @@ import {
 } from "@mui/material";
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { getLocationById, updateLocation } from "@/app/api/locations/locations";
+import { getLocationById, updateLocation } from "@/api-clients/locations/locations";
+import { logger } from "../../../../../utils/logger";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 
 export default function AdminEditLocationPage() {
   const router = useRouter();
   const params = useParams();
-  const id = params?.id as string;
+  const id = params.id as string;
   const { data: session } = useSession();
 
   const [loading, setLoading] = useState(false);
@@ -33,7 +34,7 @@ export default function AdminEditLocationPage() {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
-    userId: session?.user?.id || "00000000-0000-0000-0000-000000000000",
+    userId: session?.user.id || "00000000-0000-0000-0000-000000000000",
     addressLine: "",
     city: "",
     governorate: "",
@@ -52,7 +53,7 @@ export default function AdminEditLocationPage() {
       try {
         const data = await getLocationById(session.accessToken, id);
         setFormData({
-          userId: data.userId || session.user?.id || "00000000-0000-0000-0000-000000000000",
+          userId: data.userId || session.user.id,
           addressLine: data.addressLine || "",
           city: data.city || "",
           governorate: data.governorate || "",
@@ -63,49 +64,57 @@ export default function AdminEditLocationPage() {
           isPrimary: data.isPrimary || false,
           imageUrl: data.imageUrl || "",
         });
-      } catch (err: any) {
+      } catch (err) {
         setErrorMsg("Failed to load location details");
+        logger.error("Failed to load location", err);
       } finally {
         setFetching(false);
       }
     };
 
-    fetchLocation();
-  }, [id, session?.accessToken, session?.user?.id]);
+    void fetchLocation();
+  }, [id, session?.accessToken, session?.user.id]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: SyntheticEvent) => {
     e.preventDefault();
     if (!session?.accessToken) {
       setErrorMsg("Unauthorized. Please log in.");
       return;
     }
-    
+
     setLoading(true);
     setErrorMsg(null);
-    
+
     try {
       const payload = {
         ...formData,
-        userId: formData.userId || session.user?.id || "00000000-0000-0000-0000-000000000000",
+        userId: formData.userId || session.user.id,
         latitude: formData.latitude ? parseFloat(formData.latitude) : null,
         longitude: formData.longitude ? parseFloat(formData.longitude) : null,
       };
-      
+
       await updateLocation(session.accessToken, id, payload);
       setSuccessMsg("Location updated successfully");
       setTimeout(() => {
         router.push("/admin/locations");
       }, 1500);
-    } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || err.message || "Failed to update location");
+    } catch (err: unknown) {
+      let message = "Failed to update location";
+      if (err && typeof err === "object" && "response" in err) {
+        const resp = err.response as { data?: { message?: string } };
+        message = resp.data?.message || message;
+      } else if (err instanceof Error) {
+        message = err.message;
+      }
+      setErrorMsg(message);
     } finally {
       setLoading(false);
     }
@@ -113,7 +122,7 @@ export default function AdminEditLocationPage() {
 
   if (fetching) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 10 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", p: 10 }}>
         <CircularProgress />
       </Box>
     );
@@ -121,28 +130,36 @@ export default function AdminEditLocationPage() {
 
   return (
     <Box sx={{ p: { xs: 2, sm: 4 }, maxWidth: 800, mx: "auto" }}>
-      <Stack direction="row" alignItems="center" mb={4} spacing={2}>
+      <Stack direction="row" sx={{ alignItems: "center", mb: 4 }} spacing={2}>
         <Button
           startIcon={<ArrowBackIcon />}
-          onClick={() => router.push("/admin/locations")}
+          onClick={() => {
+            router.push("/admin/locations");
+          }}
           color="inherit"
           sx={{ borderRadius: 2 }}
         >
           Back
         </Button>
-        <Typography variant="h4" fontWeight={800} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Typography variant="h4" sx={{ fontWeight: 800, display: "flex", alignItems: "center", gap: 1 }}>
           <LocationOnIcon fontSize="large" color="primary" />
           Edit Location
         </Typography>
       </Stack>
 
       <Card sx={{ p: { xs: 2, sm: 4 }, borderRadius: 4, border: "1px solid", borderColor: "divider", elevation: 0 }}>
-        <form onSubmit={handleSubmit}>
+        <form
+          onSubmit={e => {
+            void handleSubmit(e);
+          }}
+        >
           <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Typography variant="h6" fontWeight={700} mb={1}>Location Details</Typography>
+            <Grid size={{ xs: 12 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
+                Location Details
+              </Typography>
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
                 label="Location Name / Address Line"
@@ -152,17 +169,10 @@ export default function AdminEditLocationPage() {
                 required
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="City"
-                name="city"
-                value={formData.city}
-                onChange={handleChange}
-                required
-              />
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField fullWidth label="City" name="city" value={formData.city} onChange={handleChange} required />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
                 label="Governorate / State"
@@ -171,7 +181,7 @@ export default function AdminEditLocationPage() {
                 onChange={handleChange}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
                 label="Country"
@@ -181,7 +191,7 @@ export default function AdminEditLocationPage() {
                 required
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
                 label="Postal Code"
@@ -191,32 +201,34 @@ export default function AdminEditLocationPage() {
               />
             </Grid>
 
-            <Grid item xs={12} mt={2}>
-              <Typography variant="h6" fontWeight={700} mb={1}>Coordinates & Media</Typography>
+            <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
+                Coordinates & Media
+              </Typography>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
                 label="Latitude"
                 name="latitude"
                 type="number"
-                inputProps={{ step: "any" }}
+                slotProps={{ htmlInput: { step: "any" } }}
                 value={formData.latitude}
                 onChange={handleChange}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
                 label="Longitude"
                 name="longitude"
                 type="number"
-                inputProps={{ step: "any" }}
+                slotProps={{ htmlInput: { step: "any" } }}
                 value={formData.longitude}
                 onChange={handleChange}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
                 label="Image URL"
@@ -226,25 +238,22 @@ export default function AdminEditLocationPage() {
                 placeholder="https://example.com/image.jpg"
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <FormControlLabel
                 control={
-                  <Switch
-                    checked={formData.isPrimary}
-                    onChange={handleChange}
-                    name="isPrimary"
-                    color="primary"
-                  />
+                  <Switch checked={formData.isPrimary} onChange={handleChange} name="isPrimary" color="primary" />
                 }
                 label="Set as Primary Location"
               />
             </Grid>
 
-            <Grid item xs={12} mt={2}>
-              <Stack direction="row" justifyContent="flex-end" spacing={2}>
+            <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
+              <Stack direction="row" sx={{ justifyContent: "flex-end" }} spacing={2}>
                 <Button
                   variant="outlined"
-                  onClick={() => router.push("/admin/locations")}
+                  onClick={() => {
+                    router.push("/admin/locations");
+                  }}
                   sx={{ borderRadius: 2, px: 4 }}
                 >
                   Cancel
@@ -266,19 +275,37 @@ export default function AdminEditLocationPage() {
       <Snackbar
         open={!!errorMsg}
         autoHideDuration={4000}
-        onClose={() => setErrorMsg(null)}
+        onClose={() => {
+          setErrorMsg(null);
+        }}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
-        <Alert severity="error" onClose={() => setErrorMsg(null)}>{errorMsg}</Alert>
+        <Alert
+          severity="error"
+          onClose={() => {
+            setErrorMsg(null);
+          }}
+        >
+          {errorMsg}
+        </Alert>
       </Snackbar>
 
       <Snackbar
         open={!!successMsg}
         autoHideDuration={4000}
-        onClose={() => setSuccessMsg(null)}
+        onClose={() => {
+          setSuccessMsg(null);
+        }}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
-        <Alert severity="success" onClose={() => setSuccessMsg(null)}>{successMsg}</Alert>
+        <Alert
+          severity="success"
+          onClose={() => {
+            setSuccessMsg(null);
+          }}
+        >
+          {successMsg}
+        </Alert>
       </Snackbar>
     </Box>
   );

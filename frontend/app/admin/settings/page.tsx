@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, ChangeEvent, SyntheticEvent } from "react";
 import {
   Box,
   Typography,
@@ -19,6 +19,12 @@ import axios from "axios";
 import { toApiUrl } from "@/utils/api-client";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
+import { logger } from "@/utils/logger";
+
+interface SettingsResponse {
+  language?: string;
+  currency?: string;
+}
 
 export default function AdminSettingsPage() {
   const { data: session } = useSession();
@@ -37,37 +43,33 @@ export default function AdminSettingsPage() {
     let isMounted = true;
     const fetchSettings = async () => {
       try {
-        const response = await axios.get(toApiUrl("/api/settings"));
-        if (isMounted) {
-          if (response.data) {
-            setFormData({
-              language: response.data.language || "en",
-              currency: response.data.currency || "USD",
-            });
-          }
-        }
-      } catch (err: any) {
-        console.error("Failed to load settings:", err);
+        const response = await axios.get<SettingsResponse>(toApiUrl("/api/settings"));
+        setFormData({
+          language: response.data.language || "en",
+          currency: response.data.currency || "USD",
+        });
+      } catch (err: unknown) {
+        logger.error("Failed to load settings", err);
       } finally {
         if (isMounted) setFetching(false);
       }
     };
 
-    fetchSettings();
+    void fetchSettings();
     return () => {
       isMounted = false;
     };
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       [name]: value,
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: SyntheticEvent) => {
     e.preventDefault();
     if (!session?.accessToken) {
       setErrorMsg("Unauthorized. Please log in.");
@@ -83,8 +85,15 @@ export default function AdminSettingsPage() {
         headers: { Authorization: `Bearer ${session.accessToken}` },
       });
       setSuccessMsg("Settings updated successfully!");
-    } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || err.message || "Failed to update settings");
+    } catch (err: unknown) {
+      let message = "Failed to update settings";
+      if (axios.isAxiosError(err)) {
+        const data = err.response?.data as { message?: string } | undefined;
+        message = data?.message || err.message;
+      } else if (err instanceof Error) {
+        message = err.message;
+      }
+      setErrorMsg(message);
     } finally {
       setLoading(false);
     }
@@ -100,12 +109,8 @@ export default function AdminSettingsPage() {
 
   return (
     <Box sx={{ p: { xs: 2, sm: 4 }, maxWidth: 800, mx: "auto" }}>
-      <Stack direction="row" alignItems="center" mb={4} spacing={2}>
-        <Typography
-          variant="h4"
-          fontWeight={800}
-          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-        >
+      <Stack direction="row" spacing={2} sx={{ alignItems: "center", mb: 4 }}>
+        <Typography variant="h4" sx={{ fontWeight: 800, display: "flex", alignItems: "center", gap: 1 }}>
           <SettingsRoundedIcon fontSize="large" color="primary" />
           Platform Settings
         </Typography>
@@ -117,21 +122,25 @@ export default function AdminSettingsPage() {
           borderRadius: 4,
           border: "1px solid",
           borderColor: "divider",
-          elevation: 0,
+          boxShadow: "none",
         }}
       >
-        <form onSubmit={handleSubmit}>
+        <form
+          onSubmit={e => {
+            void handleSubmit(e);
+          }}
+        >
           <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Typography variant="h6" fontWeight={700} mb={1}>
+            <Grid size={{ xs: 12 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
                 Global Configuration
               </Typography>
-              <Typography variant="body2" color="text.secondary" mb={2}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                 Set the default language and currency for the entire platform.
               </Typography>
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 select
                 fullWidth
@@ -148,7 +157,7 @@ export default function AdminSettingsPage() {
               </TextField>
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 select
                 fullWidth
@@ -167,8 +176,8 @@ export default function AdminSettingsPage() {
               </TextField>
             </Grid>
 
-            <Grid item xs={12} mt={2}>
-              <Stack direction="row" justifyContent="flex-end">
+            <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
+              <Stack direction="row" sx={{ justifyContent: "flex-end" }}>
                 <Button
                   type="submit"
                   variant="contained"
@@ -187,10 +196,17 @@ export default function AdminSettingsPage() {
       <Snackbar
         open={!!errorMsg}
         autoHideDuration={4000}
-        onClose={() => setErrorMsg(null)}
+        onClose={() => {
+          setErrorMsg(null);
+        }}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
-        <Alert severity="error" onClose={() => setErrorMsg(null)}>
+        <Alert
+          severity="error"
+          onClose={() => {
+            setErrorMsg(null);
+          }}
+        >
           {errorMsg}
         </Alert>
       </Snackbar>
@@ -198,10 +214,17 @@ export default function AdminSettingsPage() {
       <Snackbar
         open={!!successMsg}
         autoHideDuration={4000}
-        onClose={() => setSuccessMsg(null)}
+        onClose={() => {
+          setSuccessMsg(null);
+        }}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
-        <Alert severity="success" onClose={() => setSuccessMsg(null)}>
+        <Alert
+          severity="success"
+          onClose={() => {
+            setSuccessMsg(null);
+          }}
+        >
           {successMsg}
         </Alert>
       </Snackbar>

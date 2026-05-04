@@ -21,7 +21,7 @@ export default async function MyBookingsPage() {
             }}
           >
             <CardContent sx={{ p: { xs: 4, sm: 6 }, textAlign: "center" }}>
-              <Typography variant="h5" fontWeight={700} color="text.primary" gutterBottom>
+              <Typography variant="h5" color="text.primary" gutterBottom sx={{ fontWeight: 700 }}>
                 Sign in required
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
@@ -46,11 +46,11 @@ export default async function MyBookingsPage() {
         <Box sx={{ mb: { xs: 3, md: 5 } }}>
           <Typography
             variant="h4"
-            fontWeight={800}
             color="text.primary"
             gutterBottom
             sx={{
               fontSize: { xs: "1.75rem", sm: "2rem", md: "2.25rem", lg: "2.5rem" },
+              fontWeight: 800,
             }}
           >
             My Bookings

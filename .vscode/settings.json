@@ -1,8 +1,8 @@
 {
-  "typescript.tsdk": "frontend/node_modules/typescript/lib",
+  "js/ts.tsdk.path": "frontend/node_modules/typescript/lib",
   // Show prompt when workspace TS is detected
-  "typescript.enablePromptUseWorkspaceTsdk": true,
-  "typescript.autoClosingTags": false,
+  "js/ts.tsdk.promptToUseWorkspaceVersion": true,
+  "js/ts.autoClosingTags.enabled": false,
   "kiroAgent.configureMCP": "Disabled",
   "sqltools.connections": [
     {

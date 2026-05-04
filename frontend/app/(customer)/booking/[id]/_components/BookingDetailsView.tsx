@@ -104,12 +104,10 @@ export default function BookingDetailsView({
         <Stack
           direction={{ xs: "column", sm: "row" }}
           spacing={2}
-          alignItems={{ sm: "center" }}
-          justifyContent="space-between"
-          sx={{ mb: 3 }}
+          sx={{ mb: 3, alignItems: { sm: "center" }, justifyContent: "space-between" }}
         >
           <Box>
-            <Typography variant="h4" fontWeight={800} color="text.primary">
+            <Typography variant="h4" color="text.primary" sx={{ fontWeight: 800 }}>
               Booking Overview
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
@@ -142,7 +140,7 @@ export default function BookingDetailsView({
               <Typography
                 variant="body2"
                 color={feedback.severity === "success" ? "success.main" : "error.main"}
-                fontWeight={700}
+                sx={{ fontWeight: 700 }}
               >
                 {feedback.message}
               </Typography>
@@ -181,11 +179,10 @@ export default function BookingDetailsView({
                 <Stack
                   direction={{ xs: "column", sm: "row" }}
                   spacing={1.5}
-                  justifyContent="space-between"
-                  sx={{ mb: 2 }}
+                  sx={{ mb: 2, justifyContent: "space-between" }}
                 >
                   <Box>
-                    <Typography variant="h5" fontWeight={800} color="text.primary">
+                    <Typography variant="h5" color="text.primary" sx={{ fontWeight: 800 }}>
                       {booking.car?.name ?? "Unknown car"}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
@@ -208,7 +205,7 @@ export default function BookingDetailsView({
                         <LocationIcon fontSize="small" />
                       </Box>
                       <Box>
-                        <Typography variant="body2" fontWeight={700} color="text.primary">
+                        <Typography variant="body2" color="text.primary" sx={{ fontWeight: 700 }}>
                           Pick-up
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
@@ -227,7 +224,7 @@ export default function BookingDetailsView({
                         <LocationIcon fontSize="small" />
                       </Box>
                       <Box>
-                        <Typography variant="body2" fontWeight={700} color="text.primary">
+                        <Typography variant="body2" color="text.primary" sx={{ fontWeight: 700 }}>
                           Drop-off
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
@@ -248,7 +245,7 @@ export default function BookingDetailsView({
                     <PersonIcon fontSize="small" />
                   </Box>
                   <Box>
-                    <Typography variant="body2" fontWeight={700} color="text.primary">
+                    <Typography variant="body2" color="text.primary" sx={{ fontWeight: 700 }}>
                       Driver
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
@@ -275,31 +272,31 @@ export default function BookingDetailsView({
               }}
             >
               <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-                <Typography variant="h6" fontWeight={800} color="text.primary" sx={{ mb: 2 }}>
+                <Typography variant="h6" color="text.primary" sx={{ mb: 2, fontWeight: 800 }}>
                   Reservation Summary
                 </Typography>
 
                 <Stack spacing={1.5}>
-                  <Stack direction="row" justifyContent="space-between" alignItems="center">
-                    <Stack direction="row" spacing={1} alignItems="center">
+                  <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+                    <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                       <CarIcon sx={{ color: "text.secondary", fontSize: 18 }} />
                       <Typography variant="body2" color="text.secondary">
                         Vehicle
                       </Typography>
                     </Stack>
-                    <Typography variant="body2" color="text.primary" fontWeight={700}>
+                    <Typography variant="body2" color="text.primary" sx={{ fontWeight: 700 }}>
                       {booking.car?.name ?? "N/A"}
                     </Typography>
                   </Stack>
 
-                  <Stack direction="row" justifyContent="space-between" alignItems="center">
-                    <Stack direction="row" spacing={1} alignItems="center">
+                  <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+                    <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                       <CalendarIcon sx={{ color: "text.secondary", fontSize: 18 }} />
                       <Typography variant="body2" color="text.secondary">
                         Duration
                       </Typography>
                     </Stack>
-                    <Typography variant="body2" color="text.primary" fontWeight={700}>
+                    <Typography variant="body2" color="text.primary" sx={{ fontWeight: 700 }}>
                       {durationDays ? `${String(durationDays)} days` : "N/A"}
                     </Typography>
                   </Stack>
@@ -307,11 +304,11 @@ export default function BookingDetailsView({
 
                 <Divider sx={{ my: 2.5 }} />
 
-                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-                  <Typography variant="body1" fontWeight={700} color="text.primary">
+                <Stack direction="row" sx={{ mb: 3, justifyContent: "space-between", alignItems: "center" }}>
+                  <Typography variant="body1" color="text.primary" sx={{ fontWeight: 700 }}>
                     Total Price
                   </Typography>
-                  <Typography variant="h5" fontWeight={900} color="primary.main">
+                  <Typography variant="h5" color="primary.main" sx={{ fontWeight: 900 }}>
                     {formatCurrency(booking.price)}
                   </Typography>
                 </Stack>

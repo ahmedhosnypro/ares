@@ -103,7 +103,7 @@ export default function PreferencesSection({
 
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="subtitle1" fontWeight={700} color="text.primary" gutterBottom>
+      <Typography variant="subtitle1" color="text.primary" gutterBottom sx={{ fontWeight: 700 }}>
         Preferences
       </Typography>
       <Divider sx={{ mb: 2.5, borderColor: "border.light" }} />

@@ -42,15 +42,15 @@ export default function TrustIndicators({ valueProps = [] }: Readonly<TrustIndic
 
   return (
     <Container maxWidth="lg" sx={{ mt: 3, mb: 8 }}>
-      <Grid container spacing={2} justifyContent="center" alignItems="stretch">
+      <Grid container spacing={2} sx={{ justifyContent: "center", alignItems: "stretch" }}>
         {indicators.map((item, idx) => (
           <Grid size={{ xs: 12, sm: hasDynamicContent ? 4 : 3 }} key={idx}>
             <Stack
               direction="row"
               spacing={1}
-              alignItems="center"
-              justifyContent="center"
               sx={{
+                alignItems: "center",
+                justifyContent: "center",
                 py: 1.5,
                 px: 2,
                 bgcolor: "background.paper",
@@ -63,7 +63,7 @@ export default function TrustIndicators({ valueProps = [] }: Readonly<TrustIndic
             >
               <Box sx={{ color: "success.main", display: "flex" }}>{item.icon}</Box>
               <Box>
-                <Typography variant="body2" fontWeight="600" sx={{ fontSize: { xs: "0.8rem", sm: "0.875rem" } }}>
+                <Typography variant="body2" sx={{ fontWeight: "600", fontSize: { xs: "0.8rem", sm: "0.875rem" } }}>
                   {item.text}
                 </Typography>
                 {item.description ? (
@@ -72,7 +72,7 @@ export default function TrustIndicators({ valueProps = [] }: Readonly<TrustIndic
                   </Typography>
                 ) : null}
                 {item.accent ? (
-                  <Typography variant="caption" color="primary.main" fontWeight={700} display="block">
+                  <Typography variant="caption" color="primary.main" sx={{ fontWeight: 700, display: "block" }}>
                     {item.accent}
                   </Typography>
                 ) : null}

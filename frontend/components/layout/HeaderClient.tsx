@@ -122,13 +122,11 @@ export default function HeaderClient({ session }: HeaderClientProps) {
         position="sticky"
         elevation={0}
         sx={{
-          bgcolor: theme => (theme.palette.mode === "light" ? "rgba(15, 91, 91, 0.95)" : "rgba(10, 14, 15, 0.95)"),
+          bgcolor: "header.background",
           backdropFilter: "blur(12px)",
           transition: "all 0.3s ease",
-          borderBottom: theme =>
-            theme.palette.mode === "light"
-              ? "1px solid rgba(255, 255, 255, 0.1)"
-              : "1px solid rgba(255, 255, 255, 0.05)",
+          borderBottom: "1px solid",
+          borderColor: "header.border",
         }}
       >
         <Container maxWidth="lg" sx={{ maxWidth: { xs: "100%", lg: "1200px" } }}>
@@ -188,7 +186,7 @@ export default function HeaderClient({ session }: HeaderClientProps) {
                   component={Link}
                   href={link.href}
                   sx={{
-                    color: "white",
+                    color: "common.white",
                     fontWeight: 600,
                     px: 2,
                     py: 1,
@@ -197,7 +195,7 @@ export default function HeaderClient({ session }: HeaderClientProps) {
                     fontSize: "1rem",
                     transition: "all 0.2s ease",
                     "&:hover": {
-                      bgcolor: "rgba(255, 255, 255, 0.15)",
+                      bgcolor: "header.buttonHover",
                     },
                   }}
                 >
@@ -207,7 +205,7 @@ export default function HeaderClient({ session }: HeaderClientProps) {
             </Box>
 
             {/* Right: Utility & Conversion */}
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ ml: "auto" }}>
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center", ml: "auto" }}>
               {/* Theme Switcher */}
               <ThemeSwitcher color="inherit" size="medium" />
 
@@ -217,14 +215,14 @@ export default function HeaderClient({ session }: HeaderClientProps) {
                 startIcon={<LanguageIcon />}
                 endIcon={<KeyboardArrowDownIcon />}
                 sx={{
-                  color: "white",
+                  color: "common.white",
                   fontWeight: 600,
                   textTransform: "none",
                   display: { xs: "none", sm: "flex" },
                   borderRadius: 1.5,
                   px: 2,
                   "&:hover": {
-                    bgcolor: "rgba(255, 255, 255, 0.15)",
+                    bgcolor: "header.buttonHover",
                   },
                 }}
               >
@@ -259,14 +257,14 @@ export default function HeaderClient({ session }: HeaderClientProps) {
                 startIcon={<AttachMoneyIcon />}
                 endIcon={<KeyboardArrowDownIcon />}
                 sx={{
-                  color: "white",
+                  color: "common.white",
                   fontWeight: 600,
                   textTransform: "none",
                   display: { xs: "none", sm: "flex" },
                   borderRadius: 1.5,
                   px: 2,
                   "&:hover": {
-                    bgcolor: "rgba(255, 255, 255, 0.15)",
+                    bgcolor: "header.buttonHover",
                   },
                 }}
               >
@@ -290,8 +288,8 @@ export default function HeaderClient({ session }: HeaderClientProps) {
                     }}
                     selected={selectedCurrency === curr.code}
                   >
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Typography fontWeight={selectedCurrency === curr.code ? "bold" : "normal"}>
+                    <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                      <Typography sx={{ fontWeight: selectedCurrency === curr.code ? "bold" : "normal" }}>
                         {curr.symbol}
                       </Typography>
                       <Typography variant="body2">{curr.label}</Typography>
@@ -322,9 +320,10 @@ export default function HeaderClient({ session }: HeaderClientProps) {
                         width: 40,
                         height: 40,
                         bgcolor: "secondary.main",
-                        color: "text.primary",
+                        color: "secondary.contrastText",
                         fontWeight: "bold",
-                        border: "2px solid rgba(255, 255, 255, 0.3)",
+                        border: "2px solid",
+                        borderColor: "header.avatarBorder",
                       }}
                     >
                       {getUserInitials()}
@@ -344,7 +343,7 @@ export default function HeaderClient({ session }: HeaderClientProps) {
                   >
                     {/* User Info Header */}
                     <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
-                      <Typography variant="subtitle2" fontWeight="bold" noWrap>
+                      <Typography variant="subtitle2" sx={{ fontWeight: "bold" }} noWrap>
                         {getUserDisplayName()}
                       </Typography>
                       <Typography variant="caption" color="text.secondary" noWrap>
@@ -417,14 +416,14 @@ export default function HeaderClient({ session }: HeaderClientProps) {
                     href="/sign-in"
                     variant="text"
                     sx={{
-                      color: "white",
+                      color: "common.white",
                       fontWeight: 600,
                       textTransform: "none",
                       display: { xs: "none", md: "inline-flex" },
                       borderRadius: 1.5,
                       px: 2,
                       "&:hover": {
-                        bgcolor: "rgba(255, 255, 255, 0.15)",
+                        bgcolor: "header.buttonHover",
                       },
                     }}
                   >
@@ -436,16 +435,16 @@ export default function HeaderClient({ session }: HeaderClientProps) {
                     variant="contained"
                     sx={{
                       bgcolor: "secondary.main",
-                      color: "text.primary",
+                      color: "secondary.contrastText",
                       fontWeight: "bold",
                       textTransform: "none",
                       display: { xs: "none", md: "inline-flex" },
                       borderRadius: 1.5,
                       px: 3,
-                      boxShadow: "0 4px 12px rgba(184, 134, 11, 0.3)",
+                      boxShadow: theme => theme.palette.shadow.button,
                       "&:hover": {
                         bgcolor: "secondary.dark",
-                        boxShadow: "0 6px 16px rgba(184, 134, 11, 0.4)",
+                        boxShadow: theme => theme.palette.shadow.buttonHover,
                         transform: "translateY(-1px)",
                       },
                       transition: "all 0.2s ease",
@@ -463,7 +462,7 @@ export default function HeaderClient({ session }: HeaderClientProps) {
                 }}
                 sx={{
                   display: { xs: "flex", md: "none" },
-                  color: "white",
+                  color: "common.white",
                 }}
               >
                 <MenuIcon />
@@ -485,7 +484,7 @@ export default function HeaderClient({ session }: HeaderClientProps) {
         }}
       >
         <Box sx={{ p: 2 }}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 2 }}>
             <Box
               sx={{
                 position: "relative",
@@ -518,7 +517,7 @@ export default function HeaderClient({ session }: HeaderClientProps) {
           {session && (
             <>
               <Box sx={{ px: 2, py: 2, bgcolor: "grey.50", borderRadius: 2, mb: 2 }}>
-                <Stack direction="row" spacing={2} alignItems="center">
+                <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
                   <Avatar
                     src={toImageUrl(session.user.image) ?? undefined}
                     alt={getUserDisplayName()}
@@ -532,7 +531,7 @@ export default function HeaderClient({ session }: HeaderClientProps) {
                     {getUserInitials()}
                   </Avatar>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography variant="subtitle2" fontWeight="bold" noWrap>
+                    <Typography variant="subtitle2" sx={{ fontWeight: "bold" }} noWrap>
                       {getUserDisplayName()}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" noWrap>
@@ -634,7 +633,7 @@ export default function HeaderClient({ session }: HeaderClientProps) {
               <Typography variant="caption" color="text.secondary" gutterBottom>
                 Language
               </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap">
+              <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
                 {languages.map(lang => (
                   <Button
                     key={lang.code}
@@ -655,7 +654,7 @@ export default function HeaderClient({ session }: HeaderClientProps) {
               <Typography variant="caption" color="text.secondary" gutterBottom>
                 Currency
               </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap">
+              <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
                 {currencies.map(curr => (
                   <Button
                     key={curr.code}

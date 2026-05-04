@@ -186,7 +186,7 @@ export default async function VehicleDetailsPage({ params }: PageProps) {
   if (!pageData) {
     return (
       <Box component="main" sx={{ minHeight: "60vh", display: "grid", placeItems: "center", px: 2 }}>
-        <Typography variant="h6" color="text.secondary" textAlign="center">
+        <Typography variant="h6" color="text.secondary" sx={{ textAlign: "center" }}>
           We were unable to load this vehicle right now.
         </Typography>
       </Box>

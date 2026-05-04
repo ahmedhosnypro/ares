@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { Box, Container, Paper, Stack, Typography, Button, Divider, Grid } from "@mui/material";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import ReceiptIcon from "@mui/icons-material/Receipt";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
@@ -90,12 +90,21 @@ export default async function ConfirmationPage({ params }: PageProps) {
   return (
     <Box component="main" sx={{ minHeight: "100vh", bgcolor: "background.default", py: { xs: 4, md: 10 } }}>
       <Container maxWidth="md">
-        <Paper elevation={0} sx={{ p: { xs: 3, md: 6 }, borderRadius: 6, border: "1px solid", borderColor: "divider", textAlign: "center" }}>
-          <CheckCircleOutlineIcon sx={{ fontSize: 80, color: "success.main", mb: 2 }} />
-          <Typography variant="h3" fontWeight={900} gutterBottom>
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 3, md: 6 },
+            borderRadius: 6,
+            border: "1px solid",
+            borderColor: "divider",
+            textAlign: "center",
+          }}
+        >
+          <CheckCircleOutlinedIcon sx={{ fontSize: 80, color: "success.main", mb: 2 }} />
+          <Typography variant="h3" gutterBottom sx={{ fontWeight: 900 }}>
             Booking Confirmed!
           </Typography>
-          <Typography variant="h6" color="text.secondary" mb={4}>
+          <Typography variant="h6" color="text.secondary" sx={{ mb: 4 }}>
             Your reservation has been successfully placed and paid.
           </Typography>
 
@@ -105,7 +114,7 @@ export default async function ConfirmationPage({ params }: PageProps) {
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                   Booking Reference
                 </Typography>
-                <Typography variant="h5" fontWeight={800} color="primary.main">
+                <Typography variant="h5" color="primary.main" sx={{ fontWeight: 800 }}>
                   {bookingId.slice(0, 8).toUpperCase()}
                 </Typography>
               </Grid>
@@ -116,9 +125,11 @@ export default async function ConfirmationPage({ params }: PageProps) {
 
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Stack spacing={1}>
-                  <Box display="flex" alignItems="center" gap={1}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <CalendarTodayIcon fontSize="small" color="action" />
-                    <Typography variant="subtitle2" fontWeight={700}>Dates</Typography>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                      Dates
+                    </Typography>
                   </Box>
                   <Typography variant="body2">
                     {pickupDate.toLocaleDateString()} - {returnDate.toLocaleDateString()}
@@ -128,9 +139,11 @@ export default async function ConfirmationPage({ params }: PageProps) {
 
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Stack spacing={1}>
-                  <Box display="flex" alignItems="center" gap={1}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <LocationOnIcon fontSize="small" color="action" />
-                    <Typography variant="subtitle2" fontWeight={700}>Vehicle</Typography>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                      Vehicle
+                    </Typography>
                   </Box>
                   <Typography variant="body2">
                     {booking.car.make} {booking.car.model}
@@ -143,15 +156,19 @@ export default async function ConfirmationPage({ params }: PageProps) {
               </Grid>
 
               <Grid size={12}>
-                <Stack direction="row" justifyContent="space-between" alignItems="center">
-                  <Typography variant="subtitle1" fontWeight={700}>Total Paid</Typography>
-                  <Typography variant="h5" fontWeight={900}>{formatCurrency(booking.price)}</Typography>
+                <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                    Total Paid
+                  </Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 900 }}>
+                    {formatCurrency(booking.price)}
+                  </Typography>
                 </Stack>
               </Grid>
             </Grid>
           </Box>
 
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="center">
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ justifyContent: "center" }}>
             {transactionId && (
               <Button
                 variant="contained"

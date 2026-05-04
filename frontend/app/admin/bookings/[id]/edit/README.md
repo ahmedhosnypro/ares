@@ -59,9 +59,9 @@ Update the booking status (Pending / Confirmed / Paid / Cancelled, etc.). Full u
 
 **Response**
 
-| Status | Meaning               |
-| ------ | --------------------- |
-| 200    | Booking status updated|
-| 400    | Invalid request       |
-| 401    | Unauthorized          |
-| 404    | Booking not found     |
+| Status | Meaning                |
+| ------ | ---------------------- |
+| 200    | Booking status updated |
+| 400    | Invalid request        |
+| 401    | Unauthorized           |
+| 404    | Booking not found      |

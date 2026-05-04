@@ -4,7 +4,7 @@ import { useEffect, useMemo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { Box, Typography, Button, Chip } from "@mui/material";
+import { Box, Typography, Button, Chip, alpha } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import Link from "next/link";
 
@@ -183,9 +183,15 @@ export default function DestinationMap({ locations }: DestinationMapProps) {
         theme.palette.primary.main,
         theme.palette.primary.contrastText,
         theme.palette.background.paper,
-        theme.palette.mode === "dark" ? "rgba(0, 0, 0, 0.6)" : "rgba(0, 0, 0, 0.3)"
+        alpha(theme.palette.common.black, isDarkMode ? 0.6 : 0.3)
       ),
-    [theme.palette.background.paper, theme.palette.mode, theme.palette.primary.contrastText, theme.palette.primary.main]
+    [
+      isDarkMode,
+      theme.palette.background.paper,
+      theme.palette.primary.contrastText,
+      theme.palette.primary.main,
+      theme.palette.common.black,
+    ]
   );
 
   // Process locations and add coordinates
@@ -260,7 +266,7 @@ export default function DestinationMap({ locations }: DestinationMapProps) {
           <Marker key={loc.id} position={loc.coords} icon={mapMarkerIcon}>
             <Popup maxWidth={300}>
               <Box sx={{ p: 1 }}>
-                <Typography variant="h6" fontWeight="bold" gutterBottom>
+                <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
                   {loc.city}
                 </Typography>
                 {loc.governorate && (
@@ -269,7 +275,7 @@ export default function DestinationMap({ locations }: DestinationMapProps) {
                   </Typography>
                 )}
                 {loc.addressLine && (
-                  <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: 2 }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2 }}>
                     {loc.addressLine}
                   </Typography>
                 )}

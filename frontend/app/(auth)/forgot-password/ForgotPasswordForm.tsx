@@ -19,14 +19,15 @@ import {
 import { useTheme } from "@mui/material/styles";
 import {
   Email as EmailIcon,
-  ErrorOutline as ErrorIcon,
-  CheckCircleOutline as SuccessIcon,
+  ErrorOutlined as ErrorIcon,
+  CheckCircleOutlined as SuccessIcon,
 } from "@mui/icons-material";
 import { toApiUrl } from "@/utils/api-client";
+import { logger } from "@/utils/logger";
 import { z } from "zod";
 
 const forgotPasswordSchema = z.object({
-  email: z.string().min(1, "Email is required").email("Please enter a valid email address"),
+  email: z.email({ message: "Please enter a valid email address" }),
 });
 
 export default function ForgotPasswordForm() {
@@ -65,10 +66,14 @@ export default function ForgotPasswordForm() {
       if (res.ok) {
         setIsSuccess(true);
       } else {
-        const data = await res.json().catch(() => null);
+        const data = (await res.json().catch((err: unknown) => {
+          logger.error("Failed to parse forgot password error response", err);
+          return null;
+        })) as { message?: string } | null;
         setServerError(data?.message || "Failed to request password reset. Please try again.");
       }
     } catch (error) {
+      logger.error("Forgot password request failed", error);
       setServerError("An unexpected error occurred. Please try again later.");
     } finally {
       setIsLoading(false);
@@ -118,14 +123,23 @@ export default function ForgotPasswordForm() {
                 Reset Password
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Enter your email address and we'll send you a link to reset your password.
+                Enter your email address and we&apos;ll send you a link to reset your password.
               </Typography>
             </Box>
 
             {isSuccess ? (
-              <Box sx={{ textAlign: "center", p: 3, bgcolor: "success.light", borderRadius: 3, border: "1px solid", borderColor: "success.main" }}>
+              <Box
+                sx={{
+                  textAlign: "center",
+                  p: 3,
+                  bgcolor: "success.light",
+                  borderRadius: 3,
+                  border: "1px solid",
+                  borderColor: "success.main",
+                }}
+              >
                 <SuccessIcon color="success" sx={{ fontSize: 64, mb: 2 }} />
-                <Typography variant="h6" fontWeight="bold" gutterBottom>
+                <Typography variant="h6" sx={{ fontWeight: "bold" }} gutterBottom>
                   Check Your Email
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
@@ -153,9 +167,12 @@ export default function ForgotPasswordForm() {
 
                 <Box
                   component="form"
-                  onSubmit={handleSubmit}
+                  onSubmit={(e: React.SubmitEvent<HTMLFormElement>) => {
+                    void handleSubmit(e);
+                  }}
                   noValidate
                 >
+                  {" "}
                   <TextField
                     fullWidth
                     id="email"
@@ -183,7 +200,6 @@ export default function ForgotPasswordForm() {
                     }}
                     sx={{ mb: 4 }}
                   />
-
                   <Button
                     type="submit"
                     fullWidth
@@ -236,12 +252,16 @@ export default function ForgotPasswordForm() {
                 />
               </Box>
               <Box sx={{ position: "absolute", inset: 0, background: theme.palette.overlay.tealGradient }} />
-              <Box sx={{ position: "absolute", bottom: 0, left: 0, right: 0, p: 6, color: "white" }}>
+              <Box sx={{ position: "absolute", bottom: 0, left: 0, right: 0, p: 6, color: "common.white" }}>
                 <Typography variant="h3" component="h3" sx={{ fontWeight: 900, mb: 2, letterSpacing: "-0.02em" }}>
                   Seamless Recovery
                 </Typography>
-                <Typography variant="h6" sx={{ maxWidth: 500, color: "grey.300", fontWeight: 400, lineHeight: 1.6 }}>
-                  Don't worry, getting back on the road is just a click away. Let's get you signed back in securely.
+                <Typography
+                  variant="h6"
+                  sx={{ maxWidth: 500, color: "text.secondary", fontWeight: 400, lineHeight: 1.6 }}
+                >
+                  Don&apos;t worry, getting back on the road is just a click away. Let&apos;s get you signed back in
+                  securely.
                 </Typography>
               </Box>
             </Paper>

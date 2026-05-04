@@ -14,7 +14,7 @@ export function renderSignInRequired() {
           }}
         >
           <CardContent sx={{ p: { xs: 4, sm: 6 }, textAlign: "center" }}>
-            <Typography variant="h5" fontWeight={700} color="text.primary" gutterBottom>
+            <Typography variant="h5" color="text.primary" gutterBottom sx={{ fontWeight: 700 }}>
               Sign in required
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
@@ -45,7 +45,7 @@ export function renderErrorState(title: string, message: string) {
           }}
         >
           <CardContent sx={{ p: { xs: 4, sm: 6 }, textAlign: "center" }}>
-            <Typography variant="h5" fontWeight={700} color="text.primary" gutterBottom>
+            <Typography variant="h5" color="text.primary" gutterBottom sx={{ fontWeight: 700 }}>
               {title}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>

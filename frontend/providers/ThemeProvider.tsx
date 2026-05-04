@@ -3,7 +3,7 @@
 import { useState, useEffect, ReactNode, startTransition } from "react";
 import { ThemeProvider } from "@mui/material/styles";
 import { CssBaseline } from "@mui/material";
-import { createAppTheme } from "./themeMaterial3";
+import { createAppTheme } from "./theme";
 import { getClientTheme, setThemePreference } from "@/lib/theme-detection";
 import type { PaletteMode } from "@mui/material/styles";
 import { ThemeContext } from "@/context/ThemeContext";

@@ -14,14 +14,16 @@ import {
   Alert,
   Divider,
 } from "@mui/material";
-import { createUser } from "@/app/api/users/users";
+import { z } from "zod";
+import { passwordSchema } from "@/lib/validation/schemas";
+import { createUser } from "@/api-clients/users/users";
 
 export default function CreateSupplierPage() {
   const router = useRouter();
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [errors, setErrors] = useState<any>({});
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string | undefined>>({});
 
   const [form, setForm] = useState({
     email: "",
@@ -33,41 +35,20 @@ export default function CreateSupplierPage() {
     role: "Supplier",
   });
 
-  // -------------------------
-  // VALIDATION
-  // -------------------------
-  const validate = () => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex = /^[0-9+\s-]{8,15}$/;
-
-    const newErrors: any = {};
-
-    if (!form.email.trim()) newErrors.email = "Email is required";
-    else if (!emailRegex.test(form.email)) newErrors.email = "Invalid email";
-
-    if (!form.password.trim()) {
-      newErrors.password = "Password is required";
-    } else if (form.password.length < 6) {
-      newErrors.password = "Minimum 6 characters";
-    } else if (!/[A-Z]/.test(form.password)) {
-      newErrors.password = "Must contain uppercase letter";
-    } else if (!/[^A-Za-z0-9]/.test(form.password)) {
-      newErrors.password = "Must contain special character";
-    }
-
-    if (!form.firstName.trim())
-      newErrors.firstName = "First name is required";
-
-    if (!form.lastName.trim())
-      newErrors.lastName = "Last name is required";
-
-    if (form.phoneNumber && !phoneRegex.test(form.phoneNumber))
-      newErrors.phoneNumber = "Invalid phone number";
-
-    setErrors(newErrors);
-
-    return Object.keys(newErrors).length === 0;
-  };
+  const createUserSchema = z.object({
+    email: z.email({ message: "Invalid email" }),
+    password: passwordSchema,
+    firstName: z.string().min(1, "First name is required"),
+    lastName: z.string().min(1, "Last name is required"),
+    phoneNumber: z
+      .string()
+      .optional()
+      .refine(v => !v || /^[0-9+\s-]{8,15}$/.test(v), {
+        message: "Invalid phone number",
+      }),
+    status: z.string(),
+    role: z.string(),
+  });
 
   // -------------------------
   // SUBMIT
@@ -76,9 +57,20 @@ export default function CreateSupplierPage() {
     try {
       setSaving(true);
       setError("");
+      setFieldErrors({});
 
-      const isValid = validate();
-      if (!isValid) return;
+      const result = createUserSchema.safeParse(form);
+      if (!result.success) {
+        const simplifiedErrors: Record<string, string | undefined> = {};
+        result.error.issues.forEach(issue => {
+          const key = issue.path[0] as string;
+          if (!simplifiedErrors[key]) {
+            simplifiedErrors[key] = issue.message;
+          }
+        });
+        setFieldErrors(simplifiedErrors);
+        return;
+      }
 
       await createUser({
         email: form.email.trim(),
@@ -87,12 +79,13 @@ export default function CreateSupplierPage() {
         lastName: form.lastName.trim(),
         phoneNumber: form.phoneNumber,
         status: form.status,
-        roles: [form.role], // ✅ مهم جدًا
+        roles: [form.role],
       });
 
       router.push("/admin/users");
-    } catch (err: any) {
-      setError(err?.message || "Create user failed");
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Create user failed";
+      setError(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -100,13 +93,12 @@ export default function CreateSupplierPage() {
 
   return (
     <Box sx={{ p: 4, maxWidth: 750, mx: "auto" }}>
-
       {/* Header */}
-      <Typography variant="h5" fontWeight={800} mb={1}>
+      <Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
         Create User
       </Typography>
 
-      <Typography variant="body2" color="text.secondary" mb={3}>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
         Create a new system user account
       </Typography>
 
@@ -116,50 +108,51 @@ export default function CreateSupplierPage() {
         </Alert>
       )}
 
-      {/* Card */}
       <Paper
         elevation={0}
         sx={{
           p: 4,
           borderRadius: 4,
-          border: "1px solid rgba(0,0,0,0.08)",
-          background: "#fff",
+          border: "1px solid",
+          borderColor: "border.light",
+          bgcolor: "background.paper",
         }}
       >
         <Stack spacing={2.2}>
-
           {/* Account */}
-          <Typography fontWeight={700} color="primary">
+          <Typography sx={{ fontWeight: 700 }} color="primary">
             Account Info
           </Typography>
 
           <TextField
             label="Email"
             value={form.email}
-            onChange={(e) =>
-              setForm({ ...form, email: e.target.value })
-            }
+            onChange={e => {
+              setForm({ ...form, email: e.target.value });
+              if (fieldErrors.email) setFieldErrors(prev => ({ ...prev, email: undefined }));
+            }}
             fullWidth
-            error={Boolean(errors.email)}
-            helperText={errors.email}
+            error={Boolean(fieldErrors.email)}
+            helperText={fieldErrors.email}
           />
 
           <TextField
             label="Password"
             type="password"
             value={form.password}
-            onChange={(e) =>
-              setForm({ ...form, password: e.target.value })
-            }
+            onChange={e => {
+              setForm({ ...form, password: e.target.value });
+              if (fieldErrors.password) setFieldErrors(prev => ({ ...prev, password: undefined }));
+            }}
             fullWidth
-            error={Boolean(errors.password)}
-            helperText={errors.password}
+            error={Boolean(fieldErrors.password)}
+            helperText={fieldErrors.password}
           />
 
           <Divider />
 
           {/* Personal */}
-          <Typography fontWeight={700} color="primary">
+          <Typography sx={{ fontWeight: 700 }} color="primary">
             Personal Info
           </Typography>
 
@@ -167,41 +160,44 @@ export default function CreateSupplierPage() {
             <TextField
               label="First Name"
               value={form.firstName}
-              onChange={(e) =>
-                setForm({ ...form, firstName: e.target.value })
-              }
+              onChange={e => {
+                setForm({ ...form, firstName: e.target.value });
+                if (fieldErrors.firstName) setFieldErrors(prev => ({ ...prev, firstName: undefined }));
+              }}
               fullWidth
-              error={Boolean(errors.firstName)}
-              helperText={errors.firstName}
+              error={Boolean(fieldErrors.firstName)}
+              helperText={fieldErrors.firstName}
             />
 
             <TextField
               label="Last Name"
               value={form.lastName}
-              onChange={(e) =>
-                setForm({ ...form, lastName: e.target.value })
-              }
+              onChange={e => {
+                setForm({ ...form, lastName: e.target.value });
+                if (fieldErrors.lastName) setFieldErrors(prev => ({ ...prev, lastName: undefined }));
+              }}
               fullWidth
-              error={Boolean(errors.lastName)}
-              helperText={errors.lastName}
+              error={Boolean(fieldErrors.lastName)}
+              helperText={fieldErrors.lastName}
             />
           </Stack>
 
           <TextField
             label="Phone Number"
             value={form.phoneNumber}
-            onChange={(e) =>
-              setForm({ ...form, phoneNumber: e.target.value })
-            }
+            onChange={e => {
+              setForm({ ...form, phoneNumber: e.target.value });
+              if (fieldErrors.phoneNumber) setFieldErrors(prev => ({ ...prev, phoneNumber: undefined }));
+            }}
             fullWidth
-            error={Boolean(errors.phoneNumber)}
-            helperText={errors.phoneNumber}
+            error={Boolean(fieldErrors.phoneNumber)}
+            helperText={fieldErrors.phoneNumber}
           />
 
           <Divider />
 
           {/* Role */}
-          <Typography fontWeight={700} color="primary">
+          <Typography sx={{ fontWeight: 700 }} color="primary">
             Role
           </Typography>
 
@@ -209,9 +205,9 @@ export default function CreateSupplierPage() {
             select
             label="User Role"
             value={form.role}
-            onChange={(e) =>
-              setForm({ ...form, role: e.target.value })
-            }
+            onChange={e => {
+              setForm({ ...form, role: e.target.value });
+            }}
             fullWidth
           >
             <MenuItem value="Supplier">Supplier</MenuItem>
@@ -224,9 +220,9 @@ export default function CreateSupplierPage() {
             select
             label="Status"
             value={form.status}
-            onChange={(e) =>
-              setForm({ ...form, status: e.target.value })
-            }
+            onChange={e => {
+              setForm({ ...form, status: e.target.value });
+            }}
             fullWidth
           >
             <MenuItem value="active">Active</MenuItem>
@@ -234,15 +230,12 @@ export default function CreateSupplierPage() {
           </TextField>
 
           {/* Actions */}
-          <Stack
-            direction="row"
-            spacing={2}
-            justifyContent="flex-end"
-            mt={2}
-          >
+          <Stack direction="row" spacing={2} sx={{ justifyContent: "flex-end", mt: 2 }}>
             <Button
               variant="outlined"
-              onClick={() => router.back()}
+              onClick={() => {
+                router.back();
+              }}
               sx={{ borderRadius: 2 }}
             >
               Cancel
@@ -250,7 +243,9 @@ export default function CreateSupplierPage() {
 
             <Button
               variant="contained"
-              onClick={handleSubmit}
+              onClick={() => {
+                void handleSubmit();
+              }}
               disabled={saving}
               sx={{
                 borderRadius: 2,
@@ -258,11 +253,7 @@ export default function CreateSupplierPage() {
                 fontWeight: 600,
               }}
             >
-              {saving ? (
-                <CircularProgress size={20} color="inherit" />
-              ) : (
-                "Create User"
-              )}
+              {saving ? <CircularProgress size={20} color="inherit" /> : "Create User"}
             </Button>
           </Stack>
         </Stack>

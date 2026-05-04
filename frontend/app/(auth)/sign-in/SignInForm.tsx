@@ -24,7 +24,7 @@ import {
 import { useTheme } from "@mui/material/styles";
 import {
   Email as EmailIcon,
-  ErrorOutline as ErrorIcon,
+  ErrorOutlined as ErrorIcon,
   Lock as LockIcon,
   Visibility,
   VisibilityOff,
@@ -93,7 +93,7 @@ export default function SignInForm() {
       } else if (res?.ok) {
         // Fetch session to determine roles
         const session = await getSession();
-        if (session?.user?.roles?.includes("Admin") || session?.user?.roles?.includes("Supplier")) {
+        if (session?.user.roles.includes("Admin") || session?.user.roles.includes("Supplier")) {
           router.push("/admin");
         } else {
           router.push("/");
@@ -321,11 +321,14 @@ export default function SignInForm() {
                 />
               </Box>
               <Box sx={{ position: "absolute", inset: 0, background: theme.palette.overlay.tealGradient }} />
-              <Box sx={{ position: "absolute", bottom: 0, left: 0, right: 0, p: 6, color: "white" }}>
+              <Box sx={{ position: "absolute", bottom: 0, left: 0, right: 0, p: 6, color: "common.white" }}>
                 <Typography variant="h3" component="h3" sx={{ fontWeight: 900, mb: 2, letterSpacing: "-0.02em" }}>
                   Drive Your Ambition
                 </Typography>
-                <Typography variant="h6" sx={{ maxWidth: 500, color: "grey.300", fontWeight: 400, lineHeight: 1.6 }}>
+                <Typography
+                  variant="h6"
+                  sx={{ maxWidth: 500, color: "text.secondary", fontWeight: 400, lineHeight: 1.6 }}
+                >
                   Experience the ultimate driving journey with our collection of top-tier vehicles, tailored just for
                   you.
                 </Typography>

@@ -78,7 +78,7 @@ export default function CountrySelect({
           helperText={helperText}
           slotProps={{
             htmlInput: {
-              ...params.inputProps,
+              ...params.slotProps.htmlInput,
               autoComplete: "new-password",
             },
           }}

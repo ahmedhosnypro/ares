@@ -126,7 +126,7 @@ export default function ChangePasswordForm({ userId, accessToken }: ChangePasswo
 
   return (
     <Box>
-      <Typography variant="h6" fontWeight={700} color="text.primary" gutterBottom>
+      <Typography variant="h6" color="text.primary" gutterBottom sx={{ fontWeight: 700 }}>
         Change Password
       </Typography>
       <Divider sx={{ mb: 3, borderColor: "border.light" }} />
@@ -134,7 +134,7 @@ export default function ChangePasswordForm({ userId, accessToken }: ChangePasswo
       <Box
         component="form"
         onSubmit={e => {
-          void handleSubmit(e as React.SyntheticEvent<HTMLFormElement>);
+          void handleSubmit(e);
         }}
         noValidate
         sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}
@@ -227,7 +227,7 @@ export default function ChangePasswordForm({ userId, accessToken }: ChangePasswo
                 color={passwordStrength.color}
                 sx={{ height: 4, borderRadius: 999, mb: 0.5 }}
               />
-              <Typography variant="caption" color={`${passwordStrength.color}.main`} fontWeight={600}>
+              <Typography variant="caption" color={`${passwordStrength.color}.main`} sx={{ fontWeight: 600 }}>
                 {passwordStrength.label}
               </Typography>
             </Box>

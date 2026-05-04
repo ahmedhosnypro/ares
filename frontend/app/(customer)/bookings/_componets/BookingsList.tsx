@@ -219,11 +219,11 @@ export default function BookingsList({ userId, accessToken }: Readonly<{ userId:
         </Box>
         <Typography
           variant="h5"
-          fontWeight={800}
           color="text.primary"
           gutterBottom
           sx={{
             fontSize: { xs: "1.25rem", sm: "1.5rem" },
+            fontWeight: 800,
           }}
         >
           Ready for your first trip?
@@ -267,11 +267,11 @@ export default function BookingsList({ userId, accessToken }: Readonly<{ userId:
           <CalendarIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
           <Typography
             variant="h6"
-            fontWeight={700}
             color="text.primary"
             gutterBottom
             sx={{
               fontSize: { xs: "1rem", sm: "1.125rem" },
+              fontWeight: 700,
             }}
           >
             No matches found
@@ -317,17 +317,17 @@ export default function BookingsList({ userId, accessToken }: Readonly<{ userId:
                 }}
               >
                 Showing{" "}
-                <Box component="span" fontWeight={700} color="primary.main">
+                <Typography component="span" sx={{ fontWeight: 700, color: "primary.main" }}>
                   {(page - 1) * PAGE_SIZE + 1}
-                </Box>
+                </Typography>
                 {" – "}
-                <Box component="span" fontWeight={700} color="primary.main">
+                <Typography component="span" sx={{ fontWeight: 700, color: "primary.main" }}>
                   {Math.min(page * PAGE_SIZE, totalRecords)}
-                </Box>
+                </Typography>
                 {" of "}
-                <Box component="span" fontWeight={700} color="primary.main">
+                <Typography component="span" sx={{ fontWeight: 700, color: "primary.main" }}>
                   {totalRecords}
-                </Box>
+                </Typography>
                 {" bookings"}
               </Typography>
               <Pagination

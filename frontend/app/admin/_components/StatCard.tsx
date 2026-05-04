@@ -1,7 +1,7 @@
 // app/admin/components/StatCard.tsx
 "use client";
 
-import { Card, CardContent, Box, Avatar, Typography, Chip, useTheme } from "@mui/material";
+import { Card, CardContent, Box, Avatar, Typography, Chip, useTheme, alpha } from "@mui/material";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
@@ -16,9 +16,24 @@ const iconMap = {
   PeopleAlt: PeopleAltIcon,
 };
 
-export default function StatCard({ title, value, change, isUp, icon, color }: any) {
+type StatColor = "primary" | "secondary" | "error" | "warning" | "info" | "success";
+
+interface StatCardProps {
+  title: string;
+  value: string;
+  change: string;
+  isUp: boolean;
+  icon: keyof typeof iconMap;
+  color: StatColor;
+}
+
+export default function StatCard({ title, value, change, isUp, icon, color }: Readonly<StatCardProps>) {
   const theme = useTheme();
-  const IconComponent = iconMap[icon as keyof typeof iconMap];
+  const IconComponent = iconMap[icon];
+
+  const paletteColor = theme.palette[color] as { main: string; contrastText: string };
+  const mainColor = paletteColor.main;
+  const contrastText = paletteColor.contrastText;
 
   return (
     <Card
@@ -26,13 +41,17 @@ export default function StatCard({ title, value, change, isUp, icon, color }: an
       sx={{
         borderRadius: 4,
         border: "1px solid",
-        borderColor: theme.palette.mode === "dark" ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)",
+        borderColor: "divider",
         bgcolor: "background.paper",
         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-        boxShadow: theme.palette.mode === "light" ? "0 4px 20px rgba(0,0,0,0.03)" : "none",
+        boxShadow: theme =>
+          theme.palette.mode === "light" ? `0 4px 20px ${alpha(theme.palette.common.black, 0.03)}` : "none",
         "&:hover": {
           transform: "translateY(-6px)",
-          boxShadow: theme.palette.mode === "light" ? "0 12px 28px rgba(0,0,0,0.08)" : "0 12px 28px rgba(0,0,0,0.4)",
+          boxShadow: theme =>
+            theme.palette.mode === "light"
+              ? `0 12px 28px ${alpha(theme.palette.common.black, 0.08)}`
+              : `0 12px 28px ${alpha(theme.palette.common.black, 0.4)}`,
         },
       }}
     >
@@ -41,10 +60,10 @@ export default function StatCard({ title, value, change, isUp, icon, color }: an
           <Avatar
             sx={{
               bgcolor: `${color}.main`,
-              color: "#fff",
+              color: contrastText,
               width: 52,
               height: 52,
-              boxShadow: `0 8px 16px ${(theme.palette as any)[color].main}40`,
+              boxShadow: `0 8px 16px ${alpha(mainColor, 0.25)}`,
             }}
           >
             <IconComponent fontSize="medium" />
@@ -58,14 +77,13 @@ export default function StatCard({ title, value, change, isUp, icon, color }: an
             sx={{ fontWeight: "bold", borderRadius: 2 }}
           />
         </Box>
-        <Typography variant="h3" fontWeight="800" sx={{ mb: 1, letterSpacing: "-1px" }}>
+        <Typography variant="h3" sx={{ fontWeight: "800", mb: 1, letterSpacing: "-1px", color: "text.primary" }}>
           {value}
         </Typography>
         <Typography
           variant="body2"
           color="text.secondary"
-          fontWeight="600"
-          sx={{ textTransform: "uppercase", letterSpacing: "0.5px", fontSize: "0.75rem" }}
+          sx={{ fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px", fontSize: "0.75rem" }}
         >
           {title}
         </Typography>

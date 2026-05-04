@@ -155,7 +155,7 @@ export default function AddressForm({
 
   return (
     <Box>
-      <Typography variant="h6" fontWeight={700} color="text.primary" gutterBottom>
+      <Typography variant="h6" color="text.primary" gutterBottom sx={{ fontWeight: 700 }}>
         Address & Emergency Contact
       </Typography>
       <Divider sx={{ mb: 3, borderColor: "border.light" }} />
@@ -163,7 +163,7 @@ export default function AddressForm({
       <Box
         component="form"
         onSubmit={e => {
-          void handleSubmit(e as React.SyntheticEvent<HTMLFormElement>);
+          void handleSubmit(e);
         }}
         noValidate
       >
@@ -257,7 +257,7 @@ export default function AddressForm({
 
         {/* Emergency contact */}
         <Box sx={{ mt: 4 }}>
-          <Typography variant="subtitle2" fontWeight={700} color="text.primary" gutterBottom>
+          <Typography variant="subtitle2" color="text.primary" gutterBottom sx={{ fontWeight: 700 }}>
             Emergency Contact
           </Typography>
           <Divider sx={{ mb: 2.5, borderColor: "border.light" }} />

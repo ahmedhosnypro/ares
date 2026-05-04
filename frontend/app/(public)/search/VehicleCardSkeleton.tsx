@@ -1,18 +1,16 @@
 "use client";
 
 import { Box, Card, CardContent, Divider, Skeleton, Stack } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
 
 export default function VehicleCardSkeleton() {
-  const theme = useTheme();
-
   return (
     <Card
       sx={{
         height: "100%",
         borderRadius: "24px",
-        boxShadow: theme.palette.shadow.card,
-        border: `1px solid ${theme.palette.border.light}`,
+        boxShadow: "shadow.card",
+        border: "1px solid",
+        borderColor: "border.light",
       }}
     >
       {/* Image Skeleton */}
@@ -20,7 +18,7 @@ export default function VehicleCardSkeleton() {
         sx={{
           position: "relative",
           height: 240,
-          bgcolor: "grey.50",
+          bgcolor: "background.default",
           overflow: "hidden",
         }}
       >
@@ -49,12 +47,12 @@ export default function VehicleCardSkeleton() {
           </Box>
 
           {/* Price and Rating */}
-          <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+          <Stack direction="row" spacing={2} sx={{ alignItems: "center", justifyContent: "space-between" }}>
             <Box>
               <Skeleton variant="text" width={40} height={16} animation="wave" />
               <Skeleton variant="text" width={80} height={32} animation="wave" />
             </Box>
-            <Stack alignItems="flex-end" spacing={0.5}>
+            <Stack spacing={0.5} sx={{ alignItems: "flex-end" }}>
               <Skeleton variant="text" width={100} height={20} animation="wave" />
               <Skeleton variant="text" width={80} height={16} animation="wave" />
             </Stack>
@@ -63,8 +61,8 @@ export default function VehicleCardSkeleton() {
           <Divider />
 
           {/* Location and View Details */}
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Stack direction="row" spacing={1} alignItems="center">
+          <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
               <Skeleton variant="circular" width={30} height={30} animation="wave" />
               <Skeleton variant="text" width={100} height={20} animation="wave" />
             </Stack>

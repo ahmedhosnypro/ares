@@ -1,4 +1,3 @@
-import React from "react";
 import BookingsClient from "./_components/BookingsClient";
 
 export const metadata = {

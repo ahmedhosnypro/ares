@@ -135,13 +135,13 @@ export async function promptBackendConfig(
       initial: defaults.dbIntegratedSecurity,
     },
     {
-      type: (prev, values) => values.dbIntegratedSecurity ? null : "text",
+      type: (prev, values) => (values.dbIntegratedSecurity ? null : "text"),
       name: "dbUser",
       message: "Database user",
       initial: defaults.dbUser,
     },
     {
-      type: (prev, values) => values.dbIntegratedSecurity ? null : "password",
+      type: (prev, values) => (values.dbIntegratedSecurity ? null : "password"),
       name: "dbPassword",
       message: "Database password",
       initial: defaults.dbPassword,
@@ -209,8 +209,8 @@ export async function promptBackendConfig(
     dbPort: response.dbPort as number,
     dbName: response.dbName as string,
     dbIntegratedSecurity: response.dbIntegratedSecurity as boolean,
-    dbUser: response.dbUser as string ?? "",
-    dbPassword: response.dbPassword as string ?? "",
+    dbUser: (response.dbUser as string) ?? "",
+    dbPassword: (response.dbPassword as string) ?? "",
     jwtSecret: response.jwtSecret as string,
     jwtIssuer: response.jwtIssuer as string,
     jwtAudience: response.jwtAudience as string,
@@ -228,28 +228,28 @@ export async function promptBackendConfig(
  */
 export function buildConnectionString(config: BackendEnvConfig): string {
   const parts: string[] = [];
-  
+
   // Named instances (containing a backslash) usually don't use a static port in the connection string
   // they resolve dynamically via SQL Browser
   const isNamedInstance = config.dbHost.includes("\\");
-  
+
   if (config.dbPort > 0 && !isNamedInstance) {
     parts.push(`Server=${config.dbHost},${String(config.dbPort)}`);
   } else {
     parts.push(`Server=${config.dbHost}`);
   }
-  
+
   parts.push(`Database=${config.dbName}`);
-  
+
   if (config.dbIntegratedSecurity) {
     parts.push(`Integrated Security=True`);
   } else {
     parts.push(`User=${config.dbUser}`);
     parts.push(`Password=${config.dbPassword}`);
   }
-  
-  parts.push(`TrustServerCertificate=${config.dbTrustServerCertificate ? 'True' : 'False'}`);
-  parts.push(`Encrypt=${config.dbEncrypt ? 'True' : 'False'}`);
+
+  parts.push(`TrustServerCertificate=${config.dbTrustServerCertificate ? "True" : "False"}`);
+  parts.push(`Encrypt=${config.dbEncrypt ? "True" : "False"}`);
 
   return parts.join(";");
 }

@@ -69,7 +69,7 @@ function VerificationItem({ label, isVerified, actionText, icon, isLast }: Verif
           primary={
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center" }}>{icon}</Box>
-              <Typography variant="body2" fontWeight={600} color="text.primary">
+              <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
                 {label}
               </Typography>
             </Box>
@@ -105,7 +105,7 @@ export default function VerificationStatus({ emailVerified, phoneVerified, licen
 
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="subtitle1" fontWeight={700} color="text.primary" gutterBottom>
+      <Typography variant="subtitle1" color="text.primary" gutterBottom sx={{ fontWeight: 700 }}>
         Verification Status
       </Typography>
       <Divider sx={{ mb: 1, borderColor: "border.light" }} />

@@ -56,14 +56,15 @@ export default function WhyChooseUsSection() {
       <Box sx={{ maxWidth: 1200, mx: "auto" }}>
         <Typography
           variant="h3"
-          fontWeight="bold"
-          textAlign="center"
-          mb={2}
-          sx={{ fontSize: { xs: "2rem", md: "3rem" } }}
+          sx={{ fontWeight: "bold", textAlign: "center", mb: 2, fontSize: { xs: "2rem", md: "3rem" } }}
         >
           Why choose us?
         </Typography>
-        <Typography variant="body1" color="text.secondary" textAlign="center" mb={8} sx={{ maxWidth: 600, mx: "auto" }}>
+        <Typography
+          variant="body1"
+          color="text.secondary"
+          sx={{ textAlign: "center", mb: 8, maxWidth: 600, mx: "auto" }}
+        >
           We combine transparency, quality, and convenience to make your car rental experience seamless.
         </Typography>
 
@@ -73,9 +74,9 @@ export default function WhyChooseUsSection() {
             <Grid size={{ xs: 12, sm: 6, md: 4 }} key={i}>
               <Stack
                 spacing={2}
-                alignItems="center"
-                textAlign="center"
                 sx={{
+                  alignItems: "center",
+                  textAlign: "center",
                   height: "100%",
                   p: 3,
                   transition: "transform 0.2s ease",
@@ -96,11 +97,7 @@ export default function WhyChooseUsSection() {
                 >
                   {feature.icon}
                 </Avatar>
-                <Typography
-                  variant="h6"
-                  fontWeight="bold"
-                  sx={{ minHeight: 32 }} // Consistent title height
-                >
+                <Typography variant="h6" sx={{ fontWeight: "bold", minHeight: 32 }}>
                   {feature.title}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>

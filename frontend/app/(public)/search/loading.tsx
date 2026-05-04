@@ -19,8 +19,8 @@ export default function SearchLoading() {
       <Box
         sx={{
           borderBottom: "1px solid",
-          borderColor: theme.palette.border.main,
-          bgcolor: "rgba(255, 255, 255, 0.8)",
+          borderColor: "border.main",
+          bgcolor: "overlay.blur",
           backdropFilter: "blur(10px)",
         }}
       >
@@ -43,7 +43,7 @@ export default function SearchLoading() {
               }}
             >
               <Stack spacing={2}>
-                <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems="flex-end">
+                <Stack direction={{ xs: "column", md: "row" }} spacing={2} sx={{ alignItems: "flex-end" }}>
                   <Skeleton variant="rounded" height={56} sx={{ flex: 2, borderRadius: "12px" }} animation="wave" />
                   <Skeleton variant="rounded" height={56} sx={{ flex: 1, borderRadius: "12px" }} animation="wave" />
                   <Skeleton variant="rounded" height={56} sx={{ flex: 1, borderRadius: "12px" }} animation="wave" />
@@ -51,8 +51,7 @@ export default function SearchLoading() {
                 <Stack
                   direction={{ xs: "column", sm: "row" }}
                   spacing={2}
-                  alignItems={{ xs: "stretch", sm: "center" }}
-                  justifyContent="space-between"
+                  sx={{ alignItems: { xs: "stretch", sm: "center" }, justifyContent: "space-between" }}
                 >
                   <Skeleton variant="text" width={300} height={20} animation="wave" />
                   <Skeleton variant="rounded" width={220} height={48} sx={{ borderRadius: "999px" }} animation="wave" />
@@ -61,7 +60,7 @@ export default function SearchLoading() {
             </Box>
 
             {/* Chips Skeleton */}
-            <Stack direction="row" spacing={1.25} flexWrap="wrap">
+            <Stack direction="row" spacing={1.25} sx={{ flexWrap: "wrap" }}>
               <Skeleton variant="rounded" width={150} height={32} sx={{ borderRadius: "16px" }} animation="wave" />
               <Skeleton variant="rounded" width={200} height={32} sx={{ borderRadius: "16px" }} animation="wave" />
             </Stack>

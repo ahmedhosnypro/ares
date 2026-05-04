@@ -1,4 +1,5 @@
 import { toApiUrl } from "@/utils/api-client";
+import { logger } from "@/utils/logger";
 
 export interface PublicLocation {
   id: string;
@@ -368,8 +369,26 @@ function normalizeDestination(destination: ApiDestinationDto): PublicDestination
   };
 }
 
+async function fetchJsonOrNull<T>(url: string, init?: RequestInit): Promise<T | null> {
+  try {
+    const response = await fetch(url, init);
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return (await response.json()) as T;
+  } catch (error) {
+    if (process.env.NODE_ENV !== "production") {
+      logger.warn(`Public data request failed for ${url}:`, error);
+    }
+
+    return null;
+  }
+}
+
 export async function fetchPublicLocations(): Promise<PublicLocation[]> {
-  const response = await fetch(toApiUrl("/api/locations/1/50"), {
+  const payload = await fetchJsonOrNull<ApiPagedResponse<ApiLocationDto>>(toApiUrl("/api/locations/1/50"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -377,11 +396,10 @@ export async function fetchPublicLocations(): Promise<PublicLocation[]> {
     cache: "no-store",
   });
 
-  if (!response.ok) {
+  if (!payload) {
     return [];
   }
 
-  const payload = (await response.json()) as ApiPagedResponse<ApiLocationDto>;
   return normalizeCollection(payload)
     .map(normalizeLocation)
     .filter(location => Boolean(location.id));
@@ -402,52 +420,59 @@ export async function fetchFeaturedVehicles(
     sortBy: "rating",
   });
 
-  const response = await fetch(toApiUrl(`/api/vehicles/search?${search.toString()}`), {
-    cache: "no-store",
-  });
+  const payload = await fetchJsonOrNull<ApiPagedResponse<ApiVehicleListDto>>(
+    toApiUrl(`/api/vehicles/search?${search.toString()}`),
+    {
+      cache: "no-store",
+    }
+  );
 
-  if (!response.ok) {
+  if (!payload) {
     return [];
   }
 
-  const payload = (await response.json()) as ApiPagedResponse<ApiVehicleListDto>;
   return normalizeCollection(payload)
     .map(normalizeVehicle)
     .filter(vehicle => Boolean(vehicle.vehicleId));
 }
 
 export async function fetchPublicSuppliers(limit = 6): Promise<PublicSupplierCard[]> {
-  const response = await fetch(toApiUrl(`/api/public/suppliers/1/${String(limit)}`), { cache: "no-store" });
+  const payload = await fetchJsonOrNull<ApiPagedResponse<ApiSupplierDto>>(
+    toApiUrl(`/api/public/suppliers/1/${String(limit)}`),
+    { cache: "no-store" }
+  );
 
-  if (!response.ok) {
+  if (!payload) {
     return [];
   }
 
-  const payload = (await response.json()) as ApiPagedResponse<ApiSupplierDto>;
   return normalizeCollection(payload)
     .map(normalizeSupplier)
     .filter(supplier => Boolean(supplier.id));
 }
 
 export async function fetchLandingContent(): Promise<PublicLandingContent | null> {
-  const response = await fetch(toApiUrl("/api/public/landing"), { cache: "no-store" });
+  const payload = await fetchJsonOrNull<ApiLandingContentDto>(toApiUrl("/api/public/landing"), {
+    cache: "no-store",
+  });
 
-  if (!response.ok) {
+  if (!payload) {
     return null;
   }
 
-  const payload = (await response.json()) as ApiLandingContentDto;
   return normalizeLandingContent(payload);
 }
 
 export async function fetchPublicDestinations(limit = 4): Promise<PublicDestinationCard[]> {
-  const response = await fetch(toApiUrl(`/api/public/destinations?limit=${String(limit)}`), { cache: "no-store" });
+  const payload = await fetchJsonOrNull<ApiDestinationDto[] | ApiPagedResponse<ApiDestinationDto>>(
+    toApiUrl(`/api/public/destinations?limit=${String(limit)}`),
+    { cache: "no-store" }
+  );
 
-  if (!response.ok) {
+  if (!payload) {
     return [];
   }
 
-  const payload = (await response.json()) as ApiDestinationDto[] | ApiPagedResponse<ApiDestinationDto>;
   return normalizeCollection(payload)
     .map(normalizeDestination)
     .filter(destination => Boolean(destination.id));

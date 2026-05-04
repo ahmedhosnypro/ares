@@ -73,9 +73,8 @@ export default function BookingCard({ booking }: Readonly<{ booking: BookingItem
           <Box sx={{ flex: 1 }}>
             <Typography
               variant="h6"
-              fontWeight={800}
               color="text.primary"
-              sx={{ fontSize: { xs: "1rem", sm: "1.125rem" } }}
+              sx={{ fontSize: { xs: "1rem", sm: "1.125rem" }, fontWeight: 800 }}
             >
               {booking.car?.name ?? "Unknown Car"}
             </Typography>
@@ -100,20 +99,19 @@ export default function BookingCard({ booking }: Readonly<{ booking: BookingItem
             />
             <Typography
               variant="h6"
-              fontWeight={900}
               color="primary.main"
-              sx={{ fontSize: { xs: "1.125rem", sm: "1.25rem" } }}
+              sx={{ fontSize: { xs: "1.125rem", sm: "1.25rem" }, fontWeight: 900 }}
             >
               ${booking.price ?? 0}
             </Typography>
             <Typography
               variant="caption"
               color="text.secondary"
-              fontWeight={700}
               sx={{
                 textTransform: "uppercase",
                 letterSpacing: 1,
                 fontSize: "0.65rem",
+                fontWeight: 700,
               }}
             >
               Total
@@ -160,9 +158,8 @@ export default function BookingCard({ booking }: Readonly<{ booking: BookingItem
             <Box sx={{ flex: 1 }}>
               <Typography
                 variant="body2"
-                fontWeight={700}
                 color="text.primary"
-                sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" } }}
+                sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" }, fontWeight: 700 }}
               >
                 Pick-up
               </Typography>
@@ -194,9 +191,8 @@ export default function BookingCard({ booking }: Readonly<{ booking: BookingItem
             <Box sx={{ flex: 1 }}>
               <Typography
                 variant="body2"
-                fontWeight={700}
                 color="text.primary"
-                sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" } }}
+                sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" }, fontWeight: 700 }}
               >
                 Drop-off
               </Typography>
@@ -278,7 +274,7 @@ export default function BookingCard({ booking }: Readonly<{ booking: BookingItem
             }}
           >
             <Box>
-              <Typography variant="h6" fontWeight={800} color="text.primary">
+              <Typography variant="h6" color="text.primary" sx={{ fontWeight: 800 }}>
                 {booking.car?.name ?? "Unknown Car"}
               </Typography>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
@@ -290,14 +286,13 @@ export default function BookingCard({ booking }: Readonly<{ booking: BookingItem
             </Box>
 
             <Box sx={{ textAlign: "right" }}>
-              <Typography variant="h5" fontWeight={900} color="primary.main">
+              <Typography variant="h5" color="primary.main" sx={{ fontWeight: 900 }}>
                 ${booking.price ?? 0}
               </Typography>
               <Typography
                 variant="caption"
                 color="text.secondary"
-                fontWeight={700}
-                sx={{ textTransform: "uppercase", letterSpacing: 1 }}
+                sx={{ textTransform: "uppercase", letterSpacing: 1, fontWeight: 700 }}
               >
                 Total Price
               </Typography>
@@ -322,7 +317,7 @@ export default function BookingCard({ booking }: Readonly<{ booking: BookingItem
                 <LocationIcon sx={{ fontSize: 16 }} />
               </Box>
               <Box>
-                <Typography variant="body2" fontWeight={700} color="text.primary">
+                <Typography variant="body2" color="text.primary" sx={{ fontWeight: 700 }}>
                   Pick-up
                 </Typography>
                 <Typography variant="body2" color="text.secondary" noWrap>
@@ -351,7 +346,7 @@ export default function BookingCard({ booking }: Readonly<{ booking: BookingItem
                 <LocationIcon sx={{ fontSize: 16 }} />
               </Box>
               <Box>
-                <Typography variant="body2" fontWeight={700} color="text.primary">
+                <Typography variant="body2" color="text.primary" sx={{ fontWeight: 700 }}>
                   Drop-off
                 </Typography>
                 <Typography variant="body2" color="text.secondary" noWrap>

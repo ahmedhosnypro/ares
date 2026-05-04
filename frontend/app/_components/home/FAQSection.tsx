@@ -17,14 +17,11 @@ export default function FAQSection({ faqItems }: FAQSectionProps) {
     <Box sx={{ mb: 4 }}>
       <Typography
         variant="h4"
-        fontWeight="bold"
-        textAlign="center"
-        mb={2}
-        sx={{ fontSize: { xs: "1.75rem", md: "2.125rem" } }}
+        sx={{ fontWeight: "bold", textAlign: "center", mb: 2, fontSize: { xs: "1.75rem", md: "2.125rem" } }}
       >
         Frequently asked questions
       </Typography>
-      <Typography variant="body1" color="text.secondary" textAlign="center" mb={5} sx={{ maxWidth: 600, mx: "auto" }}>
+      <Typography variant="body1" color="text.secondary" sx={{ textAlign: "center", mb: 5, maxWidth: 600, mx: "auto" }}>
         Find answers to common questions about our rental service.
       </Typography>
 
@@ -87,7 +84,7 @@ export default function FAQSection({ faqItems }: FAQSectionProps) {
                 },
               }}
             >
-              <Typography fontWeight="bold" sx={{ fontSize: { xs: "0.95rem", md: "1rem" } }}>
+              <Typography sx={{ fontWeight: "bold", fontSize: { xs: "0.95rem", md: "1rem" } }}>
                 {item.question}
               </Typography>
             </AccordionSummary>
@@ -115,7 +112,7 @@ export default function FAQSection({ faqItems }: FAQSectionProps) {
 
       {/* Optional: Add a help CTA below FAQs */}
       <Box sx={{ textAlign: "center", mt: 4 }}>
-        <Typography variant="body2" color="text.secondary" mb={2}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Still have questions?
         </Typography>
         <Typography

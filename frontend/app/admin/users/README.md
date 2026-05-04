@@ -43,4 +43,3 @@ Toggle the status of a user between 'Active' and 'Blocked'.
 **Response — 200 OK**
 
 Status successfully changed.
-

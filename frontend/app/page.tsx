@@ -106,10 +106,10 @@ export default async function Home() {
         </Box>
 
         <Box>
-          <Typography variant="h4" fontWeight="bold" textAlign="center" mb={2}>
+          <Typography variant="h4" sx={{ fontWeight: "bold", textAlign: "center", mb: 2 }}>
             Destination Discovery
           </Typography>
-          <Typography variant="body1" color="text.secondary" textAlign="center" mb={4}>
+          <Typography variant="body1" color="text.secondary" sx={{ textAlign: "center", mb: 4 }}>
             Find our premium fleet in hundreds of locations worldwide.
           </Typography>
           <DestinationMapWrapper locations={locations} />

@@ -20,58 +20,61 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
-    "test:e2e:report": "playwright show-report"
+    "test:e2e:report": "playwright show-report",
+    "prepare": "husky"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@hookform/resolvers": "^5.2.2",
-    "@mui/icons-material": "^7.3.8",
-    "@mui/material": "^7.3.8",
-    "@mui/x-data-grid": "^8.27.3",
-    "@mui/x-date-pickers": "^8.27.2",
+    "@mui/icons-material": "^9.0.0",
+    "@mui/material": "^9.0.0",
+    "@mui/x-data-grid": "^9.0.4",
+    "@mui/x-date-pickers": "^9.0.4",
     "axios": "^1.13.5",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.38.0",
     "leaflet": "^1.9.4",
-    "libphonenumber-js": "^1.12.41",
-    "lucide-react": "^1.7.0",
+    "libphonenumber-js": "^1.12.42",
+    "lucide-react": "^1.14.0",
     "mui-phone-number": "^3.0.3",
-    "next": "16.1.6",
-    "next-auth": "^4.24.13",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "react-hook-form": "^7.74.0",
+    "next": "16.2.4",
+    "next-auth": "^4.24.14",
+    "react": "19.2.5",
+    "react-dom": "19.2.5",
+    "react-hook-form": "^7.75.0",
     "react-leaflet": "^5.0.0",
     "recharts": "^3.8.1",
     "tailwind-merge": "^3.5.0",
-    "zod": "^4.3.6"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@cspell/dict-ar": "^1.1.7",
-    "@cspell/eslint-plugin": "^9.7.0",
+    "@cspell/eslint-plugin": "^10.0.0",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.54.2",
-    "@tailwindcss/postcss": "^4.2.1",
+    "@tailwindcss/postcss": "^4.2.4",
     "@types/leaflet": "^1.9.21",
-    "@types/node": "^20",
+    "@types/node": "^25.6.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@typescript/native-preview": "^7.0.0-dev.20260414.1",
-    "autoprefixer": "^10.4.27",
+    "@typescript/native-preview": "^7.0.0-dev.20260504.1",
+    "autoprefixer": "^10.5.0",
     "babel-plugin-react-compiler": "1.0.0",
-    "eslint": "^9",
-    "eslint-config-next": "16.1.6",
+    "eslint": "^10.3.0",
+    "eslint-config-next": "16.2.4",
     "eslint-plugin-react-refresh": "^0.5.2",
-    "eslint-plugin-sonarjs": "^4.0.0",
-    "globals": "^17.3.0",
-    "postcss": "^8.5.8",
+    "eslint-plugin-sonarjs": "^4.0.3",
+    "globals": "^17.6.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "postcss": "^8.5.13",
     "prettier": "^3.8.3",
-    "tailwindcss": "3",
-    "typescript": "^5",
-    "typescript-eslint": "^8.56.1"
+    "tailwindcss": "4.2.4",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.59.1"
   },
   "ignoreScripts": [
     "sharp",
@@ -80,5 +83,14 @@
   "trustedDependencies": [
     "sharp",
     "unrs-resolver"
-  ]
+  ],
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "*.{json,css,scss,md}": [
+      "prettier --write"
+    ]
+  }
 }

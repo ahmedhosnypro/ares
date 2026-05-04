@@ -146,7 +146,7 @@ export default function PersonalInfoForm({
 
   return (
     <Box>
-      <Typography variant="h6" fontWeight={700} color="text.primary" gutterBottom>
+      <Typography variant="h6" color="text.primary" gutterBottom sx={{ fontWeight: 700 }}>
         Personal Information
       </Typography>
       <Divider sx={{ mb: 3, borderColor: "border.light" }} />
@@ -154,7 +154,7 @@ export default function PersonalInfoForm({
       <Box
         component="form"
         onSubmit={e => {
-          void handleSubmit(e as React.SyntheticEvent<HTMLFormElement>);
+          void handleSubmit(e);
         }}
         noValidate
       >
@@ -250,7 +250,11 @@ export default function PersonalInfoForm({
                     },
                     error: touched.dateOfBirth && !!fieldErrors.dateOfBirth,
                     helperText: touched.dateOfBirth ? fieldErrors.dateOfBirth : undefined,
-                    autoComplete: "bday",
+                    slotProps: {
+                      htmlInput: {
+                        autoComplete: "bday",
+                      },
+                    },
                   },
                 }}
               />

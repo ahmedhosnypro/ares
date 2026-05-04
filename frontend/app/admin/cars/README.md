@@ -89,7 +89,9 @@ Delete a car (only if no active bookings).
 | 200    | Car deleted             |
 | 400    | Car has active bookings |
 | 404    | Car not found           |
---------------------------------------------------------------------
+
+---
+
 # Admin — Edit Car
 
 ## Page Info
@@ -195,7 +197,9 @@ Same shape as `POST /api/create-car` plus `_id` field.
 | 400    | Invalid fields               |
 | 404    | Car not found                |
 | 409    | License plate already in use |
-----------------------------------------------------------------------
+
+---
+
 # Admin — Car Detail
 
 ## Page Info
@@ -253,7 +257,9 @@ Fetch full car details.
 | Status | Meaning       |
 | ------ | ------------- |
 | 404    | Car not found |
----------------------------------------------------------------------
+
+---
+
 # Admin — Create Car
 
 ## Page Info
@@ -370,7 +376,9 @@ Create the new car record.
 | ------ | ---------------------------- |
 | 400    | Missing required fields      |
 | 409    | License plate already in use |
---------------------------------------------------------------------------------------
+
+---
+
 # Admin — Cars List
 
 ## Page Info
@@ -462,4 +470,3 @@ Delete a car (only if no active bookings).
 | 200    | Car deleted             |
 | 400    | Car has active bookings |
 | 404    | Car not found           |
-

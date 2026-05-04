@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -26,7 +26,9 @@ import {
   Tooltip,
   useTheme,
   useMediaQuery,
-  alpha
+  alpha,
+  type Theme,
+  type SelectChangeEvent,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 
@@ -36,10 +38,17 @@ import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import BlockIcon from "@mui/icons-material/Block";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { toggleUserStatus, getUsers } from "@/app/api/users/users";
+import { toggleUserStatus, getUsers, type User } from "@/api-clients/users/users";
+import { logger } from "@/utils/logger";
+
+interface StatCardProps {
+  readonly label: string;
+  readonly value: string | number;
+  readonly color: string;
+}
 
 // ── UI Card ─────────────────────────────
-function StatCard({ label, value, color }: any) {
+function StatCard({ label, value, color }: StatCardProps) {
   return (
     <Card
       elevation={0}
@@ -48,35 +57,39 @@ function StatCard({ label, value, color }: any) {
         borderRadius: 4,
         border: "1px solid",
         borderColor: "divider",
-        background: (theme) =>
-          `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${alpha(
-            color,
-            0.08
-          )} 100%)`
+        background: (theme: Theme) =>
+          `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${alpha(color, 0.08)} 100%)`,
       }}
     >
-      <Typography variant="overline" color="text.secondary" fontWeight={700}>
+      <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 700 }}>
         {label}
       </Typography>
-      <Typography variant="h4" fontWeight={800} sx={{ color }}>
+      <Typography variant="h4" sx={{ fontWeight: 800, color }}>
         {value}
       </Typography>
     </Card>
   );
 }
 
+interface UserMobileCardProps {
+  readonly u: User;
+  readonly theme: Theme;
+  readonly fetchUsers: () => void;
+}
+
 // ── MOBILE USER CARD ────────────────────
-function UserMobileCard({
-  u,
-  theme,
-  fetchUsers,
-}: {
-  u: any;
-  theme: any;
-  fetchUsers: () => void;
-}) {
+function UserMobileCard({ u, theme, fetchUsers }: UserMobileCardProps) {
   const status = (u.status || "").toLowerCase();
   const isActive = status === "active";
+
+  const handleToggleStatus = useCallback(async () => {
+    try {
+      await toggleUserStatus(u.id);
+      fetchUsers();
+    } catch (err) {
+      logger.error("Failed to toggle user status", err);
+    }
+  }, [u.id, fetchUsers]);
 
   return (
     <Paper
@@ -90,8 +103,8 @@ function UserMobileCard({
       }}
     >
       {/* Top row: avatar + name/email + status chip */}
-      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.5}>
-        <Stack direction="row" spacing={1.5} alignItems="center" flex={1} minWidth={0}>
+      <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", flex: 1, minWidth: 0 }}>
           <Avatar
             sx={{
               bgcolor: theme.palette.primary.light,
@@ -102,14 +115,14 @@ function UserMobileCard({
               flexShrink: 0,
             }}
           >
-            {u.firstName?.[0]}
-            {u.lastName?.[0]}
+            {u.firstName[0]}
+            {u.lastName[0]}
           </Avatar>
-          <Box minWidth={0}>
-            <Typography fontWeight={600} fontSize={14} noWrap>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography noWrap sx={{ fontWeight: 600, fontSize: 14 }}>
               {u.firstName} {u.lastName}
             </Typography>
-            <Typography variant="caption" color="text.secondary" noWrap display="block">
+            <Typography variant="caption" color="text.secondary" noWrap sx={{ display: "block" }}>
               {u.email}
             </Typography>
           </Box>
@@ -122,9 +135,7 @@ function UserMobileCard({
             ml: 1,
             flexShrink: 0,
             textTransform: "capitalize",
-            bgcolor: isActive
-              ? alpha(theme.palette.success.main, 0.15)
-              : alpha(theme.palette.error.main, 0.15),
+            bgcolor: isActive ? alpha(theme.palette.success.main, 0.15) : alpha(theme.palette.error.main, 0.15),
             color: isActive ? theme.palette.success.main : theme.palette.error.main,
             fontWeight: 700,
             fontSize: 11,
@@ -138,7 +149,7 @@ function UserMobileCard({
         color="text.secondary"
         sx={{ textTransform: "capitalize", display: "block", mb: 1.5 }}
       >
-        Role: <strong>{u.roles?.join(", ") || "—"}</strong>
+        Role: <strong>{u.roles.join(", ") || "—"}</strong>
       </Typography>
 
       {/* Actions */}
@@ -158,9 +169,8 @@ function UserMobileCard({
         <Tooltip title={isActive ? "Block User" : "Activate User"}>
           <IconButton
             size="small"
-            onClick={async () => {
-              await toggleUserStatus(u.id);
-              fetchUsers();
+            onClick={() => {
+              void handleToggleStatus();
             }}
             sx={{ color: isActive ? "error.main" : "success.main" }}
           >
@@ -177,7 +187,7 @@ export default function UsersPage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
@@ -188,44 +198,39 @@ export default function UsersPage() {
   const PAGE_SIZE = 10;
 
   // ── FETCH USERS ───────────────────────
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getUsers(1, 100);
 
-      const normalized = (data?.data || []).map((u: any) => ({
+      const normalized: User[] = (data.data || []).map(u => ({
         ...u,
         status: (u.status || "").toLowerCase(),
         roles: Array.isArray(u.roles)
           ? u.roles.map((r: string) => r.toLowerCase())
-          : [(u.roles || "").toLowerCase()]
+          : [((u.roles as string) || "").toLowerCase()],
       }));
 
       setUsers(normalized);
     } catch (err) {
-      console.error(err);
+      logger.error("Failed to fetch users", err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    void fetchUsers();
+  }, [fetchUsers]);
 
   // ── FILTER ────────────────────────────
   const filtered = useMemo(() => {
-    return users.filter((u) => {
-      const matchSearch =
-        `${u.firstName} ${u.lastName} ${u.email}`
-          .toLowerCase()
-          .includes(search.toLowerCase());
+    return users.filter(u => {
+      const matchSearch = `${u.firstName} ${u.lastName} ${u.email}`.toLowerCase().includes(search.toLowerCase());
 
-      const matchStatus =
-        statusFilter === "all" || u.status === statusFilter;
+      const matchStatus = statusFilter === "all" || u.status === statusFilter;
 
-      const matchRole =
-        roleFilter === "all" || u.roles.includes(roleFilter.toLowerCase());
+      const matchRole = roleFilter === "all" || u.roles.includes(roleFilter.toLowerCase());
 
       return matchSearch && matchStatus && matchRole;
     });
@@ -233,29 +238,239 @@ export default function UsersPage() {
 
   // ── STATS ─────────────────────────────
   const totalUsers = users.length;
-  const activeUsers = users.filter((u) => u.status === "active").length;
-  const blockedUsers = users.filter((u) => u.status === "blocked").length;
+  const activeUsers = users.filter(u => u.status === "active").length;
+  const blockedUsers = users.filter(u => u.status === "blocked").length;
 
   // ── PAGINATION ────────────────────────
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  // ── RENDER CONTENT ──
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
+          <CircularProgress />
+        </Box>
+      );
+    }
+
+    if (isMobile) {
+      return (
+        <Box>
+          {pageData.length > 0 ? (
+            pageData.map(u => (
+              <UserMobileCard
+                key={u.id}
+                u={u}
+                theme={theme}
+                fetchUsers={() => {
+                  void fetchUsers();
+                }}
+              />
+            ))
+          ) : (
+            <Box sx={{ py: 8, textAlign: "center", opacity: 0.6 }}>
+              <SearchIcon sx={{ fontSize: 60, mb: 2, color: "text.disabled" }} />
+              <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 700 }}>
+                No users found
+              </Typography>
+              <Typography variant="body2" color="text.disabled">
+                Try adjusting your search or filters to find what you&apos;re looking for.
+              </Typography>
+            </Box>
+          )}
+
+          {/* PAGINATION mobile */}
+          <Stack direction="column" spacing={1} sx={{ alignItems: "center", mt: 2, mb: 1 }}>
+            <Typography variant="caption">
+              Showing {pageData.length} of {filtered.length}
+            </Typography>
+            <Pagination
+              count={totalPages}
+              page={page}
+              onChange={(_, v) => {
+                setPage(v);
+              }}
+              size="small"
+              siblingCount={0}
+              boundaryCount={1}
+              sx={{ "& .MuiPaginationItem-root": { borderRadius: 2 } }}
+            />
+          </Stack>
+        </Box>
+      );
+    }
+
+    return (
+      <Paper sx={{ borderRadius: 3 }}>
+        <TableContainer sx={{ overflowX: "auto" }}>
+          <Table sx={{ minWidth: 500 }}>
+            <TableHead>
+              <TableRow>
+                <TableCell>User</TableCell>
+                <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>Contact</TableCell>
+                <TableCell>Role</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell align="right">Actions</TableCell>
+              </TableRow>
+            </TableHead>
+
+            <TableBody>
+              {pageData.length > 0 ? (
+                pageData.map(u => {
+                  const status = (u.status || "").toLowerCase();
+                  const isActive = status === "active";
+
+                  const handleStatusClick = async () => {
+                    try {
+                      await toggleUserStatus(u.id);
+                      await fetchUsers();
+                    } catch (err) {
+                      logger.error("Failed to toggle status", err);
+                    }
+                  };
+
+                  return (
+                    <TableRow key={u.id} hover>
+                      <TableCell>
+                        <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                          <Avatar
+                            sx={{
+                              bgcolor: theme.palette.primary.light,
+                              fontWeight: 700,
+                              width: { xs: 32, sm: 40 },
+                              height: { xs: 32, sm: 40 },
+                              fontSize: { xs: 13, sm: 16 },
+                            }}
+                          >
+                            {u.firstName[0]}
+                            {u.lastName[0]}
+                          </Avatar>
+                          <Box>
+                            <Typography sx={{ fontWeight: 600, fontSize: { xs: 13, sm: 15 } }}>
+                              {u.firstName} {u.lastName}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{ display: { xs: "block", sm: "none" } }}
+                            >
+                              {u.email}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      </TableCell>
+
+                      <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>{u.email}</TableCell>
+
+                      <TableCell>
+                        <Typography variant="body2" sx={{ textTransform: "capitalize", fontWeight: 500 }}>
+                          {u.roles.join(", ") || "—"}
+                        </Typography>
+                      </TableCell>
+
+                      <TableCell>
+                        <Chip
+                          label={status}
+                          size="small"
+                          sx={{
+                            textTransform: "capitalize",
+                            bgcolor: isActive
+                              ? alpha(theme.palette.success.main, 0.15)
+                              : alpha(theme.palette.error.main, 0.15),
+                            color: isActive ? theme.palette.success.main : theme.palette.error.main,
+                            fontWeight: 700,
+                            fontSize: { xs: 11, sm: 13 },
+                          }}
+                        />
+                      </TableCell>
+
+                      <TableCell align="right">
+                        <Stack direction="row" spacing={0.5} sx={{ justifyContent: "flex-end" }}>
+                          <Tooltip title="View">
+                            <IconButton component={Link} href={`/admin/users/${u.id}`} size="small">
+                              <VisibilityOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+
+                          <Tooltip title="Edit">
+                            <IconButton
+                              component={Link}
+                              href={`/admin/users/${u.id}/edit`}
+                              size="small"
+                              sx={{ display: { xs: "none", sm: "inline-flex" } }}
+                            >
+                              <EditOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+
+                          <Tooltip title={isActive ? "Block User" : "Activate User"}>
+                            <IconButton
+                              size="small"
+                              onClick={() => {
+                                void handleStatusClick();
+                              }}
+                              sx={{ color: isActive ? "error.main" : "success.main" }}
+                            >
+                              {isActive ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
+                            </IconButton>
+                          </Tooltip>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} align="center" sx={{ py: 10 }}>
+                    <Box sx={{ textAlign: "center", opacity: 0.6 }}>
+                      <SearchIcon sx={{ fontSize: 60, mb: 2, color: "text.disabled" }} />
+                      <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 700 }}>
+                        No users found
+                      </Typography>
+                      <Typography variant="body2" color="text.disabled">
+                        Try adjusting your search or filters to find what you&apos;re looking for.
+                      </Typography>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        {/* PAGINATION */}
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          sx={{ gap: 1, justifyContent: "space-between", alignItems: "center", p: 2 }}
+        >
+          <Typography variant="caption">
+            Showing {pageData.length} of {filtered.length}
+          </Typography>
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={(_, v) => {
+              setPage(v);
+            }}
+            size="small"
+            siblingCount={0}
+          />
+        </Stack>
+      </Paper>
+    );
+  };
 
   return (
     <Box sx={{ p: { xs: 1.5, sm: 3, md: 4 }, maxWidth: 1300, mx: "auto" }}>
       {/* HEADER */}
       <Stack
         direction={{ xs: "column", sm: "row" }}
-        justifyContent="space-between"
-        alignItems={{ xs: "flex-start", sm: "center" }}
-        gap={2}
-        mb={4}
+        sx={{ gap: 2, justifyContent: "space-between", alignItems: { xs: "flex-start", sm: "center" }, mb: 4 }}
       >
         <Box>
-          <Typography
-            variant="h4"
-            fontWeight={800}
-            sx={{ fontSize: { xs: "1.5rem", sm: "2rem", md: "2.125rem" } }}
-          >
+          <Typography variant="h4" sx={{ fontWeight: 800, fontSize: { xs: "1.5rem", sm: "2rem", md: "2.125rem" } }}>
             Users Directory
           </Typography>
           <Typography color="text.secondary" variant="body2">
@@ -264,11 +479,7 @@ export default function UsersPage() {
         </Box>
 
         {/* ACTION BUTTON */}
-        <Stack
-          direction="row"
-          spacing={2}
-          sx={{ width: { xs: "100%", sm: "auto" } }}
-        >
+        <Stack direction="row" spacing={2} sx={{ width: { xs: "100%", sm: "auto" } }}>
           <Link
             href="/admin/users/create"
             style={{
@@ -282,8 +493,8 @@ export default function UsersPage() {
                 py: 1.2,
                 borderRadius: 3,
                 fontWeight: 700,
-                color: "#fff",
-                background: (theme) =>
+                color: "common.white",
+                background: (theme: Theme) =>
                   `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
                 boxShadow: 3,
                 display: "flex",
@@ -306,42 +517,47 @@ export default function UsersPage() {
       </Stack>
 
       {/* STATS */}
-      <Grid container spacing={{ xs: 2, sm: 3 }} mb={4}>
-        <Grid item xs={12} sm={4}>
+      <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mb: 4 }}>
+        <Grid size={{ xs: 12, sm: 4 }}>
           <StatCard label="Total Users" value={totalUsers} color={theme.palette.primary.main} />
         </Grid>
-        <Grid item xs={6} sm={4}>
+        <Grid size={{ xs: 6, sm: 4 }}>
           <StatCard label="Active Users" value={activeUsers} color={theme.palette.success.main} />
         </Grid>
-        <Grid item xs={6} sm={4}>
+        <Grid size={{ xs: 6, sm: 4 }}>
           <StatCard label="Blocked Users" value={blockedUsers} color={theme.palette.error.main} />
         </Grid>
       </Grid>
 
       {/* FILTER */}
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mb={3}>
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>
         <TextField
           fullWidth
           placeholder="Search..."
           value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          onChange={e => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
           size={isMobile ? "small" : "medium"}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            },
           }}
         />
 
-        <FormControl
-          sx={{ minWidth: { xs: "100%", sm: 140 } }}
-          size={isMobile ? "small" : "medium"}
-        >
+        <FormControl sx={{ minWidth: { xs: "100%", sm: 140 } }} size={isMobile ? "small" : "medium"}>
           <Select
             value={roleFilter}
-            onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
+            onChange={(e: SelectChangeEvent) => {
+              setRoleFilter(e.target.value);
+              setPage(1);
+            }}
             displayEmpty
           >
             <MenuItem value="all">All Roles</MenuItem>
@@ -351,13 +567,13 @@ export default function UsersPage() {
           </Select>
         </FormControl>
 
-        <FormControl
-          sx={{ minWidth: { xs: "100%", sm: 140 } }}
-          size={isMobile ? "small" : "medium"}
-        >
+        <FormControl sx={{ minWidth: { xs: "100%", sm: 140 } }} size={isMobile ? "small" : "medium"}>
           <Select
             value={statusFilter}
-            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+            onChange={(e: SelectChangeEvent) => {
+              setStatusFilter(e.target.value);
+              setPage(1);
+            }}
             displayEmpty
           >
             <MenuItem value="all">All Status</MenuItem>
@@ -368,213 +584,7 @@ export default function UsersPage() {
       </Stack>
 
       {/* TABLE / MOBILE CARDS */}
-      {loading ? (
-        <Box display="flex" justifyContent="center" py={10}>
-          <CircularProgress />
-        </Box>
-      ) : isMobile ? (
-        /* ── MOBILE: card list ── */
-        <Box>
-          {pageData.length > 0 ? (
-            pageData.map((u) => (
-              <UserMobileCard key={u.id} u={u} theme={theme} fetchUsers={fetchUsers} />
-            ))
-          ) : (
-            <Box py={8} textAlign="center" sx={{ opacity: 0.6 }}>
-              <SearchIcon sx={{ fontSize: 60, mb: 2, color: "text.disabled" }} />
-              <Typography variant="h6" fontWeight={700} color="text.secondary">
-                No users found
-              </Typography>
-              <Typography variant="body2" color="text.disabled">
-                Try adjusting your search or filters to find what you're looking for.
-              </Typography>
-            </Box>
-          )}
-
-          {/* PAGINATION mobile */}
-          <Stack direction="column" alignItems="center" spacing={1} mt={2} mb={1}>
-            <Typography variant="caption">
-              Showing {pageData.length} of {filtered.length}
-            </Typography>
-            <Pagination
-              count={totalPages}
-              page={page}
-              onChange={(_, v) => setPage(v)}
-              size="small"
-              siblingCount={0}
-              boundaryCount={1}
-            />
-          </Stack>
-        </Box>
-      ) : (
-        /* ── DESKTOP: table ── */
-        <Paper sx={{ borderRadius: 3 }}>
-          <TableContainer sx={{ overflowX: "auto" }}>
-            <Table sx={{ minWidth: 500 }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell>User</TableCell>
-                  <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>
-                    Contact
-                  </TableCell>
-                  <TableCell>Role</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-
-              <TableBody>
-                {pageData.length > 0 ? (
-                  pageData.map((u) => {
-                    const status = (u.status || "").toLowerCase();
-                    const isActive = status === "active";
-
-                    return (
-                      <TableRow key={u.id} hover>
-                        <TableCell>
-                          <Stack direction="row" spacing={2} alignItems="center">
-                            <Avatar
-                              sx={{
-                                bgcolor: theme.palette.primary.light,
-                                fontWeight: 700,
-                                width: { xs: 32, sm: 40 },
-                                height: { xs: 32, sm: 40 },
-                                fontSize: { xs: 13, sm: 16 },
-                              }}
-                            >
-                              {u.firstName?.[0]}
-                              {u.lastName?.[0]}
-                            </Avatar>
-                            <Box>
-                              <Typography fontWeight={600} fontSize={{ xs: 13, sm: 15 }}>
-                                {u.firstName} {u.lastName}
-                              </Typography>
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                sx={{ display: { xs: "block", sm: "none" } }}
-                              >
-                                {u.email}
-                              </Typography>
-                            </Box>
-                          </Stack>
-                        </TableCell>
-
-                        <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>
-                          {u.email}
-                        </TableCell>
-
-                        <TableCell>
-                          <Typography
-                            variant="body2"
-                            sx={{ textTransform: "capitalize", fontWeight: 500 }}
-                          >
-                            {u.roles?.join(", ") || "—"}
-                          </Typography>
-                        </TableCell>
-
-                        <TableCell>
-                          <Chip
-                            label={status}
-                            size="small"
-                            sx={{
-                              textTransform: "capitalize",
-                              bgcolor: isActive
-                                ? alpha(theme.palette.success.main, 0.15)
-                                : alpha(theme.palette.error.main, 0.15),
-                              color: isActive
-                                ? theme.palette.success.main
-                                : theme.palette.error.main,
-                              fontWeight: 700,
-                              fontSize: { xs: 11, sm: 13 },
-                            }}
-                          />
-                        </TableCell>
-
-                        <TableCell align="right">
-                          <Stack direction="row" justifyContent="flex-end" spacing={0.5}>
-                            <Tooltip title="View">
-                              <IconButton
-                                component={Link}
-                                href={`/admin/users/${u.id}`}
-                                size="small"
-                              >
-                                <VisibilityOutlinedIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-
-                            <Tooltip title="Edit">
-                              <IconButton
-                                component={Link}
-                                href={`/admin/users/${u.id}/edit`}
-                                size="small"
-                                sx={{ display: { xs: "none", sm: "inline-flex" } }}
-                              >
-                                <EditOutlinedIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-
-                            <Tooltip title={isActive ? "Block User" : "Activate User"}>
-                              <IconButton
-                                size="small"
-                                onClick={async () => {
-                                  await toggleUserStatus(u.id);
-                                  fetchUsers();
-                                }}
-                                sx={{ color: isActive ? "error.main" : "success.main" }}
-                              >
-                                {isActive ? (
-                                  <BlockIcon fontSize="small" />
-                                ) : (
-                                  <CheckCircleIcon fontSize="small" />
-                                )}
-                              </IconButton>
-                            </Tooltip>
-                          </Stack>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={5} align="center" sx={{ py: 10 }}>
-                      <Box sx={{ textAlign: "center", opacity: 0.6 }}>
-                        <SearchIcon sx={{ fontSize: 60, mb: 2, color: "text.disabled" }} />
-                        <Typography variant="h6" fontWeight={700} color="text.secondary">
-                          No users found
-                        </Typography>
-                        <Typography variant="body2" color="text.disabled">
-                          Try adjusting your search or filters to find what you're looking for.
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-
-          {/* PAGINATION */}
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            justifyContent="space-between"
-            alignItems="center"
-            gap={1}
-            p={2}
-          >
-            <Typography variant="caption">
-              Showing {pageData.length} of {filtered.length}
-            </Typography>
-            <Pagination
-              count={totalPages}
-              page={page}
-              onChange={(_, v) => setPage(v)}
-              size="small"
-              siblingCount={0}
-            />
-          </Stack>
-        </Paper>
-      )}
+      {renderContent()}
     </Box>
   );
 }
