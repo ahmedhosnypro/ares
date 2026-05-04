@@ -43,8 +43,7 @@ namespace Backend.Domain.Entities
         [Column(TypeName = "decimal(18,2)")]
         public decimal? TotalPrice { get; set; }
 
-        [MaxLength(50)]
-        public string? Status { get; set; }
+        public BookingStatus Status { get; set; } = BookingStatus.Pending;
 
         public DateTime? CancelledAt { get; set; }
         

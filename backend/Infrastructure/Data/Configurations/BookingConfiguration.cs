@@ -30,6 +30,11 @@ namespace Backend.Infrastructure.Data.Configurations
                 .HasIndex(b => b.BookingNumber)
                 .IsUnique();
 
+            builder
+                .Property(b => b.Status)
+                .HasConversion<string>()
+                .HasMaxLength(50);
+
         }
     }
 }
