@@ -60,7 +60,7 @@ public class DbInitializerTests
         Assert.Equal(3, await context.Vehicles.CountAsync());
         Assert.Equal(9, await context.VehicleImages.CountAsync());
         Assert.Equal(5, await context.VehicleFeatures.CountAsync());
-        Assert.Equal(3, await context.UserAddresses.CountAsync());
+        Assert.Equal(6, await context.UserAddresses.CountAsync());
         Assert.Equal(2, await context.Bookings.CountAsync());
         Assert.Equal(2, await context.Reviews.CountAsync());
         Assert.True(await context.CompanyProfiles.AnyAsync());
