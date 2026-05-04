@@ -83,7 +83,8 @@ public class UserProfileService : IUserProfileService
         var profileCompleteness = CalculateProfileCompleteness(
             user,
             userAddress,
-            emergencyContactDto);
+            emergencyContactDto,
+            verifications);
 
         // Build and return profile DTO
         var profileDto = new UserProfileDto(
@@ -348,21 +349,19 @@ public class UserProfileService : IUserProfileService
     private int CalculateProfileCompleteness(
         ApplicationUser user,
         UserAddress? address,
-        EmergencyContactDto emergencyContact)
+        EmergencyContactDto emergencyContact,
+        List<Verification> verifications)
     {
-        var totalFields = 0;
+        var totalFields = 12;
         var filledFields = 0;
 
-        // Required fields
-        totalFields += 4; // FirstName, LastName, Email, Phone
+        // Required fields (4)
         if (!string.IsNullOrWhiteSpace(user.FirstName)) filledFields++;
         if (!string.IsNullOrWhiteSpace(user.LastName)) filledFields++;
         if (!string.IsNullOrWhiteSpace(user.Email)) filledFields++;
         if (!string.IsNullOrWhiteSpace(user.PhoneNumber)) filledFields++;
 
-        // Optional fields
-        totalFields += 5; // ProfileImage, DateOfBirth, Address, EmergencyContact, Preferences
-
+        // Optional fields (4)
         if (!string.IsNullOrWhiteSpace(user.ProfileImage)) filledFields++;
         if (user.DateOfBirth.HasValue) filledFields++;
 
@@ -382,17 +381,22 @@ public class UserProfileService : IUserProfileService
             filledFields++;
         }
 
-        // Preferences set to non-default values counts as 1
-        if (!string.IsNullOrWhiteSpace(user.LanguagePreference) &&
-            !string.IsNullOrWhiteSpace(user.CurrencyPreference))
+        // Verification status (4)
+        if (user.EmailConfirmed) filledFields++;
+        if (user.PhoneNumberConfirmed) filledFields++;
+
+        // Driver license verification
+        if (verifications.Any(v => v.DocumentType == "DriverLicense" && v.Status == "Approved"))
         {
             filledFields++;
         }
 
-        // Verification status
-        totalFields += 2;
-        if (user.EmailConfirmed) filledFields++;
-        if (user.PhoneNumberConfirmed) filledFields++;
+        // KYC Verification (Standard or better level counts as 1)
+        var approvedCount = verifications.Count(v => v.Status == "Approved");
+        if (approvedCount >= 2)
+        {
+            filledFields++;
+        }
 
         return (int)Math.Round((double)filledFields / totalFields * 100);
     }
