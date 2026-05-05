@@ -481,12 +481,19 @@ export default function AdminLocationsPage() {
   return (
     <Box sx={{ p: { xs: 1.5, sm: 3, md: 4 }, maxWidth: 1300, mx: "auto" }}>
       {/* HEADER */}
-      <Stack direction={{ xs: "column", sm: "row" }} sx={{ alignItems: { xs: "flex-start", sm: "center" } }}>
+      <Stack
+        direction={{ xs: "row", sm: "row" }}
+        sx={{
+          mb: { xs: 3, sm: 4 },
+          alignItems: { xs: "flex-start", sm: "center" },
+          justifyContent: { xs: "space-between" },
+        }}
+      >
         <Box>
           <Typography variant="h4" sx={{ fontSize: { xs: "1.5rem", sm: "1.6rem", md: "2rem" }, fontWeight: 800 }}>
             Locations Management
           </Typography>
-          <Typography color="text.secondary" variant="body2">
+          <Typography color="text.secondary" variant="body2" sx={{ paddingInlineStart: { xs: 0.6, sm: 1.2 } }}>
             Manage pick-up and drop-off locations
           </Typography>
         </Box>

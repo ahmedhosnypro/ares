@@ -231,63 +231,7 @@ const VehicleMobileCard = memo(function VehicleMobileCard({
         "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.03) },
       }}
     >
-      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1.5 }}>
-        <Box
-          sx={{
-            width: 52,
-            height: 52,
-            borderRadius: 2,
-            overflow: "hidden",
-            flexShrink: 0,
-            bgcolor: alpha(theme.palette.primary.main, 0.08),
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          {v.imageUrl ? (
-            <Image
-              src={toImageUrl(v.imageUrl) as string}
-              alt={`${v.make} ${v.model}`}
-              fill
-              style={{ objectFit: "cover" }}
-            />
-          ) : (
-            <CarIcon fontSize="small" />
-          )}
-        </Box>
-
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography sx={{ fontWeight: 700, fontSize: 15 }} noWrap color="text.primary">
-            {v.make} {v.model}
-          </Typography>
-          <Stack direction="row" spacing={0.8} sx={{ alignItems: "center" }}>
-            <Typography variant="caption" color="text.secondary">
-              {v.category || "General"}
-            </Typography>
-            <Typography variant="caption" color="text.disabled">
-              ·
-            </Typography>
-            <Typography variant="caption" sx={{ fontWeight: 700 }} color="primary.main">
-              ${v.dailyRate}/day
-            </Typography>
-          </Stack>
-        </Box>
-
-        <Chip
-          label={status.label}
-          size="small"
-          sx={{
-            textTransform: "capitalize",
-            borderRadius: 2,
-            bgcolor: alpha(statusColor, 0.15),
-            color: statusColor,
-            fontWeight: 700,
-            fontSize: 11,
-            flexShrink: 0,
-          }}
-        />
-      </Stack>
+      {/* <Stack direx  */}
 
       <ActionButtons
         vehicleId={v.vehicleId || ""}
@@ -511,7 +455,8 @@ export default function AdminCarsPage() {
                               <Image
                                 src={toImageUrl(v.imageUrl) as string}
                                 alt={`${v.make} ${v.model}`}
-                                fill
+                                width={420}
+                                height={300}
                                 style={{ objectFit: "cover" }}
                               />
                             ) : (
