@@ -19,6 +19,7 @@ import {
   LinearProgress,
   useTheme,
   CircularProgress,
+  alpha,
 } from "@mui/material";
 import { motion } from "framer-motion";
 import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
@@ -33,6 +34,7 @@ import { useSession } from "next-auth/react";
 import { apiFetchJson } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
 import { DashboardSummary } from "./types";
+import BookingOverview from "./_components/BookingOverview";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -245,91 +247,99 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <Box sx={{ p: { xs: 2, md: 4 }, bgcolor: "background.default", fontFamily: "inherit" }}>
-      <Box sx={{ mb: 4, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <Box>
-          <Typography
-            variant="h4"
-            gutterBottom
-            sx={{ fontWeight: "800", color: "text.primary", letterSpacing: "-0.5px" }}
-          >
-            Dashboard Overview
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Welcome back{session?.user.firstName ? `, ${session.user.firstName}` : ", Admin"}. Here&apos;s what&apos;s
-            happening today.
-          </Typography>
-        </Box>
+    <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: "background.default", fontFamily: "inherit" }}>
+      {/* Greeting (kept — replaces the page title that now lives in the navbar) */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="body1" color="text.secondary">
+          Welcome back{session?.user.firstName ? `, ${session.user.firstName}` : ", Admin"}. Here&apos;s what&apos;s
+          happening today.
+        </Typography>
       </Box>
 
       <motion.div variants={containerVariants} initial="hidden" animate="visible">
-        <Grid container spacing={3} sx={{ mb: 4 }}>
+        {/* Stat cards — restyled to match new design (horizontal layout: icon-left, content-right) */}
+        <Grid container spacing={2.5} sx={{ mb: 3 }}>
           {summaryData.map((stat, index) => (
             <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
               <motion.div variants={itemVariants}>
                 <Card
                   elevation={0}
                   sx={{
-                    borderRadius: 4,
+                    borderRadius: 3,
                     border: "1px solid",
-                    borderColor: "border.main",
+                    borderColor: "divider",
                     bgcolor: "background.paper",
-                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                    boxShadow: "shadow.card",
+                    transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                    boxShadow: "0 1px 3px rgba(15,23,42,0.04)",
                     "&:hover": {
-                      transform: "translateY(-6px)",
-                      boxShadow: "shadow.cardHover",
+                      transform: "translateY(-3px)",
+                      boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
                     },
                   }}
                 >
-                  <CardContent sx={{ p: 3, "&:last-child": { pb: 3 } }}>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3 }}>
+                  <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                       <Avatar
                         sx={{
-                          bgcolor: `${stat.color}.main`,
-                          color: "common.white",
-                          width: 52,
-                          height: 52,
-                          boxShadow: `0 8px 16px ${theme.palette[stat.color].main}40`,
+                          bgcolor: alpha(theme.palette[stat.color].main, 0.12),
+                          color: `${stat.color}.main`,
+                          width: 56,
+                          height: 56,
                         }}
                       >
                         {stat.icon}
                       </Avatar>
-                      <Chip
-                        icon={
-                          stat.isUp ? (
-                            <TrendingUpIcon sx={{ fontSize: 16 }} />
-                          ) : (
-                            <TrendingDownIcon sx={{ fontSize: 16 }} />
-                          )
-                        }
-                        label={stat.change}
-                        size="small"
-                        color={stat.isUp ? "success" : "error"}
-                        variant="outlined"
-                        sx={{ fontWeight: "bold", borderRadius: 2, px: 0.5 }}
-                      />
+                      <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ fontWeight: 600, fontSize: "0.85rem", mb: 0.25 }}
+                          noWrap
+                        >
+                          {stat.title}
+                        </Typography>
+                        <Typography
+                          variant="h4"
+                          sx={{ fontWeight: 800, letterSpacing: "-0.5px", lineHeight: 1.1 }}
+                          noWrap
+                        >
+                          {stat.value}
+                        </Typography>
+                      </Box>
                     </Box>
-                    <Typography variant="h3" sx={{ fontWeight: "800", mb: 1, letterSpacing: "-1px" }}>
-                      {stat.value}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{
-                        fontWeight: "600",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.5px",
-                        fontSize: "0.75rem",
-                      }}
-                    >
-                      {stat.title}
-                    </Typography>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 1.5 }}>
+                      {stat.isUp ? (
+                        <TrendingUpIcon sx={{ fontSize: 16, color: "success.main" }} />
+                      ) : (
+                        <TrendingDownIcon sx={{ fontSize: 16, color: "error.main" }} />
+                      )}
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontWeight: 700,
+                          color: stat.isUp ? "success.main" : "error.main",
+                          fontSize: "0.78rem",
+                        }}
+                      >
+                        {stat.change}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.78rem" }}>
+                        from last month
+                      </Typography>
+                    </Box>
                   </CardContent>
                 </Card>
               </motion.div>
             </Grid>
           ))}
+        </Grid>
+
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid size={{ xs: 12, lg: 6 }}>
+            <motion.div variants={itemVariants} style={{ height: "100%" }}>
+              <BookingOverview />
+            </motion.div>
+          </Grid>
         </Grid>
 
         <Grid container spacing={3}>
