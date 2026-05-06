@@ -59,7 +59,7 @@ interface RawVehicle {
   createdAt?: string; // present after VehicleListDto rebuild
 }
 
-// PagedResult<T> serialises as { data, page, pageSize, totalCount, totalPages }
+// PagedResult<T> serializes as { data, page, pageSize, totalCount, totalPages }
 // Some older admin endpoints wrap as { resultData, pageInfo }
 interface AnyPagedResponse<T> {
   data?: T[];
@@ -67,7 +67,7 @@ interface AnyPagedResponse<T> {
   items?: T[];
 }
 
-// ── Icon / colour map ─────────────────────────────────────────────────────────
+// ── Icon / color map ─────────────────────────────────────────────────────────
 const TYPE_META: Record<
   RecentActivityItem["type"],
   { color: "primary" | "success" | "warning" | "info"; icon: React.ReactNode }
@@ -100,8 +100,8 @@ function formatTimestamp(iso: string | null | undefined): string {
 
   if (isToday) {
     if (seconds < 60) return "just now";
-    if (minutes < 60) return `${minutes} min ago`;
-    return `${hours} hr ago`;
+    if (minutes < 60) return `${minutes.toString()} min ago`;
+    return `${hours.toString()} hr ago`;
   }
 
   // Older than today → "Apr 29" or "Apr 29, 2025" for a different year
@@ -113,7 +113,7 @@ function formatTimestamp(iso: string | null | undefined): string {
 }
 
 // ── Fallback helpers ──────────────────────────────────────────────────────────
-const extractRows = <T,>(res: AnyPagedResponse<T> | null): T[] => res?.data ?? res?.resultData ?? res?.items ?? [];
+const extractRows = <T,>(res: AnyPagedResponse<T> | null): T[] => res?.data ?? res?.resultData ?? [];
 
 // Best available timestamp for a booking record
 const bestBookingTs = (b: RawBooking): string | undefined => b.createdAt ?? (b.from ? b.from : undefined);
@@ -259,7 +259,6 @@ export default function RecentActivity() {
     setLoading(true);
     setError(false);
 
-    // ── Strategy 1: dedicated endpoint (available after backend rebuild) ──
     try {
       const data = await apiFetchJson<RecentActivityItem[]>("api/dashboard/recent-summary", {
         accessToken: session.accessToken,
@@ -270,7 +269,6 @@ export default function RecentActivity() {
     } catch (err: unknown) {
       const status = err instanceof ApiError ? err.status : 0;
       if (status !== 404) {
-        // Real server error (401, 500…)
         logger.error("RecentActivity: primary endpoint failed", err);
         setError(true);
         setLoading(false);
@@ -279,17 +277,16 @@ export default function RecentActivity() {
       logger.warn("RecentActivity: /recent-summary not yet available, using fallback");
     }
 
-    // ── Strategy 2: assemble from existing APIs ───────────────────────────
     try {
-      const isSupplier = session.user?.roles?.includes("Supplier") ?? false;
-      const userId = session.user?.id ?? "";
+      const isSupplier = session.user.roles.includes("Supplier");
+      const userId = session.user.id;
       setItems(await fetchViaFallbackApis(session.accessToken, isSupplier, userId));
     } catch (err: unknown) {
       logger.error("RecentActivity: fallback failed", err);
-      setItems([]); // show empty state, never crash
+      setItems([]);
     }
     setLoading(false);
-  }, [session?.accessToken]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [session]);
 
   useEffect(() => {
     void fetchActivity();
@@ -348,12 +345,12 @@ export default function RecentActivity() {
     return (
       <Stack spacing={0.5}>
         {items.map((item, idx) => {
-          const meta = TYPE_META[item.type] ?? TYPE_META.booking;
+          const meta = TYPE_META[item.type];
           const colorMain = theme.palette[meta.color].main;
 
           return (
             <Box
-              key={`${item.type}-${idx}`}
+              key={`${item.type}-${idx.toString()}`}
               sx={{
                 display: "flex",
                 alignItems: "center",
@@ -421,9 +418,9 @@ export default function RecentActivity() {
       sx={t => ({
         borderRadius: 4,
         border: "1px solid",
-        borderColor: t.palette.border?.main ?? t.palette.divider,
+        borderColor: t.palette.border.main,
         height: "100%",
-        boxShadow: t.palette.shadow?.card ?? "none",
+        boxShadow: t.palette.shadow.card,
         overflow: "hidden",
       })}
     >

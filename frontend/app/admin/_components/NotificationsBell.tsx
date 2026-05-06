@@ -26,7 +26,6 @@ import {
   getNotifications,
   markNotificationAsRead,
   type NotificationItem,
-  type NotificationsResponse,
 } from "@/api-clients/notfications/notfications";
 import { logger } from "@/utils/logger";
 
@@ -64,8 +63,8 @@ export default function NotificationsBell() {
     try {
       setLoading(true);
       setError(false);
-      const data = (await getNotifications(token)) as NotificationsResponse;
-      const list: NotificationItem[] = Array.isArray(data) ? data : data.notifications || [];
+      const data = await getNotifications(token);
+      const list: NotificationItem[] = Array.isArray(data) ? data : data.notifications;
       // Newest first
       list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       setItems(list);
@@ -230,9 +229,7 @@ export default function NotificationsBell() {
               Notifications
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {unreadCount > 0
-                ? `${unreadCount.toString()} unread message${unreadCount === 1 ? "" : "s"}`
-                : "You're all caught up"}
+              {unreadCount > 0 ? `${unreadCount.toString()} unread messages` : "You're all caught up"}
             </Typography>
           </Box>
           <Tooltip title="Mark all as read">
@@ -252,11 +249,13 @@ export default function NotificationsBell() {
 
         {/* Body */}
         <Box sx={{ overflowY: "auto", flexGrow: 1, minHeight: 120 }}>
-          {loading && items.length === 0 ? (
+          {loading && items.length === 0 && (
             <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", py: 6 }}>
               <CircularProgress size={26} />
             </Box>
-          ) : error ? (
+          )}
+
+          {!loading && error && (
             <Box sx={{ p: 4, textAlign: "center" }}>
               <Typography variant="body2" color="error">
                 Failed to load notifications.
@@ -265,14 +264,18 @@ export default function NotificationsBell() {
                 Try again
               </Button>
             </Box>
-          ) : items.length === 0 ? (
+          )}
+
+          {!loading && !error && items.length === 0 && (
             <Box sx={{ p: 5, textAlign: "center" }}>
               <NotificationsIcon sx={{ fontSize: 36, color: "text.disabled", mb: 1 }} />
               <Typography variant="body2" color="text.secondary">
                 No notifications yet.
               </Typography>
             </Box>
-          ) : (
+          )}
+
+          {!loading && !error && items.length > 0 && (
             <Stack divider={<Divider />}>
               {items.slice(0, PREVIEW_LIMIT).map(n => (
                 <Box
