@@ -13,7 +13,6 @@ import {
   Button,
   alpha,
   useTheme,
-  Fade,
   Tooltip,
 } from "@mui/material";
 import NotificationsIcon from "@mui/icons-material/Notifications";
@@ -191,7 +190,6 @@ export default function NotificationsBell() {
         onClose={handleClose}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "right" }}
-        TransitionComponent={Fade}
         transitionDuration={200}
         slotProps={{
           paper: {
