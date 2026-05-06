@@ -32,19 +32,21 @@ import {
   Settings as SettingsIcon,
   Notifications as NotificationsIcon,
   MonetizationOn as PricingIcon,
-  Logout as LogoutIcon,
+
   Public as CountriesIcon,
   Place as LocationsIcon,
   Home as HomeIcon,
   Person as PersonIcon,
   KeyboardArrowDown as KeyboardArrowDownIcon,
   Search as SearchIcon,
+  ExitToApp as ExitIcon,
 } from "@mui/icons-material";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import ThemeSwitcher from "@/components/ui/ThemeSwitcher";
+import NotificationsBell from "./_components/NotificationsBell";
 
 const drawerWidth = 260;
 
@@ -91,7 +93,10 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
   };
 
   const handleLogout = async () => {
-    await signOut({ callbackUrl: "/" });
+    // إيقاف التوجيه التلقائي لمسح حالة الجلسة تمامًا
+    await signOut({ redirect: false });
+    // إجبار المتصفح على إعادة التحميل والانتقال للصفحة الرئيسية لمسح الكاش
+    window.location.href = "/";
   };
 
   if (status === "loading") {
@@ -130,51 +135,56 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
 
   const drawer = (
     <Box sx={{ height: "100%", display: "flex", flexDirection: "column", bgcolor: SIDEBAR_BG, color: SIDEBAR_TEXT }}>
-      <Toolbar sx={{ px: 3, display: "flex", alignItems: "center", gap: 2, height: 88 }}>
+      <Toolbar sx={{ px: 2.5, display: "flex", alignItems: "center", gap: 1.5, height: 88 }}>
         <Link
           href="/"
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "12px",
+            gap: "10px",
             textDecoration: "none",
             color: "inherit",
+            width: "100%",
           }}
         >
+          {/* Real website logo (same asset as the public Header) — auto-inverted to read on the dark sidebar */}
           <Box
             sx={{
-              width: 44,
-              height: 44,
-              bgcolor: "rgba(255,255,255,0.08)",
-              borderRadius: 2,
+              position: "relative",
+              flexShrink: 0,
+              width: 130,
+              height: 40,
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              color: "#fff",
             }}
           >
-            <CarIcon sx={{ fontSize: 26 }} />
-          </Box>
-          <Box sx={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
-            <Typography
-              variant="h6"
-              sx={{ fontWeight: 900, letterSpacing: 1, color: "#fff", lineHeight: 1.1 }}
-            >
-              ARES
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{
-                fontWeight: 600,
-                color: SIDEBAR_TEXT_MUTED,
-                fontSize: "0.65rem",
-                letterSpacing: "1px",
-                textTransform: "uppercase",
+            <Image
+              src="/img/favicon/logo_transparent.png"
+              alt="Ares Logo"
+              fill
+              sizes="130px"
+              priority
+              style={{
+                objectFit: "contain",
+                objectPosition: "left center",
+                filter: "brightness(0) invert(1)",
               }}
-            >
-              Rental Platform
-            </Typography>
+            />
           </Box>
+          <Typography
+            variant="caption"
+            sx={{
+              fontWeight: 600,
+              color: SIDEBAR_TEXT_MUTED,
+              fontSize: "0.62rem",
+              letterSpacing: "1.5px",
+              textTransform: "uppercase",
+              ml: "auto",
+              display: { xs: "none", sm: "block" },
+            }}
+          >
+            Admin
+          </Typography>
         </Link>
       </Toolbar>
       <Divider sx={{ mb: 1.5, borderColor: SIDEBAR_DIVIDER }} />
@@ -273,10 +283,22 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
                 display: "block",
               }}
             >
-              {user.email || (user.roles[0] || "Administrator")}
+              {user.email || user.roles[0] || "Administrator"}
             </Typography>
           </Box>
-          <KeyboardArrowDownIcon sx={{ color: SIDEBAR_TEXT_MUTED, fontSize: 20 }} />
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                void handleLogout();
+              }}
+              sx={{ color: SIDEBAR_TEXT_MUTED, "&:hover": { color: "error.main", bgcolor: SIDEBAR_HOVER_BG } }}
+            >
+              <ExitIcon fontSize="small" />
+            </IconButton>
+            <KeyboardArrowDownIcon sx={{ color: SIDEBAR_TEXT_MUTED, fontSize: 20 }} />
+          </Box>
         </Box>
       </Box>
     </Box>
@@ -400,38 +422,16 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
             >
               <HomeIcon />
             </IconButton>
-            <IconButton aria-label="notifications" sx={{ color: "text.secondary" }}>
-              <Box
-                sx={{
-                  position: "relative",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <NotificationsIcon />
-                <Box
-                  sx={{
-                    position: "absolute",
-                    top: -4,
-                    right: -4,
-                    minWidth: 18,
-                    height: 18,
-                    bgcolor: "error.main",
-                    color: "common.white",
-                    borderRadius: "50%",
-                    fontSize: "0.65rem",
-                    fontWeight: 700,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    px: 0.5,
-                  }}
-                >
-                  3
-                </Box>
-              </Box>
+            <IconButton
+              onClick={() => {
+                void handleLogout();
+              }}
+              aria-label="logout"
+              sx={{ color: "error.main", "&:hover": { bgcolor: "error.lighter" } }}
+            >
+              <ExitIcon />
             </IconButton>
+            <NotificationsBell />
           </Box>
         </Toolbar>
       </AppBar>
@@ -490,7 +490,7 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
           }}
         >
           <ListItemIcon sx={{ color: "inherit", minWidth: "auto" }}>
-            <LogoutIcon fontSize="small" />
+            <ExitIcon fontSize="small" />
           </ListItemIcon>
           Logout
         </MenuItem>
