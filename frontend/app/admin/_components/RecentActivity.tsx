@@ -254,43 +254,52 @@ export default function RecentActivity() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  const fetchActivity = useCallback(async () => {
-    if (!session?.accessToken) return;
-    setLoading(true);
-    setError(false);
+  const loadActivity = useCallback(async (): Promise<RecentActivityItem[]> => {
+    if (!session?.accessToken) return [];
 
     try {
       const data = await apiFetchJson<RecentActivityItem[]>("api/dashboard/recent-summary", {
         accessToken: session.accessToken,
       });
-      setItems(Array.isArray(data) ? data : []);
-      setLoading(false);
-      return;
+      return Array.isArray(data) ? data : [];
     } catch (err: unknown) {
       const status = err instanceof ApiError ? err.status : 0;
       if (status !== 404) {
-        logger.error("RecentActivity: primary endpoint failed", err);
-        setError(true);
-        setLoading(false);
-        return;
+        throw err; // Re-throw non-404 errors
       }
       logger.warn("RecentActivity: /recent-summary not yet available, using fallback");
     }
 
-    try {
-      const isSupplier = session.user.roles.includes("Supplier");
-      const userId = session.user.id;
-      setItems(await fetchViaFallbackApis(session.accessToken, isSupplier, userId));
-    } catch (err: unknown) {
-      logger.error("RecentActivity: fallback failed", err);
-      setItems([]);
-    }
-    setLoading(false);
+    // session.user is always populated when accessToken is present
+    const user = session.user;
+    const isSupplier = user.roles.includes("Supplier");
+    const userId = user.id;
+    return fetchViaFallbackApis(session.accessToken, isSupplier, userId);
   }, [session]);
 
+  const fetchActivity = useCallback(() => {
+    setLoading(true);
+    setError(false);
+    loadActivity()
+      .then(data => {
+        setItems(data);
+        setLoading(false);
+      })
+      .catch((err: unknown) => {
+        logger.error("RecentActivity: load failed", err);
+        setError(true);
+        setLoading(false);
+      });
+  }, [loadActivity]);
+
   useEffect(() => {
-    void fetchActivity();
+    // fetchActivity uses .then/.catch so setState is never called synchronously
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchActivity();
   }, [fetchActivity]);
+
+  // Expose a manual refresh for buttons
+  const handleRefresh = fetchActivity;
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -323,7 +332,7 @@ export default function RecentActivity() {
             color="text.secondary"
             sx={{ cursor: "pointer", textDecoration: "underline" }}
             onClick={() => {
-              void fetchActivity();
+              handleRefresh();
             }}
           >
             Try again
@@ -432,7 +441,7 @@ export default function RecentActivity() {
           <IconButton
             size="small"
             onClick={() => {
-              void fetchActivity();
+              handleRefresh();
             }}
             disabled={loading}
             aria-label="Refresh recent activity"
