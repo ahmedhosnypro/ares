@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, Typography, Box, CircularProgress, useTheme } from "@mui/material";
-// eslint-disable-next-line @typescript-eslint/no-deprecated, sonarjs/deprecation
+// eslint-disable-next-line sonarjs/deprecation
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { apiFetchJson } from "@/utils/api-client";
 import { useSession } from "next-auth/react";
@@ -152,7 +152,7 @@ export default function BookingOverview() {
                   ))}
               </Pie>
               <Tooltip
-                formatter={(value: unknown) => [`${String(value ?? 0)} Bookings`, "Count"]}
+                formatter={(value: unknown) => [`${(value as number).toLocaleString()} Bookings`, "Count"]}
                 contentStyle={{ borderRadius: 8, border: "none", boxShadow: theme.shadows[3] }}
               />
             </PieChart>
