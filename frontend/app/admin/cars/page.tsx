@@ -380,7 +380,13 @@ export default function AdminCarsPage() {
         <Box>
           {filtered.length > 0 ? (
             filtered.map((v: Vehicle) => (
-              <VehicleMobileCard key={v.id} v={v} theme={theme} onDelete={handleDelete} onNavigate={handleNavigate} />
+              <VehicleMobileCard
+                key={v.vehicleId || v.id}
+                v={v}
+                theme={theme}
+                onDelete={handleDelete}
+                onNavigate={handleNavigate}
+              />
             ))
           ) : (
             <Box sx={{ py: 8, textAlign: "center", opacity: 0.6 }}>
@@ -472,7 +478,7 @@ export default function AdminCarsPage() {
 
                   return (
                     <TableRow
-                      key={v.id}
+                      key={v.vehicleId || v.id}
                       hover
                       sx={{
                         transition: "background 0.15s",
@@ -577,7 +583,7 @@ export default function AdminCarsPage() {
 
                       <TableCell align="right">
                         <ActionButtons
-                          vehicleId={v.id}
+                          vehicleId={v.vehicleId || v.id}
                           available={!!v.available}
                           hasActiveBookings={v.hasActiveBookings}
                           onDelete={handleDelete}
