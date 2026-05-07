@@ -8,10 +8,14 @@ namespace Backend.Infrastructure.Data.Configurations
     {
         public void Configure(EntityTypeBuilder<Review> builder)
         {
+            // One-to-one: a Booking has at most one Review, and a Review belongs to exactly one Booking.
+            // Pair both navigations to the same FK so EF Core does not invent a shadow `BookingId1` column
+            // for the inverse `Booking.Review` navigation. Without this, every SELECT on Reviews emits
+            // `[r].[BookingId1]` and SQL Server returns "Invalid column name 'BookingId1'" (HTTP 500).
             builder
                 .HasOne(r => r.Booking)
-                .WithMany()
-                .HasForeignKey(r => r.BookingId)
+                .WithOne(b => b.Review)
+                .HasForeignKey<Review>(r => r.BookingId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder

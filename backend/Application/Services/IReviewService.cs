@@ -35,4 +35,31 @@ public interface IReviewService
         CreateReviewRequest request,
         Guid userId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the review attached to a specific booking, if any.
+    /// Used by the customer Booking Details page only.
+    /// Returns null when no review exists yet for the booking.
+    /// </summary>
+    /// <param name="bookingId">Booking ID</param>
+    /// <param name="userId">Authenticated user ID (must own the booking)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    Task<BookingReviewDto?> GetReviewByBookingAsync(
+        Guid bookingId,
+        Guid userId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Updates an existing review owned by the user, only if the 24h edit window
+    /// has not expired.
+    /// </summary>
+    /// <param name="reviewId">Review ID</param>
+    /// <param name="request">Updated rating and comment</param>
+    /// <param name="userId">Authenticated user ID (must own the review)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    Task<BookingReviewDto> UpdateReviewAsync(
+        Guid reviewId,
+        UpdateReviewRequest request,
+        Guid userId,
+        CancellationToken cancellationToken = default);
 }

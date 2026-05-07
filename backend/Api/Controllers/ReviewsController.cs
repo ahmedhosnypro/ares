@@ -116,4 +116,84 @@ public class ReviewsController : ControllerBase
             new { vehicleId = result.VehicleId },
             result);
     }
+
+    /// <summary>
+    /// Get the review attached to a specific booking (authenticated, owner only).
+    /// Returns 204 No Content when no review exists yet.
+    /// Used exclusively by the customer Booking Details page.
+    /// </summary>
+    [HttpGet("booking/{bookingId}")]
+    [Authorize]
+    [ProducesResponseType(typeof(BookingReviewDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetReviewByBooking(
+        Guid bookingId,
+        CancellationToken cancellationToken = default)
+    {
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        if (userIdClaim == null)
+        {
+            return Unauthorized(new { Message = "User not authenticated" });
+        }
+
+        var userId = Guid.Parse(userIdClaim.Value);
+
+        var review = await _reviewService.GetReviewByBookingAsync(bookingId, userId, cancellationToken);
+        if (review == null)
+        {
+            return NoContent();
+        }
+
+        return Ok(review);
+    }
+
+    /// <summary>
+    /// Update an existing review within the 24h edit window (owner only).
+    /// </summary>
+    [HttpPut("{reviewId}")]
+    [Authorize]
+    [ProducesResponseType(typeof(BookingReviewDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateReview(
+        Guid reviewId,
+        [FromBody] UpdateReviewRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        if (userIdClaim == null)
+        {
+            return Unauthorized(new { Message = "User not authenticated" });
+        }
+
+        var userId = Guid.Parse(userIdClaim.Value);
+
+        var validator = new UpdateReviewRequestValidator();
+        var validationResult = await validator.ValidateAsync(request, cancellationToken);
+
+        if (!validationResult.IsValid)
+        {
+            return BadRequest(new
+            {
+                StatusCode = 400,
+                Message = "Validation failed",
+                ValidationErrors = validationResult.Errors.Select(e => new
+                {
+                    Field = e.PropertyName,
+                    Message = e.ErrorMessage
+                })
+            });
+        }
+
+        var updated = await _reviewService.UpdateReviewAsync(reviewId, request, userId, cancellationToken);
+
+        _logger.LogInformation("Review {ReviewId} updated by user {UserId}", reviewId, userId);
+
+        return Ok(updated);
+    }
 }

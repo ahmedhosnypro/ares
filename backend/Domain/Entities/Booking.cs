@@ -48,5 +48,7 @@ namespace Backend.Domain.Entities
         public DateTime? CancelledAt { get; set; }
         
         public string? CancellationReason { get; set; }
+        
+        public virtual Review? Review { get; set; }
     }
 }
