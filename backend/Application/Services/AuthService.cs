@@ -427,4 +427,59 @@ public class AuthService : IAuthService
             !x.IsActive && 
             x.CreatedAt.AddDays(ttl) <= DateTime.UtcNow);
     }
+
+    public async Task<List<string>> GetDemoRolesAsync(CancellationToken cancellationToken = default)
+    {
+        var isDemoSetting = await _context.SystemSettings.FirstOrDefaultAsync(s => s.Key == "IsDemoView", cancellationToken);
+        if (isDemoSetting == null || isDemoSetting.Value != "true")
+        {
+            return new List<string>();
+        }
+        
+        return new List<string> { "Customer", "Supplier", "Admin" };
+    }
+
+    public async Task<LoginResponse> DemoLoginAsync(string role, CancellationToken cancellationToken = default)
+    {
+        var isDemoSetting = await _context.SystemSettings.FirstOrDefaultAsync(s => s.Key == "IsDemoView", cancellationToken);
+        if (isDemoSetting == null || isDemoSetting.Value != "true")
+        {
+            throw new UnauthorizedException("Demo login is disabled");
+        }
+
+        // Find user by role
+        var usersInRole = await _userManager.GetUsersInRoleAsync(role);
+        var user = usersInRole.FirstOrDefault();
+
+        if (user == null)
+        {
+            throw new UnauthorizedException($"No demo account found for role {role}");
+        }
+
+        var roles = await _userManager.GetRolesAsync(user);
+        var token = _jwtTokenService.GenerateToken(user, roles, false);
+        var expiresAt = _jwtTokenService.GetTokenExpiration(false);
+        var ipAddress = "0.0.0.0";
+        var refreshToken = CreateRefreshToken(ipAddress);
+
+        if (user.RefreshTokens == null)
+            user.RefreshTokens = new List<RefreshToken>();
+        user.RefreshTokens.Add(refreshToken);
+        RemoveOldRefreshTokens(user);
+        await _userManager.UpdateAsync(user);
+
+        return new LoginResponse(
+            Token: token,
+            RefreshToken: refreshToken.Token,
+            ExpiresAt: expiresAt,
+            User: new UserDto(
+                Id: user.Id,
+                Email: user.Email!,
+                FirstName: user.FirstName ?? string.Empty,
+                LastName: user.LastName ?? string.Empty,
+                Roles: roles.ToList(),
+                EmailVerified: user.EmailConfirmed
+            )
+        );
+    }
 }

@@ -409,16 +409,24 @@ export async function fetchFeaturedVehicles(
   pickupLocationId: string,
   pickupDate: string,
   returnDate: string,
+  category?: string,
   limit = 6
 ): Promise<PublicVehicleCard[]> {
-  const search = new URLSearchParams({
+  const searchParams: Record<string, string> = {
     pickupLocationId,
     pickupDate,
     returnDate,
     page: "1",
     limit: String(limit),
     sortBy: "rating",
-  });
+  };
+
+  // Add category filter if provided
+  if (category) {
+    searchParams.category = category;
+  }
+
+  const search = new URLSearchParams(searchParams);
 
   const payload = await fetchJsonOrNull<ApiPagedResponse<ApiVehicleListDto>>(
     toApiUrl(`/api/vehicles/search?${search.toString()}`),

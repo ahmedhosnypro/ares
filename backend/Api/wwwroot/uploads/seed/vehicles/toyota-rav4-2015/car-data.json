@@ -1,0 +1,57 @@
+{
+  "make": "Toyota",
+  "model": "RAV4",
+  "year": 2015,
+  "category": "SUV",
+  "color": "Blue",
+  "transmission": "Automatic",
+  "fuelType": "Gasoline",
+  "seats": 5,
+  "pricePerDay": 55,
+  "locationCity": "Alexandria",
+  "description": "A well-maintained, proven model — spacious and capable for family adventures. The 2015 Toyota RAV4 handles city streets and desert roads alike.",
+  "features": [
+    {
+      "category": "Comfort",
+      "name": "Air Conditioning",
+      "description": "Dual-zone climate control"
+    },
+    {
+      "category": "Safety",
+      "name": "All-Wheel Drive",
+      "description": "4WD capability"
+    },
+    {
+      "category": "Technology",
+      "name": "Bluetooth",
+      "description": "Hands-free calling and audio"
+    },
+    {
+      "category": "Comfort",
+      "name": "Roof Rack",
+      "description": "Cargo carrying capacity"
+    }
+  ],
+  "images": [
+    {
+      "url": "https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=800&q=80",
+      "isPrimary": true,
+      "displayOrder": 1
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&q=80",
+      "isPrimary": false,
+      "displayOrder": 2
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1546614042-7df3c24c9e5d?w=800&q=80",
+      "isPrimary": false,
+      "displayOrder": 3
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1606016159991-dfe4f2746ad5?w=800&q=80",
+      "isPrimary": false,
+      "displayOrder": 4
+    }
+  ]
+}

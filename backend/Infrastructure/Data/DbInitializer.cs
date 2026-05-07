@@ -103,6 +103,11 @@ public static class DbInitializer
         UserManager<ApplicationUser> userManager,
         ILogger logger)
     {
+        if (!await context.SystemSettings.AnyAsync(s => s.Key == "IsDemoView"))
+        {
+            await context.SystemSettings.AddAsync(new SystemSetting { Id = Guid.NewGuid(), Key = "IsDemoView", Value = "true" });
+            await context.SaveChangesAsync();
+        }
         var admin = await EnsureUserAsync(
             userManager,
             AdminId,
@@ -223,7 +228,7 @@ public static class DbInitializer
             95m,
             "Cairo",
             "Comfortable sedan for business trips and city rides.",
-            "Sedan",
+            "Standard",
             "Available",
             "uploads/seed/vehicles/mini.png");
 
@@ -242,7 +247,7 @@ public static class DbInitializer
             140m,
             "Alexandria",
             "Spacious SUV ready for family travel and road trips.",
-            "SUV",
+            "Premium",
             "Available",
             "uploads/seed/vehicles/midi.png");
 
@@ -317,6 +322,9 @@ public static class DbInitializer
 
         await context.SaveChangesAsync();
         logger.LogInformation("Bookings and reviews seeded successfully.");
+
+        // ── Extended vehicle catalog (Egypt market, 2015–2024) ────────────
+        await VehicleSeeder.SeedAsync(context, logger);
 
         logger.LogInformation("Demo seed data created successfully.");
     }

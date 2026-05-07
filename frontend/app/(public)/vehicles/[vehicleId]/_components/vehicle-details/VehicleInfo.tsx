@@ -84,7 +84,7 @@ export default function VehicleInfo({ vehicle }: VehicleInfoProps) {
                   sx={{
                     border: "1px solid",
                     borderColor: "divider",
-                    borderRadius: 2,
+                    borderRadius: 1,
                     p: 1.5,
                     bgcolor: "background.default",
                     height: "100%",
@@ -111,7 +111,7 @@ export default function VehicleInfo({ vehicle }: VehicleInfoProps) {
           <Grid container spacing={1.5}>
             {vehicle.features.map(feature => (
               <Grid key={feature.id || feature.featureName} size={{ xs: 12, sm: 6 }}>
-                <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: 1.5 }}>
+                <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1, p: 1.5 }}>
                   <Typography variant="subtitle2" color="text.primary" sx={{ fontWeight: 700 }}>
                     {feature.featureName}
                   </Typography>

@@ -27,7 +27,6 @@ import {
   ListItemIcon,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
-import LanguageIcon from "@mui/icons-material/Language";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import CloseIcon from "@mui/icons-material/Close";
@@ -37,6 +36,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import { toImageUrl } from "@/utils/image-url";
 import ThemeSwitcher from "@/components/ui/ThemeSwitcher";
+import CheckoutIndicator from "@/components/layout/CheckoutIndicator";
 
 interface HeaderClientProps {
   readonly session: Session | null;
@@ -44,10 +44,8 @@ interface HeaderClientProps {
 
 export default function HeaderClient({ session }: HeaderClientProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [languageAnchor, setLanguageAnchor] = useState<null | HTMLElement>(null);
   const [currencyAnchor, setCurrencyAnchor] = useState<null | HTMLElement>(null);
   const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
-  const [selectedLanguage, setSelectedLanguage] = useState("EN");
   const [selectedCurrency, setSelectedCurrency] = useState("USD");
 
   const navigationLinks = [
@@ -57,12 +55,6 @@ export default function HeaderClient({ session }: HeaderClientProps) {
     { label: "About Us", href: "/about" },
   ];
 
-  const languages = [
-    { code: "EN", label: "English" },
-    { code: "AR", label: "العربية" },
-    { code: "FR", label: "Français" },
-  ];
-
   const currencies = [
     { code: "USD", label: "USD - US Dollar", symbol: "$" },
     { code: "EGP", label: "EGP - Egyptian Pound", symbol: "E£" },
@@ -70,21 +62,12 @@ export default function HeaderClient({ session }: HeaderClientProps) {
     { code: "GBP", label: "GBP - British Pound", symbol: "£" },
   ];
 
-  const handleLanguageClick = (event: React.MouseEvent<HTMLElement>) => {
-    setLanguageAnchor(event.currentTarget);
-  };
-
   const handleCurrencyClick = (event: React.MouseEvent<HTMLElement>) => {
     setCurrencyAnchor(event.currentTarget);
   };
 
   const handleUserMenuClick = (event: React.MouseEvent<HTMLElement>) => {
     setUserMenuAnchor(event.currentTarget);
-  };
-
-  const handleLanguageSelect = (code: string) => {
-    setSelectedLanguage(code);
-    setLanguageAnchor(null);
   };
 
   const handleCurrencySelect = (code: string) => {
@@ -209,47 +192,8 @@ export default function HeaderClient({ session }: HeaderClientProps) {
               {/* Theme Switcher */}
               <ThemeSwitcher color="inherit" size="medium" />
 
-              {/* Language Selector */}
-              <Button
-                onClick={handleLanguageClick}
-                startIcon={<LanguageIcon />}
-                endIcon={<KeyboardArrowDownIcon />}
-                sx={{
-                  color: "common.white",
-                  fontWeight: 600,
-                  textTransform: "none",
-                  display: { xs: "none", sm: "flex" },
-                  borderRadius: 1.5,
-                  px: 2,
-                  "&:hover": {
-                    bgcolor: "header.buttonHover",
-                  },
-                }}
-              >
-                {selectedLanguage}
-              </Button>
-              <Menu
-                anchorEl={languageAnchor}
-                open={Boolean(languageAnchor)}
-                onClose={() => {
-                  setLanguageAnchor(null);
-                }}
-                slotProps={{
-                  paper: { sx: { borderRadius: 1.5, minWidth: 150 } },
-                }}
-              >
-                {languages.map(lang => (
-                  <MenuItem
-                    key={lang.code}
-                    onClick={() => {
-                      handleLanguageSelect(lang.code);
-                    }}
-                    selected={selectedLanguage === lang.code}
-                  >
-                    {lang.label}
-                  </MenuItem>
-                ))}
-              </Menu>
+              {/* Pending checkout indicator */}
+              <CheckoutIndicator />
 
               {/* Currency Selector */}
               <Button
@@ -502,13 +446,16 @@ export default function HeaderClient({ session }: HeaderClientProps) {
                 style={{ objectFit: "contain", mixBlendMode: "multiply" }}
               />
             </Box>
-            <IconButton
-              onClick={() => {
-                setMobileMenuOpen(false);
-              }}
-            >
-              <CloseIcon />
-            </IconButton>
+            <Stack direction="row" sx={{ alignItems: "center" }}>
+              <CheckoutIndicator />
+              <IconButton
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </Stack>
           </Stack>
 
           <Divider sx={{ mb: 2 }} />
@@ -627,27 +574,6 @@ export default function HeaderClient({ session }: HeaderClientProps) {
                   Toggle theme
                 </Typography>
               </Box>
-            </Box>
-
-            <Box>
-              <Typography variant="caption" color="text.secondary" gutterBottom>
-                Language
-              </Typography>
-              <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
-                {languages.map(lang => (
-                  <Button
-                    key={lang.code}
-                    size="small"
-                    variant={selectedLanguage === lang.code ? "contained" : "outlined"}
-                    onClick={() => {
-                      handleLanguageSelect(lang.code);
-                    }}
-                    sx={{ borderRadius: 1.5 }}
-                  >
-                    {lang.code}
-                  </Button>
-                ))}
-              </Stack>
             </Box>
 
             <Box>

@@ -11,4 +11,6 @@ public interface IAuthService
     Task<bool> VerifyEmailAsync(string userId, string token, CancellationToken cancellationToken = default);
     Task<LoginResponse> RefreshTokenAsync(RefreshTokenRequest request, string? ipAddress, CancellationToken cancellationToken = default);
     Task RevokeTokenAsync(string token, string? ipAddress, CancellationToken cancellationToken = default);
+    Task<List<string>> GetDemoRolesAsync(CancellationToken cancellationToken = default);
+    Task<LoginResponse> DemoLoginAsync(string role, CancellationToken cancellationToken = default);
 }

@@ -376,9 +376,10 @@ export async function setupBackendEnv(quick = false, isDevcontainer = false): Pr
     logDebug(`Could not set file permissions: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 
-  // Update .env.example if it exists
-  if (await fileExists(envExamplePath)) {
-    logInfo("Updating .env.example with new structure...");
+  // Only update .env.example if it doesn't exist
+  // This prevents unnecessary changes to the template file
+  if (!(await fileExists(envExamplePath))) {
+    logInfo("Creating .env.example template...");
     const exampleConfig = { ...config };
     // Replace sensitive values with placeholders
     exampleConfig.dbPassword = "YourStrongPassword123!";
@@ -389,7 +390,7 @@ export async function setupBackendEnv(quick = false, isDevcontainer = false): Pr
 
     const exampleContent = generateBackendEnvContent(exampleConfig);
     await Bun.write(envExamplePath, exampleContent);
-    logSuccess("Updated .env.example");
+    logSuccess("Created .env.example");
   }
 
   return config;

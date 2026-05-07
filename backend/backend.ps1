@@ -184,6 +184,8 @@ Commands:
   migrate list
   migrate remove
 
+  seed
+
   db drop [--yes]
 
   help
@@ -192,6 +194,7 @@ Examples:
   scripts/backend.ps1 build
   scripts/backend.ps1 migrate add --name AddBookingIndexes
   scripts/backend.ps1 migrate update --target latest
+  scripts/backend.ps1 seed
   scripts/backend.ps1 db drop --yes
   scripts/backend.ps1 menu
 "@
@@ -330,6 +333,17 @@ function Action-MigrateRemove {
     [void](Invoke-LabelledCommand -Label 'Removing last migration' -FilePath 'dotnet' -Arguments $args)
 }
 
+function Action-Seed {
+    if (-not (Ensure-DbHostResolves)) { return }
+
+    $args = @('ef', 'database', 'update') + $EfArgs
+    [void](Invoke-LabelledCommand -Label 'Updating database to latest' -FilePath 'dotnet' -Arguments $args)
+
+    [System.Environment]::SetEnvironmentVariable('SEED_DEMO_DATA', 'true', 'Process')
+    $args = @('run', '--project', $ApiProj, '--no-launch-profile', '--', '--seed-only')
+    [void](Invoke-LabelledCommand -Label 'Seeding database' -FilePath 'dotnet' -Arguments $args)
+}
+
 function Action-DbDrop {
     param([bool]$Force)
 
@@ -359,22 +373,23 @@ $Menu = @(
     'migrate update - Apply migrations to the database',
     'migrate list   - List all migrations',
     'migrate remove - Remove the last migration',
+    'seed           - Seed dev/demo data',
     'db drop        - Drop the database',
     'quit           - Exit'
 )
 
 function Parse-OptionValue {
     param(
-        [string[]]$Args,
+        [string[]]$ArgList,
         [string[]]$Names
     )
 
-    for ($i = 0; $i -lt $Args.Count; $i++) {
-        if ($Names -contains $Args[$i]) {
-            if ($i + 1 -ge $Args.Count) {
-                throw "Missing value for option $($Args[$i])"
+    for ($i = 0; $i -lt $ArgList.Count; $i++) {
+        if ($Names -contains $ArgList[$i]) {
+            if ($i + 1 -ge $ArgList.Count) {
+                throw "Missing value for option $($ArgList[$i])"
             }
-            return $Args[$i + 1]
+            return $ArgList[$i + 1]
         }
     }
 
@@ -415,6 +430,7 @@ function Main {
                     'migrate update*' { Action-MigrateUpdate -SelectedTarget '' }
                     'migrate list*' { Action-MigrateList }
                     'migrate remove*' { Action-MigrateRemove }
+                    seed*            { Action-Seed }
                     'db drop*' { Action-DbDrop -Force:$false }
                 }
 
@@ -443,7 +459,7 @@ function Main {
                     foreach ($arg in $rest) {
                         if ($arg -notin @('--name', '-n') -and $rest.IndexOf($arg) -gt 0 -and $rest[$rest.IndexOf($arg) - 1] -in @('--name', '-n')) { continue }
                     }
-                    $name = Parse-OptionValue -Args $rest -Names @('--name', '-n')
+                    $name = Parse-OptionValue -ArgList $rest -Names @('--name', '-n')
                     if ($rest.Count -gt 0 -and [string]::IsNullOrWhiteSpace($name)) {
                         Write-Host 'Unknown or invalid option for migrate add. Use --name <MigrationName>.'
                         Show-Usage
@@ -455,7 +471,7 @@ function Main {
                 'update' {
                     $target = ''
                     if ($rest -contains '--latest') { $target = 'latest' }
-                    $explicitTarget = Parse-OptionValue -Args $rest -Names @('--target', '-t')
+                    $explicitTarget = Parse-OptionValue -ArgList $rest -Names @('--target', '-t')
                     if (-not [string]::IsNullOrWhiteSpace($explicitTarget)) { $target = $explicitTarget }
 
                     foreach ($arg in $rest) {
@@ -484,6 +500,11 @@ function Main {
                 }
             }
 
+            break
+        }
+
+        'seed' {
+            Action-Seed
             break
         }
 

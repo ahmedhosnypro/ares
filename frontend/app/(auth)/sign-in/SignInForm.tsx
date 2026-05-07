@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { signIn, getSession } from "next-auth/react";
@@ -31,11 +31,15 @@ import {
 } from "@mui/icons-material";
 import { signInSchema, type SignInFormData } from "@/lib/validation/schemas";
 import { logger } from "@/utils/logger";
+import { toApiUrl } from "@/utils/api-client";
+import { useEffect } from "react";
 
 type FieldErrors = Partial<Record<keyof SignInFormData, string>>;
 
 export default function SignInForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
 
@@ -47,6 +51,22 @@ export default function SignInForm() {
   const [serverError, setServerError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [touched, setTouched] = useState<Partial<Record<keyof SignInFormData, boolean>>>({});
+  const [demoRoles, setDemoRoles] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development") {
+      fetch(toApiUrl("/api/auth/demo-roles"))
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data) && data.length > 0) {
+            setDemoRoles(data);
+          }
+        })
+        .catch((err: unknown) => {
+          logger.error("Failed to fetch demo roles:", err);
+        });
+    }
+  }, []);
 
   const validateField = (field: keyof SignInFormData, value: string) => {
     const result = signInSchema.shape[field].safeParse(value);
@@ -93,7 +113,9 @@ export default function SignInForm() {
       } else if (res?.ok) {
         // Fetch session to determine roles
         const session = await getSession();
-        if (session?.user.roles.includes("Admin") || session?.user.roles.includes("Supplier")) {
+        if (callbackUrl) {
+          router.push(callbackUrl);
+        } else if (session?.user.roles.includes("Admin") || session?.user.roles.includes("Supplier")) {
           router.push("/admin");
         } else {
           router.push("/");
@@ -103,6 +125,37 @@ export default function SignInForm() {
     } catch (error) {
       setServerError("An unexpected error occurred. Please try again.");
       logger.error("Login error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDemoLogin = async (role: string) => {
+    setServerError("");
+    setIsLoading(true);
+    try {
+      const res = await signIn("credentials", {
+        redirect: false,
+        demoRole: role,
+      });
+
+      if (res?.error) {
+        setServerError(res.error);
+        logger.error("Demo login error:", res.error);
+      } else if (res?.ok) {
+        const session = await getSession();
+        if (callbackUrl) {
+          router.push(callbackUrl);
+        } else if (session?.user.roles.includes("Admin") || session?.user.roles.includes("Supplier")) {
+          router.push("/admin");
+        } else {
+          router.push("/");
+        }
+        router.refresh();
+      }
+    } catch (error) {
+      setServerError("An unexpected error occurred during demo login. Please try again.");
+      logger.error("Demo login error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -301,6 +354,31 @@ export default function SignInForm() {
                 Create a free account
               </MuiLink>
             </Typography>
+
+            {demoRoles.length > 0 && (
+              <Box sx={{ mt: 4, pt: 4, borderTop: `1px solid ${theme.palette.divider}` }}>
+                <Typography variant="subtitle2" align="center" color="text.secondary" sx={{ mb: 2 }}>
+                  DEV ONLY: Demo Logins
+                </Typography>
+                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", justifyContent: "center" }}>
+                  {demoRoles.map(role => (
+                    <Button
+                      key={role}
+                      variant="outlined"
+                      size="small"
+                      color="secondary"
+                      onClick={() => {
+                        void handleDemoLogin(role);
+                      }}
+                      disabled={isLoading}
+                      sx={{ borderRadius: "999px", textTransform: "none" }}
+                    >
+                      {role}
+                    </Button>
+                  ))}
+                </Box>
+              </Box>
+            )}
           </Box>
         </Box>
 

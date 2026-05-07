@@ -27,11 +27,10 @@ export function AppThemeProvider({ children, initialTheme = "light" }: AppThemeP
   }, [mode]);
 
   const toggleTheme = () => {
-    setMode(prev => {
-      const newMode = prev === "light" ? "dark" : "light";
-      setThemePreference(newMode);
-      return newMode;
-    });
+    const newMode = mode === "light" ? "dark" : "light";
+    setThemePreference(newMode);
+    // Force a full page reload to ensure server and client components are in sync
+    window.location.reload();
   };
 
   const theme = createAppTheme(mode);

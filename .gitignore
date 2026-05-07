@@ -27,6 +27,7 @@ obj/
 *.user
 *.rsuser
 .vs/
+*.lscache
 
 # VS Code
 .history/
@@ -39,3 +40,5 @@ obj/
 *.pid
 logs
 TestResultsfrontend/*.zip
+
+

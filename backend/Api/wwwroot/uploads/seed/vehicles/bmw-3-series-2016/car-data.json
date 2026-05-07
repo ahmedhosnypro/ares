@@ -1,0 +1,67 @@
+{
+  "make": "BMW",
+  "model": "3 Series",
+  "year": 2016,
+  "category": "Luxury",
+  "color": "Gray",
+  "transmission": "Automatic",
+  "fuelType": "Gasoline",
+  "seats": 5,
+  "pricePerDay": 95,
+  "locationCity": "Port Said",
+  "description": "A well-maintained, proven model — delivering premium comfort and refined performance. The 2016 BMW 3 Series is an exceptional driving experience.",
+  "features": [
+    {
+      "category": "Comfort",
+      "name": "Leather Seats",
+      "description": "Premium leather upholstery"
+    },
+    {
+      "category": "Comfort",
+      "name": "Heated Seats",
+      "description": "Front and rear heated seats"
+    },
+    {
+      "category": "Technology",
+      "name": "Navigation",
+      "description": "Built-in GPS navigation system"
+    },
+    {
+      "category": "Technology",
+      "name": "Premium Audio",
+      "description": "High-end sound system"
+    },
+    {
+      "category": "Safety",
+      "name": "Blind Spot Monitor",
+      "description": "Lane change assist"
+    },
+    {
+      "category": "Safety",
+      "name": "Parking Assist",
+      "description": "Automated parking system"
+    }
+  ],
+  "images": [
+    {
+      "url": "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&q=80",
+      "isPrimary": true,
+      "displayOrder": 1
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=800&q=80",
+      "isPrimary": false,
+      "displayOrder": 2
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1525609004556-c46c7d6cf023?w=800&q=80",
+      "isPrimary": false,
+      "displayOrder": 3
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1563720223185-11003d516935?w=800&q=80",
+      "isPrimary": false,
+      "displayOrder": 4
+    }
+  ]
+}

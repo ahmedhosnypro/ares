@@ -297,4 +297,28 @@ public class AuthController : ControllerBase
         await _authService.RevokeTokenAsync(request.RefreshToken, ipAddress, cancellationToken);
         return Ok(new { Message = "Token revoked successfully" });
     }
+
+    [HttpGet("demo-roles")]
+    [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<string>>> GetDemoRoles(CancellationToken cancellationToken)
+    {
+        var roles = await _authService.GetDemoRolesAsync(cancellationToken);
+        return Ok(roles);
+    }
+
+    [HttpPost("demo-login")]
+    [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<LoginResponse>> DemoLogin(
+        [FromBody] DemoLoginRequest request,
+        CancellationToken cancellationToken)
+    {
+        var response = await _authService.DemoLoginAsync(request.Role, cancellationToken);
+        return Ok(response);
+    }
+}
+
+public class DemoLoginRequest
+{
+    public string Role { get; set; } = null!;
 }

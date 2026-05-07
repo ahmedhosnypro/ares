@@ -43,6 +43,88 @@ export async function checkPendingMigrations(): Promise<boolean> {
 }
 
 /**
+ * Stop any running backend processes that might lock DLL files
+ */
+async function stopRunningBackendProcesses(): Promise<boolean> {
+  logDebug("Checking for running backend processes...");
+
+  try {
+    // Check if Api process is running (Windows)
+    const checkProc = Bun.spawn(["powershell", "-Command", "Get-Process -Name 'Api' -ErrorAction SilentlyContinue"], {
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+
+    await checkProc.exited;
+    const output = await new Response(checkProc.stdout).text();
+
+    if (output.trim() && output.includes("Api")) {
+      logInfo("Stopping running backend process...");
+      startSpinner("Stopping Api process...");
+
+      // Kill the process
+      const killProc = Bun.spawn(["powershell", "-Command", "Stop-Process -Name 'Api' -Force -ErrorAction SilentlyContinue"], {
+        stdout: "pipe",
+        stderr: "pipe",
+      });
+
+      await killProc.exited;
+      
+      // Wait a bit for the process to fully terminate
+      await Bun.sleep(2000);
+
+      stopSpinner(true, "Backend process stopped");
+      return true;
+    }
+
+    logDebug("No running backend processes found");
+    return true;
+  } catch (error) {
+    logDebug(`Error checking for running processes: ${error instanceof Error ? error.message : "Unknown error"}`);
+    // Continue anyway - this is not critical
+    return true;
+  }
+}
+
+/**
+ * Restore NuGet packages for backend projects
+ */
+async function restoreNuGetPackages(): Promise<boolean> {
+  logDebug("Restoring NuGet packages...");
+
+  startSpinner("Restoring NuGet packages...");
+
+  try {
+    const proc = Bun.spawn(["dotnet", "restore", "backend/Api/Api.csproj"], {
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+
+    const exitCode = await proc.exited;
+    const output = await new Response(proc.stdout).text();
+    const errorOutput = await new Response(proc.stderr).text();
+
+    if (exitCode === 0) {
+      stopSpinner(true, "NuGet packages restored successfully");
+      logDebug("Restore output:");
+      logDebug(output);
+      return true;
+    }
+
+    stopSpinner(false, "NuGet restore failed");
+    logError(`Restore error: ${errorOutput || output}`);
+    logDebug("Restore output:");
+    logDebug(output);
+    return false;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    stopSpinner(false, "NuGet restore failed");
+    logError(`Restore error: ${errorMessage}`);
+    return false;
+  }
+}
+
+/**
  * Run database migrations
  */
 export async function runMigrations(): Promise<MigrationResult> {
@@ -55,6 +137,18 @@ export async function runMigrations(): Promise<MigrationResult> {
     return {
       success: false,
       error: "Could not load backend/.env",
+    };
+  }
+
+  // Stop any running backend processes first
+  await stopRunningBackendProcesses();
+
+  // Restore NuGet packages first
+  const restoreSuccess = await restoreNuGetPackages();
+  if (!restoreSuccess) {
+    return {
+      success: false,
+      error: "Failed to restore NuGet packages",
     };
   }
 

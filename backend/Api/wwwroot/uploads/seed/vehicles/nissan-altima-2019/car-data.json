@@ -1,0 +1,52 @@
+{
+  "make": "Nissan",
+  "model": "Altima",
+  "year": 2019,
+  "category": "Standard",
+  "color": "Gray",
+  "transmission": "Automatic",
+  "fuelType": "Gasoline",
+  "seats": 5,
+  "pricePerDay": 58,
+  "locationCity": "Cairo",
+  "description": "A reliable mid-generation model — a solid choice for business or leisure. The 2019 Nissan Altima combines comfort with everyday practicality.",
+  "features": [
+    {
+      "category": "Comfort",
+      "name": "Air Conditioning",
+      "description": "Automatic climate control"
+    },
+    {
+      "category": "Safety",
+      "name": "Rear Camera",
+      "description": "Parking camera with sensors"
+    },
+    {
+      "category": "Technology",
+      "name": "Bluetooth",
+      "description": "Hands-free calling and audio streaming"
+    },
+    {
+      "category": "Safety",
+      "name": "Cruise Control",
+      "description": "Adaptive cruise control"
+    }
+  ],
+  "images": [
+    {
+      "url": "uploads/seed/vehicles/nissan-altima-2019/img-1.jpg",
+      "isPrimary": true,
+      "displayOrder": 1
+    },
+    {
+      "url": "uploads/seed/vehicles/nissan-altima-2019/img-2.jpg",
+      "isPrimary": false,
+      "displayOrder": 2
+    },
+    {
+      "url": "uploads/seed/vehicles/nissan-altima-2019/img-3.jpg",
+      "isPrimary": false,
+      "displayOrder": 3
+    }
+  ]
+}
