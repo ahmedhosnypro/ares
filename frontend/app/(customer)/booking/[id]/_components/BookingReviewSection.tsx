@@ -111,7 +111,7 @@ function ReviewForm({
         minRows={3}
         fullWidth
         value={draftComment}
-        onChange={(e) => {
+        onChange={e => {
           setDraftComment(e.target.value);
         }}
         slotProps={{ htmlInput: { maxLength: COMMENT_MAX } }}
