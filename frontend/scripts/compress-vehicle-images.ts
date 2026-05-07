@@ -1,13 +1,13 @@
 #!/usr/bin/env bun
 /* eslint-disable no-console */
-import sharp from 'sharp';
-import { existsSync, statSync } from 'fs';
-import { readFile, writeFile, unlink } from 'fs/promises';
+import sharp from "sharp";
+import { existsSync, statSync } from "fs";
+import { readFile, writeFile, unlink } from "fs/promises";
 
 const images = [
-  { name: 'mini.png', path: '../backend/Api/wwwroot/uploads/seed/mini.png' },
-  { name: 'midi.png', path: '../backend/Api/wwwroot/uploads/seed/midi.png' },
-  { name: 'maxi.png', path: '../backend/Api/wwwroot/uploads/seed/maxi.png' },
+  { name: "mini.png", path: "../backend/Api/wwwroot/uploads/seed/mini.png" },
+  { name: "midi.png", path: "../backend/Api/wwwroot/uploads/seed/midi.png" },
+  { name: "maxi.png", path: "../backend/Api/wwwroot/uploads/seed/maxi.png" },
 ];
 
 async function compressImage(inputPath: string, outputPath: string) {
@@ -18,10 +18,10 @@ async function compressImage(inputPath: string, outputPath: string) {
 
   const originalStats = statSync(inputPath);
   const originalSize = originalStats.size;
-  
+
   await sharp(inputPath)
     .resize(800, 600, {
-      fit: 'inside',
+      fit: "inside",
       withoutEnlargement: true,
     })
     .png({
@@ -29,12 +29,12 @@ async function compressImage(inputPath: string, outputPath: string) {
       compressionLevel: 9,
       palette: true, // Use palette-based PNG for smaller file size
     })
-    .toFile(outputPath + '.tmp');
+    .toFile(outputPath + ".tmp");
 
   // Replace original with compressed
-  const compressedData = await readFile(outputPath + '.tmp');
+  const compressedData = await readFile(outputPath + ".tmp");
   await writeFile(outputPath, compressedData);
-  await unlink(outputPath + '.tmp');
+  await unlink(outputPath + ".tmp");
 
   const compressedStats = statSync(outputPath);
   const compressedSize = compressedStats.size;
@@ -48,13 +48,13 @@ async function compressImage(inputPath: string, outputPath: string) {
 }
 
 async function main() {
-  console.log('🖼️  Compressing vehicle class images in backend/Api/wwwroot/uploads/seed/...\n');
+  console.log("🖼️  Compressing vehicle class images in backend/Api/wwwroot/uploads/seed/...\n");
 
   for (const image of images) {
     await compressImage(image.path, image.path);
   }
 
-  console.log('✨ All images compressed successfully!');
+  console.log("✨ All images compressed successfully!");
 }
 
 main().catch(console.error);

@@ -360,7 +360,7 @@ export default function SignInForm() {
                 <Typography variant="subtitle2" align="center" color="text.secondary" sx={{ mb: 2 }}>
                   DEV ONLY: Demo Logins
                 </Typography>
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'center' }}>
+                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", justifyContent: "center" }}>
                   {demoRoles.map(role => (
                     <Button
                       key={role}

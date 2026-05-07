@@ -153,10 +153,7 @@ function AuthGate({ vehicleId }: AuthGateProps) {
   const callbackUrl = `/checkout/${vehicleId}`;
 
   return (
-    <Paper
-      elevation={0}
-      sx={{ p: { xs: 3, md: 4 }, borderRadius: 4, border: "1px solid", borderColor: "divider" }}
-    >
+    <Paper elevation={0} sx={{ p: { xs: 3, md: 4 }, borderRadius: 4, border: "1px solid", borderColor: "divider" }}>
       <Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
         Almost there!
       </Typography>

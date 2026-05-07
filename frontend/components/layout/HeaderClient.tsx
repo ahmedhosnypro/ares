@@ -195,8 +195,6 @@ export default function HeaderClient({ session }: HeaderClientProps) {
               {/* Pending checkout indicator */}
               <CheckoutIndicator />
 
-
-
               {/* Currency Selector */}
               <Button
                 onClick={handleCurrencyClick}

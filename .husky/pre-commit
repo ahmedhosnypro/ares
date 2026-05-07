@@ -1,4 +1,9 @@
 #!/bin/sh
+
+echo "================================"
+echo "🎨 FRONTEND CHECKS"
+echo "================================"
+
 cd frontend
 
 echo "🔍 Running format check..."
@@ -13,4 +18,21 @@ echo "🔍 Running lint..."
 echo "🏗️  Running build..."
 ~/.bun/bin/bun run build || exit 1
 
+cd ..
+
+echo ""
+echo "================================"
+echo "⚙️  BACKEND CHECKS"
+echo "================================"
+
+echo "📦 Restoring dependencies..."
+dotnet restore backend/Ares.slnx || exit 1
+
+echo "🏗️  Building backend..."
+dotnet build backend/Ares.slnx --no-restore --configuration Release || exit 1
+
+echo "🧪 Running tests..."
+dotnet test backend/Ares.slnx --no-build --configuration Release --verbosity normal || exit 1
+
+echo ""
 echo "✅ All checks passed!"

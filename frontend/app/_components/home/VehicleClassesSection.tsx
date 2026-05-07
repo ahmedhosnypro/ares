@@ -11,9 +11,27 @@ interface VehicleClassesSectionProps {
 
 export default function VehicleClassesSection({ defaultLocationId }: VehicleClassesSectionProps) {
   const vehicleClasses = [
-    { title: "Compact & Mini", spec: "4 Seats, 2 Bags", img: "/uploads/seed/mini.png", price: "$25", category: "Compact" },
-    { title: "Mid-Size & Standard", spec: "5 Seats, 3 Bags", img: "/uploads/seed/midi.png", price: "$35", category: "Standard" },
-    { title: "SUVs & Maxi", spec: "5+ Seats, 4+ Bags", img: "/uploads/seed/maxi.png", price: "$50", category: "Premium" },
+    {
+      title: "Compact & Mini",
+      spec: "4 Seats, 2 Bags",
+      img: "/uploads/seed/mini.png",
+      price: "$25",
+      category: "Compact",
+    },
+    {
+      title: "Mid-Size & Standard",
+      spec: "5 Seats, 3 Bags",
+      img: "/uploads/seed/midi.png",
+      price: "$35",
+      category: "Standard",
+    },
+    {
+      title: "SUVs & Maxi",
+      spec: "5+ Seats, 4+ Bags",
+      img: "/uploads/seed/maxi.png",
+      price: "$50",
+      category: "Premium",
+    },
   ];
 
   return (
@@ -94,7 +112,11 @@ export default function VehicleClassesSection({ defaultLocationId }: VehicleClas
                 <Box sx={{ mt: "auto" }}>
                   {" "}
                   {/* Push button to bottom */}
-                  <MuiLink href={`/search?pickupLocationId=${defaultLocationId}&category=${vc.category}`} component={Link} underline="none">
+                  <MuiLink
+                    href={`/search?pickupLocationId=${defaultLocationId}&category=${vc.category}`}
+                    component={Link}
+                    underline="none"
+                  >
                     <Button
                       variant="contained" // Changed from "outlined" to "contained" for primary action
                       color="primary"

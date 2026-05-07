@@ -400,9 +400,7 @@ interface SuccessViewProps {
 }
 
 function SuccessView({ firstName, email: _email, callbackUrl }: SuccessViewProps) {
-  const signInHref = callbackUrl
-    ? `/sign-in?callbackUrl=${encodeURIComponent(callbackUrl)}`
-    : "/sign-in";
+  const signInHref = callbackUrl ? `/sign-in?callbackUrl=${encodeURIComponent(callbackUrl)}` : "/sign-in";
 
   return (
     <Box
