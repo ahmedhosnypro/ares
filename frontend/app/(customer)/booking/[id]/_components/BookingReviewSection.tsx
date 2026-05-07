@@ -70,6 +70,137 @@ function isReviewPayload(value: unknown): value is BookingReviewDto {
   );
 }
 
+interface ReviewFormProps {
+  readonly draftRating: number | null;
+  readonly setDraftRating: (val: number | null) => void;
+  readonly draftComment: string;
+  readonly setDraftComment: (val: string) => void;
+  readonly onSubmit: () => Promise<void>;
+  readonly onCancel: () => void;
+  readonly submitting: boolean;
+  readonly isUpdate: boolean;
+}
+
+function ReviewForm({
+  draftRating,
+  setDraftRating,
+  draftComment,
+  setDraftComment,
+  onSubmit,
+  onCancel,
+  submitting,
+  isUpdate,
+}: ReviewFormProps) {
+  return (
+    <Stack spacing={2}>
+      <Box>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+          Rating
+        </Typography>
+        <Rating
+          value={draftRating}
+          onChange={(_, value) => {
+            setDraftRating(value);
+          }}
+          size="large"
+        />
+      </Box>
+      <TextField
+        label="Comment (optional)"
+        multiline
+        minRows={3}
+        fullWidth
+        value={draftComment}
+        onChange={(e) => {
+          setDraftComment(e.target.value);
+        }}
+        slotProps={{ htmlInput: { maxLength: COMMENT_MAX } }}
+        helperText={`${String(draftComment.length)}/${String(COMMENT_MAX)}`}
+      />
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+        <Button
+          variant="contained"
+          onClick={() => {
+            void onSubmit();
+          }}
+          disabled={submitting}
+        >
+          {submitting ? (isUpdate ? "Saving…" : "Submitting…") : isUpdate ? "Save Changes" : "Submit Review"}
+        </Button>
+        <Button variant="outlined" onClick={onCancel} disabled={submitting}>
+          Cancel
+        </Button>
+      </Stack>
+    </Stack>
+  );
+}
+
+interface ReviewViewStateProps {
+  readonly review: BookingReviewDto;
+  readonly onEdit: () => void;
+}
+
+function ReviewViewState({ review, onEdit }: ReviewViewStateProps) {
+  return (
+    <Stack spacing={1.5}>
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={1}
+        sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}
+      >
+        <Rating value={review.rating} readOnly />
+        <Typography variant="caption" color="text.secondary">
+          {review.canEdit
+            ? `Editable until ${formatDeadline(review.editDeadline)}`
+            : "This review can no longer be edited (24h window passed)."}
+        </Typography>
+      </Stack>
+      <Typography variant="body2" color="text.primary">
+        {review.comment && review.comment.trim() !== "" ? review.comment : "No written feedback provided."}
+      </Typography>
+      {review.canEdit ? (
+        <Box>
+          <Button variant="outlined" onClick={onEdit}>
+            Edit Review
+          </Button>
+        </Box>
+      ) : null}
+    </Stack>
+  );
+}
+
+interface EmptyReviewStateProps {
+  readonly onStartCreate: () => void;
+  readonly vehicleId?: string;
+}
+
+function EmptyReviewState({ onStartCreate, vehicleId }: EmptyReviewStateProps) {
+  return (
+    <Stack spacing={2}>
+      <Typography variant="body2" color="text.secondary">
+        How was your experience? Leave a quick rating and an optional comment.
+      </Typography>
+      <Box>
+        <Button variant="contained" onClick={onStartCreate} disabled={!vehicleId}>
+          Write a Review
+        </Button>
+      </Box>
+    </Stack>
+  );
+}
+
+function getSubmissionErrorMessage(err: unknown): string {
+  if (err instanceof ApiError) {
+    if (err.status === 400) {
+      return "Please double-check your review and try again.";
+    }
+    if (err.status === 409) {
+      return "A review for this booking already exists.";
+    }
+  }
+  return "Unable to save your review. Please try again.";
+}
+
 export default function BookingReviewSection({
   bookingId,
   vehicleId,
@@ -171,18 +302,20 @@ export default function BookingReviewSection({
     try {
       const isUpdate = review !== null;
       const url = isUpdate ? toApiUrl(`/api/reviews/${review.reviewId}`) : toApiUrl(`/api/reviews/create`);
+      const method = isUpdate ? "PUT" : "POST";
+      const trimmedComment = draftComment.trim() === "" ? null : draftComment.trim();
 
       const body = isUpdate
-        ? { Rating: draftRating, Comment: draftComment.trim() === "" ? null : draftComment.trim() }
+        ? { Rating: draftRating, Comment: trimmedComment }
         : {
             VehicleId: vehicleId,
             BookingId: bookingId,
             Rating: draftRating,
-            Comment: draftComment.trim() === "" ? null : draftComment.trim(),
+            Comment: trimmedComment,
           };
 
       const res = await fetch(url, {
-        method: isUpdate ? "PUT" : "POST",
+        method,
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
@@ -194,8 +327,6 @@ export default function BookingReviewSection({
         throw new ApiError(res.status, res.statusText, await res.text());
       }
 
-      // After create, fetch the fresh booking review to get canEdit + editDeadline.
-      // After update, the response already matches BookingReviewDto.
       if (isUpdate) {
         const data: unknown = await res.json();
         if (isReviewPayload(data)) {
@@ -209,13 +340,7 @@ export default function BookingReviewSection({
       setEditing(false);
     } catch (err) {
       logger.error("Submit booking review failed", err);
-      if (err instanceof ApiError && err.status === 400) {
-        setError("Please double-check your review and try again.");
-      } else if (err instanceof ApiError && err.status === 409) {
-        setError("A review for this booking already exists.");
-      } else {
-        setError("Unable to save your review. Please try again.");
-      }
+      setError(getSubmissionErrorMessage(err));
     } finally {
       setSubmitting(false);
     }
@@ -254,133 +379,22 @@ export default function BookingReviewSection({
             {error ? <Alert severity="error">{error}</Alert> : null}
             {feedback ? <Alert severity="success">{feedback}</Alert> : null}
 
-            {/* No review yet -> creation form */}
-            {!review && editing ? (
-              <Stack spacing={2}>
-                <Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                    Rating
-                  </Typography>
-                  <Rating
-                    value={draftRating}
-                    onChange={(_, value) => {
-                      setDraftRating(value);
-                    }}
-                    size="large"
-                  />
-                </Box>
-                <TextField
-                  label="Comment (optional)"
-                  multiline
-                  minRows={3}
-                  fullWidth
-                  value={draftComment}
-                  onChange={e => {
-                    setDraftComment(e.target.value);
-                  }}
-                  slotProps={{ htmlInput: { maxLength: COMMENT_MAX } }}
-                  helperText={`${String(draftComment.length)}/${String(COMMENT_MAX)}`}
-                />
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
-                  <Button
-                    variant="contained"
-                    onClick={() => {
-                      void handleSubmit();
-                    }}
-                    disabled={submitting}
-                  >
-                    {submitting ? "Submitting…" : "Submit Review"}
-                  </Button>
-                  <Button variant="outlined" onClick={handleCancel} disabled={submitting}>
-                    Cancel
-                  </Button>
-                </Stack>
-              </Stack>
-            ) : null}
-
-            {!review && !editing ? (
-              <Stack spacing={2}>
-                <Typography variant="body2" color="text.secondary">
-                  How was your experience? Leave a quick rating and an optional comment.
-                </Typography>
-                <Box>
-                  <Button variant="contained" onClick={handleStartCreate} disabled={!vehicleId}>
-                    Write a Review
-                  </Button>
-                </Box>
-              </Stack>
-            ) : null}
-
-            {/* Existing review -> editable or locked */}
-            {review && !editing ? (
-              <Stack spacing={1.5}>
-                <Stack
-                  direction={{ xs: "column", sm: "row" }}
-                  spacing={1}
-                  sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}
-                >
-                  <Rating value={review.rating} readOnly />
-                  <Typography variant="caption" color="text.secondary">
-                    {review.canEdit
-                      ? `Editable until ${formatDeadline(review.editDeadline)}`
-                      : "This review can no longer be edited (24h window passed)."}
-                  </Typography>
-                </Stack>
-                <Typography variant="body2" color="text.primary">
-                  {review.comment && review.comment.trim() !== "" ? review.comment : "No written feedback provided."}
-                </Typography>
-                {review.canEdit ? (
-                  <Box>
-                    <Button variant="outlined" onClick={handleStartEdit}>
-                      Edit Review
-                    </Button>
-                  </Box>
-                ) : null}
-              </Stack>
-            ) : null}
-
-            {review && editing ? (
-              <Stack spacing={2}>
-                <Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                    Rating
-                  </Typography>
-                  <Rating
-                    value={draftRating}
-                    onChange={(_, value) => {
-                      setDraftRating(value);
-                    }}
-                    size="large"
-                  />
-                </Box>
-                <TextField
-                  label="Comment (optional)"
-                  multiline
-                  minRows={3}
-                  fullWidth
-                  value={draftComment}
-                  onChange={e => {
-                    setDraftComment(e.target.value);
-                  }}
-                  slotProps={{ htmlInput: { maxLength: COMMENT_MAX } }}
-                  helperText={`${String(draftComment.length)}/${String(COMMENT_MAX)}`}
-                />
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
-                  <Button
-                    variant="contained"
-                    onClick={() => {
-                      void handleSubmit();
-                    }}
-                    disabled={submitting}
-                  >
-                    {submitting ? "Saving…" : "Save Changes"}
-                  </Button>
-                  <Button variant="outlined" onClick={handleCancel} disabled={submitting}>
-                    Cancel
-                  </Button>
-                </Stack>
-              </Stack>
-            ) : null}
+            {editing ? (
+              <ReviewForm
+                draftRating={draftRating}
+                setDraftRating={setDraftRating}
+                draftComment={draftComment}
+                setDraftComment={setDraftComment}
+                onSubmit={handleSubmit}
+                onCancel={handleCancel}
+                submitting={submitting}
+                isUpdate={!!review}
+              />
+            ) : review ? (
+              <ReviewViewState review={review} onEdit={handleStartEdit} />
+            ) : (
+              <EmptyReviewState onStartCreate={handleStartCreate} vehicleId={vehicleId} />
+            )}
           </Stack>
         )}
       </CardContent>
