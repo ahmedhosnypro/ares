@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, Typography, Box, CircularProgress, useTheme } from "@mui/material";
-// eslint-disable-next-line sonarjs/deprecation
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+import { PieChart, Pie, Tooltip, ResponsiveContainer } from "recharts";
 import { apiFetchJson } from "@/utils/api-client";
 import { useSession } from "next-auth/react";
 import { logger } from "@/utils/logger";
@@ -12,14 +11,6 @@ interface RawBooking {
   status?: string;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  Pending: "#eab308",
-  Confirmed: "#3b82f6",
-  Active: "#22c55e",
-  Completed: "#a855f7",
-  Cancelled: "#ef4444",
-};
-
 const EXPECTED_STATUSES = ["Pending", "Confirmed", "Active", "Completed", "Cancelled"];
 
 export default function BookingOverview() {
@@ -27,80 +18,89 @@ export default function BookingOverview() {
   const { data: session } = useSession();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [stats, setStats] = useState<{ name: string; value: number; color: string }[]>([]);
+  const [stats, setStats] = useState<{ name: string; value: number; fill: string }[]>([]);
   const [total, setTotal] = useState(0);
 
+  const fetchBookings = useCallback(async () => {
+    if (!session?.accessToken) return;
+    try {
+      setLoading(true);
+      setError(false);
+      const data = await apiFetchJson<{
+        resultData?: RawBooking[];
+        data?: RawBooking[];
+        items?: RawBooking[];
+      }>("api/admin/bookings/search/1/10000", {
+        method: "POST",
+        accessToken: session.accessToken,
+        body: JSON.stringify({
+          userId: null,
+          suppliers: session.user.roles.includes("Supplier") ? [session.user.id] : null,
+          statuses: null,
+          carId: null,
+          filter: {
+            from: null,
+            to: null,
+            keyword: null,
+            pickupLocation: null,
+            dropOffLocation: null,
+          },
+          page: 1,
+          size: 10000,
+          language: "en",
+        }),
+      });
+
+      const bookingsList = data.resultData || data.data || data.items || [];
+
+      const counts: Record<string, number> = {
+        Pending: 0,
+        Confirmed: 0,
+        Active: 0,
+        Completed: 0,
+        Cancelled: 0,
+      };
+
+      let totalBookings = 0;
+
+      bookingsList.forEach((b: RawBooking) => {
+        const status = b.status || "Pending";
+        if (status in counts) {
+          counts[status]++;
+          totalBookings++;
+        }
+      });
+
+      // Map status to colors using theme
+      const statusColorMap: Record<string, string> = {
+        Pending: theme.palette.status.pending.main,
+        Confirmed: theme.palette.status.confirmed.main,
+        Active: theme.palette.status.active.main,
+        Completed: theme.palette.status.completed.main,
+        Cancelled: theme.palette.status.cancelled.main,
+      };
+
+      const formattedStats = EXPECTED_STATUSES.map(key => ({
+        name: key,
+        value: counts[key] || 0,
+        fill: statusColorMap[key] || theme.palette.status.pending.main,
+      }));
+
+      setStats(formattedStats);
+      setTotal(totalBookings);
+    } catch (err) {
+      logger.error("Failed to fetch bookings for overview", err);
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [session, theme.palette.status]);
+
   useEffect(() => {
-    const fetchBookings = async () => {
-      if (!session?.accessToken) return;
-      try {
-        setLoading(true);
-        setError(false);
-        const data = await apiFetchJson<{
-          resultData?: RawBooking[];
-          data?: RawBooking[];
-          items?: RawBooking[];
-        }>("api/admin/bookings/search/1/10000", {
-          method: "POST",
-          accessToken: session.accessToken,
-          body: JSON.stringify({
-            userId: null,
-            suppliers: session.user.roles.includes("Supplier") ? [session.user.id] : null,
-            statuses: null,
-            carId: null,
-            filter: {
-              from: null,
-              to: null,
-              keyword: null,
-              pickupLocation: null,
-              dropOffLocation: null,
-            },
-            page: 1,
-            size: 10000,
-            language: "en",
-          }),
-        });
-
-        const bookingsList = data.resultData || data.data || data.items || [];
-
-        const counts: Record<string, number> = {
-          Pending: 0,
-          Confirmed: 0,
-          Active: 0,
-          Completed: 0,
-          Cancelled: 0,
-        };
-
-        let totalBookings = 0;
-
-        bookingsList.forEach((b: RawBooking) => {
-          const status = b.status || "Pending";
-          if (status in counts) {
-            counts[status]++;
-            totalBookings++;
-          }
-        });
-
-        const formattedStats = EXPECTED_STATUSES.map(key => ({
-          name: key,
-          value: counts[key] || 0,
-          color: STATUS_COLORS[key],
-        }));
-
-        setStats(formattedStats);
-        setTotal(totalBookings);
-      } catch (err) {
-        logger.error("Failed to fetch bookings for overview", err);
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (session) {
       void fetchBookings();
     }
-  }, [session]);
+  }, [session, fetchBookings]);
 
   const renderContent = () => {
     if (loading) {
@@ -143,14 +143,7 @@ export default function BookingOverview() {
                 dataKey="value"
                 animationDuration={1000}
                 animationBegin={0}
-              >
-                {stats
-                  .filter(s => s.value > 0)
-                  .map((entry, index) => (
-                    // eslint-disable-next-line @typescript-eslint/no-deprecated, sonarjs/deprecation
-                    <Cell key={`cell-${String(index)}`} fill={entry.color} stroke="none" />
-                  ))}
-              </Pie>
+              />
               <Tooltip
                 formatter={(value: unknown) => [`${(value as number).toLocaleString()} Bookings`, "Count"]}
                 contentStyle={{ borderRadius: 8, border: "none", boxShadow: theme.shadows[3] }}
@@ -201,7 +194,7 @@ export default function BookingOverview() {
             return (
               <Box key={stat.name} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Box sx={{ width: 14, height: 14, borderRadius: "50%", bgcolor: stat.color }} />
+                  <Box sx={{ width: 14, height: 14, borderRadius: "50%", bgcolor: stat.fill }} />
                   <Typography variant="body2" sx={{ fontWeight: "600", color: "text.primary" }}>
                     {stat.name}
                   </Typography>

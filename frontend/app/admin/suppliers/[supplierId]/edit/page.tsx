@@ -16,16 +16,11 @@ import {
   useTheme,
   Avatar,
   Chip,
+  alpha,
 } from "@mui/material";
 
 import { getSupplierById, updateSupplier } from "@/api-clients/suppliers/suppliers";
 import { logger } from "@/utils/logger";
-
-// ─── tiny status helpers ───────────────────────────────────────────────────────
-const STATUS_META: Record<string, { label: string; color: string; bg: string }> = {
-  active: { label: "Active", color: "#067930ff", bg: "#dcfce7" },
-  blocked: { label: "Blocked", color: "#c41010ff", bg: "#fee2e2" },
-};
 
 // ─── section label ─────────────────────────────────────────────────────────────
 function SectionLabel({ children }: { readonly children: React.ReactNode }) {
@@ -189,7 +184,23 @@ export default function EditSupplierPage() {
     return <Alert severity="warning">Invalid Supplier Link</Alert>;
   }
 
-  const statusMeta = STATUS_META[form.status] ?? STATUS_META.active;
+  // Determine status metadata based on form status
+  let statusMeta: { label: string; color: string; bg: string };
+
+  if (form.status === "blocked") {
+    statusMeta = {
+      label: "Blocked",
+      color: theme.palette.status.blocked.main,
+      bg: theme.palette.status.blocked.light,
+    };
+  } else {
+    statusMeta = {
+      label: "Active",
+      color: theme.palette.status.active.main,
+      bg: theme.palette.status.active.light,
+    };
+  }
+
   const initials = form.companyName.trim() ? form.companyName.trim().slice(0, 2).toUpperCase() : "S";
 
   // ── render ────────────────────────────────────────────────────────────────
@@ -249,7 +260,8 @@ export default function EditSupplierPage() {
             mb: 3,
             borderRadius: 2.5,
             fontWeight: 500,
-            border: "1px solid #fca5a5",
+            border: "1px solid",
+            borderColor: "error.light",
           }}
         >
           {error}
@@ -266,8 +278,8 @@ export default function EditSupplierPage() {
           border: "1px solid",
           borderColor: "divider",
           background: isDark
-            ? `linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)`
-            : `linear-gradient(135deg, ${theme.palette.primary.main}06 0%, rgba(255,255,255,0) 100%)`,
+            ? `linear-gradient(135deg, ${alpha(theme.palette.common.white, 0.04)} 0%, ${alpha(theme.palette.common.white, 0.01)} 100%)`
+            : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.06)} 0%, ${alpha(theme.palette.common.white, 0)} 100%)`,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -454,7 +466,7 @@ export default function EditSupplierPage() {
             py: 2.5,
             borderTop: "1px solid",
             borderColor: "divider",
-            background: isDark ? "rgba(255,255,255,0.025)" : "rgba(0,0,0,0.018)",
+            background: "action.hover",
             display: "flex",
             justifyContent: "flex-end",
             alignItems: "center",

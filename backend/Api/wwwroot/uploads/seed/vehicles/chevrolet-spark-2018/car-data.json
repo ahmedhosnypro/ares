@@ -1,0 +1,52 @@
+{
+  "make": "Chevrolet",
+  "model": "Spark",
+  "year": 2018,
+  "category": "Economy",
+  "color": "Green",
+  "transmission": "Manual",
+  "fuelType": "Gasoline",
+  "seats": 4,
+  "pricePerDay": 26,
+  "locationCity": "Port Said",
+  "description": "A well-maintained, proven model — perfect for budget-conscious travelers. The 2018 Chevrolet Spark offers excellent fuel economy and easy city parking.",
+  "features": [
+    {
+      "category": "Comfort",
+      "name": "Air Conditioning",
+      "description": "Manual climate control"
+    },
+    {
+      "category": "Safety",
+      "name": "Airbags",
+      "description": "Front and side airbags"
+    },
+    {
+      "category": "Technology",
+      "name": "Bluetooth",
+      "description": "Hands-free calling"
+    }
+  ],
+  "images": [
+    {
+      "url": "https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=800&q=80",
+      "isPrimary": true,
+      "displayOrder": 1
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&q=80",
+      "isPrimary": false,
+      "displayOrder": 2
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=800&q=80",
+      "isPrimary": false,
+      "displayOrder": 3
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=800&q=80",
+      "isPrimary": false,
+      "displayOrder": 4
+    }
+  ]
+}

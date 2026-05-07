@@ -1,0 +1,52 @@
+{
+  "make": "Hyundai",
+  "model": "Accent",
+  "year": 2021,
+  "category": "Economy",
+  "color": "Gray",
+  "transmission": "Automatic",
+  "fuelType": "Gasoline",
+  "seats": 5,
+  "pricePerDay": 38,
+  "locationCity": "Luxor",
+  "description": "A reliable mid-generation model — perfect for budget-conscious travelers. The 2021 Hyundai Accent offers excellent fuel economy and easy city parking.",
+  "features": [
+    {
+      "category": "Comfort",
+      "name": "Air Conditioning",
+      "description": "Manual climate control"
+    },
+    {
+      "category": "Safety",
+      "name": "Airbags",
+      "description": "Front and side airbags"
+    },
+    {
+      "category": "Technology",
+      "name": "Bluetooth",
+      "description": "Hands-free calling"
+    }
+  ],
+  "images": [
+    {
+      "url": "https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?w=800&q=80",
+      "isPrimary": true,
+      "displayOrder": 1
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=800&q=80",
+      "isPrimary": false,
+      "displayOrder": 2
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=800&q=80",
+      "isPrimary": false,
+      "displayOrder": 3
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800&q=80",
+      "isPrimary": false,
+      "displayOrder": 4
+    }
+  ]
+}

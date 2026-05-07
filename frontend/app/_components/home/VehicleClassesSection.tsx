@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Box, Button, Card, CardContent, CardMedia, Divider, Grid, Typography, Link as MuiLink } from "@mui/material";
+import { toImageUrl } from "@/utils/image-url";
 
 interface VehicleClassesSectionProps {
   readonly defaultLocationId: string;
@@ -10,9 +11,27 @@ interface VehicleClassesSectionProps {
 
 export default function VehicleClassesSection({ defaultLocationId }: VehicleClassesSectionProps) {
   const vehicleClasses = [
-    { title: "Compact & Mini", spec: "4 Seats, 2 Bags", img: "/img/mini.png", price: "$25" },
-    { title: "Mid-Size & Standard", spec: "5 Seats, 3 Bags", img: "/img/midi.png", price: "$35" },
-    { title: "SUVs & Maxi", spec: "5+ Seats, 4+ Bags", img: "/img/maxi.png", price: "$50" },
+    {
+      title: "Compact & Mini",
+      spec: "4 Seats, 2 Bags",
+      img: "/uploads/seed/mini.png",
+      price: "$25",
+      category: "Compact",
+    },
+    {
+      title: "Mid-Size & Standard",
+      spec: "5 Seats, 3 Bags",
+      img: "/uploads/seed/midi.png",
+      price: "$35",
+      category: "Standard",
+    },
+    {
+      title: "SUVs & Maxi",
+      spec: "5+ Seats, 4+ Bags",
+      img: "/uploads/seed/maxi.png",
+      price: "$50",
+      category: "Premium",
+    },
   ];
 
   return (
@@ -60,7 +79,7 @@ export default function VehicleClassesSection({ defaultLocationId }: VehicleClas
                   }}
                 >
                   <Image
-                    src={vc.img}
+                    src={toImageUrl(vc.img) || vc.img}
                     alt={vc.title}
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -93,7 +112,11 @@ export default function VehicleClassesSection({ defaultLocationId }: VehicleClas
                 <Box sx={{ mt: "auto" }}>
                   {" "}
                   {/* Push button to bottom */}
-                  <MuiLink href={`/search?pickupLocationId=${defaultLocationId}`} component={Link} underline="none">
+                  <MuiLink
+                    href={`/search?pickupLocationId=${defaultLocationId}&category=${vc.category}`}
+                    component={Link}
+                    underline="none"
+                  >
                     <Button
                       variant="contained" // Changed from "outlined" to "contained" for primary action
                       color="primary"

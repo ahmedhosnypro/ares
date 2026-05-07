@@ -1,2 +1,38 @@
 #!/bin/sh
-~/.bun/bin/bun run --cwd frontend lint-staged
+
+echo "================================"
+echo "🎨 FRONTEND CHECKS"
+echo "================================"
+
+cd frontend
+
+echo "🔍 Running format check..."
+~/.bun/bin/bun run format|| exit 1
+
+echo "🔍 Running TypeScript check..."
+~/.bun/bin/bun run tsgo || exit 1
+
+echo "🔍 Running lint..."
+~/.bun/bin/bun run lint || exit 1
+
+echo "🏗️  Running build..."
+~/.bun/bin/bun run build || exit 1
+
+cd ..
+
+echo ""
+echo "================================"
+echo "⚙️  BACKEND CHECKS"
+echo "================================"
+
+echo "📦 Restoring dependencies..."
+dotnet restore backend/Ares.slnx || exit 1
+
+echo "🏗️  Building backend..."
+dotnet build backend/Ares.slnx --no-restore --configuration Release || exit 1
+
+echo "🧪 Running tests..."
+dotnet test backend/Ares.slnx --no-build --configuration Release --verbosity normal || exit 1
+
+echo ""
+echo "✅ All checks passed!"

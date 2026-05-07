@@ -7,6 +7,7 @@ import MuiProvider from "@/providers/MuiProvider";
 import Header from "../components/layout/Header";
 import { getServerTheme } from "@/lib/server-theme-detection";
 import ThemeWatcher from "./_components/ThemeWatcher";
+import React from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

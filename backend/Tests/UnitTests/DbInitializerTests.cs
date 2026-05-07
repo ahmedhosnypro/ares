@@ -57,9 +57,14 @@ public class DbInitializerTests
 
         await DbInitializer.InitializeAsync(serviceProviderMock.Object, seedDemoData: true);
 
-        Assert.Equal(3, await context.Vehicles.CountAsync());
-        Assert.Equal(9, await context.VehicleImages.CountAsync());
-        Assert.Equal(5, await context.VehicleFeatures.CountAsync());
+        // 3 core demo vehicles + 17 from VehicleSeeder = 20 total
+        Assert.Equal(20, await context.Vehicles.CountAsync());
+        // 3 core vehicles × 3 images + 17 seeded vehicles × 3 images = 60 total
+        Assert.Equal(60, await context.VehicleImages.CountAsync());
+        // 3 core vehicles: 5 features + 17 seeded vehicles with varying features
+        // Compact (5 vehicles × 3 features) + Standard (5 vehicles × 4 features) + Premium (7 vehicles × 6 features) = 15 + 20 + 42 = 77
+        // Plus 5 original features = 82 total
+        Assert.Equal(82, await context.VehicleFeatures.CountAsync());
         Assert.Equal(6, await context.UserAddresses.CountAsync());
         Assert.Equal(2, await context.Bookings.CountAsync());
         Assert.Equal(2, await context.Reviews.CountAsync());

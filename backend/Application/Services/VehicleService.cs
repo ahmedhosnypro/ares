@@ -67,6 +67,7 @@ public class VehicleService : IVehicleService
                 reviewCount,
                 null,
                 vehicle.AvailabilityStatus == "Available",
+                vehicle.LocationCity,
                 vehicle.CreatedAt
             ));
         }
@@ -465,6 +466,7 @@ public class VehicleService : IVehicleService
                 reviewCount,
                 null,
                 vehicle.AvailabilityStatus == "Available",
+                vehicle.LocationCity,
                 vehicle.CreatedAt
             ));
         }

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import { toApiUrl } from "@/utils/api-client";
 import {
   Alert,
@@ -395,9 +396,12 @@ function SignUpHeader({ isSuccess }: SignUpHeaderProps) {
 interface SuccessViewProps {
   readonly firstName: string;
   readonly email: string;
+  readonly callbackUrl?: string | null;
 }
 
-function SuccessView({ firstName, email: _email }: SuccessViewProps) {
+function SuccessView({ firstName, email: _email, callbackUrl }: SuccessViewProps) {
+  const signInHref = callbackUrl ? `/sign-in?callbackUrl=${encodeURIComponent(callbackUrl)}` : "/sign-in";
+
   return (
     <Box
       sx={{
@@ -421,7 +425,7 @@ function SuccessView({ firstName, email: _email }: SuccessViewProps) {
       </Typography>
       <Button
         component={Link}
-        href="/sign-in"
+        href={signInHref}
         variant="contained"
         fullWidth
         size="large"
@@ -504,6 +508,8 @@ type TouchedFields = Partial<Record<keyof SignUpFormData, boolean>>;
 export default function SignUpForm() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -611,7 +617,7 @@ export default function SignUpForm() {
 
             {/* ── Success ── */}
             {isSuccess ? (
-              <SuccessView firstName={firstName} email={email} />
+              <SuccessView firstName={firstName} email={email} callbackUrl={callbackUrl} />
             ) : (
               <>
                 {serverError && (

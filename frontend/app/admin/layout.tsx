@@ -49,14 +49,6 @@ import NotificationsBell from "./_components/NotificationsBell";
 
 const drawerWidth = 260;
 
-// Sidebar (dark navy) palette — kept local so we don't touch the global theme.
-const SIDEBAR_BG = "#0f172a"; // slate-900
-const SIDEBAR_TEXT = "#cbd5e1"; // slate-300
-const SIDEBAR_TEXT_MUTED = "#94a3b8"; // slate-400
-const SIDEBAR_ACTIVE_BG = "#3b82f6"; // blue-500
-const SIDEBAR_HOVER_BG = "#1e293b"; // slate-800
-const SIDEBAR_DIVIDER = "#1e293b";
-
 const menuItems = [
   { text: "Dashboard", icon: <DashboardIcon />, path: "/admin" },
   { text: "Bookings", icon: <BookingIcon />, path: "/admin/bookings" },
@@ -133,7 +125,15 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
   const pageTitle = activeMenuItem?.text ?? "Dashboard";
 
   const drawer = (
-    <Box sx={{ height: "100%", display: "flex", flexDirection: "column", bgcolor: SIDEBAR_BG, color: SIDEBAR_TEXT }}>
+    <Box
+      sx={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        bgcolor: "sidebar.background",
+        color: "sidebar.text",
+      }}
+    >
       <Toolbar sx={{ px: 2.5, display: "flex", alignItems: "center", gap: 1.5, height: 88 }}>
         <Link
           href="/"
@@ -174,7 +174,7 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
             variant="caption"
             sx={{
               fontWeight: 600,
-              color: SIDEBAR_TEXT_MUTED,
+              color: "sidebar.textMuted",
               fontSize: "0.62rem",
               letterSpacing: "1.5px",
               textTransform: "uppercase",
@@ -186,7 +186,7 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
           </Typography>
         </Link>
       </Toolbar>
-      <Divider sx={{ mb: 1.5, borderColor: SIDEBAR_DIVIDER }} />
+      <Divider sx={{ mb: 1.5, borderColor: "sidebar.divider" }} />
       <List sx={{ px: 1.5, flex: 1, overflowY: "auto" }}>
         {menuItems.map(item => {
           const isActive = pathname === item.path;
@@ -201,12 +201,12 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
                     borderRadius: 2,
                     py: 1.1,
                     px: 1.5,
-                    bgcolor: isActive ? SIDEBAR_ACTIVE_BG : "transparent",
-                    color: isActive ? "#fff" : SIDEBAR_TEXT,
+                    bgcolor: isActive ? "sidebar.activeBg" : "transparent",
+                    color: isActive ? "common.white" : "sidebar.text",
                     transition: "all 0.2s ease",
                     "&:hover": {
-                      bgcolor: isActive ? SIDEBAR_ACTIVE_BG : SIDEBAR_HOVER_BG,
-                      color: "#fff",
+                      bgcolor: isActive ? "sidebar.activeBg" : "sidebar.hoverBg",
+                      color: "common.white",
                     },
                   }}
                 >
@@ -228,7 +228,7 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
           );
         })}
       </List>
-      <Box sx={{ p: 1.5, borderTop: `1px solid ${SIDEBAR_DIVIDER}` }}>
+      <Box sx={{ p: 1.5, borderTop: "1px solid", borderColor: "sidebar.divider" }}>
         <Box
           onClick={handleMenu}
           sx={{
@@ -240,7 +240,7 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
             borderRadius: 2,
             transition: "all 0.2s ease",
             "&:hover": {
-              bgcolor: SIDEBAR_HOVER_BG,
+              bgcolor: "sidebar.hoverBg",
             },
           }}
         >
@@ -261,7 +261,7 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
               variant="subtitle2"
               sx={{
                 fontWeight: 700,
-                color: "#fff",
+                color: "common.white",
                 whiteSpace: "nowrap",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
@@ -274,7 +274,7 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
               variant="caption"
               sx={{
                 fontWeight: 500,
-                color: SIDEBAR_TEXT_MUTED,
+                color: "sidebar.textMuted",
                 fontSize: "0.72rem",
                 whiteSpace: "nowrap",
                 overflow: "hidden",
@@ -292,11 +292,14 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
                 e.stopPropagation();
                 void handleLogout();
               }}
-              sx={{ color: SIDEBAR_TEXT_MUTED, "&:hover": { color: "error.main", bgcolor: SIDEBAR_HOVER_BG } }}
+              sx={{
+                color: "sidebar.textMuted",
+                "&:hover": { color: "error.main", bgcolor: "sidebar.hoverBg" },
+              }}
             >
               <ExitIcon fontSize="small" />
             </IconButton>
-            <KeyboardArrowDownIcon sx={{ color: SIDEBAR_TEXT_MUTED, fontSize: 20 }} />
+            <KeyboardArrowDownIcon sx={{ color: "sidebar.textMuted", fontSize: 20 }} />
           </Box>
         </Box>
       </Box>
@@ -507,7 +510,7 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
               boxSizing: "border-box",
               width: drawerWidth,
               border: "none",
-              bgcolor: SIDEBAR_BG,
+              bgcolor: "sidebar.background",
             },
           }}
         >
@@ -521,7 +524,7 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
               boxSizing: "border-box",
               width: drawerWidth,
               border: "none",
-              bgcolor: SIDEBAR_BG,
+              bgcolor: "sidebar.background",
             },
           }}
           open

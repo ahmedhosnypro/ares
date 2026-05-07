@@ -34,6 +34,7 @@ namespace Backend.Infrastructure.Data
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<Favorite> Favorites { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<SystemSetting> SystemSettings { get; set; }
 
         // Crucial Graduation Project Extras
         public DbSet<VehicleFeature> VehicleFeatures { get; set; }
@@ -52,6 +53,7 @@ namespace Backend.Infrastructure.Data
         IQueryable<UserAddress> IApplicationDbContext.UserAddresses => UserAddresses;
         IQueryable<Verification> IApplicationDbContext.Verifications => Verifications;
         IQueryable<Notification> IApplicationDbContext.Notifications => Notifications;
+        IQueryable<SystemSetting> IApplicationDbContext.SystemSettings => SystemSettings;
 
         public void AddFavorite(Favorite favorite)
         {

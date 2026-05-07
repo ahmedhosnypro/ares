@@ -8,6 +8,50 @@ if (!process.env.NEXTAUTH_SECRET) {
   throw new Error("NEXTAUTH_SECRET is not set in environment variables");
 }
 
+type AuthResponse = {
+  user?: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    roles: string[];
+    emailVerified: boolean;
+  };
+  token?: string;
+  message?: string;
+};
+
+async function performLogin(credentials: Record<string, string>, baseUrl: string): Promise<Response> {
+  if (credentials.demoRole) {
+    return fetch(`${baseUrl}/api/auth/demo-login`, {
+      method: "POST",
+      body: JSON.stringify({ role: credentials.demoRole }),
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  if (!credentials.email || !credentials.password) {
+    throw new Error("Missing credentials");
+  }
+
+  return fetch(`${baseUrl}/api/auth/login`, {
+    method: "POST",
+    body: JSON.stringify({
+      email: credentials.email,
+      password: credentials.password,
+      stayConnected: credentials.stayConnected === "true",
+    }),
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+function handleAuthError(res: Response, data: AuthResponse): never {
+  if (res.status === 401) throw new Error("Invalid email or password");
+  if (res.status === 403) throw new Error(data.message || "Account suspended or locked");
+  if (res.status === 429) throw new Error("Too many attempts. Try again later");
+  throw new Error(data.message || "An unexpected error occurred");
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -16,40 +60,19 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
         stayConnected: { label: "Stay Connected", type: "text" },
+        demoRole: { label: "Demo Role", type: "text" },
       },
       async authorize(credentials) {
-        if (!credentials || !credentials.email || !credentials.password) {
+        if (!credentials) {
           throw new Error("Missing credentials");
         }
 
         const baseUrl = getApiBaseUrl();
 
         try {
-          // بنبعت الداتا للـ API بتاعك زي ما اتفقنا مع الباك إند
-          const res = await fetch(`${baseUrl}/api/auth/login`, {
-            method: "POST",
-            body: JSON.stringify({
-              email: credentials.email,
-              password: credentials.password,
-              stayConnected: credentials.stayConnected === "true",
-            }),
-            headers: { "Content-Type": "application/json" },
-          });
+          const res = await performLogin(credentials, baseUrl);
+          const data = (await res.json()) as AuthResponse;
 
-          const data = (await res.json()) as {
-            user?: {
-              id: string;
-              email: string;
-              firstName: string;
-              lastName: string;
-              roles: string[];
-              emailVerified: boolean;
-            };
-            token?: string;
-            message?: string;
-          };
-
-          // لو الباك إند رد بنجاح (200 OK)
           if (res.ok && data.user && data.token) {
             return {
               id: data.user.id,
@@ -58,15 +81,11 @@ export const authOptions: NextAuthOptions = {
               lastName: data.user.lastName,
               roles: data.user.roles,
               emailVerified: data.user.emailVerified,
-              accessToken: data.token, // التوكن اللي هنحتاجه بعدين في الـ fetch
+              accessToken: data.token,
             };
-          } else {
-            // معالجة الإيرورز عشان تظهر في صفحة اللوجين
-            if (res.status === 401) throw new Error("Invalid email or password");
-            if (res.status === 403) throw new Error(data.message || "Account suspended or locked");
-            if (res.status === 429) throw new Error("Too many attempts. Try again later");
-            throw new Error(data.message || "An unexpected error occurred");
           }
+
+          handleAuthError(res, data);
         } catch (error) {
           logger.error("NextAuth authorize error:", error);
           if (error instanceof Error) {

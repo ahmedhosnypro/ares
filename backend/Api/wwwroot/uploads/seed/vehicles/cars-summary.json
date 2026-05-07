@@ -1,0 +1,26 @@
+{
+  "generatedAt": "2026-05-06T23:27:22.8054417Z",
+  "totalCars": 17,
+  "categories": [
+    {
+      "name": "Economy",
+      "count": 5
+    },
+    {
+      "name": "Luxury",
+      "count": 4
+    },
+    {
+      "name": "Standard",
+      "count": 2
+    },
+    {
+      "name": "SUV",
+      "count": 4
+    },
+    {
+      "name": "Van",
+      "count": 2
+    }
+  ]
+}

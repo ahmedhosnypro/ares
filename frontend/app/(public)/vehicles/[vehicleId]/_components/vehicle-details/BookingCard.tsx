@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
@@ -94,7 +93,13 @@ export default function BookingCard({ vehicle, locationOptions, vehicleId, baseP
 
   const [pickupLocationId, setPickupLocationId] = useState(defaultLocationId);
   const [dropoffLocationId, setDropoffLocationId] = useState(defaultLocationId);
-  const [pickupDate, setPickupDate] = useState<Date | null>(null);
+  const [pickupDate, setPickupDate] = useState<Date | null>(() => {
+    const now = new Date();
+    const hoursRemaining = 24 - now.getHours();
+    const date = hoursRemaining < 12 ? new Date(now.getTime() + 24 * 60 * 60 * 1000) : now;
+    date.setHours(0, 0, 0, 0);
+    return date;
+  });
   const [returnDate, setReturnDate] = useState<Date | null>(null);
   const [totalPrice, setTotalPrice] = useState(resolvedVehicle.pricePerDay);
   const [isPricingLoading, setIsPricingLoading] = useState(false);
@@ -170,8 +175,20 @@ export default function BookingCard({ vehicle, locationOptions, vehicleId, baseP
     setErrors(validationErrors);
     if (Object.keys(validationErrors).length > 0) return;
 
+    // Guest flow: save intent and redirect to checkout auth gate
     if (!session?.accessToken) {
-      setSubmitError("Please sign in to complete booking.");
+      const intent = {
+        vehicleId: resolvedVehicle.vehicleId,
+        pickupLocationId,
+        dropOffLocationId: dropoffLocationId,
+        pickupDate: pickupDate ? formatDateForApi(pickupDate) : "",
+        returnDate: returnDate ? formatDateForApi(returnDate) : "",
+        totalPrice,
+        vehicleLabel: `${resolvedVehicle.make} ${resolvedVehicle.model}`,
+        pricePerDay: resolvedVehicle.pricePerDay,
+      };
+      sessionStorage.setItem("bookingIntent", JSON.stringify(intent));
+      router.push(`/checkout/${resolvedVehicle.vehicleId}`);
       return;
     }
 
@@ -338,11 +355,7 @@ export default function BookingCard({ vehicle, locationOptions, vehicleId, baseP
 
         {!session?.accessToken && (
           <Typography variant="caption" color="text.secondary" sx={{ textAlign: "center" }}>
-            You need to{" "}
-            <Box component={Link} href="/login" sx={{ color: "primary.main", textDecoration: "none", fontWeight: 700 }}>
-              sign in
-            </Box>{" "}
-            before placing a booking.
+            You&apos;ll be asked to sign in or create an account at checkout.
           </Typography>
         )}
       </Stack>

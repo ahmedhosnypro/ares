@@ -1,0 +1,57 @@
+{
+  "make": "Kia",
+  "model": "Carnival",
+  "year": 2018,
+  "category": "Van",
+  "color": "Gray",
+  "transmission": "Automatic",
+  "fuelType": "Gasoline",
+  "seats": 8,
+  "pricePerDay": 90,
+  "locationCity": "Aswan",
+  "description": "A well-maintained, proven model — ideal for group travel and family trips. The 2018 Kia Carnival offers ample space and comfort for all passengers.",
+  "features": [
+    {
+      "category": "Comfort",
+      "name": "3rd Row Seating",
+      "description": "Seats up to 8 passengers"
+    },
+    {
+      "category": "Comfort",
+      "name": "Air Conditioning",
+      "description": "Tri-zone climate control"
+    },
+    {
+      "category": "Technology",
+      "name": "Rear Entertainment",
+      "description": "DVD player and screens"
+    },
+    {
+      "category": "Safety",
+      "name": "Rear Camera",
+      "description": "360-degree camera system"
+    }
+  ],
+  "images": [
+    {
+      "url": "https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=800&q=80",
+      "isPrimary": true,
+      "displayOrder": 1
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&q=80",
+      "isPrimary": false,
+      "displayOrder": 2
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1546614042-7df3c24c9e5d?w=800&q=80",
+      "isPrimary": false,
+      "displayOrder": 3
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1606016159991-dfe4f2746ad5?w=800&q=80",
+      "isPrimary": false,
+      "displayOrder": 4
+    }
+  ]
+}

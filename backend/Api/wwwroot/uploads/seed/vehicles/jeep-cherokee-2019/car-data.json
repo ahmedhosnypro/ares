@@ -1,0 +1,57 @@
+{
+  "make": "Jeep",
+  "model": "Cherokee",
+  "year": 2019,
+  "category": "SUV",
+  "color": "Black",
+  "transmission": "Automatic",
+  "fuelType": "Gasoline",
+  "seats": 5,
+  "pricePerDay": 70,
+  "locationCity": "Alexandria",
+  "description": "A reliable mid-generation model — spacious and capable for family adventures. The 2019 Jeep Cherokee handles city streets and desert roads alike.",
+  "features": [
+    {
+      "category": "Comfort",
+      "name": "Air Conditioning",
+      "description": "Dual-zone climate control"
+    },
+    {
+      "category": "Safety",
+      "name": "All-Wheel Drive",
+      "description": "4WD capability"
+    },
+    {
+      "category": "Technology",
+      "name": "Bluetooth",
+      "description": "Hands-free calling and audio"
+    },
+    {
+      "category": "Comfort",
+      "name": "Roof Rack",
+      "description": "Cargo carrying capacity"
+    }
+  ],
+  "images": [
+    {
+      "url": "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=800&q=80",
+      "isPrimary": true,
+      "displayOrder": 1
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=800&q=80",
+      "isPrimary": false,
+      "displayOrder": 2
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=800&q=80",
+      "isPrimary": false,
+      "displayOrder": 3
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?w=800&q=80",
+      "isPrimary": false,
+      "displayOrder": 4
+    }
+  ]
+}

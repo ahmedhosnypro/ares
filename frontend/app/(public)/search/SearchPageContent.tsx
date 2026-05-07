@@ -35,6 +35,7 @@ interface SearchPageContentProps {
   readonly pickupDate: string;
   readonly returnDate: string;
   readonly selectedLocation: PublicLocation | undefined;
+  readonly category?: string;
 }
 
 function VehicleCard({ vehicle }: Readonly<{ vehicle: PublicVehicleCard }>) {
@@ -311,8 +312,19 @@ export default function SearchPageContent({
   pickupDate,
   returnDate,
   selectedLocation,
+  category,
 }: SearchPageContentProps) {
   const theme = useTheme();
+
+  // Map category to display name
+  const getCategoryDisplayName = (cat?: string): string | undefined => {
+    if (cat === "Compact") return "Compact & Mini";
+    if (cat === "Standard") return "Mid-Size & Standard";
+    if (cat === "Premium") return "SUVs & Maxi";
+    return undefined;
+  };
+
+  const categoryDisplayName = getCategoryDisplayName(category);
 
   return (
     <Box
@@ -362,6 +374,8 @@ export default function SearchPageContent({
                 defaultLocationId={pickupLocationId}
                 defaultPickupDate={pickupDate}
                 defaultReturnDate={returnDate}
+                defaultCategory={category}
+                vehicles={vehicles}
               />
             </Box>
 
@@ -390,6 +404,15 @@ export default function SearchPageContent({
                 size="small"
                 sx={{ fontSize: "0.75rem" }}
               />
+              {categoryDisplayName && (
+                <Chip
+                  label={categoryDisplayName}
+                  color="success"
+                  variant="filled"
+                  size="small"
+                  sx={{ fontSize: "0.75rem", fontWeight: 600 }}
+                />
+              )}
             </Box>
           </Stack>
         </Container>

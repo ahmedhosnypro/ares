@@ -14,10 +14,57 @@ export interface BuildResult {
 }
 
 /**
+ * Stop any running backend processes that might lock DLL files
+ */
+async function stopRunningBackendProcesses(): Promise<boolean> {
+  logDebug("Checking for running backend processes...");
+
+  try {
+    // Check if Api process is running (Windows)
+    const checkProc = Bun.spawn(["powershell", "-Command", "Get-Process -Name 'Api' -ErrorAction SilentlyContinue"], {
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+
+    await checkProc.exited;
+    const output = await new Response(checkProc.stdout).text();
+
+    if (output.trim() && output.includes("Api")) {
+      logInfo("Stopping running backend process...");
+      startSpinner("Stopping Api process...");
+
+      // Kill the process
+      const killProc = Bun.spawn(["powershell", "-Command", "Stop-Process -Name 'Api' -Force -ErrorAction SilentlyContinue"], {
+        stdout: "pipe",
+        stderr: "pipe",
+      });
+
+      await killProc.exited;
+      
+      // Wait a bit for the process to fully terminate
+      await Bun.sleep(2000);
+
+      stopSpinner(true, "Backend process stopped");
+      return true;
+    }
+
+    logDebug("No running backend processes found");
+    return true;
+  } catch (error) {
+    logDebug(`Error checking for running processes: ${error instanceof Error ? error.message : "Unknown error"}`);
+    // Continue anyway - this is not critical
+    return true;
+  }
+}
+
+/**
  * Restore NuGet packages
  */
 export async function restorePackages(): Promise<BuildResult> {
   logInfo("Restoring NuGet packages...");
+
+  // Stop any running backend processes first
+  await stopRunningBackendProcesses();
 
   startSpinner("Running dotnet restore...");
   const startTime = Date.now();

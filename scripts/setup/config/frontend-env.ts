@@ -255,9 +255,10 @@ export async function setupFrontendEnv(
     logDebug(`Could not set file permissions: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 
-  // Update .env.example if it exists
-  if (await fileExists(envExamplePath)) {
-    logInfo("Updating .env.example with new structure...");
+  // Only update .env.example if it doesn't exist
+  // This prevents unnecessary changes to the template file
+  if (!(await fileExists(envExamplePath))) {
+    logInfo("Creating .env.example template...");
     const exampleConfig = { ...config };
     // Replace sensitive values with placeholders
     exampleConfig.nextAuthSecret = "your-nextauth-secret-min-32-characters-long";
@@ -273,7 +274,7 @@ export async function setupFrontendEnv(
 
     const exampleContent = generateFrontendEnvContent(exampleConfig);
     await Bun.write(envExamplePath, exampleContent);
-    logSuccess("Updated .env.example");
+    logSuccess("Created .env.example");
   }
 
   return config;

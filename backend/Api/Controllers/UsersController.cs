@@ -257,6 +257,7 @@ public class AdminUsersController : ControllerBase
     /// </summary>
     /// <param name="page">Page number</param>
     /// <param name="size">Page size</param>
+    /// <param name="request">Optional filter request</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Paginated list of users</returns>
     [HttpPost("{page}/{size}")]

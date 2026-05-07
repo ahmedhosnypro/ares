@@ -1,0 +1,67 @@
+{
+  "make": "Volvo",
+  "model": "S60",
+  "year": 2023,
+  "category": "Luxury",
+  "color": "Blue",
+  "transmission": "Automatic",
+  "fuelType": "Gasoline",
+  "seats": 5,
+  "pricePerDay": 148,
+  "locationCity": "Hurghada",
+  "description": "A modern, up-to-date model — delivering premium comfort and refined performance. The 2023 Volvo S60 is an exceptional driving experience.",
+  "features": [
+    {
+      "category": "Comfort",
+      "name": "Leather Seats",
+      "description": "Premium leather upholstery"
+    },
+    {
+      "category": "Comfort",
+      "name": "Heated Seats",
+      "description": "Front and rear heated seats"
+    },
+    {
+      "category": "Technology",
+      "name": "Navigation",
+      "description": "Built-in GPS navigation system"
+    },
+    {
+      "category": "Technology",
+      "name": "Premium Audio",
+      "description": "High-end sound system"
+    },
+    {
+      "category": "Safety",
+      "name": "Blind Spot Monitor",
+      "description": "Lane change assist"
+    },
+    {
+      "category": "Safety",
+      "name": "Parking Assist",
+      "description": "Automated parking system"
+    }
+  ],
+  "images": [
+    {
+      "url": "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800&q=80",
+      "isPrimary": true,
+      "displayOrder": 1
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1580274455191-1c62238fa333?w=800&q=80",
+      "isPrimary": false,
+      "displayOrder": 2
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?w=800&q=80",
+      "isPrimary": false,
+      "displayOrder": 3
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1471444928139-48c5bf5173f8?w=800&q=80",
+      "isPrimary": false,
+      "displayOrder": 4
+    }
+  ]
+}
