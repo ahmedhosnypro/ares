@@ -45,8 +45,6 @@ export async function getSuppliers(page = 1, size = 10): Promise<SupplierRespons
   });
 }
 
-
-
 // create new supplier
 export const createSupplier = async (payload: {
   email: string;
@@ -88,7 +86,6 @@ export async function getSupplierById(id: string): Promise<Supplier> {
   return data;
 }
 
-
 // Update Supplier
 
 export async function updateSupplier(
@@ -104,14 +101,13 @@ export async function updateSupplier(
   }
 ): Promise<Supplier> {
   const session = await getSession();
-  
+
   return apiFetchJson(`/api/admin/suppliers/${id}/edit`, {
     method: "PUT",
     accessToken: session?.accessToken ?? undefined,
     body: JSON.stringify(payload),
   });
 }
-
 
 export async function deleteSupplier(id: string): Promise<Supplier> {
   const session = await getSession();
@@ -126,5 +122,3 @@ export async function deleteSupplier(id: string): Promise<Supplier> {
     throw err;
   }
 }
-
-

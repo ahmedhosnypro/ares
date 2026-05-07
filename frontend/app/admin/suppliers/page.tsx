@@ -219,9 +219,7 @@ export default function SuppliersPage() {
 
       await deleteSupplier(deleteTarget.id);
 
-      setSuppliers(prev =>
-        prev.filter(s => s.id !== deleteTarget.id)
-      );
+      setSuppliers(prev => prev.filter(s => s.id !== deleteTarget.id));
     } catch (err) {
       logger.error("Failed to delete supplier", err);
     } finally {
@@ -361,7 +359,7 @@ export default function SuppliersPage() {
                 key={s.id}
                 s={s}
                 theme={theme}
-                onDeleteClick={(supplier) => {
+                onDeleteClick={supplier => {
                   setDeleteTarget(supplier);
                 }}
               />

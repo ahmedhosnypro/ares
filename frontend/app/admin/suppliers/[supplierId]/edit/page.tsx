@@ -23,7 +23,7 @@ import { logger } from "@/utils/logger";
 
 // ─── tiny status helpers ───────────────────────────────────────────────────────
 const STATUS_META: Record<string, { label: string; color: string; bg: string }> = {
-  active:  { label: "Active",  color: "#067930ff", bg: "#dcfce7" },
+  active: { label: "Active", color: "#067930ff", bg: "#dcfce7" },
   blocked: { label: "Blocked", color: "#c41010ff", bg: "#fee2e2" },
 };
 
@@ -91,9 +91,7 @@ export default function EditSupplierPage() {
 
   const isDark = theme.palette.mode === "dark";
 
-  const idFromParams = Array.isArray(params.supplierId)
-    ? params.supplierId[0]
-    : params.supplierId;
+  const idFromParams = Array.isArray(params.supplierId) ? params.supplierId[0] : params.supplierId;
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -121,8 +119,7 @@ export default function EditSupplierPage() {
         phoneNumber: data.phoneNumber || "",
         status: data.status || "active",
         companyName: data.companyProfile?.companyName || "",
-        commercialRegistrationNumber:
-          data.companyProfile?.commercialRegistrationNumber || "",
+        commercialRegistrationNumber: data.companyProfile?.commercialRegistrationNumber || "",
         taxId: data.companyProfile?.taxId || "",
       });
     } catch (err: unknown) {
@@ -193,10 +190,7 @@ export default function EditSupplierPage() {
   }
 
   const statusMeta = STATUS_META[form.status] ?? STATUS_META.active;
-  const initials =
-    form.companyName.trim()
-      ? form.companyName.trim().slice(0, 2).toUpperCase()
-      : "S";
+  const initials = form.companyName.trim() ? form.companyName.trim().slice(0, 2).toUpperCase() : "S";
 
   // ── render ────────────────────────────────────────────────────────────────
   return (
@@ -344,7 +338,7 @@ export default function EditSupplierPage() {
           size="small"
           label="Status"
           value={form.status}
-          onChange={(e) => {
+          onChange={e => {
             setForm({ ...form, status: e.target.value });
           }}
           sx={{ width: 164, ...fieldSx }}
@@ -380,7 +374,7 @@ export default function EditSupplierPage() {
               label="Company Name"
               fullWidth
               value={form.companyName}
-              onChange={(e) => {
+              onChange={e => {
                 setForm({ ...form, companyName: e.target.value });
               }}
               sx={fieldSx}
@@ -390,7 +384,7 @@ export default function EditSupplierPage() {
                 label="Commercial Registration"
                 fullWidth
                 value={form.commercialRegistrationNumber}
-                onChange={(e) => {
+                onChange={e => {
                   setForm({ ...form, commercialRegistrationNumber: e.target.value });
                 }}
                 sx={fieldSx}
@@ -399,7 +393,7 @@ export default function EditSupplierPage() {
                 label="Tax ID"
                 fullWidth
                 value={form.taxId}
-                onChange={(e) => {
+                onChange={e => {
                   setForm({ ...form, taxId: e.target.value });
                 }}
                 sx={fieldSx}
@@ -426,7 +420,7 @@ export default function EditSupplierPage() {
                 label="First Name"
                 fullWidth
                 value={form.firstName}
-                onChange={(e) => {
+                onChange={e => {
                   setForm({ ...form, firstName: e.target.value });
                 }}
                 sx={fieldSx}
@@ -435,7 +429,7 @@ export default function EditSupplierPage() {
                 label="Last Name"
                 fullWidth
                 value={form.lastName}
-                onChange={(e) => {
+                onChange={e => {
                   setForm({ ...form, lastName: e.target.value });
                 }}
                 sx={fieldSx}
@@ -445,7 +439,7 @@ export default function EditSupplierPage() {
               label="Phone Number"
               fullWidth
               value={form.phoneNumber}
-              onChange={(e) => {
+              onChange={e => {
                 setForm({ ...form, phoneNumber: e.target.value });
               }}
               sx={fieldSx}
@@ -460,9 +454,7 @@ export default function EditSupplierPage() {
             py: 2.5,
             borderTop: "1px solid",
             borderColor: "divider",
-            background: isDark
-              ? "rgba(255,255,255,0.025)"
-              : "rgba(0,0,0,0.018)",
+            background: isDark ? "rgba(255,255,255,0.025)" : "rgba(0,0,0,0.018)",
             display: "flex",
             justifyContent: "flex-end",
             alignItems: "center",
@@ -511,9 +503,7 @@ export default function EditSupplierPage() {
               background: saving
                 ? undefined
                 : `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-              boxShadow: saving
-                ? "none"
-                : `0 4px 16px ${theme.palette.primary.main}44`,
+              boxShadow: saving ? "none" : `0 4px 16px ${theme.palette.primary.main}44`,
               transition: "box-shadow 0.25s, transform 0.15s, filter 0.2s",
               "&:hover": {
                 transform: "translateY(-1px)",

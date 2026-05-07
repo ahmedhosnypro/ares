@@ -117,7 +117,9 @@ export default function CreateSupplierPage() {
       >
         <Stack spacing={2.2}>
           {/* Account Info */}
-          <Typography sx={{ fontWeight: 700 }} color="primary">Account Info</Typography>
+          <Typography sx={{ fontWeight: 700 }} color="primary">
+            Account Info
+          </Typography>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
             <TextField
               label="Email"
@@ -145,7 +147,9 @@ export default function CreateSupplierPage() {
           <Divider />
 
           {/* Personal Info */}
-          <Typography sx={{ fontWeight: 700 }} color="primary">Representative Info</Typography>
+          <Typography sx={{ fontWeight: 700 }} color="primary">
+            Representative Info
+          </Typography>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
             <TextField
               label="First Name"
@@ -182,7 +186,9 @@ export default function CreateSupplierPage() {
           <Divider />
 
           {/* Company Info */}
-          <Typography sx={{ fontWeight: 700 }} color="primary">Company Details</Typography>
+          <Typography sx={{ fontWeight: 700 }} color="primary">
+            Company Details
+          </Typography>
           <TextField
             label="Company Name"
             fullWidth

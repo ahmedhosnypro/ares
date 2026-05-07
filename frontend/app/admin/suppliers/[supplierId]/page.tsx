@@ -27,7 +27,7 @@ import { logger } from "@/utils/logger";
 
 // ─── status meta (matches EditSupplierPage) ────────────────────────────────────
 const STATUS_META: Record<string, { label: string; color: string; bg: string }> = {
-  active:  { label: "Active",  color: "#16a34a", bg: "#dcfce7" },
+  active: { label: "Active", color: "#16a34a", bg: "#dcfce7" },
   blocked: { label: "Blocked", color: "#dc2626", bg: "#fee2e2" },
   pending: { label: "Pending", color: "#d97706", bg: "#fef3c7" },
 };
@@ -84,10 +84,7 @@ function InfoRow({
         borderRadius: 3,
         border: "1px solid",
         borderColor: "divider",
-        bgcolor:
-          theme.palette.mode === "dark"
-            ? "rgba(255,255,255,0.02)"
-            : "rgba(0,0,0,0.015)",
+        bgcolor: theme.palette.mode === "dark" ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.015)",
         display: "flex",
         alignItems: "center",
         gap: 2,
@@ -139,9 +136,7 @@ export default function SupplierDetailsPage() {
   const router = useRouter();
   const theme = useTheme();
 
-  const supplierId = Array.isArray(params.supplierId)
-    ? params.supplierId[0]
-    : params.supplierId;
+  const supplierId = Array.isArray(params.supplierId) ? params.supplierId[0] : params.supplierId;
 
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [loading, setLoading] = useState(true);
@@ -176,9 +171,7 @@ export default function SupplierDetailsPage() {
         }}
       >
         <CircularProgress size={36} thickness={4} />
-        <Typography sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
-          Loading supplier…
-        </Typography>
+        <Typography sx={{ color: "text.secondary", fontSize: "0.875rem" }}>Loading supplier…</Typography>
       </Box>
     );
   }
@@ -203,17 +196,13 @@ export default function SupplierDetailsPage() {
     );
   }
 
-  const statusMeta =
-    STATUS_META[supplier.status] ?? { label: supplier.status, color: "#64748b", bg: "#f1f5f9" };
+  const statusMeta = STATUS_META[supplier.status] ?? { label: supplier.status, color: "#64748b", bg: "#f1f5f9" };
 
-  const initials = supplier.firstName
-    ? supplier.firstName[0].toUpperCase()
-    : "?";
+  const initials = supplier.firstName ? supplier.firstName[0].toUpperCase() : "?";
 
   // ── render ────────────────────────────────────────────────────────────────
   return (
     <Box sx={{ p: { xs: 2, sm: 4 }, maxWidth: 700, mx: "auto" }}>
-
       {/* ── identity card ── */}
       <Paper
         elevation={0}
@@ -223,10 +212,7 @@ export default function SupplierDetailsPage() {
           borderRadius: 3.5,
           border: "1px solid",
           borderColor: "divider",
-          background:
-            theme.palette.mode === "dark"
-              ? "rgba(255,255,255,0.03)"
-              : "rgba(0,0,0,0.015)",
+          background: theme.palette.mode === "dark" ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.015)",
           display: "flex",
           alignItems: "center",
           gap: 2,
@@ -246,9 +232,7 @@ export default function SupplierDetailsPage() {
           {initials}
         </Avatar>
         <Box>
-          <Typography
-            sx={{ fontWeight: 800, fontSize: "1.05rem", lineHeight: 1.2, letterSpacing: "-0.01em" }}
-          >
+          <Typography sx={{ fontWeight: 800, fontSize: "1.05rem", lineHeight: 1.2, letterSpacing: "-0.01em" }}>
             {supplier.firstName} {supplier.lastName}
           </Typography>
           <Chip
@@ -311,10 +295,7 @@ export default function SupplierDetailsPage() {
                   borderRadius: 3,
                   border: "1px solid",
                   borderColor: "divider",
-                  bgcolor:
-                    theme.palette.mode === "dark"
-                      ? "rgba(255,255,255,0.02)"
-                      : "rgba(0,0,0,0.015)",
+                  bgcolor: theme.palette.mode === "dark" ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.015)",
                   flex: 1,
                   transition: "border-color 0.18s, box-shadow 0.18s",
                   "&:hover": {
@@ -356,9 +337,7 @@ export default function SupplierDetailsPage() {
               iconColor="#0F8A5F"
               label="Email Address"
             >
-              <Typography sx={{ fontWeight: 600, fontSize: "0.9rem" }}>
-                {supplier.email}
-              </Typography>
+              <Typography sx={{ fontWeight: 600, fontSize: "0.9rem" }}>{supplier.email}</Typography>
             </InfoRow>
 
             <InfoRow
@@ -367,9 +346,7 @@ export default function SupplierDetailsPage() {
               iconColor="#2E7D32"
               label="Phone Number"
             >
-              <Typography sx={{ fontWeight: 600, fontSize: "0.9rem" }}>
-                {supplier.phoneNumber || "—"}
-              </Typography>
+              <Typography sx={{ fontWeight: 600, fontSize: "0.9rem" }}>{supplier.phoneNumber || "—"}</Typography>
             </InfoRow>
           </Stack>
         </Box>
@@ -378,7 +355,6 @@ export default function SupplierDetailsPage() {
 
         {/* Roles section */}
 
-
         {/* Footer */}
         <Box
           sx={{
@@ -386,10 +362,7 @@ export default function SupplierDetailsPage() {
             py: 2.5,
             borderTop: "1px solid",
             borderColor: "divider",
-            background:
-              theme.palette.mode === "dark"
-                ? "rgba(255,255,255,0.02)"
-                : "rgba(0,0,0,0.015)",
+            background: theme.palette.mode === "dark" ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.015)",
             display: "flex",
             justifyContent: "flex-end",
             gap: 1.5,
