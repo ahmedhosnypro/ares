@@ -1,5 +1,6 @@
 import { getSession } from "next-auth/react";
 import { apiFetchJson } from "@/utils/api-client";
+import { logger } from "@/utils/logger";
 
 export interface Supplier {
   id: string;
@@ -11,6 +12,8 @@ export interface Supplier {
   phoneNumber?: string;
   companyProfile?: {
     companyName?: string;
+    commercialRegistrationNumber?: string;
+    taxId?: string;
   };
   [key: string]: unknown;
 }
@@ -40,4 +43,82 @@ export async function getSuppliers(page = 1, size = 10): Promise<SupplierRespons
       types: ["user"],
     }),
   });
+}
+
+// create new supplier
+export const createSupplier = async (payload: {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  status: string;
+  companyName: string;
+  commercialRegistrationNumber: string;
+  taxId: string;
+}) => {
+  const session = await getSession();
+
+  if (!session?.accessToken) {
+    throw new Error("No access token found");
+  }
+
+  return apiFetchJson<string>(`/api/admin/suppliers/create`, {
+    method: "POST",
+    accessToken: session.accessToken,
+    body: JSON.stringify(payload),
+  });
+};
+
+/**
+ * GET Supplier by id
+ */
+export async function getSupplierById(id: string): Promise<Supplier> {
+  const session = await getSession();
+
+  const data = await apiFetchJson<Supplier>(`/api/suppliers/${id}`, {
+    method: "GET",
+    accessToken: session?.accessToken ?? undefined,
+  });
+
+  logger.debug("Supplier details response", data);
+
+  return data;
+}
+
+// Update Supplier
+
+export async function updateSupplier(
+  id: string,
+  payload: {
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    status: string;
+    companyName: string;
+    commercialRegistrationNumber: string;
+    taxId: string;
+  }
+): Promise<Supplier> {
+  const session = await getSession();
+
+  return apiFetchJson(`/api/admin/suppliers/${id}/edit`, {
+    method: "PUT",
+    accessToken: session?.accessToken ?? undefined,
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteSupplier(id: string): Promise<Supplier> {
+  const session = await getSession();
+
+  try {
+    return await apiFetchJson(`/api/admin/suppliers/${id}/delete`, {
+      method: "DELETE",
+      accessToken: session?.accessToken,
+    });
+  } catch (err) {
+    logger.error("Delete supplier failed", err);
+    throw err;
+  }
 }

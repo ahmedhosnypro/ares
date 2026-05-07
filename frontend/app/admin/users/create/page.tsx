@@ -18,7 +18,7 @@ import { z } from "zod";
 import { passwordSchema } from "@/lib/validation/schemas";
 import { createUser } from "@/api-clients/users/users";
 
-export default function CreateSupplierPage() {
+export default function CreateUserPage() {
   const router = useRouter();
 
   const [saving, setSaving] = useState(false);

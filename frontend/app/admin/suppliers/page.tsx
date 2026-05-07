@@ -28,6 +28,12 @@ import {
   useMediaQuery,
   alpha,
   Grid,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
 } from "@mui/material";
 import { Theme } from "@mui/material";
 
@@ -38,7 +44,8 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import BlockIcon from "@mui/icons-material/Block";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import BusinessIcon from "@mui/icons-material/Business";
-
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
+import { deleteSupplier } from "@/api-clients/suppliers/suppliers";
 import { getSuppliers, type Supplier } from "@/api-clients/suppliers/suppliers";
 import { logger } from "@/utils/logger";
 
@@ -76,9 +83,10 @@ function StatCard({ label, value, color }: StatCardProps) {
 interface SupplierMobileCardProps {
   readonly s: Supplier;
   readonly theme: Theme;
+  readonly onDeleteClick: (supplier: Supplier) => void;
 }
 
-function SupplierMobileCard({ s, theme }: SupplierMobileCardProps) {
+function SupplierMobileCard({ s, theme, onDeleteClick }: SupplierMobileCardProps) {
   const isActive = s.status === "active";
   return (
     <Paper
@@ -145,6 +153,20 @@ function SupplierMobileCard({ s, theme }: SupplierMobileCardProps) {
             {isActive ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
           </IconButton>
         </Tooltip>
+        <Tooltip title={s.status === "deleted" ? "Already deleted" : "Delete"}>
+          <span>
+            <IconButton
+              size="small"
+              color="error"
+              disabled={s.status === "deleted"}
+              onClick={() => {
+                onDeleteClick(s);
+              }}
+            >
+              <DeleteOutlineIcon fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
       </Stack>
     </Paper>
   );
@@ -159,6 +181,10 @@ export default function SuppliersPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
+
+  // ── DELETE STATE ──────────────────────
+  const [deleteTarget, setDeleteTarget] = useState<Supplier | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const PAGE_SIZE = 10;
 
@@ -183,6 +209,24 @@ export default function SuppliersPage() {
   useEffect(() => {
     void fetchSuppliers();
   }, []);
+
+  // ── DELETE HANDLER ────────────────────
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+
+    try {
+      setDeleting(true);
+
+      await deleteSupplier(deleteTarget.id);
+
+      setSuppliers(prev => prev.filter(s => s.id !== deleteTarget.id));
+    } catch (err) {
+      logger.error("Failed to delete supplier", err);
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
+  };
 
   // ── FILTER ────────────────────────────
   const filtered = useMemo(() => {
@@ -310,7 +354,16 @@ export default function SuppliersPage() {
         /* ── MOBILE: card list ── */
         <Box>
           {pageData.length > 0 ? (
-            pageData.map(s => <SupplierMobileCard key={s.id} s={s} theme={theme} />)
+            pageData.map(s => (
+              <SupplierMobileCard
+                key={s.id}
+                s={s}
+                theme={theme}
+                onDeleteClick={supplier => {
+                  setDeleteTarget(supplier);
+                }}
+              />
+            ))
           ) : (
             <Box sx={{ py: 8, textAlign: "center" }}>
               <Typography color="text.secondary">No suppliers found</Typography>
@@ -418,6 +471,20 @@ export default function SuppliersPage() {
                                 {isActive ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
                               </IconButton>
                             </Tooltip>
+                            <Tooltip title={s.status === "deleted" ? "Already deleted" : "Delete"}>
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  disabled={s.status === "deleted"}
+                                  onClick={() => {
+                                    setDeleteTarget(s);
+                                  }}
+                                >
+                                  <DeleteOutlineIcon fontSize="small" />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
                           </Stack>
                         </TableCell>
                       </TableRow>
@@ -451,6 +518,51 @@ export default function SuppliersPage() {
           </Stack>
         </Paper>
       )}
+
+      {/* ── DELETE CONFIRM DIALOG ── */}
+      <Dialog
+        open={!!deleteTarget}
+        onClose={() => {
+          if (!deleting) {
+            setDeleteTarget(null);
+          }
+        }}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>Delete Supplier</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete{" "}
+            <strong>
+              {deleteTarget?.firstName} {deleteTarget?.lastName}
+            </strong>
+            ? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => {
+              setDeleteTarget(null);
+            }}
+            disabled={deleting}
+            variant="outlined"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              void handleDeleteConfirm();
+            }}
+            disabled={deleting}
+            variant="contained"
+            color="error"
+            startIcon={deleting ? <CircularProgress size={16} color="inherit" /> : <DeleteOutlineIcon />}
+          >
+            {deleting ? "Deleting..." : "Delete"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
