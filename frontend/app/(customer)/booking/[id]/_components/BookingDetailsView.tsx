@@ -21,12 +21,14 @@ import {
 } from "@mui/icons-material";
 import { toImageUrl } from "@/utils/image-url";
 import { type BookingDetails } from "./types";
+import BookingReviewSection from "./BookingReviewSection";
 
 interface BookingDetailsViewProps {
   readonly booking: BookingDetails;
   readonly routeBookingId: string;
   readonly canCancel: boolean;
   readonly onCancel: (formData: FormData) => Promise<void>;
+  readonly accessToken?: string;
   readonly feedback?: {
     readonly severity: AlertColor;
     readonly message: string;
@@ -92,6 +94,7 @@ export default function BookingDetailsView({
   routeBookingId,
   canCancel,
   onCancel,
+  accessToken,
   feedback,
 }: Readonly<BookingDetailsViewProps>) {
   const bookingRef = booking.id ?? routeBookingId;
@@ -258,6 +261,15 @@ export default function BookingDetailsView({
                 </Stack>
               </CardContent>
             </Paper>
+
+            {accessToken ? (
+              <BookingReviewSection
+                bookingId={bookingRef}
+                vehicleId={booking.car?.id}
+                status={booking.status}
+                accessToken={accessToken}
+              />
+            ) : null}
           </Grid>
 
           <Grid size={{ xs: 12, lg: 4 }}>

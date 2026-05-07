@@ -77,6 +77,7 @@ export default async function BookingDetailsPage({ params, searchParams }: Reado
       routeBookingId={id}
       canCancel={canCancelBooking(bookingResult.booking.status)}
       onCancel={cancelBookingAction.bind(null, id)}
+      accessToken={session.accessToken}
       feedback={getFeedback(resolvedSearchParams)}
     />
   );
