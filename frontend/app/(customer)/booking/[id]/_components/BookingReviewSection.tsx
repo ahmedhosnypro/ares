@@ -91,6 +91,13 @@ function ReviewForm({
   submitting,
   isUpdate,
 }: ReviewFormProps) {
+  let buttonLabel: string;
+  if (submitting) {
+    buttonLabel = isUpdate ? "Saving…" : "Submitting…";
+  } else {
+    buttonLabel = isUpdate ? "Save Changes" : "Submit Review";
+  }
+
   return (
     <Stack spacing={2}>
       <Box>
@@ -125,7 +132,7 @@ function ReviewForm({
           }}
           disabled={submitting}
         >
-          {submitting ? (isUpdate ? "Saving…" : "Submitting…") : isUpdate ? "Save Changes" : "Submit Review"}
+          {buttonLabel}
         </Button>
         <Button variant="outlined" onClick={onCancel} disabled={submitting}>
           Cancel
@@ -379,22 +386,26 @@ export default function BookingReviewSection({
             {error ? <Alert severity="error">{error}</Alert> : null}
             {feedback ? <Alert severity="success">{feedback}</Alert> : null}
 
-            {editing ? (
-              <ReviewForm
-                draftRating={draftRating}
-                setDraftRating={setDraftRating}
-                draftComment={draftComment}
-                setDraftComment={setDraftComment}
-                onSubmit={handleSubmit}
-                onCancel={handleCancel}
-                submitting={submitting}
-                isUpdate={!!review}
-              />
-            ) : review ? (
-              <ReviewViewState review={review} onEdit={handleStartEdit} />
-            ) : (
-              <EmptyReviewState onStartCreate={handleStartCreate} vehicleId={vehicleId} />
-            )}
+            {(() => {
+              if (editing) {
+                return (
+                  <ReviewForm
+                    draftRating={draftRating}
+                    setDraftRating={setDraftRating}
+                    draftComment={draftComment}
+                    setDraftComment={setDraftComment}
+                    onSubmit={handleSubmit}
+                    onCancel={handleCancel}
+                    submitting={submitting}
+                    isUpdate={!!review}
+                  />
+                );
+              }
+              if (review) {
+                return <ReviewViewState review={review} onEdit={handleStartEdit} />;
+              }
+              return <EmptyReviewState onStartCreate={handleStartCreate} vehicleId={vehicleId} />;
+            })()}
           </Stack>
         )}
       </CardContent>
