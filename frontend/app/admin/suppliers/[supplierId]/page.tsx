@@ -25,13 +25,6 @@ import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import { getSupplierById, type Supplier } from "@/api-clients/suppliers/suppliers";
 import { logger } from "@/utils/logger";
 
-// ─── status meta (matches EditSupplierPage) ────────────────────────────────────
-const STATUS_META: Record<string, { label: string; color: string; bg: string }> = {
-  active: { label: "Active", color: "#16a34a", bg: "#dcfce7" },
-  blocked: { label: "Blocked", color: "#dc2626", bg: "#fee2e2" },
-  pending: { label: "Pending", color: "#d97706", bg: "#fef3c7" },
-};
-
 // ─── section label (same as EditSupplierPage) ──────────────────────────────────
 function SectionLabel({ children }: { readonly children: React.ReactNode }) {
   const theme = useTheme();
@@ -84,7 +77,7 @@ function InfoRow({
         borderRadius: 3,
         border: "1px solid",
         borderColor: "divider",
-        bgcolor: theme.palette.mode === "dark" ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.015)",
+        bgcolor: "action.hover",
         display: "flex",
         alignItems: "center",
         gap: 2,
@@ -196,7 +189,34 @@ export default function SupplierDetailsPage() {
     );
   }
 
-  const statusMeta = STATUS_META[supplier.status] ?? { label: supplier.status, color: "#64748b", bg: "#f1f5f9" };
+  // Determine status metadata
+  let statusMeta: { label: string; color: string; bg: string };
+
+  if (supplier.status === "active") {
+    statusMeta = {
+      label: "Active",
+      color: theme.palette.status.active.main,
+      bg: theme.palette.status.active.light,
+    };
+  } else if (supplier.status === "blocked") {
+    statusMeta = {
+      label: "Blocked",
+      color: theme.palette.status.blocked.main,
+      bg: theme.palette.status.blocked.light,
+    };
+  } else if (supplier.status === "pending") {
+    statusMeta = {
+      label: "Pending",
+      color: theme.palette.status.pending.main,
+      bg: theme.palette.status.pending.light,
+    };
+  } else {
+    statusMeta = {
+      label: supplier.status,
+      color: theme.palette.text.secondary,
+      bg: theme.palette.action.hover,
+    };
+  }
 
   const initials = supplier.firstName ? supplier.firstName[0].toUpperCase() : "?";
 
@@ -212,7 +232,7 @@ export default function SupplierDetailsPage() {
           borderRadius: 3.5,
           border: "1px solid",
           borderColor: "divider",
-          background: theme.palette.mode === "dark" ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.015)",
+          background: "action.hover",
           display: "flex",
           alignItems: "center",
           gap: 2,
@@ -268,8 +288,8 @@ export default function SupplierDetailsPage() {
           <Stack spacing={2}>
             <InfoRow
               icon={<BusinessIcon sx={{ fontSize: 18 }} />}
-              iconBg="#EEF0FF"
-              iconColor="#3C4DB7"
+              iconBg={theme.palette.icon.business.bg}
+              iconColor={theme.palette.icon.business.color}
               label="Company Name"
             >
               <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", color: theme.palette.primary.main }}>
@@ -295,7 +315,7 @@ export default function SupplierDetailsPage() {
                   borderRadius: 3,
                   border: "1px solid",
                   borderColor: "divider",
-                  bgcolor: theme.palette.mode === "dark" ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.015)",
+                  bgcolor: "action.hover",
                   flex: 1,
                   transition: "border-color 0.18s, box-shadow 0.18s",
                   "&:hover": {
@@ -333,8 +353,8 @@ export default function SupplierDetailsPage() {
           <Stack spacing={2}>
             <InfoRow
               icon={<EmailIcon sx={{ fontSize: 18 }} />}
-              iconBg="#E1F7F0"
-              iconColor="#0F8A5F"
+              iconBg={theme.palette.icon.email.bg}
+              iconColor={theme.palette.icon.email.color}
               label="Email Address"
             >
               <Typography sx={{ fontWeight: 600, fontSize: "0.9rem" }}>{supplier.email}</Typography>
@@ -342,8 +362,8 @@ export default function SupplierDetailsPage() {
 
             <InfoRow
               icon={<PhoneIcon sx={{ fontSize: 18 }} />}
-              iconBg="#E8F5E9"
-              iconColor="#2E7D32"
+              iconBg={theme.palette.icon.phone.bg}
+              iconColor={theme.palette.icon.phone.color}
               label="Phone Number"
             >
               <Typography sx={{ fontWeight: 600, fontSize: "0.9rem" }}>{supplier.phoneNumber || "—"}</Typography>
@@ -362,7 +382,7 @@ export default function SupplierDetailsPage() {
             py: 2.5,
             borderTop: "1px solid",
             borderColor: "divider",
-            background: theme.palette.mode === "dark" ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.015)",
+            background: "action.hover",
             display: "flex",
             justifyContent: "flex-end",
             gap: 1.5,

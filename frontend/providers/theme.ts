@@ -34,6 +34,60 @@ declare module "@mui/material/styles" {
       socialBg: string;
       socialText: string;
     };
+    status: {
+      pending: {
+        main: string;
+        light: string;
+        contrastText: string;
+      };
+      confirmed: {
+        main: string;
+        light: string;
+        contrastText: string;
+      };
+      active: {
+        main: string;
+        light: string;
+        contrastText: string;
+      };
+      completed: {
+        main: string;
+        light: string;
+        contrastText: string;
+      };
+      cancelled: {
+        main: string;
+        light: string;
+        contrastText: string;
+      };
+      blocked: {
+        main: string;
+        light: string;
+        contrastText: string;
+      };
+    };
+    sidebar: {
+      background: string;
+      text: string;
+      textMuted: string;
+      activeBg: string;
+      hoverBg: string;
+      divider: string;
+    };
+    icon: {
+      business: {
+        bg: string;
+        color: string;
+      };
+      email: {
+        bg: string;
+        color: string;
+      };
+      phone: {
+        bg: string;
+        color: string;
+      };
+    };
   }
   interface PaletteOptions {
     overlay?: {
@@ -65,6 +119,60 @@ declare module "@mui/material/styles" {
       divider?: string;
       socialBg?: string;
       socialText?: string;
+    };
+    status?: {
+      pending?: {
+        main?: string;
+        light?: string;
+        contrastText?: string;
+      };
+      confirmed?: {
+        main?: string;
+        light?: string;
+        contrastText?: string;
+      };
+      active?: {
+        main?: string;
+        light?: string;
+        contrastText?: string;
+      };
+      completed?: {
+        main?: string;
+        light?: string;
+        contrastText?: string;
+      };
+      cancelled?: {
+        main?: string;
+        light?: string;
+        contrastText?: string;
+      };
+      blocked?: {
+        main?: string;
+        light?: string;
+        contrastText?: string;
+      };
+    };
+    sidebar?: {
+      background?: string;
+      text?: string;
+      textMuted?: string;
+      activeBg?: string;
+      hoverBg?: string;
+      divider?: string;
+    };
+    icon?: {
+      business?: {
+        bg?: string;
+        color?: string;
+      };
+      email?: {
+        bg?: string;
+        color?: string;
+      };
+      phone?: {
+        bg?: string;
+        color?: string;
+      };
     };
   }
 }
@@ -120,6 +228,60 @@ const lightPalette: PaletteOptions = {
     socialBg: "rgba(255, 255, 255, 0.05)",
     socialText: "#b3b9c1",
   },
+  status: {
+    pending: {
+      main: "#eab308",
+      light: "#fef3c7",
+      contrastText: "#000000",
+    },
+    confirmed: {
+      main: "#3b82f6",
+      light: "#dbeafe",
+      contrastText: "#ffffff",
+    },
+    active: {
+      main: "#22c55e",
+      light: "#dcfce7",
+      contrastText: "#000000",
+    },
+    completed: {
+      main: "#a855f7",
+      light: "#f3e8ff",
+      contrastText: "#ffffff",
+    },
+    cancelled: {
+      main: "#ef4444",
+      light: "#fee2e2",
+      contrastText: "#ffffff",
+    },
+    blocked: {
+      main: "#dc2626",
+      light: "#fee2e2",
+      contrastText: "#ffffff",
+    },
+  },
+  sidebar: {
+    background: "#0f172a",
+    text: "#cbd5e1",
+    textMuted: "#94a3b8",
+    activeBg: "#3b82f6",
+    hoverBg: "#1e293b",
+    divider: "#1e293b",
+  },
+  icon: {
+    business: {
+      bg: "#EEF0FF",
+      color: "#3C4DB7",
+    },
+    email: {
+      bg: "#E1F7F0",
+      color: "#0F8A5F",
+    },
+    phone: {
+      bg: "#E8F5E9",
+      color: "#2E7D32",
+    },
+  },
 };
 
 const darkPalette: PaletteOptions = {
@@ -172,6 +334,60 @@ const darkPalette: PaletteOptions = {
     divider: "rgba(255, 255, 255, 0.05)",
     socialBg: "rgba(255, 255, 255, 0.05)",
     socialText: "#b3b9c1",
+  },
+  status: {
+    pending: {
+      main: "#fbbf24",
+      light: "#fef3c7",
+      contrastText: "#000000",
+    },
+    confirmed: {
+      main: "#60a5fa",
+      light: "#dbeafe",
+      contrastText: "#000000",
+    },
+    active: {
+      main: "#4ade80",
+      light: "#dcfce7",
+      contrastText: "#000000",
+    },
+    completed: {
+      main: "#c084fc",
+      light: "#f3e8ff",
+      contrastText: "#000000",
+    },
+    cancelled: {
+      main: "#f87171",
+      light: "#fee2e2",
+      contrastText: "#000000",
+    },
+    blocked: {
+      main: "#ef4444",
+      light: "#fee2e2",
+      contrastText: "#000000",
+    },
+  },
+  sidebar: {
+    background: "#0f172a",
+    text: "#cbd5e1",
+    textMuted: "#94a3b8",
+    activeBg: "#3b82f6",
+    hoverBg: "#1e293b",
+    divider: "#1e293b",
+  },
+  icon: {
+    business: {
+      bg: "#312e81",
+      color: "#a5b4fc",
+    },
+    email: {
+      bg: "#064e3b",
+      color: "#6ee7b7",
+    },
+    phone: {
+      bg: "#14532d",
+      color: "#86efac",
+    },
   },
 };
 

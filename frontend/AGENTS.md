@@ -8,6 +8,34 @@
 - When running scripts, use: ~/.bun/bin/bun run <script-name>
 - When executing files directly, use: ~/.bun/bin/bun <file-path>
 
+## AI Agent Communication Rules
+
+- **NEVER create summary markdown files** for work completed (e.g., `SUMMARY.md`, `CHANGES.md`, `REPORT.md`)
+- **DO respond in chat** with a clear summary of what was done
+- Summary files clutter the repository and are not needed
+- Exception: Documentation files that are part of the project structure (e.g., `README.md`, `CONTRIBUTING.md`)
+
+## Theme and Styling Rules
+
+- **NO hardcoded colors allowed** - All colors MUST come from the theme palette defined in `frontend/providers/theme.ts`
+- **NEVER use hex colors, rgb/rgba values, or color names** (e.g., `#fff`, `#000000`, `rgb(255,0,0)`, `"white"`, `"red"`)
+- **Always use theme colors**: `theme.palette.primary.main`, `theme.palette.status.active.main`, `theme.palette.sidebar.background`
+- Available theme palettes:
+  - `primary`, `secondary`, `error`, `warning`, `info`, `success`
+  - `background.default`, `background.paper`
+  - `text.primary`, `text.secondary`
+  - `status.pending`, `status.confirmed`, `status.active`, `status.completed`, `status.cancelled`, `status.blocked`
+  - `sidebar.background`, `sidebar.text`, `sidebar.textMuted`, `sidebar.activeBg`, `sidebar.hoverBg`, `sidebar.divider`
+  - `icon.business`, `icon.email`, `icon.phone`
+  - `border.light`, `border.main`
+  - `shadow.card`, `shadow.cardHover`, `shadow.button`, `shadow.buttonHover`
+  - `overlay.dark`, `overlay.gradient`, `overlay.tealGradient`, `overlay.blur`
+  - `header.background`, `header.border`, `header.buttonHover`, `header.avatarBorder`
+  - `footer.background`, `footer.text`, `footer.title`, `footer.divider`, `footer.socialBg`, `footer.socialText`
+  - `common.white`, `common.black`
+- If a color is needed that doesn't exist in the theme, add it to `frontend/providers/theme.ts` first
+- This ensures proper theme switching (light/dark mode) and consistent design across the application
+
 ## Scripts and Commands
 
 - Prefer Bun's built-in commands over npm equivalents
@@ -91,6 +119,27 @@ Code Changes → CodeScene Diagnostics → TypeScript Check → Linting → Code
 - **Always use the logger utility**: `import { logger } from '@/src/utils/logger'`
 - Methods: `logger.info`, `logger.warn`, `logger.error`, `logger.debug`
 - `info`, `warn`, and `debug` are suppressed in production; `error` always logs.
+
+## Theme and Styling
+
+- **NO hardcoded colors allowed** - All colors MUST come from the theme palette
+- **NEVER use hex colors, rgb/rgba values, or color names** (e.g., `#fff`, `rgb(255,0,0)`, `"white"`, `"red"`)
+- **Always use theme colors**: `theme.palette.primary.main`, `theme.palette.status.active.main`, `theme.palette.sidebar.background`
+- Available theme palettes:
+  - `primary`, `secondary`, `error`, `warning`, `info`, `success`
+  - `background.default`, `background.paper`
+  - `text.primary`, `text.secondary`
+  - `status.pending`, `status.confirmed`, `status.active`, `status.completed`, `status.cancelled`, `status.blocked`
+  - `sidebar.background`, `sidebar.text`, `sidebar.textMuted`, `sidebar.activeBg`, `sidebar.hoverBg`, `sidebar.divider`
+  - `icon.business`, `icon.email`, `icon.phone`
+  - `border.light`, `border.main`
+  - `shadow.card`, `shadow.cardHover`, `shadow.button`, `shadow.buttonHover`
+  - `overlay.dark`, `overlay.gradient`, `overlay.tealGradient`, `overlay.blur`
+  - `header.background`, `header.border`, `header.buttonHover`, `header.avatarBorder`
+  - `footer.background`, `footer.text`, `footer.title`, `footer.divider`, `footer.socialBg`, `footer.socialText`
+  - `common.white`, `common.black`
+- If a color is needed that doesn't exist in the theme, add it to `frontend/providers/theme.ts` first
+- This ensures proper theme switching (light/dark mode) and consistent design
 
 ## React & Next.js Patterns
 
