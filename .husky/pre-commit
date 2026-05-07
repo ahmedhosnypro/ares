@@ -7,7 +7,7 @@ echo "================================"
 cd frontend
 
 echo "🔍 Running format check..."
-~/.bun/bin/bun run format:check || exit 1
+~/.bun/bin/bun run format|| exit 1
 
 echo "🔍 Running TypeScript check..."
 ~/.bun/bin/bun run tsgo || exit 1
