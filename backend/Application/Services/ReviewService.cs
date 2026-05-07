@@ -153,4 +153,83 @@ public class ReviewService : IReviewService
 
         return true;
     }
+
+    /// <summary>
+    /// 24-hour edit window. Reviews become read-only after this time.
+    /// </summary>
+    private static readonly TimeSpan EditWindow = TimeSpan.FromHours(24);
+
+    private static BookingReviewDto ToBookingReviewDto(Review review)
+    {
+        var editDeadline = review.CreatedAt + EditWindow;
+        return new BookingReviewDto(
+            review.Id,
+            review.BookingId,
+            review.VehicleId,
+            review.UserId,
+            review.Rating ?? 0,
+            review.Comment,
+            review.CreatedAt,
+            review.UpdatedAt,
+            editDeadline,
+            DateTime.UtcNow < editDeadline);
+    }
+
+    public async Task<BookingReviewDto?> GetReviewByBookingAsync(
+        Guid bookingId,
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        // Verify the booking exists and belongs to the caller before exposing review data.
+        var booking = await _bookingRepository.GetBookingWithDetailsAsync(bookingId, cancellationToken);
+        if (booking == null)
+        {
+            throw new NotFoundException($"Booking with ID {bookingId} not found");
+        }
+
+        if (booking.UserId != userId)
+        {
+            throw new ForbiddenException("You can only view reviews for your own bookings");
+        }
+
+        var review = await _context.Reviews
+            .FirstOrDefaultAsync(r => r.BookingId == bookingId, cancellationToken);
+
+        return review == null ? null : ToBookingReviewDto(review);
+    }
+
+    public async Task<BookingReviewDto> UpdateReviewAsync(
+        Guid reviewId,
+        UpdateReviewRequest request,
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var review = await _context.Reviews
+            .FirstOrDefaultAsync(r => r.Id == reviewId, cancellationToken);
+
+        if (review == null)
+        {
+            throw new NotFoundException($"Review with ID {reviewId} not found");
+        }
+
+        if (review.UserId != userId)
+        {
+            throw new ForbiddenException("You can only edit your own reviews");
+        }
+
+        // Block editing past the 24h window.
+        if (DateTime.UtcNow >= review.CreatedAt + EditWindow)
+        {
+            throw new ValidationException("EditWindow", "This review can no longer be edited (24 hour window expired)");
+        }
+
+        review.Rating = request.Rating;
+        review.Comment = request.Comment;
+        review.UpdatedAt = DateTime.UtcNow;
+
+        await _reviewRepository.UpdateAsync(review, cancellationToken);
+        await _reviewRepository.SaveChangesAsync(cancellationToken);
+
+        return ToBookingReviewDto(review);
+    }
 }
