@@ -1,7 +1,0 @@
-# SonarQube generated files
-.sonar-token
-.scannerwork/
-.sonar-state
-
-# Logs
-*.log

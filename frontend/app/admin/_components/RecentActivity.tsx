@@ -293,10 +293,12 @@ export default function RecentActivity() {
   }, [loadActivity]);
 
   useEffect(() => {
-    // fetchActivity uses .then/.catch so setState is never called synchronously
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchActivity();
-  }, [fetchActivity]);
+    // Initial load on mount
+    if (session?.accessToken) {
+      fetchActivity();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.accessToken]);
 
   // Expose a manual refresh for buttons
   const handleRefresh = fetchActivity;

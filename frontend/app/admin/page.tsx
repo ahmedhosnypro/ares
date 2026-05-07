@@ -273,10 +273,10 @@ export default function AdminDashboardPage() {
                     borderColor: "divider",
                     bgcolor: "background.paper",
                     transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-                    boxShadow: "0 1px 3px rgba(15,23,42,0.04)",
+                    boxShadow: theme => theme.palette.shadow.card,
                     "&:hover": {
                       transform: "translateY(-3px)",
-                      boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
+                      boxShadow: theme => theme.palette.shadow.cardHover,
                     },
                   }}
                 >
