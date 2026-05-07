@@ -31,7 +31,7 @@ export default function SearchFormFilter({
   defaultPickupDate,
   defaultReturnDate,
   defaultCategory,
-  vehicles
+  vehicles,
 }: SearchFormFilterProps) {
   const router = useRouter();
   const theme = useTheme();

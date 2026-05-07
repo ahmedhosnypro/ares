@@ -43,13 +43,16 @@ export default async function SearchPage({ searchParams }: Readonly<PageProps>) 
   const locations = await fetchPublicLocations();
 
   const requestedLocationId = firstValue(resolvedSearchParams.pickupLocationId);
-  const selectedLocation = locations.length > 0 ? findLocationById(locations, requestedLocationId) ?? locations[0] : undefined;
+  const selectedLocation =
+    locations.length > 0 ? (findLocationById(locations, requestedLocationId) ?? locations[0]) : undefined;
   const pickupLocationId = selectedLocation?.id ?? "";
   const pickupDate = firstValue(resolvedSearchParams.pickupDate) || defaultDates.pickupDate;
   const returnDate = firstValue(resolvedSearchParams.returnDate) || defaultDates.returnDate;
   const category = firstValue(resolvedSearchParams.category);
 
-  const vehicles = pickupLocationId ? await fetchFeaturedVehicles(pickupLocationId, pickupDate, returnDate, category, 12) : [];
+  const vehicles = pickupLocationId
+    ? await fetchFeaturedVehicles(pickupLocationId, pickupDate, returnDate, category, 12)
+    : [];
 
   return (
     <SearchPageContent

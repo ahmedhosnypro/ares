@@ -13,9 +13,7 @@ interface VehicleAutocompleteProps {
   readonly vehicles: readonly PublicVehicleCard[];
 }
 
-export default function VehicleAutocomplete({
-  vehicles,
-}: VehicleAutocompleteProps) {
+export default function VehicleAutocomplete({ vehicles }: VehicleAutocompleteProps) {
   const router = useRouter();
   const theme = useTheme();
   const [inputValue, setInputValue] = useState("");
@@ -36,12 +34,8 @@ export default function VehicleAutocomplete({
       const makeModel = `${vehicle.make} ${vehicle.model}`.toLowerCase();
       const location = vehicle.locationCity.toLowerCase();
       const category = vehicle.status.toLowerCase();
-      
-      return (
-        makeModel.includes(searchTerm) ||
-        location.includes(searchTerm) ||
-        category.includes(searchTerm)
-      );
+
+      return makeModel.includes(searchTerm) || location.includes(searchTerm) || category.includes(searchTerm);
     });
   }, [inputValue, limitedVehicles]);
 
@@ -55,7 +49,7 @@ export default function VehicleAutocomplete({
     <Box sx={{ width: "100%", maxWidth: "1000px", mx: "auto" }}>
       <Autocomplete
         options={filteredVehicles}
-        getOptionLabel={(option) => `${option.make} ${option.model}`}
+        getOptionLabel={option => `${option.make} ${option.model}`}
         inputValue={inputValue}
         onInputChange={(_, newInputValue) => {
           setInputValue(newInputValue);
@@ -63,9 +57,9 @@ export default function VehicleAutocomplete({
         onChange={(_, newValue) => {
           handleVehicleSelect(newValue);
         }}
-        filterOptions={(x) => x} // We handle filtering ourselves
+        filterOptions={x => x} // We handle filtering ourselves
         noOptionsText={inputValue ? "No vehicles found" : "Start typing to search..."}
-        renderInput={(params) => (
+        renderInput={params => (
           <TextField
             {...params}
             placeholder="Search by make, model, or location..."
@@ -111,7 +105,7 @@ export default function VehicleAutocomplete({
         renderOption={(props, option) => {
           const { key, ...otherProps } = props;
           const imageUrl = toImageUrl(option.imageUrl);
-          
+
           return (
             <Box
               component="li"
