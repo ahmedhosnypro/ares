@@ -166,7 +166,7 @@ export default function AdminDashboardPage() {
             const bookingsList = bookingsData.resultData || bookingsData.data || bookingsData.items;
             if (bookingsList) {
               const mappedBookings = bookingsList.map((b: RawBooking) => ({
-                id: (b.id || b._id || "").toString().substring(0, 8).toUpperCase(),
+                id: (b.id || b._id || "").toString(),
                 customer: b.driver?.fullName || "Guest",
                 car: b.car?.name || "Vehicle",
                 date: b.from ? new Date(b.from).toLocaleDateString() : "",
@@ -442,7 +442,9 @@ export default function AdminDashboardPage() {
                       <TableBody>
                         {recentBookings.map(row => (
                           <TableRow key={row.id} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
-                            <TableCell sx={{ fontWeight: "600" }}>{row.id}</TableCell>
+                            <TableCell sx={{ fontWeight: "600" }}>
+                              {row.id.length > 8 ? row.id.substring(0, 8).toUpperCase() : row.id}
+                            </TableCell>
                             <TableCell>{row.customer}</TableCell>
                             <TableCell>{row.car}</TableCell>
                             <TableCell>{row.date}</TableCell>

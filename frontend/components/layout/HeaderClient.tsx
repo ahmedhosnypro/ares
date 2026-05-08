@@ -37,6 +37,7 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import { toImageUrl } from "@/utils/image-url";
 import ThemeSwitcher from "@/components/ui/ThemeSwitcher";
 import CheckoutIndicator from "@/components/layout/CheckoutIndicator";
+import NotificationsPanel from "@/app/_components/NotificationsPanel";
 
 interface HeaderClientProps {
   readonly session: Session | null;
@@ -194,6 +195,13 @@ export default function HeaderClient({ session }: HeaderClientProps) {
 
               {/* Pending checkout indicator */}
               <CheckoutIndicator />
+
+              {/* Notifications bell — only shown to authenticated users */}
+              {session && (
+                <Box sx={{ color: "common.white", display: "flex", alignItems: "center" }}>
+                  <NotificationsPanel iconColor="inherit" />
+                </Box>
+              )}
 
               {/* Currency Selector */}
               <Button
