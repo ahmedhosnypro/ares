@@ -9,7 +9,7 @@ export default async function Header() {
   // older NEXTAUTH_SECRET. Treat that as an anonymous session instead of
   // crashing the whole page render -- the stale cookie will be replaced the
   // next time the user signs in.
-  const session = await getServerSession(authOptions).catch(error => {
+  const session = await getServerSession(authOptions).catch((error: unknown) => {
     logger.warn("Failed to read session in Header, falling back to anonymous", error);
     return null;
   });
