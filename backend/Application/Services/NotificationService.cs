@@ -32,7 +32,8 @@ public class NotificationService : INotificationService
             n.Title,
             n.Message,
             n.IsRead,
-            n.CreatedAt));
+            n.CreatedAt,
+            n.Type));
     }
 
     public async Task MarkAsReadAsync(
@@ -42,10 +43,35 @@ public class NotificationService : INotificationService
         await _notificationRepository.MarkAsReadAsync(notificationId, cancellationToken);
     }
 
+    public async Task MarkAsReadForUserAsync(
+        Guid notificationId,
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        await _notificationRepository.MarkAsReadForUserAsync(notificationId, userId, cancellationToken);
+    }
+
+    public async Task<int> MarkAllAsReadAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _notificationRepository.MarkAllAsReadAsync(userId, cancellationToken);
+    }
+
+    public Task CreateNotificationAsync(
+        Guid userId,
+        string title,
+        string message,
+        CancellationToken cancellationToken = default)
+    {
+        return CreateNotificationAsync(userId, title, message, null, cancellationToken);
+    }
+
     public async Task CreateNotificationAsync(
         Guid userId,
         string title,
         string message,
+        string? type,
         CancellationToken cancellationToken = default)
     {
         var notification = new Notification
@@ -53,6 +79,7 @@ public class NotificationService : INotificationService
             UserId = userId,
             Title = title,
             Message = message,
+            Type = type,
             IsRead = false,
             CreatedAt = DateTime.UtcNow
         };
@@ -67,7 +94,4 @@ public class NotificationService : INotificationService
     {
         return await _notificationRepository.GetUnreadCountAsync(userId, cancellationToken);
     }
-    
-    
-    
 }

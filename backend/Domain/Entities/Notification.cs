@@ -20,6 +20,11 @@ namespace Backend.Domain.Entities
         [Required]
         public string Message { get; set; } = string.Empty;
 
+        // Optional, nullable type tag (e.g. "BookingApproved", "BookingRejected", "BookingCompleted", "ReviewAvailable").
+        // Kept nullable to remain backwards-compatible with existing rows.
+        [MaxLength(64)]
+        public string? Type { get; set; }
+
         public bool IsRead { get; set; } = false;
 
         public DateTime? ReadAt { get; set; }

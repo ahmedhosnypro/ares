@@ -32,12 +32,52 @@ public class NotificationRepository : Repository<Notification>, INotificationRep
         var notification = await _dbSet
             .FirstOrDefaultAsync(n => n.Id == notificationId, cancellationToken);
 
-        if (notification != null)
+        if (notification != null && !notification.IsRead)
         {
             notification.IsRead = true;
             notification.ReadAt = DateTime.UtcNow;
             await SaveChangesAsync(cancellationToken);
         }
+    }
+
+    public async Task MarkAsReadForUserAsync(
+        Guid notificationId,
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var notification = await _dbSet
+            .FirstOrDefaultAsync(n => n.Id == notificationId && n.UserId == userId, cancellationToken);
+
+        if (notification != null && !notification.IsRead)
+        {
+            notification.IsRead = true;
+            notification.ReadAt = DateTime.UtcNow;
+            await SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    public async Task<int> MarkAllAsReadAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var unread = await _dbSet
+            .Where(n => n.UserId == userId && !n.IsRead)
+            .ToListAsync(cancellationToken);
+
+        if (unread.Count == 0)
+        {
+            return 0;
+        }
+
+        var now = DateTime.UtcNow;
+        foreach (var n in unread)
+        {
+            n.IsRead = true;
+            n.ReadAt = now;
+        }
+
+        await SaveChangesAsync(cancellationToken);
+        return unread.Count;
     }
 
     public async Task<int> GetUnreadCountAsync(

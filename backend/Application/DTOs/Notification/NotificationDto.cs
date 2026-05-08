@@ -10,4 +10,5 @@ public record NotificationDto(
     string Title,
     string Message,
     bool IsRead,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    string? Type = null);

@@ -8,6 +8,7 @@ export interface NotificationItem {
   message: string;
   isRead: boolean;
   createdAt: string;
+  type?: string | null;
 }
 
 export interface NotificationEnvelope {
@@ -20,6 +21,11 @@ export interface MarkNotificationReadResponse {
   success: boolean;
 }
 
+export interface MarkAllReadResponse {
+  success: boolean;
+  updated?: number;
+}
+
 export interface NotificationCountResponse {
   count?: number;
   unreadCount?: number;
@@ -30,17 +36,16 @@ export interface SeedNotificationsResponse {
   message?: string;
 }
 
-/**
- * جلب جميع التنبيهات للمستخدم المصادق عليه
- */
+const jsonHeaders = (token: string): HeadersInit => ({
+  Authorization: `Bearer ${token}`,
+  Accept: "application/json",
+  "Content-Type": "application/json",
+});
+
 export const getNotifications = async (token: string): Promise<NotificationsResponse> => {
   const res = await fetch(toApiUrl("/api/notifications"), {
     method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json", // يفضل استخدام json بدل text/plain إذا كان السيرفر يدعم ذلك
-      "Content-Type": "application/json",
-    },
+    headers: jsonHeaders(token),
   });
 
   if (!res.ok) {
@@ -52,18 +57,10 @@ export const getNotifications = async (token: string): Promise<NotificationsResp
   return (await res.json()) as NotificationsResponse;
 };
 
-/**
- * تحديث حالة التنبيه إلى "مقروء"
- */
 export const markNotificationAsRead = async (id: string, token: string): Promise<MarkNotificationReadResponse> => {
   const res = await fetch(toApiUrl(`/api/notifications/${id}/read`), {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    // بعض السيرفرات تتطلب إرسال body فارغ في طلبات PUT
+    method: "PATCH",
+    headers: jsonHeaders(token),
     body: JSON.stringify({}),
   });
 
@@ -73,8 +70,6 @@ export const markNotificationAsRead = async (id: string, token: string): Promise
     throw new Error(`Failed to mark as read: ${String(res.status)}`);
   }
 
-  // ملاحظة: إذا كان السيرفر يعيد استجابة فارغة (204 No Content)،
-  // فإن res.json() قد تسبب خطأ. يفضل التأكد من حالة الاستجابة:
   if (res.status === 204) {
     return { success: true };
   }
@@ -82,9 +77,27 @@ export const markNotificationAsRead = async (id: string, token: string): Promise
   return (await res.json()) as MarkNotificationReadResponse;
 };
 
-/**
- * جلب عداد التنبيهات غير المقروءة (موجود في الصورة الثالثة)
- */
+export const markAllNotificationsAsRead = async (token: string): Promise<MarkAllReadResponse> => {
+  const res = await fetch(toApiUrl("/api/notifications/read-all"), {
+    method: "PATCH",
+    headers: jsonHeaders(token),
+    body: JSON.stringify({}),
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    logger.error("Mark All As Read Error", errorText);
+    throw new Error(`Failed to mark all as read: ${String(res.status)}`);
+  }
+
+  if (res.status === 204) {
+    return { success: true };
+  }
+
+  const data = (await res.json()) as { updated?: number };
+  return { success: true, updated: data.updated };
+};
+
 export const getNotificationCount = async (userId: string, token: string): Promise<NotificationCountResponse> => {
   const res = await fetch(toApiUrl(`/api/notification-counter/${userId}`), {
     method: "GET",
@@ -98,17 +111,10 @@ export const getNotificationCount = async (userId: string, token: string): Promi
   return (await res.json()) as NotificationCountResponse;
 };
 
-/**
- * إنشاء تنبيهات تجريبية للمستخدم (للاختبار)
- */
 export const seedNotifications = async (token: string): Promise<SeedNotificationsResponse> => {
   const res = await fetch(toApiUrl("/api/notifications/seed"), {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
+    headers: jsonHeaders(token),
   });
 
   if (!res.ok) {

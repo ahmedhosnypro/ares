@@ -6,7 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace Backend.Api.Controllers;
 
 /// <summary>
-/// Controller for notification-related operations
+/// Controller for notification-related operations.
+/// All endpoints are scoped to the authenticated user.
 /// Validates: Requirements 9.1, 9.2
 /// </summary>
 [ApiController]
@@ -28,22 +29,17 @@ public class NotificationsController : ControllerBase
     /// <summary>
     /// Get all notifications for the authenticated user
     /// </summary>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Collection of user notifications</returns>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<NotificationDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<IEnumerable<NotificationDto>>> GetUserNotifications(
         CancellationToken cancellationToken = default)
     {
-        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-        if (userIdClaim == null)
+        if (!TryGetCurrentUserId(out var userId))
         {
             _logger.LogWarning("Unauthorized notification access attempt - no user ID claim found");
             return Unauthorized(new { Message = "User not authenticated" });
         }
-
-        var userId = Guid.Parse(userIdClaim.Value);
 
         _logger.LogInformation("Getting notifications for user {UserId}", userId);
 
@@ -55,11 +51,10 @@ public class NotificationsController : ControllerBase
     }
 
     /// <summary>
-    /// Mark a notification as read
+    /// Mark a notification as read.
+    /// Both PATCH (preferred) and PUT are accepted for backwards compatibility.
     /// </summary>
-    /// <param name="id">Notification ID</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Success response</returns>
+    [HttpPatch("{id}/read")]
     [HttpPut("{id}/read")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -68,28 +63,43 @@ public class NotificationsController : ControllerBase
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-        if (userIdClaim == null)
+        if (!TryGetCurrentUserId(out var userId))
         {
             _logger.LogWarning("Unauthorized notification mark as read attempt - no user ID claim found");
             return Unauthorized(new { Message = "User not authenticated" });
         }
 
-        var userId = Guid.Parse(userIdClaim.Value);
-
         _logger.LogInformation("User {UserId} marking notification {NotificationId} as read", userId, id);
 
-        await _notificationService.MarkAsReadAsync(id, cancellationToken);
+        // Scoped to current user — silently ignored if notification belongs to someone else.
+        await _notificationService.MarkAsReadForUserAsync(id, userId, cancellationToken);
 
         return Ok(new { Message = "Notification marked as read successfully" });
     }
 
     /// <summary>
-    /// Get the count of unread notifications for a user
+    /// Mark all notifications for the authenticated user as read.
     /// </summary>
-    /// <param name="userId">User ID from route parameter</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Count of unread notifications</returns>
+    [HttpPatch("read-all")]
+    [HttpPut("read-all")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> MarkAllAsRead(CancellationToken cancellationToken = default)
+    {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return Unauthorized(new { Message = "User not authenticated" });
+        }
+
+        var updated = await _notificationService.MarkAllAsReadAsync(userId, cancellationToken);
+
+        return Ok(new { Message = "All notifications marked as read", updated });
+    }
+
+    /// <summary>
+    /// Get the count of unread notifications for a user.
+    /// Users may only query their own counter unless they are an Admin.
+    /// </summary>
     [HttpGet("/api/notification-counter/{userId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -98,15 +108,11 @@ public class NotificationsController : ControllerBase
         Guid userId,
         CancellationToken cancellationToken = default)
     {
-        var authenticatedUserIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-        if (authenticatedUserIdClaim == null)
+        if (!TryGetCurrentUserId(out var authenticatedUserId))
         {
             return Unauthorized(new { Message = "User not authenticated" });
         }
 
-        var authenticatedUserId = Guid.Parse(authenticatedUserIdClaim.Value);
-        
-        // Ensure user can only check their own notifications unless they are an admin
         var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
         if (authenticatedUserId != userId && userRole != "Admin")
         {
@@ -127,32 +133,44 @@ public class NotificationsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> SeedNotifications(CancellationToken cancellationToken = default)
     {
-        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-        if (userIdClaim == null)
+        if (!TryGetCurrentUserId(out var userId))
         {
             return Unauthorized(new { Message = "User not authenticated" });
         }
-
-        var userId = Guid.Parse(userIdClaim.Value);
 
         await _notificationService.CreateNotificationAsync(
             userId,
             "Welcome to Ares Rental!",
             "Thank you for joining our platform. Check out our latest vehicles.",
+            "Welcome",
             cancellationToken);
 
         await _notificationService.CreateNotificationAsync(
             userId,
             "Booking Confirmed",
             "Your recent booking request has been confirmed. Enjoy your ride!",
+            "BookingApproved",
             cancellationToken);
 
         await _notificationService.CreateNotificationAsync(
             userId,
             "Special Offer",
             "Get 20% off on your next rental. Offer valid until the end of the month.",
+            "Promotion",
             cancellationToken);
 
         return Ok(new { Message = "Dummy notifications created successfully" });
+    }
+
+    private bool TryGetCurrentUserId(out Guid userId)
+    {
+        userId = Guid.Empty;
+        var claim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        if (claim == null)
+        {
+            return false;
+        }
+
+        return Guid.TryParse(claim.Value, out userId);
     }
 }

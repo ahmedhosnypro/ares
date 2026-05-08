@@ -17,15 +17,18 @@ public class BookingService : IBookingService
     private readonly IBookingRepository _bookingRepository;
     private readonly IVehicleRepository _vehicleRepository;
     private readonly IApplicationDbContext _context;
+    private readonly INotificationService? _notificationService;
 
     public BookingService(
         IBookingRepository bookingRepository,
         IVehicleRepository vehicleRepository,
-        IApplicationDbContext context)
+        IApplicationDbContext context,
+        INotificationService? notificationService = null)
     {
         _bookingRepository = bookingRepository;
         _vehicleRepository = vehicleRepository;
         _context = context;
+        _notificationService = notificationService;
     }
 
     public async Task<BookingResponse> CreateBookingAsync(
@@ -440,6 +443,9 @@ public class BookingService : IBookingService
         await _bookingRepository.UpdateAsync(booking, cancellationToken);
         await _bookingRepository.SaveChangesAsync(cancellationToken);
 
+        // Fire-and-forget notification for the customer (best-effort).
+        await NotifyBookingStatusChangeAsync(booking, parsedStatus, cancellationToken);
+
         return true;
     }
 
@@ -455,28 +461,96 @@ public class BookingService : IBookingService
     }
 
     /// <summary>
-    /// Creates a notification for the customer after booking creation
+    /// Creates a notification for the customer after booking creation.
     /// Requirement 4.8: Create notification for customer
+    /// Wrapped in try/catch so notification failures never break the booking flow.
     /// </summary>
     private async Task CreateBookingNotificationAsync(
         Guid userId,
         string bookingNumber,
         CancellationToken cancellationToken)
     {
-        var notification = new Notification
+        if (_notificationService == null)
         {
-            Id = Guid.NewGuid(),
-            UserId = userId,
-            Title = "Booking Confirmed",
-            Message = $"Your booking {bookingNumber} has been created successfully and is pending confirmation.",
-            IsRead = false,
-            CreatedAt = DateTime.UtcNow
-        };
+            return;
+        }
 
-        // Add notification to context
-        // Note: This requires adding Notifications DbSet to IApplicationDbContext
-        // For now, we'll skip this until the context is updated
-        await Task.CompletedTask;
+        try
+        {
+            await _notificationService.CreateNotificationAsync(
+                userId,
+                "Booking Received",
+                $"Your booking {bookingNumber} has been created and is pending confirmation.",
+                "BookingPending",
+                cancellationToken);
+        }
+        catch
+        {
+            // Swallow — notifications are best-effort and must not break the booking flow.
+        }
+    }
+
+    /// <summary>
+    /// Creates a notification when a booking status changes (approved, rejected, completed).
+    /// Best-effort: any failure is swallowed so the status change still succeeds.
+    /// </summary>
+    private async Task NotifyBookingStatusChangeAsync(
+        Booking booking,
+        Backend.Domain.Entities.Enums.BookingStatus newStatus,
+        CancellationToken cancellationToken)
+    {
+        if (_notificationService == null)
+        {
+            return;
+        }
+
+        var bookingLabel = string.IsNullOrEmpty(booking.BookingNumber)
+            ? booking.Id.ToString()
+            : booking.BookingNumber;
+        try
+        {
+            switch (newStatus)
+            {
+                case Backend.Domain.Entities.Enums.BookingStatus.Confirmed:
+                    await _notificationService.CreateNotificationAsync(
+                        booking.UserId,
+                        "Booking Approved",
+                        $"Your booking {bookingLabel} has been approved. Get ready for your trip!",
+                        "BookingApproved",
+                        cancellationToken);
+                    break;
+
+                case Backend.Domain.Entities.Enums.BookingStatus.Cancelled:
+                    await _notificationService.CreateNotificationAsync(
+                        booking.UserId,
+                        "Booking Rejected",
+                        $"Your booking {bookingLabel} has been rejected or cancelled. Please review your bookings for details.",
+                        "BookingRejected",
+                        cancellationToken);
+                    break;
+
+                case Backend.Domain.Entities.Enums.BookingStatus.Completed:
+                    await _notificationService.CreateNotificationAsync(
+                        booking.UserId,
+                        "Booking Completed",
+                        $"Your booking {bookingLabel} has been completed. Thank you for choosing us!",
+                        "BookingCompleted",
+                        cancellationToken);
+
+                    // Review-available notification (Requirement: review available).
+                    await _notificationService.CreateNotificationAsync(
+                        booking.UserId,
+                        "Share your experience",
+                        $"You can now leave a review for booking {bookingLabel}.",
+                        "ReviewAvailable",
+                        cancellationToken);
+                    break;
+            }
+        }
+        catch
+        {
+            // Best-effort: never break the booking status update.
+        }
     }
 
     public async Task<bool> DeleteBookingsAsync(

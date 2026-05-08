@@ -8,6 +8,12 @@ namespace Backend.Infrastructure.Data.Configurations
     {
         public void Configure(EntityTypeBuilder<Notification> builder)
         {
+            builder.Property(n => n.Type)
+                .HasMaxLength(64)
+                .IsRequired(false);
+
+            builder.HasIndex(n => new { n.UserId, n.IsRead });
+
             builder
                 .HasOne(n => n.User)
                 .WithMany(u => u.Notifications)
