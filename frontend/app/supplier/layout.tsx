@@ -1,5 +1,18 @@
 "use client";
 
+/**
+ * Supplier portal layout.
+ *
+ * Mirrors the visual language of the existing admin layout (`app/admin/layout.tsx`)
+ * intentionally so suppliers see a familiar dashboard experience, but the file is
+ * fully isolated — no shared mutable state, no admin imports, and admin code is
+ * untouched.
+ *
+ * Sidebar is intentionally minimal for the first iteration (only "Dashboard").
+ * Additional items (Vehicles, Bookings, Earnings, Settings) will be added in
+ * follow-up iterations.
+ */
+
 import React, { useState } from "react";
 import {
   Box,
@@ -26,18 +39,9 @@ import {
   Menu as MenuIcon,
   Dashboard as DashboardIcon,
   DirectionsCar as CarIcon,
-  EventAvailable as BookingIcon,
-  People as UsersIcon,
-  Storefront as SupplierIcon,
-  Settings as SettingsIcon,
-  Notifications as NotificationsIcon,
-  MonetizationOn as PricingIcon,
-  Public as CountriesIcon,
-  Place as LocationsIcon,
   Home as HomeIcon,
   Person as PersonIcon,
   KeyboardArrowDown as KeyboardArrowDownIcon,
-  Search as SearchIcon,
   ExitToApp as ExitIcon,
 } from "@mui/icons-material";
 import Link from "next/link";
@@ -45,24 +49,17 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import ThemeSwitcher from "@/components/ui/ThemeSwitcher";
-import NotificationsBell from "./_components/NotificationsBell";
 
 const drawerWidth = 260;
 
+// Supplier sidebar. Add new entries here as the supplier portal grows;
+// do NOT pull from the admin menu list.
 const menuItems = [
-  { text: "Dashboard", icon: <DashboardIcon />, path: "/admin" },
-  { text: "Bookings", icon: <BookingIcon />, path: "/admin/bookings" },
-  { text: "Vehicles", icon: <CarIcon />, path: "/admin/cars" },
-  { text: "Suppliers", icon: <SupplierIcon />, path: "/admin/suppliers" },
-  { text: "Users", icon: <UsersIcon />, path: "/admin/users" },
-  { text: "Locations", icon: <LocationsIcon />, path: "/admin/locations" },
-  { text: "Countries", icon: <CountriesIcon />, path: "/admin/countries" },
-  { text: "Pricing", icon: <PricingIcon />, path: "/admin/pricing" },
-  { text: "Notifications", icon: <NotificationsIcon />, path: "/admin/notifications" },
-  { text: "Settings", icon: <SettingsIcon />, path: "/admin/settings" },
+  { text: "Dashboard", icon: <DashboardIcon />, path: "/supplier/dashboard" },
+  { text: "Vehicles", icon: <CarIcon />, path: "/supplier/vehicles" },
 ];
 
-export default function AdminLayout({ children }: { readonly children: React.ReactNode }) {
+export default function SupplierLayout({ children }: { readonly children: React.ReactNode }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -84,9 +81,7 @@ export default function AdminLayout({ children }: { readonly children: React.Rea
   };
 
   const handleLogout = async () => {
-    // إيقاف التوجيه التلقائي لمسح حالة الجلسة تمامًا
     await signOut({ redirect: false });
-    // إجبار المتصفح على إعادة التحميل والانتقال للصفحة الرئيسية لمسح الكاش
     window.location.href = "/";
   };
 
@@ -117,11 +112,15 @@ export default function AdminLayout({ children }: { readonly children: React.Rea
   }
 
   const user = session.user;
-  const userName = user.firstName ? `${user.firstName} ${user.lastName}` : "Admin User";
-  const initial = user.firstName ? user.firstName.charAt(0).toUpperCase() : "A";
+  const userName = user.firstName ? `${user.firstName} ${user.lastName}` : "Supplier";
+  const initial = user.firstName ? user.firstName.charAt(0).toUpperCase() : "S";
 
-  // Derive the page title from the currently active sidebar item (purely visual; no logic change).
-  const activeMenuItem = menuItems.find(item => item.path === pathname);
+  // Match on exact path OR a sub-route ("/supplier/vehicles/123/edit" still
+  // highlights "Vehicles"). Falls back to the Dashboard label for anything
+  // else so the AppBar title is never blank.
+  const matchesItem = (itemPath: string) =>
+    pathname === itemPath || pathname.startsWith(`${itemPath}/`);
+  const activeMenuItem = menuItems.find(item => matchesItem(item.path));
   const pageTitle = activeMenuItem?.text ?? "Dashboard";
 
   const drawer = (
@@ -146,7 +145,6 @@ export default function AdminLayout({ children }: { readonly children: React.Rea
             width: "100%",
           }}
         >
-          {/* Real website logo (same asset as the public Header) — auto-inverted to read on the dark sidebar */}
           <Box
             sx={{
               position: "relative",
@@ -182,14 +180,14 @@ export default function AdminLayout({ children }: { readonly children: React.Rea
               display: { xs: "none", sm: "block" },
             }}
           >
-            Admin
+            Supplier
           </Typography>
         </Link>
       </Toolbar>
       <Divider sx={{ mb: 1.5, borderColor: "sidebar.divider" }} />
       <List sx={{ px: 1.5, flex: 1, overflowY: "auto" }}>
         {menuItems.map(item => {
-          const isActive = pathname === item.path;
+          const isActive = matchesItem(item.path);
           return (
             <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
               <Link href={item.path} passHref style={{ width: "100%", textDecoration: "none", color: "inherit" }}>
@@ -282,7 +280,7 @@ export default function AdminLayout({ children }: { readonly children: React.Rea
                 display: "block",
               }}
             >
-              {user.email || user.roles[0] || "Administrator"}
+              {user.email || user.roles[0] || "Supplier"}
             </Typography>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -332,7 +330,6 @@ export default function AdminLayout({ children }: { readonly children: React.Rea
             <MenuIcon />
           </IconButton>
 
-          {/* Hamburger placeholder on desktop (purely decorative — toggles mobile drawer too) */}
           <IconButton
             color="inherit"
             aria-label="toggle menu"
@@ -342,7 +339,6 @@ export default function AdminLayout({ children }: { readonly children: React.Rea
             <MenuIcon />
           </IconButton>
 
-          {/* Page title */}
           <Typography
             variant="h5"
             sx={{
@@ -357,7 +353,6 @@ export default function AdminLayout({ children }: { readonly children: React.Rea
             {pageTitle}
           </Typography>
 
-          {/* Mobile-only logo (since title takes precedence on desktop) */}
           <Box sx={{ display: { xs: "flex", md: "none" }, alignItems: "center", ml: 1 }}>
             <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center" }}>
               <Box sx={{ height: 28, width: 70, position: "relative" }}>
@@ -376,46 +371,8 @@ export default function AdminLayout({ children }: { readonly children: React.Rea
 
           <Box sx={{ flexGrow: 1 }} />
 
-          {/* Visual search bar (decorative) */}
-          <Box
-            sx={{
-              display: { xs: "none", md: "flex" },
-              alignItems: "center",
-              gap: 1,
-              bgcolor: "action.hover",
-              borderRadius: 2,
-              px: 2,
-              py: 0.75,
-              width: 280,
-              border: "1px solid",
-              borderColor: "divider",
-              transition: "all 0.2s ease",
-              "&:focus-within": {
-                borderColor: "primary.main",
-                bgcolor: "background.paper",
-              },
-            }}
-          >
-            <SearchIcon sx={{ color: "text.secondary", fontSize: 20 }} />
-            <Box
-              component="input"
-              placeholder="Search..."
-              sx={{
-                border: "none",
-                outline: "none",
-                bgcolor: "transparent",
-                color: "text.primary",
-                fontSize: "0.9rem",
-                width: "100%",
-                "&::placeholder": { color: "text.secondary" },
-              }}
-            />
-          </Box>
-
-          {/* Quick actions */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <ThemeSwitcher />
-            {/* Back to site (icon only — desktop) */}
             <IconButton
               component={Link}
               href="/"
@@ -433,14 +390,12 @@ export default function AdminLayout({ children }: { readonly children: React.Rea
             >
               <ExitIcon />
             </IconButton>
-            <NotificationsBell />
           </Box>
         </Toolbar>
       </AppBar>
 
-      {/* User dropdown menu (anchored to sidebar user section) */}
       <Menu
-        id="menu-appbar"
+        id="supplier-menu-appbar"
         anchorEl={anchorEl}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
         keepMounted

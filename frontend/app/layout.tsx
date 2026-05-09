@@ -41,11 +41,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default async function RootLayout({ children }: { readonly children: React.ReactNode }) {
   // Detect theme preference on server
   const initialTheme = await getServerTheme();
 

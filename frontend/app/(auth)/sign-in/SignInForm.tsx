@@ -115,8 +115,10 @@ export default function SignInForm() {
         const session = await getSession();
         if (callbackUrl) {
           router.push(callbackUrl);
-        } else if (session?.user.roles.includes("Admin") || session?.user.roles.includes("Supplier")) {
+        } else if (session?.user.roles.includes("Admin")) {
           router.push("/admin");
+        } else if (session?.user.roles.includes("Supplier")) {
+          router.push("/supplier/dashboard");
         } else {
           router.push("/");
         }
@@ -146,8 +148,10 @@ export default function SignInForm() {
         const session = await getSession();
         if (callbackUrl) {
           router.push(callbackUrl);
-        } else if (session?.user.roles.includes("Admin") || session?.user.roles.includes("Supplier")) {
+        } else if (session?.user.roles.includes("Admin")) {
           router.push("/admin");
+        } else if (session?.user.roles.includes("Supplier")) {
+          router.push("/supplier/dashboard");
         } else {
           router.push("/");
         }
