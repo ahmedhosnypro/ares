@@ -118,7 +118,7 @@ function buildListUrl(query: SupplierVehicleListQuery): string {
 
 export async function getSupplierVehicles(
   accessToken: string,
-  query: SupplierVehicleListQuery = {},
+  query: SupplierVehicleListQuery = {}
 ): Promise<PagedResult<SupplierVehicleListItem>> {
   return apiFetchJson<PagedResult<SupplierVehicleListItem>>(buildListUrl(query), {
     method: "GET",
@@ -126,10 +126,7 @@ export async function getSupplierVehicles(
   });
 }
 
-export async function getSupplierVehicleById(
-  accessToken: string,
-  vehicleId: string,
-): Promise<SupplierVehicleDetails> {
+export async function getSupplierVehicleById(accessToken: string, vehicleId: string): Promise<SupplierVehicleDetails> {
   return apiFetchJson<SupplierVehicleDetails>(`/api/supplier/vehicles/${vehicleId}`, {
     method: "GET",
     accessToken,
@@ -138,7 +135,7 @@ export async function getSupplierVehicleById(
 
 export async function createSupplierVehicle(
   accessToken: string,
-  payload: CreateSupplierVehiclePayload,
+  payload: CreateSupplierVehiclePayload
 ): Promise<VehicleResponse> {
   return apiFetchJson<VehicleResponse>("/api/supplier/vehicles", {
     method: "POST",
@@ -150,7 +147,7 @@ export async function createSupplierVehicle(
 export async function updateSupplierVehicle(
   accessToken: string,
   vehicleId: string,
-  payload: UpdateSupplierVehiclePayload,
+  payload: UpdateSupplierVehiclePayload
 ): Promise<VehicleResponse> {
   return apiFetchJson<VehicleResponse>(`/api/supplier/vehicles/${vehicleId}`, {
     method: "PUT",
@@ -159,10 +156,7 @@ export async function updateSupplierVehicle(
   });
 }
 
-export async function deleteSupplierVehicle(
-  accessToken: string,
-  vehicleId: string,
-): Promise<VehicleResponse> {
+export async function deleteSupplierVehicle(accessToken: string, vehicleId: string): Promise<VehicleResponse> {
   return apiFetchJson<VehicleResponse>(`/api/supplier/vehicles/${vehicleId}`, {
     method: "DELETE",
     accessToken,
@@ -172,7 +166,7 @@ export async function deleteSupplierVehicle(
 export async function setSupplierVehicleAvailability(
   accessToken: string,
   vehicleId: string,
-  available: boolean,
+  available: boolean
 ): Promise<VehicleResponse> {
   return apiFetchJson<VehicleResponse>(`/api/supplier/vehicles/${vehicleId}/availability`, {
     method: "PATCH",

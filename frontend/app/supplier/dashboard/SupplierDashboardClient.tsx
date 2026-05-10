@@ -43,17 +43,7 @@ import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import VerifiedOutlinedIcon from "@mui/icons-material/VerifiedOutlined";
 import PriorityHighIcon from "@mui/icons-material/PriorityHigh";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useSession } from "next-auth/react";
 import DemoDataBadge from "../_components/DemoDataBadge";
 import {
@@ -268,7 +258,7 @@ export default function SupplierDashboardClient() {
         color: "success",
       },
     ],
-    [stats],
+    [stats]
   );
 
   return (
@@ -370,9 +360,7 @@ export default function SupplierDashboardClient() {
                 })}
               >
                 <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-                  <Box
-                    sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2.5, gap: 1 }}
-                  >
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2.5, gap: 1 }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
                       <Typography variant="h6" sx={{ fontWeight: 700 }}>
                         Earnings Overview
@@ -442,9 +430,7 @@ export default function SupplierDashboardClient() {
                 })}
               >
                 <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-                  <Box
-                    sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2.5, gap: 1 }}
-                  >
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2.5, gap: 1 }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
                       <Typography variant="h6" sx={{ fontWeight: 700 }}>
                         Bookings by Status
@@ -505,9 +491,7 @@ export default function SupplierDashboardClient() {
                 })}
               >
                 <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-                  <Box
-                    sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2.5, gap: 1 }}
-                  >
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2.5, gap: 1 }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
                       <Typography variant="h6" sx={{ fontWeight: 700 }}>
                         Recent Activity
@@ -572,9 +556,7 @@ export default function SupplierDashboardClient() {
                 })}
               >
                 <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-                  <Box
-                    sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2.5, gap: 1 }}
-                  >
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2.5, gap: 1 }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
                       <Typography variant="h6" sx={{ fontWeight: 700 }}>
                         Pending Actions

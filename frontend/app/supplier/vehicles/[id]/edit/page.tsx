@@ -1,16 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  Alert,
-  Box,
-  CircularProgress,
-  IconButton,
-  Snackbar,
-  Stack,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Alert, Box, CircularProgress, IconButton, Snackbar, Stack, Tooltip, Typography } from "@mui/material";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -23,10 +14,8 @@ import {
   type UpdateSupplierVehiclePayload,
 } from "@/api-clients/supplier-vehicles/supplier-vehicles";
 import { logger } from "@/utils/logger";
-import VehicleForm, {
-  DEFAULT_VEHICLE_FORM,
-  type VehicleFormValues,
-} from "../../_components/VehicleForm";
+import VehicleForm from "../../_components/VehicleForm";
+import { DEFAULT_VEHICLE_FORM, type VehicleFormValues } from "../../_components/VehicleForm.schema";
 
 export default function EditSupplierVehiclePage() {
   const router = useRouter();
@@ -45,42 +34,48 @@ export default function EditSupplierVehiclePage() {
 
   // ── Load existing vehicle ────────────────────────────────────────────────
   useEffect(() => {
-    if (sessionStatus === "loading") return;
-    if (!id) return;
-    if (!session?.accessToken) {
-      setLoading(false);
-      setLoadError("You must be signed in to edit this vehicle.");
-      return;
-    }
-
     let cancelled = false;
-    setLoading(true);
-    setLoadError(null);
 
-    getSupplierVehicleById(session.accessToken, id)
-      .then(data => {
+    async function load() {
+      if (sessionStatus === "loading") return;
+      if (!id) return;
+
+      if (!session?.accessToken) {
+        setLoading(false);
+        setLoadError("You must be signed in to edit this vehicle.");
+        return;
+      }
+
+      setLoading(true);
+      setLoadError(null);
+
+      try {
+        const data = await getSupplierVehicleById(session.accessToken, id);
         if (cancelled) return;
         setVehicle(data);
-      })
-      .catch((err: unknown) => {
+      } catch (err: unknown) {
         if (cancelled) return;
         logger.error("Failed to load vehicle for edit", err);
         setVehicle(null);
         setLoadError(
           err instanceof Error && err.message.toLowerCase().includes("not found")
             ? "Vehicle not found, or you don't have permission to edit it."
-            : "Could not load this vehicle. Please try again shortly.",
+            : "Could not load this vehicle. Please try again shortly."
         );
-      })
-      .finally(() => {
-        if (cancelled) return;
-        setLoading(false);
-      });
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void load();
 
     return () => {
       cancelled = true;
     };
   }, [id, session?.accessToken, sessionStatus]);
+
 
   // Map the server DTO to the form's field shape, with the same defaults
   // the form would apply for missing values.
@@ -93,9 +88,7 @@ export default function EditSupplierVehiclePage() {
       color: vehicle.color,
       licensePlate: vehicle.licensePlate,
       transmission:
-        vehicle.transmission === "Manual" || vehicle.transmission === "Automatic"
-          ? vehicle.transmission
-          : "Automatic",
+        vehicle.transmission === "Manual" || vehicle.transmission === "Automatic" ? vehicle.transmission : "Automatic",
       fuelType: vehicle.fuelType || "Gasoline",
       seats: vehicle.seats ?? DEFAULT_VEHICLE_FORM.seats,
       pricePerDay: vehicle.pricePerDay,
@@ -188,8 +181,7 @@ export default function EditSupplierVehiclePage() {
             <>
               {readOnly && (
                 <Alert severity="error" variant="outlined" sx={{ mb: 3, borderRadius: 2 }}>
-                  This vehicle was rejected by an admin and is read-only. You can view its details but not
-                  save changes.
+                  This vehicle was rejected by an admin and is read-only. You can view its details but not save changes.
                 </Alert>
               )}
               <VehicleForm

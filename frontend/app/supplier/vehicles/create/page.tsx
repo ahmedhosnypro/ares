@@ -11,7 +11,8 @@ import {
   type CreateSupplierVehiclePayload,
 } from "@/api-clients/supplier-vehicles/supplier-vehicles";
 import { logger } from "@/utils/logger";
-import VehicleForm, { type VehicleFormValues } from "../_components/VehicleForm";
+import VehicleForm from "../_components/VehicleForm";
+import { type VehicleFormValues } from "../_components/VehicleForm.schema";
 
 const PENDING_TOAST_MESSAGE = "Vehicle submitted successfully and is pending review.";
 

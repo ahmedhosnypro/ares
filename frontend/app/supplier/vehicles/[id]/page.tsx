@@ -53,42 +53,48 @@ export default function SupplierVehicleDetailsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (sessionStatus === "loading") return;
-    if (!id) return;
-    if (!session?.accessToken) {
-      setLoading(false);
-      setError("You must be signed in to view this vehicle.");
-      return;
-    }
-
     let cancelled = false;
-    setLoading(true);
-    setError(null);
 
-    getSupplierVehicleById(session.accessToken, id)
-      .then(data => {
+    async function load() {
+      if (sessionStatus === "loading") return;
+      if (!id) return;
+
+      if (!session?.accessToken) {
+        setLoading(false);
+        setError("You must be signed in to view this vehicle.");
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const data = await getSupplierVehicleById(session.accessToken, id);
         if (cancelled) return;
         setVehicle(data);
-      })
-      .catch((err: unknown) => {
+      } catch (err: unknown) {
         if (cancelled) return;
         logger.error("Failed to load vehicle details", err);
         setVehicle(null);
         setError(
           err instanceof Error && err.message.toLowerCase().includes("not found")
             ? "Vehicle not found, or you don't have permission to view it."
-            : "Could not load vehicle details. Please try again shortly.",
+            : "Could not load vehicle details. Please try again shortly."
         );
-      })
-      .finally(() => {
-        if (cancelled) return;
-        setLoading(false);
-      });
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void load();
 
     return () => {
       cancelled = true;
     };
   }, [id, session?.accessToken, sessionStatus]);
+
 
   if (loading) {
     return (
@@ -257,7 +263,11 @@ export default function SupplierVehicleDetailsPage() {
               <DetailRow icon={<PaidIcon />} label="Price per day" value={`$${vehicle.pricePerDay.toLocaleString()}`} />
               <DetailRow icon={<SpeedIcon />} label="Transmission" value={vehicle.transmission || "—"} />
               <DetailRow icon={<FuelIcon />} label="Fuel type" value={vehicle.fuelType || "—"} />
-              <DetailRow icon={<EventSeatIcon />} label="Seats" value={vehicle.seats != null ? String(vehicle.seats) : "—"} />
+              <DetailRow
+                icon={<EventSeatIcon />}
+                label="Seats"
+                value={vehicle.seats != null ? String(vehicle.seats) : "—"}
+              />
               <DetailRow icon={<LocationIcon />} label="Location" value={vehicle.locationCity || "—"} />
               <DetailRow icon={<CarIcon />} label="Color" value={vehicle.color || "—"} />
             </Grid>
@@ -267,7 +277,11 @@ export default function SupplierVehicleDetailsPage() {
             <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 700, letterSpacing: "0.08em" }}>
               Description
             </Typography>
-            <Typography variant="body2" sx={{ mt: 1, whiteSpace: "pre-wrap" }} color={vehicle.description ? "text.primary" : "text.secondary"}>
+            <Typography
+              variant="body2"
+              sx={{ mt: 1, whiteSpace: "pre-wrap" }}
+              color={vehicle.description ? "text.primary" : "text.secondary"}
+            >
               {vehicle.description || "No description provided."}
             </Typography>
           </Card>

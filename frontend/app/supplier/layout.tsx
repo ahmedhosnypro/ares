@@ -118,8 +118,7 @@ export default function SupplierLayout({ children }: { readonly children: React.
   // Match on exact path OR a sub-route ("/supplier/vehicles/123/edit" still
   // highlights "Vehicles"). Falls back to the Dashboard label for anything
   // else so the AppBar title is never blank.
-  const matchesItem = (itemPath: string) =>
-    pathname === itemPath || pathname.startsWith(`${itemPath}/`);
+  const matchesItem = (itemPath: string) => pathname === itemPath || pathname.startsWith(`${itemPath}/`);
   const activeMenuItem = menuItems.find(item => matchesItem(item.path));
   const pageTitle = activeMenuItem?.text ?? "Dashboard";
 

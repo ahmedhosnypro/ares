@@ -181,7 +181,7 @@ export default function SupplierVehiclesClient() {
     (path: string) => {
       router.push(path);
     },
-    [router],
+    [router]
   );
 
   const handleDelete = useCallback(async () => {
@@ -198,7 +198,7 @@ export default function SupplierVehiclesClient() {
               data: prev.data.filter(v => v.vehicleId !== deleteTarget.vehicleId),
               totalCount: Math.max(0, prev.totalCount - 1),
             }
-          : prev,
+          : prev
       );
       showToast("Vehicle deleted successfully.", "success");
       setDeleteTarget(null);
@@ -232,12 +232,10 @@ export default function SupplierVehiclesClient() {
           ? {
               ...prev,
               data: prev.data.map(v =>
-                v.vehicleId === row.vehicleId
-                  ? { ...v, availabilityStatus: next ? "Available" : "Unavailable" }
-                  : v,
+                v.vehicleId === row.vehicleId ? { ...v, availabilityStatus: next ? "Available" : "Unavailable" } : v
               ),
             }
-          : prev,
+          : prev
       );
 
       try {
@@ -254,16 +252,16 @@ export default function SupplierVehiclesClient() {
                 data: prev.data.map(v =>
                   v.vehicleId === row.vehicleId
                     ? { ...v, availabilityStatus: currentlyAvailable ? "Available" : "Unavailable" }
-                    : v,
+                    : v
                 ),
               }
-            : prev,
+            : prev
         );
       } finally {
         setTogglingId(null);
       }
     },
-    [session?.accessToken, showToast],
+    [session?.accessToken, showToast]
   );
 
   // ── Derived helpers ───────────────────────────────────────────────────────
@@ -271,11 +269,9 @@ export default function SupplierVehiclesClient() {
   const totalCount = data?.totalCount ?? 0;
   const totalPages = data?.totalPages ?? 0;
 
-
-
   const filtersActive = useMemo(
     () => Boolean(debouncedSearch || statusFilter || availabilityFilter),
-    [debouncedSearch, statusFilter, availabilityFilter],
+    [debouncedSearch, statusFilter, availabilityFilter]
   );
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -676,7 +672,8 @@ function VehicleTableRow({
         <Typography sx={{ fontWeight: 700 }} color="primary.main">
           ${v.pricePerDay.toLocaleString()}
           <Typography component="span" variant="caption" color="text.secondary" sx={{ fontWeight: 400 }}>
-            {" "}/ day
+            {" "}
+            / day
           </Typography>
         </Typography>
       </TableCell>
