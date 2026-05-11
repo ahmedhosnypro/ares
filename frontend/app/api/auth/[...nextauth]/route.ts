@@ -1,5 +1,6 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import type { NextRequest } from "next/server";
 import { getApiBaseUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
 
@@ -130,6 +131,19 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 };
 
-const handler = NextAuth(authOptions) as (req: Request) => Promise<Response>;
+// NextAuth v4 expects ctx.params to be a plain object, but Next.js 15/16 App
+// Router passes params as a Promise. We await it here so the handler can read
+// `params.nextauth` synchronously inside next-auth.
+type NextAuthContext = { params: Promise<{ nextauth: string[] }> };
+
+const nextAuthHandler = NextAuth(authOptions) as unknown as (
+  req: NextRequest,
+  ctx: { params: { nextauth: string[] } }
+) => Promise<Response>;
+
+async function handler(req: NextRequest, ctx: NextAuthContext): Promise<Response> {
+  const params = await ctx.params;
+  return nextAuthHandler(req, { params });
+}
 
 export { handler as GET, handler as POST };
