@@ -57,9 +57,9 @@ Returns `SupplierEarningsStatsDto`:
 
 ```json
 {
-  "totalEarnings": 184200.00,
-  "thisMonthRevenue": 12500.00,
-  "lastMonthRevenue": 10300.00,
+  "totalEarnings": 184200.0,
+  "thisMonthRevenue": 12500.0,
+  "lastMonthRevenue": 10300.0,
   "completedBookingsCount": 42
 }
 ```
@@ -93,7 +93,7 @@ excluded.
     "make": "Toyota",
     "model": "Corolla",
     "imageUrl": "/img/vehicles/abc.jpg",
-    "totalEarnings": 48200.00,
+    "totalEarnings": 48200.0,
     "completedBookingsCount": 17
   }
 ]
@@ -101,65 +101,65 @@ excluded.
 
 ## Expected chart types
 
-* **Stat cards** — 4 simple metric cards. No chart library required.
+- **Stat cards** — 4 simple metric cards. No chart library required.
   Show the value, a label, and (for this/last month) an optional delta
   badge computed client-side from the two values.
-* **Monthly revenue** — bar chart. Recharts or Chart.js works; the
+- **Monthly revenue** — bar chart. Recharts or Chart.js works; the
   payload is already in the shape both libraries expect (array of
   `{ month, revenue }`).
-* **Top vehicles** — no chart; ordered list / table. Could later
+- **Top vehicles** — no chart; ordered list / table. Could later
   add a small horizontal-bar visualisation derived from the same
   payload if helpful.
 
 ## Business rules
 
-* **Completed bookings only.** Pending, confirmed, active and
+- **Completed bookings only.** Pending, confirmed, active and
   cancelled bookings never contribute to any earnings figure or chart
   point.
-* **Ownership.** Every aggregate is filtered server-side by
+- **Ownership.** Every aggregate is filtered server-side by
   `booking.Vehicle.UserId == currentSupplierId`. There is no way for a
   supplier to surface another supplier's financial numbers, even by
   guessing vehicle ids or year values.
-* **Revenue recognition date.** The backend treats a booking's
+- **Revenue recognition date.** The backend treats a booking's
   `ReturnDate` as its revenue date (with `CreatedAt` as a defensive
   fallback when `ReturnDate` is null). The same rule applies to the
   this-month / last-month split in stats and to the monthly chart, so
   the figures and the chart bars always agree.
-* **Currency.** USD across the project — the existing booking
+- **Currency.** USD across the project — the existing booking
   pricing is denominated in USD and no FX is applied.
 
 ## Future scalability plans
 
-* Year selector → already supported by the `year` query param on the
+- Year selector → already supported by the `year` query param on the
   chart endpoint. Adding a dropdown is purely a frontend change.
-* Date-range custom filtering → if needed later, extend the service
+- Date-range custom filtering → if needed later, extend the service
   with an additional method accepting `from` / `to`. The existing
   stats / chart methods don't need to change.
-* Per-vehicle drill-down → reuse the same aggregation pattern but
+- Per-vehicle drill-down → reuse the same aggregation pattern but
   group by additional dimensions (vehicle + month) — keep ownership
   filter intact.
-* Export to CSV → would call the same service methods and stream a
+- Export to CSV → would call the same service methods and stream a
   CSV; no schema changes required.
 
 ## Security / access rules
 
-* The page must be reachable only by authenticated users with the
+- The page must be reachable only by authenticated users with the
   `Supplier` role.
-* The backend endpoints all return `401` when the JWT is missing,
+- The backend endpoints all return `401` when the JWT is missing,
   `403` when the role check fails, and `200` with the appropriate
   empty / zero values when the supplier simply has no completed
   bookings yet.
-* No mutation endpoints are exposed by the earnings module.
-* The frontend MUST NOT pass arbitrary `supplierId` values to the
+- No mutation endpoints are exposed by the earnings module.
+- The frontend MUST NOT pass arbitrary `supplierId` values to the
   backend — the authenticated supplier id is sourced server-side
   from the JWT claim, and any client-supplied id is ignored.
 
 ## Required future components
 
-* `SupplierEarningsClient.tsx` — main client component (stat cards,
+- `SupplierEarningsClient.tsx` — main client component (stat cards,
   chart, top-vehicles list).
-* `api-clients/supplier-earnings/supplier-earnings.ts` — typed client
+- `api-clients/supplier-earnings/supplier-earnings.ts` — typed client
   mirroring `api-clients/supplier-dashboard/supplier-dashboard.ts`.
-* Year selector control for the chart endpoint.
-* Empty / error / loading states matching the rest of the supplier
+- Year selector control for the chart endpoint.
+- Empty / error / loading states matching the rest of the supplier
   portal.

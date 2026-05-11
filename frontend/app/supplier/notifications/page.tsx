@@ -26,7 +26,10 @@ export default function SupplierNotificationsPage() {
   return (
     <main style={{ padding: "2rem" }}>
       <h1>Supplier Notifications Page</h1>
-      <p>This page is a placeholder. The notifications list, filter chips, and read/unread controls will be implemented in a future iteration.</p>
+      <p>
+        This page is a placeholder. The notifications list, filter chips, and read/unread controls will be implemented
+        in a future iteration.
+      </p>
     </main>
   );
 }
