@@ -39,6 +39,7 @@ import {
   KeyboardArrowDown as KeyboardArrowDownIcon,
   Search as SearchIcon,
   ExitToApp as ExitIcon,
+  VerifiedUser as VerifiedUserIcon,
 } from "@mui/icons-material";
 import Link from "next/link";
 import Image from "next/image";
@@ -55,6 +56,7 @@ const menuItems = [
   { text: "Vehicles", icon: <CarIcon />, path: "/admin/cars" },
   { text: "Suppliers", icon: <SupplierIcon />, path: "/admin/suppliers" },
   { text: "Users", icon: <UsersIcon />, path: "/admin/users" },
+  { text: "Verifications", icon: <VerifiedUserIcon />, path: "/admin/verifications" },
   { text: "Locations", icon: <LocationsIcon />, path: "/admin/locations" },
   { text: "Countries", icon: <CountriesIcon />, path: "/admin/countries" },
   { text: "Pricing", icon: <PricingIcon />, path: "/admin/pricing" },
