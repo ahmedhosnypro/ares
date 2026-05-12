@@ -71,6 +71,11 @@ namespace Backend.Infrastructure.Data
             UserAddresses.Add(userAddress);
         }
 
+        public void AddVerification(Verification verification)
+        {
+            Verifications.Add(verification);
+        }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

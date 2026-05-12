@@ -22,5 +22,6 @@ public interface IApplicationDbContext
     void AddFavorite(Favorite favorite);
     void AddBookingCancellation(BookingCancellation cancellation);
     void AddUserAddress(UserAddress userAddress);
+    void AddVerification(Verification verification);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
