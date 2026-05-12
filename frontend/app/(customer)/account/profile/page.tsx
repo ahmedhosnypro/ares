@@ -8,6 +8,7 @@ import PersonalInfoForm from "./_components/PersonalInfoForm";
 import AddressForm from "./_components/AddressForm";
 import PreferencesSection from "./_components/PreferencesSection";
 import VerificationStatus from "./_components/VerificationStatus";
+import IdentityVerificationCard from "./_components/IdentityVerificationCard";
 import ChangePasswordForm from "./_components/ChangePasswordForm";
 import ProfileCard from "./_components/ProfileCard";
 import { Alert, Box, Button, CardContent, Container, Grid, Typography } from "@mui/material";
@@ -16,7 +17,6 @@ import Link from "next/link";
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions);
 
-  // ── Not authenticated ──────────────────────────────────────────────────────
   if (!session || !session.user.id || !session.accessToken) {
     return (
       <Box sx={{ minHeight: "100vh", bgcolor: "background.default", py: { xs: 6, md: 10 } }}>
@@ -41,7 +41,6 @@ export default async function ProfilePage() {
     );
   }
 
-  // ── Fetch profile ──────────────────────────────────────────────────────────
   let profileData: ProfileData | null = null;
   let errorType: string | null = null;
   let errorMessage: string | null = null;
@@ -85,7 +84,6 @@ export default async function ProfilePage() {
     errorMessage = "Network error. Please check your connection and try again.";
   }
 
-  // ── Error state ────────────────────────────────────────────────────────────
   if (!profileData) {
     return (
       <Box sx={{ minHeight: "100vh", bgcolor: "background.default", py: { xs: 6, md: 10 } }}>
@@ -115,7 +113,6 @@ export default async function ProfilePage() {
     );
   }
 
-  // ── Destructure to primitives — never pass the whole object to client components ──
   const {
     userId,
     firstName,
@@ -130,9 +127,7 @@ export default async function ProfilePage() {
   } = profileData;
 
   const address = profileData.address;
-
   const emergencyContact = profileData.emergencyContact;
-
   const verificationStatus = profileData.verificationStatus;
   const addressStreet: string = address.street;
   const addressCity: string = address.city;
@@ -142,10 +137,10 @@ export default async function ProfilePage() {
   const emergencyName: string = emergencyContact.name;
   const emergencyPhone: string = emergencyContact.phone;
   const emergencyRelationship: string = emergencyContact.relationship;
+
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default", py: { xs: 4, md: 6 } }}>
       <Container maxWidth="lg">
-        {/* Page heading */}
         <Box sx={{ mb: 4 }}>
           <Typography variant="h4" color="text.primary" gutterBottom sx={{ fontWeight: 800 }}>
             Account Settings
@@ -156,7 +151,6 @@ export default async function ProfilePage() {
         </Box>
 
         <Grid container spacing={3}>
-          {/* ── Left sidebar (4 cols) ── */}
           <Grid size={{ xs: 12, lg: 4 }}>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
               <ProfileCard>
@@ -177,6 +171,10 @@ export default async function ProfilePage() {
                   phoneVerified={verificationStatus.phone}
                   licenseVerified={verificationStatus.driverLicense}
                 />
+              </ProfileCard>
+
+              <ProfileCard>
+                <IdentityVerificationCard accessToken={session.accessToken} />
               </ProfileCard>
 
               <ProfileCard>
@@ -202,7 +200,6 @@ export default async function ProfilePage() {
             </Box>
           </Grid>
 
-          {/* ── Main content (8 cols) ── */}
           <Grid size={{ xs: 12, lg: 8 }}>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
               <ProfileCard>
