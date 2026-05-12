@@ -44,6 +44,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 ## Features
 
 ### Admin Dashboard
+
 - **Notification Center**: A dedicated UI for administrators to track platform activity.
 - **Batch Actions**: Mark all notifications as read with a single click.
 - **Real-time Refresh**: Manual refresh capability to fetch the latest platform alerts.
