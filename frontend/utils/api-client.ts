@@ -53,7 +53,7 @@ export async function apiFetchJson<T>(endpoint: string, options: ApiFetchOptions
 
   if (!response.ok) {
     const errorBody = await response.text();
-    logger.error("Backend Error Details", errorBody);
+    logger.debug("Backend Error Details", errorBody);
     throw new ApiError(response.status, response.statusText, errorBody);
   }
 
