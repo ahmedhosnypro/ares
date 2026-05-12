@@ -20,12 +20,14 @@ bun run setup
 ```
 
 The script will:
+
 - Check system requirements
 - Generate configuration files (asks for all values interactively)
 - Setup and seed the database
 - Build and start backend + frontend
 
 **Options:**
+
 ```bash
 bun run setup          # Interactive (asks for all values)
 bun run setup:quick    # Quick setup with defaults
@@ -38,6 +40,7 @@ bun run setup:quick    # Quick setup with defaults
 ### 1. SQL Server
 
 **Docker:**
+
 ```bash
 docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=YourStrong@Passw0rd" \
   -p 1433:1433 --name mssql -d mcr.microsoft.com/mssql/server:2022-latest
@@ -129,6 +132,7 @@ bun run test              # Run tests
 ```
 
 **⚠️ Package Installation:**
+
 ```bash
 # ❌ Don't install at root
 bun add some-package
@@ -143,6 +147,7 @@ cd scripts/setup && bun add some-package
 ## 🔧 Development
 
 **Backend:**
+
 ```bash
 cd backend/Api
 dotnet watch run                    # Hot reload
@@ -151,6 +156,7 @@ dotnet ef database update           # Apply migrations
 ```
 
 **Frontend:**
+
 ```bash
 cd frontend
 bun run dev                         # Dev server
@@ -165,6 +171,7 @@ bun run lint                        # Lint
 **Swagger UI:** http://localhost:5000/swagger
 
 **Health Endpoints:**
+
 - Backend: `GET http://localhost:5000/api/health`
 - Frontend: `GET http://localhost:3000/api/health`
 
@@ -173,6 +180,7 @@ bun run lint                        # Lint
 ## 🐛 Troubleshooting
 
 **Port in use:**
+
 ```bash
 # Kill process on port
 lsof -ti:5000 | xargs kill -9
@@ -180,6 +188,7 @@ lsof -ti:3000 | xargs kill -9
 ```
 
 **Database connection failed:**
+
 ```bash
 # Check SQL Server is running
 docker ps | grep mssql
@@ -189,6 +198,7 @@ docker ps | grep mssql
 ```
 
 **Build failed:**
+
 ```bash
 # Backend
 cd backend && dotnet clean && dotnet restore && dotnet build
@@ -202,6 +212,7 @@ cd frontend && rm -rf node_modules .next && bun install && bun run build
 ## 🚀 Deployment
 
 **Backend:**
+
 ```bash
 cd backend
 dotnet publish -c Release -o ./publish
@@ -210,6 +221,7 @@ cd publish && dotnet Api.dll
 ```
 
 **Frontend:**
+
 ```bash
 cd frontend
 bun run build
