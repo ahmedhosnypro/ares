@@ -94,7 +94,7 @@ ares-car-rental/
 - **Admin Fleet Management Dashboard**: Full CRUD for vehicles via dedicated endpoints (`/api/vehicles/{id}` for details, `/api/admin/cars/create`, `/api/admin/cars/{id}/edit`, `/api/admin/cars/{id}/delete`). Secure role-based operations and active booking validation.
 - **Admin Supplier Management Dashboard**: Full CRUD for suppliers including paginated lists, detailed views, creation, updates, and soft deletion (`/api/suppliers/{page}/{size}`, `/api/admin/suppliers/create`, `/api/admin/suppliers/{id}/edit`, `/api/suppliers/{id}/delete`).
 - **Dynamic Pricing**: Dynamic pricing calculation with insurance and additional services.
-- **🔔 Notifications**: Real-time notification system. Endpoints for fetching, seeding, and marking as read. Easily tested using the dedicated admin panel feature.
+- **🔔 Notifications**: Comprehensive real-time notification system. Features platform-wide admin fan-out alerts for critical events (registrations, bookings, reviews) and a dedicated admin dashboard with batch management capabilities.
 
 ---
 

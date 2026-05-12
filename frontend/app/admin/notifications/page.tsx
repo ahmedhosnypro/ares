@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, SyntheticEvent } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Box,
   Card,
@@ -13,11 +13,17 @@ import {
   Container,
   Alert,
   Tooltip,
+  Button,
 } from "@mui/material";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import { useSession } from "next-auth/react";
-import { getNotifications, markNotificationAsRead, seedNotifications } from "@/api-clients/notfications/notfications";
+import {
+  getNotifications,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+} from "@/api-clients/notfications/notfications";
 import { logger } from "@/utils/logger";
 
 // Type definition based on your Schema
@@ -40,7 +46,7 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
-  const [seeding, setSeeding] = useState(false);
+  const [markingAll, setMarkingAll] = useState(false);
 
   const token = session?.accessToken;
 
@@ -89,17 +95,21 @@ export default function NotificationsPage() {
     }
   };
 
-  const handleSeed = async () => {
-    if (!token) return;
+  const handleMarkAll = async () => {
+    if (!token || markingAll) return;
+    const hasUnread = notifications.some(n => !n.isRead);
+    if (!hasUnread) return;
+
+    setMarkingAll(true);
+    // Optimistic update — keep the list responsive.
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
     try {
-      setSeeding(true);
-      await seedNotifications(token);
-      await fetchData();
+      await markAllNotificationsAsRead(token);
     } catch (err) {
-      logger.error("Seed failed", err);
-      setError("Failed to create dummy notifications.");
+      logger.error("Mark all as read failed; refetching", err);
+      await fetchData();
     } finally {
-      setSeeding(false);
+      setMarkingAll(false);
     }
   };
 
@@ -223,18 +233,35 @@ export default function NotificationsPage() {
             color={unreadCount > 0 ? "primary" : "default"}
             sx={{ fontWeight: "bold" }}
           />
-          <Tooltip title="Create dummy notifications for testing">
-            <IconButton
-              onClick={(e: SyntheticEvent) => {
-                e.preventDefault();
-                void handleSeed();
-              }}
-              disabled={seeding}
-              color="primary"
-              sx={{ bgcolor: "action.hover" }}
-            >
-              {seeding ? <CircularProgress size={20} /> : <span style={{ fontSize: "18px" }}>🔄</span>}
-            </IconButton>
+          <Tooltip title="Refresh">
+            <span>
+              <IconButton
+                onClick={() => {
+                  void fetchData();
+                }}
+                disabled={loading}
+                color="primary"
+                sx={{ bgcolor: "action.hover" }}
+              >
+                {loading ? <CircularProgress size={20} /> : <RefreshIcon />}
+              </IconButton>
+            </span>
+          </Tooltip>
+          <Tooltip title="Mark all as read">
+            <span>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={markingAll ? <CircularProgress size={16} /> : <DoneAllIcon />}
+                onClick={() => {
+                  void handleMarkAll();
+                }}
+                disabled={markingAll || unreadCount === 0}
+                sx={{ textTransform: "none", fontWeight: 600 }}
+              >
+                Mark all as read
+              </Button>
+            </span>
           </Tooltip>
         </Stack>
       </Stack>
