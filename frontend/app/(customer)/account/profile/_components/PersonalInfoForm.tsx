@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { Alert, Box, Button, CircularProgress, Divider, Grid, TextField, Typography } from "@mui/material";
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
-import MuiPhoneNumber from "mui-phone-number";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
@@ -79,8 +78,8 @@ export default function PersonalInfoForm({
     validateField(field, value);
   };
 
-  const handlePhoneChange = (value: string | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const raw = typeof value === "string" ? value : value.target.value;
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
     setPhone(raw);
     if (touched.phone) validateField("phone", raw);
   };
@@ -210,10 +209,11 @@ export default function PersonalInfoForm({
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6 }}>
-            <MuiPhoneNumber
+            <TextField
               id="phone"
+              name="phone"
               label="Phone Number"
-              defaultCountry="eg"
+              type="tel"
               value={phone}
               onChange={handlePhoneChange}
               onBlur={() => {

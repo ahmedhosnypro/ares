@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { Alert, Box, Button, CircularProgress, Divider, Grid, TextField, Typography } from "@mui/material";
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
-import MuiPhoneNumber from "mui-phone-number";
 import CountrySelect from "@/components/input/CountrySelect";
 import { addressSchema, type AddressFormData } from "@/lib/validation/schemas";
 import { toApiUrl } from "@/utils/api-client";
@@ -76,8 +75,8 @@ export default function AddressForm({
     validateField(field, value);
   };
 
-  const handleEmergencyPhoneChange = (value: string | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const raw = typeof value === "string" ? value : value.target.value;
+  const handleEmergencyPhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
     setEmergencyPhone(raw);
     if (touched.emergencyPhone) validateField("emergencyPhone", raw);
   };
@@ -282,10 +281,11 @@ export default function AddressForm({
             </Grid>
 
             <Grid size={{ xs: 12, sm: 6 }}>
-              <MuiPhoneNumber
+              <TextField
                 id="emergencyPhone"
+                name="emergencyPhone"
                 label="Phone Number"
-                defaultCountry="eg"
+                type="tel"
                 value={emergencyPhone}
                 onChange={handleEmergencyPhoneChange}
                 onBlur={() => {
