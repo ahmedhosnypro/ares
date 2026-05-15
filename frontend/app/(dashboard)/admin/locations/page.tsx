@@ -460,29 +460,29 @@ export default function AdminLocationsPage() {
                   </TableCell>
                 </TableRow>
               )}
-              </TableBody>
+            </TableBody>
 
-              {/* PAGINATION desktop (moved into TableFooter for semantic markup) */}
-              <TableFooter>
-                <TableRow>
-                  <TableCell colSpan={3}>
-                    <Typography variant="caption">Showing {locations.length} locations</Typography>
-                  </TableCell>
-                  <TableCell colSpan={2} align="right">
-                    <Pagination
-                      count={totalPages}
-                      page={page}
-                      onChange={(_, v) => {
-                        setPage(v);
-                      }}
-                      size="small"
-                      sx={{ "& .MuiPaginationItem-root": { borderRadius: 2 } }}
-                    />
-                  </TableCell>
-                </TableRow>
-              </TableFooter>
-            </Table>
-          </TableContainer>
+            {/* PAGINATION desktop (moved into TableFooter for semantic markup) */}
+            <TableFooter>
+              <TableRow>
+                <TableCell colSpan={3}>
+                  <Typography variant="caption">Showing {locations.length} locations</Typography>
+                </TableCell>
+                <TableCell colSpan={2} align="right">
+                  <Pagination
+                    count={totalPages}
+                    page={page}
+                    onChange={(_, v) => {
+                      setPage(v);
+                    }}
+                    size="small"
+                    sx={{ "& .MuiPaginationItem-root": { borderRadius: 2 } }}
+                  />
+                </TableCell>
+              </TableRow>
+            </TableFooter>
+          </Table>
+        </TableContainer>
       </Paper>
     );
   };
