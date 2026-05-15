@@ -441,7 +441,9 @@ export default function UsersPage() {
             <TableFooter>
               <TableRow>
                 <TableCell colSpan={3}>
-                  <Typography variant="caption">Showing {pageData.length} of {filtered.length}</Typography>
+                  <Typography variant="caption">
+                    Showing {pageData.length} of {filtered.length}
+                  </Typography>
                 </TableCell>
                 <TableCell colSpan={2} align="right">
                   <Pagination

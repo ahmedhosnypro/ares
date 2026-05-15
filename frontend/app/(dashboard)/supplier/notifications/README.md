@@ -34,13 +34,13 @@ of everything that needs their attention.
 
 ## Supported notification types (V1)
 
-| Tag                        | Title (default)          | Entity type | Redirect URL                     | Trigger                                                                                |
-| -------------------------- | ------------------------ | ----------- | -------------------------------- | -------------------------------------------------------------------------------------- |
-| `VehiclePendingReview`     | "Vehicle pending review" | Vehicle     | `/supplier/vehicles/{vehicleId}` | Supplier creates a vehicle via `POST /api/supplier/vehicles`                           |
+| Tag                        | Title (default)          | Entity type | Redirect URL                     | Trigger                                                                                    |
+| -------------------------- | ------------------------ | ----------- | -------------------------------- | ------------------------------------------------------------------------------------------ |
+| `VehiclePendingReview`     | "Vehicle pending review" | Vehicle     | `/supplier/vehicles/{vehicleId}` | Supplier creates a vehicle via `POST /api/supplier/vehicles`                               |
 | `VehicleApproved`          | "Vehicle approved"       | Vehicle     | `/supplier/vehicles/{vehicleId}` | Admin transitions a vehicle's status to `Approved` via `PUT /api/admin/vehicles/{id}/edit` |
 | `VehicleRejected`          | "Vehicle rejected"       | Vehicle     | `/supplier/vehicles/{vehicleId}` | Admin transitions a vehicle's status to `Rejected` via `PUT /api/admin/vehicles/{id}/edit` |
-| `BookingReceived`          | "New booking received"   | Booking     | `/supplier/bookings/{bookingId}` | Customer creates a booking via `POST /api/bookings/create`                             |
-| `BookingCompletedSupplier` | "Booking completed"      | Booking     | `/supplier/bookings/{bookingId}` | Booking status transitions to `Completed` via `PUT /api/admin/bookings/{id}/status`    |
+| `BookingReceived`          | "New booking received"   | Booking     | `/supplier/bookings/{bookingId}` | Customer creates a booking via `POST /api/bookings/create`                                 |
+| `BookingCompletedSupplier` | "Booking completed"      | Booking     | `/supplier/bookings/{bookingId}` | Booking status transitions to `Completed` via `PUT /api/admin/bookings/{id}/status`        |
 
 The notification type list is centralised in
 `Backend.Application.Services.SupplierNotificationTypes` (constants,

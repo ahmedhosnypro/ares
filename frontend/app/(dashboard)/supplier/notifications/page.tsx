@@ -31,8 +31,8 @@ export default function SupplierNotificationsPage() {
           Supplier Notifications
         </Typography>
         <Typography color="text.secondary">
-          This page is a placeholder. The notifications list, filter chips, and read/unread controls will be
-          implemented in a future iteration.
+          This page is a placeholder. The notifications list, filter chips, and read/unread controls will be implemented
+          in a future iteration.
         </Typography>
       </Stack>
     </Box>

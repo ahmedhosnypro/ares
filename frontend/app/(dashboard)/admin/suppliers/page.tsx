@@ -522,7 +522,7 @@ export default function SuppliersPage() {
                 </TableRow>
               </TableFooter>
             </Table>
-            </TableContainer>
+          </TableContainer>
         </Paper>
       )}
 

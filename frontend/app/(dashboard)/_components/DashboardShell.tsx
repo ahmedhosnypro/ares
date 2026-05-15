@@ -61,9 +61,7 @@ type DashboardShellProps = {
 
 function resolveActiveMenuItem(menuItems: DashboardMenuItem[], pathname: string): DashboardMenuItem | undefined {
   const matchesItem = (itemPath: string) => pathname === itemPath || pathname.startsWith(`${itemPath}/`);
-  return menuItems
-    .filter(item => matchesItem(item.path))
-    .sort((a, b) => b.path.length - a.path.length)[0];
+  return menuItems.filter(item => matchesItem(item.path)).sort((a, b) => b.path.length - a.path.length)[0];
 }
 
 export default function DashboardShell({
