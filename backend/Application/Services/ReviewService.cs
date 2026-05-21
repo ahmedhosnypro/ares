@@ -66,6 +66,8 @@ public class ReviewService : IReviewService
             r.Rating ?? 0,
             r.Comment,
             r.AdminResponse,
+            r.SupplierReply,
+            r.RepliedAt,
             r.CreatedAt
         )).ToList();
 

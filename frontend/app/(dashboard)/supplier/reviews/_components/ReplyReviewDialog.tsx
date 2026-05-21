@@ -1,0 +1,243 @@
+"use client";
+
+/**
+ * Reply / Edit-Reply modal for the supplier reviews page.
+ *
+ * Used in two modes (driven by the caller via `review.hasReply`):
+ *   - **Reply** when there is no existing supplier reply
+ *   - **Edit Reply** when one already exists (overwrites server-side)
+ *
+ * The backend has a single endpoint for both operations
+ * (`PUT /api/supplier/reviews/{reviewId}/reply`) - calling it again is
+ * the edit operation. This matches the controller doc which describes
+ * the call as idempotent "save" semantics.
+ */
+
+import { useState } from "react";
+import {
+  Alert,
+  Avatar,
+  Box,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Stack,
+  TextField,
+  Typography,
+  alpha,
+  useTheme,
+} from "@mui/material";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import ChatBubbleOutlineRoundedIcon from "@mui/icons-material/ChatBubbleOutlineRounded";
+import PersonOutlineRoundedIcon from "@mui/icons-material/PersonOutlineRounded";
+import RatingStars from "./RatingStars";
+import type { SupplierReviewListItem } from "@/api-clients/supplier-reviews/supplier-reviews";
+
+const MAX_REPLY_LENGTH = 2000;
+
+export interface ReplyReviewDialogProps {
+  readonly open: boolean;
+  readonly review: SupplierReviewListItem | null;
+  readonly submitting: boolean;
+  readonly onClose: () => void;
+  readonly onSubmit: (reviewId: string, reply: string) => Promise<void>;
+}
+
+function formatReviewDate(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString();
+}
+
+export default function ReplyReviewDialog({ open, review, submitting, onClose, onSubmit }: ReplyReviewDialogProps) {
+  if (!review) return null;
+  return (
+    <ReplyReviewDialogInner
+      key={`${review.reviewId}:${open ? "open" : "closed"}`}
+      open={open}
+      review={review}
+      submitting={submitting}
+      onClose={onClose}
+      onSubmit={onSubmit}
+    />
+  );
+}
+
+interface ReplyReviewDialogInnerProps {
+  readonly open: boolean;
+  readonly review: SupplierReviewListItem;
+  readonly submitting: boolean;
+  readonly onClose: () => void;
+  readonly onSubmit: (reviewId: string, reply: string) => Promise<void>;
+}
+
+function computeError(touched: boolean, empty: boolean, tooLong: boolean): string | null {
+  if (!touched) return null;
+  if (empty) return "Reply text is required.";
+  if (tooLong) return `Reply must not exceed ${MAX_REPLY_LENGTH.toString()} characters.`;
+  return null;
+}
+
+function ReplyReviewDialogInner({ open, review, submitting, onClose, onSubmit }: ReplyReviewDialogInnerProps) {
+  const theme = useTheme();
+  const [reply, setReply] = useState(review.supplierReply ?? "");
+  const [touched, setTouched] = useState(false);
+
+  const isEdit = review.hasReply;
+  const trimmed = reply.trim();
+  const tooLong = reply.length > MAX_REPLY_LENGTH;
+  const empty = trimmed.length === 0;
+  const error = computeError(touched, empty, tooLong);
+  const canSubmit = !submitting && !empty && !tooLong;
+
+  const handleSubmit = async () => {
+    setTouched(true);
+    if (!canSubmit) return;
+    await onSubmit(review.reviewId, trimmed);
+  };
+
+  let submitLabel: React.ReactNode = "Submit reply";
+  if (submitting) {
+    submitLabel = <CircularProgress size={20} color="inherit" />;
+  } else if (isEdit) {
+    submitLabel = "Save changes";
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onClose={() => {
+        if (!submitting) onClose();
+      }}
+      fullWidth
+      maxWidth="sm"
+      slotProps={{ paper: { sx: { borderRadius: 3, mx: { xs: 2, sm: "auto" } } } }}
+    >
+      <DialogTitle
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          pr: 1.5,
+          pb: 1,
+          fontWeight: 700,
+        }}
+      >
+        <Stack direction="row" spacing={1.25} sx={{ alignItems: "center" }}>
+          <ChatBubbleOutlineRoundedIcon color="primary" />
+          <span>{isEdit ? "Edit your reply" : "Reply to review"}</span>
+        </Stack>
+        <IconButton size="small" onClick={onClose} disabled={submitting} aria-label="close" sx={{ borderRadius: 2 }}>
+          <CloseRoundedIcon fontSize="small" />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent sx={{ pt: 2 }}>
+        <Box
+          sx={{
+            borderRadius: 2,
+            border: "1px solid",
+            borderColor: "divider",
+            p: 2,
+            bgcolor: alpha(theme.palette.primary.main, 0.03),
+            mb: 2.5,
+          }}
+        >
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            sx={{ gap: 1.5, justifyContent: "space-between", alignItems: { xs: "flex-start", sm: "center" }, mb: 1 }}
+          >
+            <Stack direction="row" spacing={1.25} sx={{ alignItems: "center" }}>
+              <Avatar
+                sx={{
+                  bgcolor: alpha(theme.palette.primary.main, 0.12),
+                  color: "primary.main",
+                  width: 36,
+                  height: 36,
+                }}
+              >
+                <PersonOutlineRoundedIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                  {review.customerName || "Customer"}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {formatReviewDate(review.createdAt)}
+                </Typography>
+              </Box>
+            </Stack>
+            <RatingStars rating={review.rating} size="small" showValue />
+          </Stack>
+
+          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: "block", mb: 0.5 }}>
+            Vehicle: {review.vehicleMake} {review.vehicleModel}
+            {review.vehicleYear ? ` · ${String(review.vehicleYear)}` : ""}
+          </Typography>
+
+          <Typography
+            variant="body2"
+            sx={{
+              whiteSpace: "pre-line",
+              color: review.comment ? "text.primary" : "text.disabled",
+              fontStyle: review.comment ? "normal" : "italic",
+            }}
+          >
+            {review.comment?.trim() || "Customer didn't leave a comment."}
+          </Typography>
+        </Box>
+
+        {isEdit && (
+          <Alert severity="info" variant="outlined" sx={{ borderRadius: 2, mb: 2 }}>
+            You already replied to this review. Saving will overwrite your previous reply.
+          </Alert>
+        )}
+
+        <TextField
+          fullWidth
+          multiline
+          minRows={4}
+          maxRows={10}
+          label="Your reply"
+          placeholder="Thank the customer, address their concerns, or share more context…"
+          value={reply}
+          onChange={e => {
+            setReply(e.target.value);
+          }}
+          onBlur={() => {
+            setTouched(true);
+          }}
+          disabled={submitting}
+          error={Boolean(error)}
+          helperText={error ?? `${reply.length.toString()} / ${MAX_REPLY_LENGTH.toString()} characters`}
+          sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "background.paper" } }}
+        />
+      </DialogContent>
+
+      <DialogActions sx={{ px: 3, pb: 2, gap: 1, flexWrap: "wrap" }}>
+        <Button
+          onClick={onClose}
+          variant="outlined"
+          disabled={submitting}
+          sx={{ borderRadius: 2, fontWeight: 600, textTransform: "none", flex: { xs: 1, sm: "none" } }}
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={() => {
+            void handleSubmit();
+          }}
+          variant="contained"
+          disabled={!canSubmit}
+          sx={{ borderRadius: 2, fontWeight: 700, textTransform: "none", flex: { xs: 1, sm: "none" } }}
+        >
+          {submitLabel}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
