@@ -49,6 +49,25 @@ export default function ReviewSection({ reviews }: ReviewSectionProps) {
                 <Typography variant="body2" color="text.secondary">
                   {review.comment || "No written feedback provided."}
                 </Typography>
+                {review.supplierReply ? (
+                  <Box sx={{ mt: 1, p: 1.5, bgcolor: "action.hover", borderRadius: 2 }}>
+                    <Stack spacing={0.5}>
+                      <Stack direction="row" sx={{ justifyContent: "space-between" }}>
+                        <Typography variant="caption" sx={{ fontWeight: 700, color: "text.primary" }}>
+                          Response from supplier
+                        </Typography>
+                        {review.repliedAt && (
+                          <Typography variant="caption" color="text.secondary">
+                            {formatReviewDate(review.repliedAt)}
+                          </Typography>
+                        )}
+                      </Stack>
+                      <Typography variant="body2" color="text.secondary">
+                        {review.supplierReply}
+                      </Typography>
+                    </Stack>
+                  </Box>
+                ) : null}
               </Stack>
             </Paper>
           ))}

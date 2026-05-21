@@ -199,8 +199,8 @@ export default function CarDetailsPage() {
                       px: 2,
                       py: 0.5,
                       borderRadius: "8px",
-                      bgcolor: alpha(getStatusColor(car.availabilityStatus), 0.1),
-                      color: getStatusColor(car.availabilityStatus),
+                      bgcolor: alpha(getStatusColor(car.availabilityStatus ?? ""), 0.1),
+                      color: getStatusColor(car.availabilityStatus ?? ""),
                     }}
                   >
                     <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "currentColor" }} />
@@ -230,7 +230,7 @@ export default function CarDetailsPage() {
                 <InfoCard
                   icon={<LocationOnIcon />}
                   label="Available At"
-                  value={car.locationCity}
+                  value={car.locationCity ?? ""}
                   color={theme.palette.error.main}
                 />
               </Grid>

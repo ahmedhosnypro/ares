@@ -2,12 +2,12 @@
 
 /**
  * Identity Verification tab — extracted verbatim from the legacy admin
- * verifications page so behaviour, look-and-feel, and API integration are
+ * verifications page so behavior, look-and-feel, and API integration are
  * preserved exactly. The only changes are:
  *   1. Top-level <Box> wrapper is collapsed (the tabs container provides padding).
  *   2. The page-level <Typography> title is removed (rendered by the parent page).
  *
- * Everything else — table layout, mobile card layout, status colours,
+ * Everything else — table layout, mobile card layout, status colors,
  * approve / reject flow, modals, and the snackbar — is unchanged.
  */
 

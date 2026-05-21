@@ -2,7 +2,7 @@
 
 ## Page Info
 
-- **Route**: `/admin/vehicles`
+- **Route**: `/admin/cars`
 - **Access**: 🔒 Admin / Supplier
 - **Purpose**: Paginated list of all cars. Admins see all cars; suppliers see only their own. Supports filtering by supplier and searching by name. Cars with active bookings cannot be deleted.
 
@@ -96,7 +96,7 @@ Delete a car (only if no active bookings).
 
 ## Page Info
 
-- **Route**: `/admin/vehicles/[id]/edit`
+- **Route**: `/admin/cars/[id]/edit`
 - **Access**: 🔒 Admin / Supplier
 - **Purpose**: Edit an existing car's details — specs, pricing, locations, and image. Validates license plate uniqueness on change.
 
@@ -204,7 +204,7 @@ Same shape as `POST /api/create-car` plus `_id` field.
 
 ## Page Info
 
-- **Route**: `/admin/vehicles/[id]`
+- **Route**: `/admin/cars/[id]`
 - **Access**: 🔒 Admin / Supplier
 - **Purpose**: Read-only view of a specific car's full details — specs, pricing, available locations, and current booking status.
 
@@ -264,7 +264,7 @@ Fetch full car details.
 
 ## Page Info
 
-- **Route**: `/admin/vehicles/create`
+- **Route**: `/admin/cars/create`
 - **Access**: 🔒 Admin / Supplier
 - **Purpose**: Form to add a new car to the fleet. Collects all car details including specs, pricing (daily/weekly/monthly), and images. Validates license plate uniqueness before saving.
 
@@ -383,7 +383,7 @@ Create the new car record.
 
 ## Page Info
 
-- **Route**: `/admin/vehicles`
+- **Route**: `/admin/cars`
 - **Access**: 🔒 Admin / Supplier
 - **Purpose**: Paginated list of all cars. Admins see all cars; suppliers see only their own. Supports filtering by supplier and searching by name. Cars with active bookings cannot be deleted.
 

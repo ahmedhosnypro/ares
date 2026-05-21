@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState, memo, useCallback } from "react";
+// cspell:ignore refetches
+
+import React, { useState, memo, useCallback, useMemo, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -10,7 +12,6 @@ import {
   TableBody,
   TableCell,
   TableContainer,
-  TableFooter,
   TableHead,
   TableRow,
   Paper,
@@ -18,8 +19,10 @@ import {
   Chip,
   Stack,
   CircularProgress,
+  LinearProgress,
   InputAdornment,
   Card,
+  MenuItem,
   Pagination,
   Tooltip,
   useTheme,
@@ -48,7 +51,42 @@ import {
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
-import { useVehicles, deleteCar, type Vehicle } from "@/api-clients/cars/cars";
+import {
+  useVehicles,
+  useAdminVehicleStats,
+  deleteCar,
+  type Vehicle,
+  type AdminVehicleFilter,
+  type VehicleStatusFilter,
+  type VehicleSortBy,
+} from "@/api-clients/cars/cars";
+import { getSuppliers, type Supplier } from "@/api-clients/suppliers/suppliers";
+
+// ── Static filter option lists. Defined as module-level constants so the
+//    dropdowns don't re-create their option arrays on every render and so
+//    the labels stay one source of truth between the filter UI and any
+//    future status-badge consumers.
+
+const STATUS_OPTIONS: readonly { value: VehicleStatusFilter; label: string }[] = [
+  { value: "", label: "All statuses" },
+  { value: "Available", label: "Available" },
+  { value: "FullyBooked", label: "Fully Booked (On Rental)" },
+  { value: "Maintenance", label: "Maintenance" },
+  { value: "Retired", label: "Retired" },
+];
+
+const TRANSMISSION_OPTIONS: readonly { value: string; label: string }[] = [
+  { value: "", label: "All transmissions" },
+  { value: "Automatic", label: "Automatic" },
+  { value: "Manual", label: "Manual" },
+];
+
+const SORT_OPTIONS: readonly { value: VehicleSortBy; label: string }[] = [
+  { value: "newest", label: "Newest first" },
+  { value: "oldest", label: "Oldest first" },
+  { value: "priceHigh", label: "Price: High → Low" },
+  { value: "priceLow", label: "Price: Low → High" },
+];
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import { toImageUrl } from "@/utils/image-url";
 import { logger } from "@/utils/logger";
@@ -74,12 +112,31 @@ const getErrorMessage = (err: unknown): string => {
   return "Something went wrong. Please try again later.";
 };
 
-type StatusColor = "error" | "success" | "warning";
+type StatusColor = "success" | "warning" | "info" | "error";
 
+/**
+ * Maps a Vehicle row to one of the four canonical VehicleStatus enum buckets
+ * the backend exposes:
+ *   - Available     → green
+ *   - FullyBooked   → amber (vehicle currently on rental)
+ *   - Maintenance   → blue
+ *   - Retired       → red (soft-deleted / inactive)
+ *
+ * Falls back to the raw `category` string for any other backend value so we
+ * never silently swallow a state we don't recognize.
+ */
 const getStatusConfig = (v: Vehicle): { label: string; colorKey: StatusColor } => {
-  if (v.category === "Deleted") return { label: "Not Available", colorKey: "error" };
+  if (v.isOnRental) return { label: "Fully Booked", colorKey: "warning" };
+  const rawStatus = (v.status ?? "").toLowerCase();
+  const rawAvail = (v.availabilityStatus ?? "").toLowerCase();
+  if (rawStatus === "maintenance" || rawAvail === "maintenance") {
+    return { label: "Maintenance", colorKey: "info" };
+  }
+  if (rawStatus === "retired" || v.category === "Deleted") {
+    return { label: "Retired", colorKey: "error" };
+  }
   if (v.available) return { label: "Available", colorKey: "success" };
-  return { label: "Rented", colorKey: "warning" };
+  return { label: "Unavailable", colorKey: "info" };
 };
 
 // ── STAT CARD ──
@@ -96,7 +153,7 @@ const StatCard = memo(function StatCard({ label, value, color, icon }: StatCardP
       elevation={0}
       sx={{
         p: { xs: 2, sm: 2.5 },
-        borderRadius: 2,
+        borderRadius: 4,
         border: "1px solid",
         borderColor: "divider",
         position: "relative",
@@ -179,7 +236,7 @@ const ActionButtons = memo(function ActionButtons({
         </IconButton>
       </Tooltip>
 
-      <Tooltip title={!available ? "Delete" : "Cannot delete rented car"}>
+      <Tooltip title={available && !hasActiveBookings ? "Delete" : "Cannot delete rented car"}>
         <span>
           <IconButton
             onClick={() => {
@@ -224,7 +281,7 @@ const VehicleMobileCard = memo(function VehicleMobileCard({
       sx={{
         p: 2,
         mb: 2,
-        borderRadius: 2,
+        borderRadius: 3,
         border: "1px solid",
         borderColor: "divider",
         transition: "background 0.15s",
@@ -307,20 +364,90 @@ export default function AdminCarsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [openDelete, setOpenDelete] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // ── Filter state. Search is debounced inside `useVehicles`; the other four
+  //    fields take effect immediately. All four flow into the backend
+  //    AdminVehicleFilterRequest so search/filter/sort run on the database
+  //    instead of being computed from the paginated array.
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<VehicleStatusFilter>("");
+  const [supplierFilter, setSupplierFilter] = useState<string>("");
+  const [transmissionFilter, setTransmissionFilter] = useState<string>("");
+  const [sortBy, setSortBy] = useState<VehicleSortBy>("newest");
 
-  const { vehicles, loading, page, totalPages, setPage, refresh } = useVehicles(session?.accessToken);
-
-  // ── FILTER ──
-  const q = search.toLowerCase();
-  const filtered = vehicles.filter(
-    (v: Vehicle) => v.make.toLowerCase().includes(q) || v.model.toLowerCase().includes(q)
+  const vehicleFilter = useMemo<AdminVehicleFilter>(
+    () => ({
+      keyword: search,
+      status: statusFilter,
+      supplierId: supplierFilter || undefined,
+      transmission: transmissionFilter || undefined,
+      sortBy,
+    }),
+    [search, statusFilter, supplierFilter, transmissionFilter, sortBy]
   );
 
+  // True when any filter / search input is non-default. Drives the
+  // empty-state copy + the "Clear filters" action.
+  const filtersActive = useMemo(
+    () =>
+      Boolean(search) ||
+      Boolean(statusFilter) ||
+      Boolean(supplierFilter) ||
+      Boolean(transmissionFilter) ||
+      sortBy !== "newest",
+    [search, statusFilter, supplierFilter, transmissionFilter, sortBy]
+  );
+
+  const handleClearFilters = useCallback(() => {
+    setSearch("");
+    setStatusFilter("");
+    setSupplierFilter("");
+    setTransmissionFilter("");
+    setSortBy("newest");
+  }, []);
+
+  const {
+    vehicles,
+    loading,
+    error: listError,
+    page,
+    totalPages,
+    totalCount,
+    setPage,
+    refresh,
+  } = useVehicles(session?.accessToken, vehicleFilter);
+
+  // ── Suppliers list for the "Supplier" filter dropdown. Loaded once on mount.
+  //    Falls back silently to an empty list — the dropdown still works, it just
+  //    won't have any options to pick from. The fetch isn't cancellable; the
+  //    extra setState after unmount is benign with React 19 and lets us avoid a
+  //    useless flag that lint complains about as a no-op.
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  useEffect(() => {
+    void (async () => {
+      try {
+        const result = await getSuppliers(1, 100);
+        const list = result.data ?? result.resultData ?? result.items ?? [];
+        setSuppliers(list);
+      } catch (err) {
+        logger.error("Failed to load suppliers for filter dropdown", err);
+      }
+    })();
+  }, []);
+
+  // ── DB-truth stats for the dashboard cards. Counts come from
+  //    /api/vehicles/admin/stats so they are independent of pagination,
+  //    search, and filter state. `refreshStats()` is called alongside
+  //    `refresh()` after a delete so the cards re-sync.
+  const { stats: vehicleStats, error: statsError, refresh: refreshStats } = useAdminVehicleStats(session?.accessToken);
+
   // ── STATS ──
-  const total = vehicles.length;
-  const availableCount = vehicles.filter((v: Vehicle) => v.available).length;
-  const rentalCount = vehicles.filter((v: Vehicle) => !v.available).length;
+  // Read from the server stats endpoint (not from the paginated `vehicles`
+  // array) so the cards always show real database totals across all pages
+  // and filters.
+  const total = vehicleStats?.totalVehicles ?? 0;
+  const availableCount = vehicleStats?.availableVehicles ?? 0;
+  const rentalCount = vehicleStats?.onRentalVehicles ?? 0;
 
   // ── HANDLERS ──
   const handleDelete = useCallback((id: string, isAvailable: boolean, hasBookings?: boolean) => {
@@ -347,11 +474,12 @@ export default function AdminCarsPage() {
       setOpenDelete(false);
       setDeleteId(null);
       refresh();
+      refreshStats();
     } catch (err: unknown) {
       setErrorMsg(getErrorMessage(err));
       logger.error("Failed to delete car", err);
     }
-  }, [deleteId, session, refresh]);
+  }, [deleteId, session, refresh, refreshStats]);
 
   const handleCloseDelete = useCallback(() => {
     setOpenDelete(false);
@@ -366,8 +494,13 @@ export default function AdminCarsPage() {
     [router]
   );
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   const mainContent = (() => {
-    if (loading) {
+    // Full-page spinner only on the *very first* load; subsequent refetches
+    // (pagination, filter changes) keep the prior rows visible underneath a
+    // subtle LinearProgress bar at the top of the table so the page never
+    // flashes an empty state mid-fetch.
+    if (loading && vehicles.length === 0 && !listError) {
       return (
         <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
           <CircularProgress />
@@ -375,12 +508,47 @@ export default function AdminCarsPage() {
       );
     }
 
+    // Error first-load — render a retry banner instead of an empty table.
+    if (listError && vehicles.length === 0) {
+      return (
+        <Paper
+          elevation={0}
+          sx={{
+            borderRadius: 4,
+            border: "1px solid",
+            borderColor: "divider",
+            py: 8,
+            textAlign: "center",
+          }}
+        >
+          <Alert
+            severity="error"
+            variant="outlined"
+            sx={{ maxWidth: 460, mx: "auto", borderRadius: 2, mb: 3 }}
+            action={
+              <Button
+                size="small"
+                color="error"
+                onClick={() => {
+                  refresh();
+                }}
+              >
+                Retry
+              </Button>
+            }
+          >
+            {listError}
+          </Alert>
+        </Paper>
+      );
+    }
+
     if (isMobile) {
       return (
         /* ── MOBILE: card list ── */
         <Box>
-          {filtered.length > 0 ? (
-            filtered.map((v: Vehicle) => (
+          {vehicles.length > 0 ? (
+            vehicles.map((v: Vehicle) => (
               <VehicleMobileCard
                 key={v.vehicleId || v.id}
                 v={v}
@@ -390,7 +558,7 @@ export default function AdminCarsPage() {
               />
             ))
           ) : (
-            <Box sx={{ py: 8, textAlign: "center", opacity: 0.6 }}>
+            <Box sx={{ py: 8, textAlign: "center" }}>
               <Avatar
                 sx={{
                   width: 64,
@@ -403,15 +571,30 @@ export default function AdminCarsPage() {
                 <SearchIcon sx={{ fontSize: 32, color: "text.disabled" }} />
               </Avatar>
               <Typography variant="h6" sx={{ fontWeight: 700 }} color="text.secondary">
-                No vehicles found
+                {filtersActive ? "No vehicles match these filters" : "No vehicles yet"}
               </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2 }}>
+                {filtersActive
+                  ? "Try clearing filters or adjusting your search."
+                  : 'Click "Add New Vehicle" to list your first one.'}
+              </Typography>
+              {filtersActive && (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={handleClearFilters}
+                  sx={{ fontWeight: 700, borderRadius: 2, textTransform: "none" }}
+                >
+                  Clear filters
+                </Button>
+              )}
             </Box>
           )}
 
           {/* PAGINATION mobile */}
           <Stack direction="column" spacing={1} sx={{ alignItems: "center", mt: 2, mb: 1 }}>
             <Typography variant="caption" color="text.secondary">
-              Showing <strong>{filtered.length}</strong> of {total} vehicles
+              Showing <strong>{vehicles.length}</strong> of {totalCount} vehicles
             </Typography>
             <Pagination
               count={totalPages}
@@ -434,13 +617,27 @@ export default function AdminCarsPage() {
       <Paper
         elevation={0}
         sx={{
-          borderRadius: 2,
+          position: "relative",
+          borderRadius: 4,
           border: "1px solid",
           borderColor: "divider",
           overflow: "hidden",
         }}
       >
-        <TableContainer sx={{ overflowX: "auto" }}>
+        {/* Subtle progress bar during refetches; the table stays visible. */}
+        {loading && (
+          <LinearProgress
+            sx={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 2,
+              zIndex: 2,
+            }}
+          />
+        )}
+        <TableContainer sx={{ overflowX: "auto", opacity: loading ? 0.6 : 1, transition: "opacity 0.15s ease" }}>
           <Table sx={{ minWidth: 500 }}>
             <TableHead>
               <TableRow
@@ -461,6 +658,9 @@ export default function AdminCarsPage() {
                 <TableCell sx={{ pl: 6 }}>Vehicle</TableCell>
                 <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>Category</TableCell>
                 <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Daily Rate</TableCell>
+                <TableCell sx={{ display: { xs: "none", lg: "table-cell" } }}>Supplier</TableCell>
+                <TableCell sx={{ display: { xs: "none", lg: "table-cell" } }}>Year</TableCell>
+                <TableCell sx={{ display: { xs: "none", lg: "table-cell" } }}>Transmission</TableCell>
                 <TableCell>Availability</TableCell>
                 <TableCell align="right" sx={{ pr: 4 }}>
                   Actions
@@ -469,8 +669,8 @@ export default function AdminCarsPage() {
             </TableHead>
 
             <TableBody>
-              {filtered.length > 0 ? (
-                filtered.map((v: Vehicle) => {
+              {vehicles.length > 0 ? (
+                vehicles.map((v: Vehicle) => {
                   const status = getStatusConfig(v);
                   const paletteColor = theme.palette[status.colorKey] as {
                     main: string;
@@ -567,6 +767,24 @@ export default function AdminCarsPage() {
                         </Typography>
                       </TableCell>
 
+                      <TableCell sx={{ display: { xs: "none", lg: "table-cell" } }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }} noWrap>
+                          {v.supplierName?.trim() || "—"}
+                        </Typography>
+                      </TableCell>
+
+                      <TableCell sx={{ display: { xs: "none", lg: "table-cell" } }}>
+                        <Typography variant="body2" color="text.secondary">
+                          {v.year ?? "—"}
+                        </Typography>
+                      </TableCell>
+
+                      <TableCell sx={{ display: { xs: "none", lg: "table-cell" } }}>
+                        <Typography variant="body2" color="text.secondary">
+                          {v.transmission || "—"}
+                        </Typography>
+                      </TableCell>
+
                       <TableCell>
                         <Chip
                           label={status.label}
@@ -596,8 +814,8 @@ export default function AdminCarsPage() {
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 10 }}>
-                    <Box sx={{ textAlign: "center", opacity: 0.6 }}>
+                  <TableCell colSpan={8} align="center" sx={{ py: 10 }}>
+                    <Box sx={{ textAlign: "center" }}>
                       <Avatar
                         sx={{
                           width: 64,
@@ -610,35 +828,55 @@ export default function AdminCarsPage() {
                         <SearchIcon sx={{ fontSize: 32, color: "text.disabled" }} />
                       </Avatar>
                       <Typography variant="h6" sx={{ fontWeight: 700 }} color="text.secondary">
-                        No vehicles found
+                        {filtersActive ? "No vehicles match these filters" : "No vehicles yet"}
                       </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2 }}>
+                        {filtersActive
+                          ? "Try clearing filters or adjusting your search."
+                          : 'Click "Add New Vehicle" to list your first one.'}
+                      </Typography>
+                      {filtersActive && (
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={handleClearFilters}
+                          sx={{ fontWeight: 700, borderRadius: 2, textTransform: "none" }}
+                        >
+                          Clear filters
+                        </Button>
+                      )}
                     </Box>
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
-            <TableFooter>
-              <TableRow>
-                <TableCell colSpan={3}>
-                  <Typography variant="caption" color="text.secondary">
-                    Showing <strong>{filtered.length}</strong> of {total} vehicles
-                  </Typography>
-                </TableCell>
-                <TableCell colSpan={2} align="right">
-                  <Pagination
-                    count={totalPages}
-                    page={page}
-                    onChange={(_, v) => {
-                      setPage(v);
-                    }}
-                    size="small"
-                    sx={{ "& .MuiPaginationItem-root": { borderRadius: 2 } }}
-                  />
-                </TableCell>
-              </TableRow>
-            </TableFooter>
           </Table>
         </TableContainer>
+
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          sx={{
+            gap: 1,
+            justifyContent: "space-between",
+            alignItems: "center",
+            p: 2,
+            borderTop: "1px solid",
+            borderColor: "divider",
+          }}
+        >
+          <Typography variant="caption" color="text.secondary">
+            Showing <strong>{vehicles.length}</strong> of {totalCount} vehicles
+          </Typography>
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={(_, v) => {
+              setPage(v);
+            }}
+            size="small"
+            sx={{ "& .MuiPaginationItem-root": { borderRadius: 2 } }}
+          />
+        </Stack>
       </Paper>
     );
   })();
@@ -666,7 +904,7 @@ export default function AdminCarsPage() {
           sx={{
             px: 2.5,
             py: 1.2,
-            borderRadius: 2,
+            borderRadius: 3,
             fontWeight: 700,
             color: "primary.contrastText",
             cursor: "pointer",
@@ -686,6 +924,27 @@ export default function AdminCarsPage() {
           Add New Vehicle
         </Box>
       </Stack>
+
+      {statsError && (
+        <Alert
+          severity="warning"
+          variant="outlined"
+          sx={{ mb: 2, borderRadius: 2 }}
+          action={
+            <Button
+              size="small"
+              color="warning"
+              onClick={() => {
+                refreshStats();
+              }}
+            >
+              Retry
+            </Button>
+          }
+        >
+          {statsError}
+        </Alert>
+      )}
 
       {/* STATS */}
       <Grid container spacing={2} sx={{ mb: 4 }}>
@@ -715,28 +974,133 @@ export default function AdminCarsPage() {
         </Grid>
       </Grid>
 
-      {/* FILTER */}
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>
-        <TextField
-          fullWidth
-          placeholder="Search by make or model..."
-          value={search}
-          onChange={e => {
-            setSearch(e.target.value);
-          }}
-          size="small"
-          sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "background.paper" } }}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: "text.disabled" }} />
-                </InputAdornment>
-              ),
-            },
-          }}
-        />
-      </Stack>
+      {/* FILTER ROW — search + four dropdowns. All four flow through `vehicleFilter`
+          into the backend; the search input is debounced inside the hook so each
+          keystroke doesn't fire a request. */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Search make, model, plate, or supplier…"
+            value={search}
+            onChange={e => {
+              setSearch(e.target.value);
+            }}
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3, bgcolor: "background.paper" } }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: "text.disabled" }} />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
+        </Grid>
+        <Grid size={{ xs: 6, sm: 6, md: 2 }}>
+          <TextField
+            select
+            fullWidth
+            size="small"
+            label="Status"
+            value={statusFilter}
+            onChange={e => {
+              setStatusFilter(e.target.value as VehicleStatusFilter);
+            }}
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3, bgcolor: "background.paper" } }}
+          >
+            {STATUS_OPTIONS.map(opt => (
+              <MenuItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+        <Grid size={{ xs: 6, sm: 6, md: 2 }}>
+          <TextField
+            select
+            fullWidth
+            size="small"
+            label="Supplier"
+            value={supplierFilter}
+            onChange={e => {
+              setSupplierFilter(e.target.value);
+            }}
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3, bgcolor: "background.paper" } }}
+          >
+            <MenuItem value="">All suppliers</MenuItem>
+            {suppliers.map(s => (
+              <MenuItem key={s.id} value={s.id}>
+                {s.companyProfile?.companyName?.trim() || `${s.firstName} ${s.lastName}`.trim()}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+        <Grid size={{ xs: 6, sm: 6, md: 2 }}>
+          <TextField
+            select
+            fullWidth
+            size="small"
+            label="Transmission"
+            value={transmissionFilter}
+            onChange={e => {
+              setTransmissionFilter(e.target.value);
+            }}
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3, bgcolor: "background.paper" } }}
+          >
+            {TRANSMISSION_OPTIONS.map(opt => (
+              <MenuItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+        <Grid size={{ xs: 6, sm: 6, md: 2 }}>
+          <TextField
+            select
+            fullWidth
+            size="small"
+            label="Sort by"
+            value={sortBy}
+            onChange={e => {
+              setSortBy(e.target.value as VehicleSortBy);
+            }}
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3, bgcolor: "background.paper" } }}
+          >
+            {SORT_OPTIONS.map(opt => (
+              <MenuItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+      </Grid>
+
+      {/* Inline retry banner: shown when a refetch fails but we still have
+          rows from the previous successful fetch. Avoids replacing the table
+          with a blocking error screen. */}
+      {listError && vehicles.length > 0 && (
+        <Alert
+          severity="warning"
+          variant="outlined"
+          sx={{ mb: 2, borderRadius: 2 }}
+          action={
+            <Button
+              size="small"
+              color="warning"
+              onClick={() => {
+                refresh();
+              }}
+            >
+              Retry
+            </Button>
+          }
+        >
+          {listError}
+        </Alert>
+      )}
 
       {/* TABLE / MOBILE CARDS */}
       {mainContent}
@@ -748,7 +1112,7 @@ export default function AdminCarsPage() {
         fullWidth
         maxWidth="xs"
         slotProps={{
-          paper: { sx: { borderRadius: 2, p: 1, mx: { xs: 2, sm: "auto" } } },
+          paper: { sx: { borderRadius: 3, p: 1, mx: { xs: 2, sm: "auto" } } },
         }}
       >
         <DialogTitle sx={{ fontWeight: 700 }}>Delete Vehicle</DialogTitle>

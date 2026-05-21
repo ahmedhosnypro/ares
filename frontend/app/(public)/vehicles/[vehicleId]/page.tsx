@@ -54,6 +54,8 @@ interface ApiReviewDto {
   readonly userName?: string;
   readonly rating?: number;
   readonly comment?: string;
+  readonly supplierReply?: string;
+  readonly repliedAt?: string;
   readonly createdAt?: string;
 }
 
@@ -119,6 +121,8 @@ function normalizeReviews(reviews: readonly ApiReviewDto[]): readonly VehicleRev
     userName: asString(review.userName, "Customer"),
     rating: asNumber(review.rating),
     comment: asString(review.comment),
+    supplierReply: review.supplierReply ? asString(review.supplierReply) : undefined,
+    repliedAt: review.repliedAt ? asString(review.repliedAt) : undefined,
     createdAt: asString(review.createdAt),
   }));
 }

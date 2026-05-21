@@ -74,7 +74,7 @@ function BookingSummary({ intent }: BookingSummaryProps) {
   return (
     <Paper
       elevation={0}
-      sx={{ p: 3, borderRadius: 2, border: "1px solid", borderColor: "divider", position: "sticky", top: 24 }}
+      sx={{ p: 3, borderRadius: 4, border: "1px solid", borderColor: "divider", position: "sticky", top: 24 }}
     >
       <Typography variant="h6" sx={{ fontWeight: 800, mb: 3 }}>
         Your Booking

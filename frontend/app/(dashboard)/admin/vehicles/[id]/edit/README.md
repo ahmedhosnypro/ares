@@ -2,7 +2,7 @@
 
 ## Page Info
 
-- **Route**: `/admin/vehicles/[id]/edit`
+- **Route**: `/admin/cars/[id]/edit`
 - **Access**: 🔒 Admin / Supplier
 - **Purpose**: Edit an existing car's details — specs, pricing, locations, and image. Validates license plate uniqueness on change.
 

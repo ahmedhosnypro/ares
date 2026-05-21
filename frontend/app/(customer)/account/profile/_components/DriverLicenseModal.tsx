@@ -20,10 +20,7 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import UploadFileRoundedIcon from "@mui/icons-material/UploadFileRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 
-import {
-  submitDriverLicense,
-  type DriverLicenseDto,
-} from "@/api-clients/driver-license/driver-license";
+import { submitDriverLicense, type DriverLicenseDto } from "@/api-clients/driver-license/driver-license";
 import { ApiError } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
 
@@ -54,7 +51,7 @@ function toDateInputValue(iso: string | null | undefined): string {
   const date = new Date(iso);
   if (isNaN(date.getTime())) return "";
   // yyyy-MM-dd in UTC so the date input maps to the calendar day the user picked.
-  const year = date.getUTCFullYear();
+  const year = String(date.getUTCFullYear());
   const month = String(date.getUTCMonth() + 1).padStart(2, "0");
   const day = String(date.getUTCDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
@@ -65,11 +62,7 @@ function isFutureDate(value: string): boolean {
   const parsed = new Date(`${value}T00:00:00Z`);
   if (isNaN(parsed.getTime())) return false;
   const todayUtc = new Date();
-  const todayDateUtc = Date.UTC(
-    todayUtc.getUTCFullYear(),
-    todayUtc.getUTCMonth(),
-    todayUtc.getUTCDate()
-  );
+  const todayDateUtc = Date.UTC(todayUtc.getUTCFullYear(), todayUtc.getUTCMonth(), todayUtc.getUTCDate());
   return parsed.getTime() > todayDateUtc;
 }
 
@@ -104,44 +97,35 @@ export default function DriverLicenseModal({
     }
   }, [open, currentLicense]);
 
-  const handleLicenseNumberChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setLicenseNumber(event.target.value);
-      setLicenseNumberError("");
-      setServerError("");
-    },
-    []
-  );
+  const handleLicenseNumberChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setLicenseNumber(event.target.value);
+    setLicenseNumberError("");
+    setServerError("");
+  }, []);
 
-  const handleExpiryDateChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setExpiryDate(event.target.value);
-      setExpiryDateError("");
-      setServerError("");
-    },
-    []
-  );
+  const handleExpiryDateChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setExpiryDate(event.target.value);
+    setExpiryDateError("");
+    setServerError("");
+  }, []);
 
-  const handleImageChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0] ?? null;
-      setServerError("");
-      if (!file) {
-        setLicenseImage(null);
-        setImageError("");
-        return;
-      }
-      const err = isValidImage(file);
-      if (err) {
-        setLicenseImage(null);
-        setImageError(err);
-        return;
-      }
-      setLicenseImage(file);
+  const handleImageChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    setServerError("");
+    if (!file) {
+      setLicenseImage(null);
       setImageError("");
-    },
-    []
-  );
+      return;
+    }
+    const err = isValidImage(file);
+    if (err) {
+      setLicenseImage(null);
+      setImageError(err);
+      return;
+    }
+    setLicenseImage(file);
+    setImageError("");
+  }, []);
 
   const validateAll = useCallback((): boolean => {
     let valid = true;
@@ -216,6 +200,13 @@ export default function DriverLicenseModal({
 
   // Today (UTC) as yyyy-MM-dd, used to enforce `min` on the date input.
   const todayMin = toDateInputValue(new Date().toISOString());
+
+  let submitButtonText = "Submit for review";
+  if (submitting) {
+    submitButtonText = "Submitting...";
+  } else if (currentLicense) {
+    submitButtonText = "Update license";
+  }
 
   return (
     <Dialog
@@ -320,7 +311,7 @@ export default function DriverLicenseModal({
           startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <UploadFileRoundedIcon />}
           sx={{ fontWeight: 700 }}
         >
-          {submitting ? "Submitting..." : currentLicense ? "Update license" : "Submit for review"}
+          {submitButtonText}
         </Button>
       </DialogActions>
     </Dialog>
@@ -342,6 +333,7 @@ function ImageFileField({ id, label, file, error, disabled, onChange }: ImageFil
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   useEffect(() => {
     if (!file) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPreviewUrl(null);
       return;
     }

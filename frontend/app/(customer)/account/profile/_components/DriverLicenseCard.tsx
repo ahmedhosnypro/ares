@@ -66,18 +66,13 @@ export default function DriverLicenseCard({ accessToken }: DriverLicenseCardProp
   }, []);
 
   const verificationState = useMemo(() => deriveState(license), [license]);
-  const canSubmit =
-    verificationState === "NotSubmitted" ||
-    verificationState === "Rejected" ||
-    verificationState === "Pending" ||
-    verificationState === "Verified";
 
-  const buttonLabel =
-    verificationState === "NotSubmitted"
-      ? "Upload License"
-      : verificationState === "Rejected"
-        ? "Resubmit License"
-        : "Update License";
+  let buttonLabel = "Update License";
+  if (verificationState === "NotSubmitted") {
+    buttonLabel = "Upload License";
+  } else if (verificationState === "Rejected") {
+    buttonLabel = "Resubmit License";
+  }
 
   return (
     <Box sx={{ p: 3 }}>
@@ -159,8 +154,8 @@ export default function DriverLicenseCard({ accessToken }: DriverLicenseCardProp
                 )}
               </Box>
               <Typography variant="body2" color="text.secondary">
-                Your driver license is under review. We&apos;ll update your status once our team has finished
-                reviewing your documents.
+                Your driver license is under review. We&apos;ll update your status once our team has finished reviewing
+                your documents.
               </Typography>
               {license?.submittedAt && (
                 <Typography variant="caption" color="text.secondary">
@@ -215,20 +210,18 @@ export default function DriverLicenseCard({ accessToken }: DriverLicenseCardProp
             </>
           )}
 
-          {canSubmit && (
-            <Button
-              variant="contained"
-              color="primary"
-              size="medium"
-              startIcon={<UploadFileRoundedIcon />}
-              onClick={() => {
-                setModalOpen(true);
-              }}
-              sx={{ fontWeight: 700, alignSelf: "flex-start" }}
-            >
-              {buttonLabel}
-            </Button>
-          )}
+          <Button
+            variant="contained"
+            color="primary"
+            size="medium"
+            startIcon={<UploadFileRoundedIcon />}
+            onClick={() => {
+              setModalOpen(true);
+            }}
+            sx={{ fontWeight: 700, alignSelf: "flex-start" }}
+          >
+            {buttonLabel}
+          </Button>
         </Stack>
       )}
 

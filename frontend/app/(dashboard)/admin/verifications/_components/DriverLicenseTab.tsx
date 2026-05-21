@@ -66,7 +66,7 @@ const PAGE_SIZE = 10;
 /**
  * Resolve the server status string to a MUI palette colour. We accept both
  * the canonical values ("Pending" / "Verified" / "Rejected") and the
- * lower-cased forms in case the backend ever changes serialisation.
+ * lower-cased forms in case the backend ever changes serialization.
  */
 function getStatusColor(theme: Theme, status: string): string {
   const s = status.toLowerCase();
@@ -230,8 +230,8 @@ export default function DriverLicenseTab() {
                         flexShrink: 0,
                       }}
                     >
-                      {l.userFirstName[0] ?? "?"}
-                      {l.userLastName[0] ?? ""}
+                      {l.userFirstName[0] || "?"}
+                      {l.userLastName[0] || ""}
                     </Avatar>
                     <Box sx={{ minWidth: 0 }}>
                       <Typography noWrap sx={{ fontWeight: 600, fontSize: 14 }}>
@@ -358,8 +358,8 @@ export default function DriverLicenseTab() {
                             fontSize: 16,
                           }}
                         >
-                          {l.userFirstName[0] ?? "?"}
-                          {l.userLastName[0] ?? ""}
+                          {l.userFirstName[0] || "?"}
+                          {l.userLastName[0] || ""}
                         </Avatar>
                         <Typography sx={{ fontWeight: 600, fontSize: 15 }}>
                           {l.userFirstName} {l.userLastName}

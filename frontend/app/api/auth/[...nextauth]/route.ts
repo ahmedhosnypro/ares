@@ -1,6 +1,5 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import type { NextRequest } from "next/server";
 import { getApiBaseUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
 
@@ -128,22 +127,30 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // الجلسة تفضل شغالة 30 يوم
   },
+  // Downgrade NextAuth's own console.error spam to warn-level for the one
+  // recoverable case we already catch in <Header />: a stale session cookie
+  // encrypted with a previous NEXTAUTH_SECRET. The user is auto-treated as
+  // anonymous and re-signs in normally, so the dev-mode error overlay this
+  // would otherwise produce is just noise.
+  logger: {
+    error(code, metadata) {
+      if (code === "JWT_SESSION_ERROR") {
+        logger.warn("Stale next-auth session cookie ignored", { code, metadata });
+        return;
+      }
+      logger.error(`[next-auth] ${code}`, metadata);
+    },
+    warn(code) {
+      logger.warn(`[next-auth] ${code}`);
+    },
+    debug(code, metadata) {
+      logger.info(`[next-auth] ${code}`, metadata);
+    },
+  },
   secret: process.env.NEXTAUTH_SECRET,
 };
 
-// NextAuth v4 expects ctx.params to be a plain object, but Next.js 15/16 App
-// Router passes params as a Promise. We await it here so the handler can read
-// `params.nextauth` synchronously inside next-auth.
-type NextAuthContext = { params: Promise<{ nextauth: string[] }> };
-
-const nextAuthHandler = NextAuth(authOptions) as unknown as (
-  req: NextRequest,
-  ctx: { params: { nextauth: string[] } }
-) => Promise<Response>;
-
-async function handler(req: NextRequest, ctx: NextAuthContext): Promise<Response> {
-  const params = await ctx.params;
-  return nextAuthHandler(req, { params });
-}
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };

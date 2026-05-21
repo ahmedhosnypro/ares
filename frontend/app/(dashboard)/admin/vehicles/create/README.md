@@ -2,7 +2,7 @@
 
 ## Page Info
 
-- **Route**: `/admin/vehicles/create`
+- **Route**: `/admin/cars/create`
 - **Access**: 🔒 Admin / Supplier
 - **Purpose**: Form to add a new car to the fleet. Collects all car details including specs, pricing (daily/weekly/monthly), and images. Validates license plate uniqueness before saving.
 

@@ -500,7 +500,7 @@ export default function HeaderClient({ session }: HeaderClientProps) {
                 <ListItem disablePadding>
                   <ListItemButton
                     component={Link}
-                    href="/account/profile"
+                    href="/profile"
                     onClick={() => {
                       setMobileMenuOpen(false);
                     }}

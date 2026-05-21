@@ -5,8 +5,7 @@ import SupplierLayout from "@/app/(dashboard)/supplier/layout";
 
 export default async function ProfileLayout({ children }: { readonly children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
-  
-  const roles = session?.user?.roles || [];
+  const roles = session?.user.roles || [];
   const isAdmin = roles.includes("Admin");
   const isSupplier = roles.includes("Supplier");
 

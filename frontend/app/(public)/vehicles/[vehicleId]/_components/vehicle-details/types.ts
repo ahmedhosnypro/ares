@@ -36,6 +36,8 @@ export interface VehicleReviewViewModel {
   readonly userName: string;
   readonly rating: number;
   readonly comment: string;
+  readonly supplierReply?: string;
+  readonly repliedAt?: string;
   readonly createdAt: string;
 }
 

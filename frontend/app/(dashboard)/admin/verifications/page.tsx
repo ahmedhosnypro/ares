@@ -4,7 +4,7 @@
  * Admin Verification Management page.
  *
  * The page hosts two review workflows under a single header:
- *   1. Identity Verification — pre-existing flow (unchanged behaviour).
+ *   1. Identity Verification — pre-existing flow (unchanged behavior).
  *   2. Driver License Verification — added in this iteration.
  *
  * The two tabs swap their content inside the same page; the admin layout,

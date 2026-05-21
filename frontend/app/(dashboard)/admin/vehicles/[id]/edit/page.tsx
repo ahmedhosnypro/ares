@@ -137,7 +137,7 @@ export default function EditCarPage() {
         <Typography color="text.secondary">Update vehicle information</Typography>
       </Stack>
 
-      <Card sx={{ p: { xs: 2, md: 4 }, borderRadius: 2 }}>
+      <Card sx={{ p: { xs: 2, md: 4 }, borderRadius: 4 }}>
         <Grid container spacing={3}>
           {/* SAME UI FIELDS (UNCHANGED) */}
 

@@ -2,7 +2,7 @@
 
 ## Page Info
 
-- **Route**: `/admin/vehicles/[id]`
+- **Route**: `/admin/cars/[id]`
 - **Access**: 🔒 Admin / Supplier
 - **Purpose**: Read-only view of a specific car's full details — specs, pricing, available locations, and current booking status.
 
