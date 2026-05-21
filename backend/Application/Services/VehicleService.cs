@@ -357,6 +357,8 @@ public class VehicleService : IVehicleService
             r.Rating ?? 0,
             r.Comment,
             r.AdminResponse,
+            r.SupplierReply,
+            r.RepliedAt,
             r.CreatedAt
         )).ToList();
 
@@ -422,22 +424,86 @@ public class VehicleService : IVehicleService
         {
             query = query.Where(v => v.UserId == currentUserId);
         }
-        
-        // Filter out soft-deleted vehicles
+
         // Admin Filtering: Filter by specific suppliers if provided
         if (filter.Suppliers != null && filter.Suppliers.Any())
         {
             query = query.Where(v => filter.Suppliers.Contains(v.UserId));
         }
+
+        // Filter out soft-deleted vehicles
         query = query.Where(v => v.IsActive);
 
-        // Search Keyword
+        // Search Keyword - matches Make, Model, LicensePlate, or supplier name
+        // (case-insensitive). Translates to a single SQL WHERE with OR'd LIKEs.
         if (!string.IsNullOrWhiteSpace(filter.Keyword))
         {
-            var keyword = filter.Keyword;
-            query = query.Where(v => 
-                (v.Make != null && v.Make.Contains(keyword)) || 
-                (v.Model != null && v.Model.Contains(keyword)));
+            var keyword = filter.Keyword.Trim();
+            query = query.Where(v =>
+                (v.Make != null && EF.Functions.Like(v.Make, $"%{keyword}%")) ||
+                (v.Model != null && EF.Functions.Like(v.Model, $"%{keyword}%")) ||
+                (v.LicensePlate != null && EF.Functions.Like(v.LicensePlate, $"%{keyword}%")) ||
+                (v.User != null && v.User.FirstName != null && EF.Functions.Like(v.User.FirstName, $"%{keyword}%")) ||
+                (v.User != null && v.User.LastName != null && EF.Functions.Like(v.User.LastName, $"%{keyword}%")));
+        }
+
+        // Transmission filter - case-insensitive equality.
+        if (!string.IsNullOrWhiteSpace(filter.Transmission))
+        {
+            var transmission = filter.Transmission.Trim();
+            query = query.Where(v => v.Transmission != null && v.Transmission.ToLower() == transmission.ToLower());
+        }
+
+        // Status filter - "Available" / "OnRental" / "Inactive". The on-rental
+        // and available buckets are made mutually exclusive via a sub-query
+        // against the Bookings table so the same vehicle never appears in two
+        // buckets, even if the Vehicle row's AvailabilityStatus column wasn't
+        // flipped when its booking became Active.
+        if (!string.IsNullOrWhiteSpace(filter.Status))
+        {
+            var status = filter.Status.Trim();
+            var activeBookedVehicleIds = _context.Bookings
+                .AsNoTracking()
+                .Where(b => b.Status == Backend.Domain.Entities.Enums.BookingStatus.Active)
+                .Select(b => b.VehicleId)
+                .Distinct();
+
+            if (status.Equals("OnRental", StringComparison.OrdinalIgnoreCase) ||
+                status.Equals("On Rental", StringComparison.OrdinalIgnoreCase) ||
+                status.Equals("Rented", StringComparison.OrdinalIgnoreCase))
+            {
+                query = query.Where(v => activeBookedVehicleIds.Contains(v.Id));
+            }
+            else if (status.Equals("Available", StringComparison.OrdinalIgnoreCase))
+            {
+                query = query.Where(v => v.AvailabilityStatus == "Available" && !activeBookedVehicleIds.Contains(v.Id));
+            }
+            else if (status.Equals("Inactive", StringComparison.OrdinalIgnoreCase) ||
+                     status.Equals("Unavailable", StringComparison.OrdinalIgnoreCase))
+            {
+                query = query.Where(v => v.AvailabilityStatus != "Available" && !activeBookedVehicleIds.Contains(v.Id));
+            }
+            // Any other value is silently ignored (no filter applied).
+        }
+
+        // Sorting - safe whitelist; unknown / null falls back to "newest".
+        var sortKey = (filter.SortBy ?? "newest").Trim().ToLowerInvariant();
+        IOrderedQueryable<Vehicle> ordered;
+        if (sortKey == "oldest")
+        {
+            ordered = query.OrderBy(v => v.CreatedAt);
+        }
+        else if (sortKey == "pricehigh")
+        {
+            ordered = query.OrderByDescending(v => v.PricePerDay).ThenByDescending(v => v.CreatedAt);
+        }
+        else if (sortKey == "pricelow")
+        {
+            ordered = query.OrderBy(v => v.PricePerDay).ThenByDescending(v => v.CreatedAt);
+        }
+        else
+        {
+            ordered = query.OrderByDescending(v => v.CreatedAt);
         }
 
         // Pagination
@@ -445,35 +511,57 @@ public class VehicleService : IVehicleService
         var totalPages = (int)Math.Ceiling(totalCount / (double)size);
         var skip = (page - 1) * size;
 
-        var vehicles = await query
-            .OrderByDescending(v => v.CreatedAt) // Assuming CreatedAt exists, if not it will fail, wait. Let's just order by Id or Price
+        var vehicles = await ordered
             .Skip(skip)
             .Take(size)
             .ToListAsync(cancellationToken);
+
+        // Pre-compute the set of currently-on-rental vehicle ids for the page so
+        // we can mark each DTO without an N+1 round-trip per row. Scoped to the
+        // ids on this page only.
+        var pageIds = vehicles.Select(v => v.Id).ToList();
+        var onRentalIdSet = await _context.Bookings
+            .AsNoTracking()
+            .Where(b => b.Status == Backend.Domain.Entities.Enums.BookingStatus.Active)
+            .Where(b => pageIds.Contains(b.VehicleId))
+            .Select(b => b.VehicleId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+        var onRentalIds = new HashSet<Guid>(onRentalIdSet);
 
         var vehicleDtos = new List<VehicleListDto>();
         foreach (var vehicle in vehicles)
         {
             var averageRating = await GetAverageRatingAsync(vehicle.Id, cancellationToken);
             var reviewCount = await GetReviewCountAsync(vehicle.Id, cancellationToken);
-            var primaryImage = vehicle.Images.FirstOrDefault(i => i.IsPrimary)?.ImageUrl 
-                             ?? vehicle.Images.FirstOrDefault()?.ImageUrl 
+            var primaryImage = vehicle.Images.FirstOrDefault(i => i.IsPrimary)?.ImageUrl
+                             ?? vehicle.Images.FirstOrDefault()?.ImageUrl
                              ?? string.Empty;
 
+            var supplierName = vehicle.User == null
+                ? null
+                : $"{vehicle.User.FirstName} {vehicle.User.LastName}".Trim();
+
             vehicleDtos.Add(new VehicleListDto(
-                vehicle.Id,
-                vehicle.Make ?? string.Empty,
-                vehicle.Model ?? string.Empty,
-                vehicle.Status ?? string.Empty,
-                vehicle.PricePerDay ?? 0,
-                "USD",
-                primaryImage,
-                averageRating,
-                reviewCount,
-                null,
-                vehicle.AvailabilityStatus == "Available",
-                vehicle.LocationCity,
-                vehicle.CreatedAt
+                VehicleId: vehicle.Id,
+                Make: vehicle.Make ?? string.Empty,
+                Model: vehicle.Model ?? string.Empty,
+                Category: vehicle.Status ?? string.Empty,
+                DailyRate: vehicle.PricePerDay ?? 0,
+                Currency: "USD",
+                ImageUrl: primaryImage,
+                Rating: averageRating,
+                ReviewCount: reviewCount,
+                Distance: null,
+                Available: vehicle.AvailabilityStatus == "Available",
+                LocationCity: vehicle.LocationCity,
+                CreatedAt: vehicle.CreatedAt,
+                Year: vehicle.Year,
+                Transmission: vehicle.Transmission,
+                SupplierName: string.IsNullOrWhiteSpace(supplierName) ? null : supplierName,
+                IsOnRental: onRentalIds.Contains(vehicle.Id),
+                AvailabilityStatus: vehicle.AvailabilityStatus,
+                LicensePlate: vehicle.LicensePlate
             ));
         }
 
@@ -731,5 +819,52 @@ public class VehicleService : IVehicleService
         }
 
         return await _bookingRepository.HasActiveBookingsAsync(vehicleId, cancellationToken);
+    }
+
+    public async Task<AdminVehicleStatsDto> GetAdminVehicleStatsAsync(
+        Guid currentUserId,
+        bool isAdmin,
+        CancellationToken cancellationToken = default)
+    {
+        // Base query mirrors GetAdminVehiclesAsync: only non-soft-deleted vehicles,
+        // and suppliers can only see their own rows. Counts come from the DB so
+        // they're independent of any pagination, search, or filter on the table.
+        var vehiclesQuery = _context.Vehicles
+            .AsNoTracking()
+            .Where(v => v.IsActive);
+
+        if (!isAdmin)
+        {
+            vehiclesQuery = vehiclesQuery.Where(v => v.UserId == currentUserId);
+        }
+
+        var totalVehicles = await vehiclesQuery.CountAsync(cancellationToken);
+
+        // Vehicles with an in-progress booking (BookingStatus.Active).
+        // Computed first because Available is defined as "in-scope AND has no
+        // active booking", so the two buckets must be mutually exclusive.
+        // We materialise the set of on-rental ids in-memory only via a sub-query;
+        // the EF translator turns this into a single SQL statement with a
+        // WHERE ... IN (SELECT ...) clause.
+        var onRentalIdsQuery = _context.Bookings
+            .AsNoTracking()
+            .Where(b => b.Status == Backend.Domain.Entities.Enums.BookingStatus.Active)
+            .Where(b => vehiclesQuery.Any(v => v.Id == b.VehicleId))
+            .Select(b => b.VehicleId)
+            .Distinct();
+
+        var onRentalVehicles = await onRentalIdsQuery.CountAsync(cancellationToken);
+
+        // "Available" = AvailabilityStatus is "Available" AND the vehicle is not
+        // currently on rental. The extra `!onRentalIdsQuery.Contains(...)` guard
+        // ensures the Available bucket never overlaps the On-Rental bucket even
+        // if a vehicle row's `AvailabilityStatus` column wasn't flipped to
+        // "Unavailable" when its booking became Active (historical data drift).
+        var availableVehicles = await vehiclesQuery
+            .Where(v => v.AvailabilityStatus == "Available")
+            .Where(v => !onRentalIdsQuery.Contains(v.Id))
+            .CountAsync(cancellationToken);
+
+        return new AdminVehicleStatsDto(totalVehicles, availableVehicles, onRentalVehicles);
     }
 }

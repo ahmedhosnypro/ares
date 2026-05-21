@@ -326,7 +326,7 @@ public class VehiclesController : ControllerBase
     /// <param name="request">Vehicle creation request</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Vehicle creation response</returns>
-    [HttpPost("/api/admin/vehicles/create")]
+    [HttpPost("/api/admin/cars/create")]
     [Authorize(Roles = "Admin,Supplier")]
     [ProducesResponseType(typeof(VehicleResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -365,7 +365,7 @@ public class VehiclesController : ControllerBase
     /// <param name="request">Vehicle update request</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Vehicle update response</returns>
-    [HttpPut("/api/admin/vehicles/{id}/edit")]
+    [HttpPut("/api/admin/cars/{id}/edit")]
     [Authorize(Roles = "Admin,Supplier")]
     [ProducesResponseType(typeof(VehicleResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -414,7 +414,7 @@ public class VehiclesController : ControllerBase
     /// <param name="id">Vehicle ID</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Vehicle deletion response</returns>
-    [HttpDelete("/api/admin/vehicles/{id}/delete")]
+    [HttpDelete("/api/admin/cars/{id}/delete")]
     [Authorize(Roles = "Admin,Supplier")]
     [ProducesResponseType(typeof(VehicleResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -445,7 +445,7 @@ public class VehiclesController : ControllerBase
     /// <param name="id">Vehicle ID</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Boolean indicating if vehicle has active bookings</returns>
-    [HttpGet("/api/admin/vehicles/{id}/check-bookings")]
+    [HttpGet("/api/admin/cars/{id}/check-bookings")]
     [Authorize(Roles = "Admin,Supplier")]
     [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -457,5 +457,33 @@ public class VehiclesController : ControllerBase
     {
         var hasActiveBookings = await _vehicleService.CheckActiveBookingsAsync(id, cancellationToken);
         return Ok(hasActiveBookings);
+    }
+
+    /// <summary>
+    /// Aggregate statistics for the Admin / Supplier "Vehicles" dashboard
+    /// (Total, Available, On-Rental). Counts are computed straight from the
+    /// database, so they are independent of the table's pagination / search /
+    /// filter state. Admin sees system-wide totals; suppliers see only their
+    /// own vehicles (scoped by JWT claim).
+    /// </summary>
+    [HttpGet("admin/stats")]
+    [Authorize(Roles = "Admin,Supplier")]
+    [ProducesResponseType(typeof(AdminVehicleStatsDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<AdminVehicleStatsDto>> GetAdminVehicleStats(
+        CancellationToken cancellationToken = default)
+    {
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        if (userIdClaim == null)
+        {
+            return Unauthorized(new { Message = "User not authenticated" });
+        }
+
+        var currentUserId = Guid.Parse(userIdClaim.Value);
+        var isAdmin = User.IsInRole("Admin");
+
+        var stats = await _vehicleService.GetAdminVehicleStatsAsync(currentUserId, isAdmin, cancellationToken);
+        return Ok(stats);
     }
 }

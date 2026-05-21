@@ -160,4 +160,17 @@ public interface IVehicleService
     Task<bool> CheckActiveBookingsAsync(
         Guid vehicleId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Computes aggregate statistics for the Admin / Supplier vehicles dashboard
+    /// (total, available, on-rental). Counts come straight from the database so
+    /// they are independent of the table's pagination / search / filter state.
+    ///
+    /// Scoping mirrors <see cref="GetAdminVehiclesAsync"/>: Admin sees everything,
+    /// suppliers see only their own vehicles.
+    /// </summary>
+    Task<AdminVehicleStatsDto> GetAdminVehicleStatsAsync(
+        Guid currentUserId,
+        bool isAdmin,
+        CancellationToken cancellationToken = default);
 }

@@ -7,5 +7,8 @@ namespace Backend.Application.DTOs.Vehicle;
 /// <param name="Keyword">Search term to filter by Make or Model</param>
 public record AdminVehicleFilterRequest(
     List<Guid>? Suppliers,
-    string? Keyword
+    string? Keyword,
+    string? Status = null,
+    string? Transmission = null,
+    string? SortBy = null
 );
