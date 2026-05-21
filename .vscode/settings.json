@@ -22,16 +22,5 @@
       "username": "sa",
       "password": "YourPassword123!"
     }
-  ],
-  "files.associations": {
-    "*.log": "log",
-    "*.log.*": "log"
-  },
-  "[log]": {
-    "editor.largeFileOptimizations": false
-  },
-  "logFileHighlighter.enableTailMode": true,
-  "logFileHighlighter.enableProgressIndicator": true,
-  "chat.mcp.discovery.enabled": {},
-  "chat.mcp.access": "all"
+  ]
 }
