@@ -335,7 +335,7 @@ public class VehicleServiceTests : IDisposable
         // Assert
         Assert.NotNull(result);
         Assert.Equal(3, result.Data.Count);
-        
+
         // Should be sorted by price ascending
         Assert.Equal(80, result.Data[0].DailyRate);
         Assert.Equal(150, result.Data[1].DailyRate);
@@ -398,7 +398,7 @@ public class VehicleServiceTests : IDisposable
         // Assert
         Assert.NotNull(result);
         Assert.Equal(3, result.Data.Count);
-        
+
         // Should be sorted by rating descending (5.0, 3.5, 2.5)
         Assert.True(result.Data[0].Rating >= result.Data[1].Rating);
         Assert.True(result.Data[1].Rating >= result.Data[2].Rating);
@@ -571,7 +571,7 @@ public class VehicleServiceTests : IDisposable
         // Assert
         Assert.NotNull(result);
         Assert.Single(result.Data);
-        
+
         var vehicleDto = result.Data.First();
         Assert.Equal(4.0, vehicleDto.Rating); // Average of 4, 5, 3
         Assert.Equal(3, vehicleDto.ReviewCount);
@@ -588,7 +588,7 @@ public class VehicleServiceTests : IDisposable
         var vehicleId = Guid.NewGuid();
         var userId = Guid.NewGuid();
         var vehicle = CreateVehicleWithDetails(vehicleId, userId);
-        
+
         var features = new List<VehicleFeature>
         {
             new() { Id = Guid.NewGuid(), VehicleId = vehicleId, FeatureName = "GPS", FeatureDescription = "Navigation system" },
@@ -691,17 +691,17 @@ public class VehicleServiceTests : IDisposable
 
         var bookings = new List<Booking>
         {
-            new() 
-            { 
-                VehicleId = vehicleId, 
-                PickupDate = DateTime.Today.AddDays(5), 
+            new()
+            {
+                VehicleId = vehicleId,
+                PickupDate = DateTime.Today.AddDays(5),
                 ReturnDate = DateTime.Today.AddDays(7),
                 Status = BookingStatus.Confirmed
             },
-            new() 
-            { 
-                VehicleId = vehicleId, 
-                PickupDate = DateTime.Today.AddDays(15), 
+            new()
+            {
+                VehicleId = vehicleId,
+                PickupDate = DateTime.Today.AddDays(15),
                 ReturnDate = DateTime.Today.AddDays(18),
                 Status = BookingStatus.Confirmed
             }
@@ -757,17 +757,17 @@ public class VehicleServiceTests : IDisposable
 
         var bookings = new List<Booking>
         {
-            new() 
-            { 
-                VehicleId = vehicleId, 
-                PickupDate = DateTime.Today.AddDays(5), 
+            new()
+            {
+                VehicleId = vehicleId,
+                PickupDate = DateTime.Today.AddDays(5),
                 ReturnDate = DateTime.Today.AddDays(7),
                 Status = BookingStatus.Confirmed
             },
-            new() 
-            { 
-                VehicleId = vehicleId, 
-                PickupDate = DateTime.Today.AddDays(10), 
+            new()
+            {
+                VehicleId = vehicleId,
+                PickupDate = DateTime.Today.AddDays(10),
                 ReturnDate = DateTime.Today.AddDays(12),
                 Status = BookingStatus.Cancelled // This should be excluded
             }
@@ -800,24 +800,24 @@ public class VehicleServiceTests : IDisposable
 
         var bookings = new List<Booking>
         {
-            new() 
-            { 
-                VehicleId = vehicleId, 
-                PickupDate = DateTime.Today.AddDays(5), 
+            new()
+            {
+                VehicleId = vehicleId,
+                PickupDate = DateTime.Today.AddDays(5),
                 ReturnDate = DateTime.Today.AddDays(8), // Before range
                 Status = BookingStatus.Confirmed
             },
-            new() 
-            { 
-                VehicleId = vehicleId, 
-                PickupDate = DateTime.Today.AddDays(15), 
+            new()
+            {
+                VehicleId = vehicleId,
+                PickupDate = DateTime.Today.AddDays(15),
                 ReturnDate = DateTime.Today.AddDays(17), // Within range
                 Status = BookingStatus.Confirmed
             },
-            new() 
-            { 
-                VehicleId = vehicleId, 
-                PickupDate = DateTime.Today.AddDays(25), 
+            new()
+            {
+                VehicleId = vehicleId,
+                PickupDate = DateTime.Today.AddDays(25),
                 ReturnDate = DateTime.Today.AddDays(27), // After range
                 Status = BookingStatus.Confirmed
             }
@@ -1369,7 +1369,7 @@ public class VehicleServiceTests : IDisposable
         // Verify only specified fields were updated
         Assert.Equal("Honda", existingVehicle.Make); // Updated
         Assert.Equal(120.00m, existingVehicle.PricePerDay); // Updated
-        
+
         // Verify other fields remained unchanged
         Assert.Equal("Camry", existingVehicle.Model);
         Assert.Equal(2020, existingVehicle.Year);

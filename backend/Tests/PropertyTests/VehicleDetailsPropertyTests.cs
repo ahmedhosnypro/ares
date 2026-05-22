@@ -113,7 +113,7 @@ public class VehicleDetailsPropertyTests : IDisposable
             var exception = Assert.ThrowsAsync<NotFoundException>(
                 () => _vehicleService.GetVehicleDetailsAsync(nonExistentVehicleId)).Result;
 
-            return exception != null && 
+            return exception != null &&
                    exception.Message.Contains(nonExistentVehicleId.ToString());
         }
         catch

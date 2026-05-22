@@ -182,19 +182,19 @@ public class SupplierServiceTests
             .ReturnsAsync(new List<string> { "Supplier" });
 
         _supplierRepositoryMock.Setup(x => x.GetCompanyProfileAsync(suppliers[0].Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new CompanyProfile 
-            { 
-                UserId = suppliers[0].Id, 
-                CompanyName = "Test Company 1", 
+            .ReturnsAsync(new CompanyProfile
+            {
+                UserId = suppliers[0].Id,
+                CompanyName = "Test Company 1",
                 CommercialRegistrationNumber = "CR001",
                 TaxId = "TAX001"
             });
 
         _supplierRepositoryMock.Setup(x => x.GetCompanyProfileAsync(suppliers[1].Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new CompanyProfile 
-            { 
-                UserId = suppliers[1].Id, 
-                CompanyName = "Test Company 2", 
+            .ReturnsAsync(new CompanyProfile
+            {
+                UserId = suppliers[1].Id,
+                CompanyName = "Test Company 2",
                 CommercialRegistrationNumber = null,
                 TaxId = null
             });

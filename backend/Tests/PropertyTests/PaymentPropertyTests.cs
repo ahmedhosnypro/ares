@@ -63,7 +63,7 @@ public class PaymentPropertyTests : IDisposable
 
             // Test pagination for different pages
             var totalPages = (int)Math.Ceiling((double)paymentCount / pageSize);
-            
+
             for (int page = 1; page <= Math.Min(totalPages, 3); page++) // Test first 3 pages max
             {
                 var request = new PaymentHistoryRequest(
@@ -133,7 +133,7 @@ public class PaymentPropertyTests : IDisposable
             var paymentDetails = _paymentRepository.GetByTransactionIdAsync(payment.TransactionId).Result;
 
             // Assert - Verify all required fields are present and correct
-            var hasAllRequiredFields = 
+            var hasAllRequiredFields =
                 paymentDetails != null &&
                 paymentDetails.TransactionId == payment.TransactionId &&
                 paymentDetails.BookingId == bookingId &&
@@ -184,7 +184,7 @@ public class PaymentPropertyTests : IDisposable
             var paymentDetails = _paymentRepository.GetByTransactionIdAsync(paymentResponse.TransactionId).Result;
 
             // Assert - Verify payment is correctly linked to booking
-            var correctlyLinked = 
+            var correctlyLinked =
                 paymentResponse != null &&
                 paymentResponse.TransactionId != Guid.Empty &&
                 paymentDetails != null &&
@@ -508,7 +508,7 @@ public class PaymentPropertyTests : IDisposable
 
             // Test date range filter
             var midDate = baseDate.AddDays(paymentCount / 2);
-            var dateRangePayments = payments.Where(p => 
+            var dateRangePayments = payments.Where(p =>
                 p.CreatedAt >= baseDate && p.CreatedAt <= midDate).ToList();
 
             if (dateRangePayments.Any())
@@ -695,10 +695,10 @@ public class PaymentPropertyTests : IDisposable
         {
             // Create separate booking for each payment
             var (_, bookingId) = CreateTestUserAndBooking(100 + i, BookingStatus.Confirmed, userId);
-            
+
             var status = statuses[i % statuses.Length];
             var method = methods[i % methods.Length];
-            
+
             var payment = new BookingPayment
             {
                 PaymentId = Guid.NewGuid(),

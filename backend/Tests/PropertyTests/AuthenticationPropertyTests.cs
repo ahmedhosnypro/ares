@@ -68,7 +68,7 @@ public class AuthenticationPropertyTests
             return true;
 
         var request = new RegisterRequest(email, password, firstName, lastName, true, true);
-        
+
         // Arrange
         var userId = Guid.NewGuid();
         var user = new ApplicationUser
@@ -117,7 +117,7 @@ public class AuthenticationPropertyTests
             return true;
 
         var request = new LoginRequest(email, password, stayConnected);
-        
+
         // Arrange
         var userId = Guid.NewGuid();
         var user = new ApplicationUser
@@ -179,7 +179,7 @@ public class AuthenticationPropertyTests
             return true;
 
         var request = new LoginRequest(email, password, stayConnected);
-        
+
         // Arrange
         var userId = Guid.NewGuid();
         var user = new ApplicationUser
@@ -193,7 +193,7 @@ public class AuthenticationPropertyTests
 
         var roles = new List<string> { "Customer" };
         var token = "test-jwt-token";
-        
+
         // Set up different expiration times based on stayConnected
         var shortExpiration = DateTime.UtcNow.AddHours(1);
         var longExpiration = DateTime.UtcNow.AddDays(400);
@@ -250,7 +250,7 @@ public class AuthenticationPropertyTests
             return true;
 
         var request = new LoginRequest(email, password, null);
-        
+
         // Arrange - Setup for invalid credentials scenarios
         if (isNonExistentEmail)
         {
@@ -304,13 +304,13 @@ public class AuthenticationPropertyTests
         // Generate weak passwords for testing
         var invalidPasswords = new[] { "123", "password", "PASSWORD", "Pass", "12345" };
         var password = invalidPasswords[Math.Abs(weakPassword?.GetHashCode() ?? 0) % invalidPasswords.Length];
-        
+
         if (string.IsNullOrWhiteSpace(email) || !email.Contains("@") ||
             string.IsNullOrWhiteSpace(firstName))
             return true;
 
         var request = new RegisterRequest(email, password, firstName, "LastName", true, true);
-        
+
         // Arrange
         _userManagerMock.Setup(x => x.FindByEmailAsync(request.Email))
             .ReturnsAsync((ApplicationUser?)null);

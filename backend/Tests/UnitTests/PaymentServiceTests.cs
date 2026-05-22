@@ -38,7 +38,7 @@ public class PaymentServiceTests
         var userId = Guid.NewGuid();
         var bookingId = Guid.NewGuid();
         var paymentMethodId = Guid.NewGuid();
-        
+
         var request = new PaymentRequest(
             BookingId: bookingId,
             Amount: 150.00m,
@@ -76,9 +76,9 @@ public class PaymentServiceTests
 
         // Verify booking status was updated to "Paid"
         _bookingRepositoryMock.Verify(x => x.UpdateAsync(It.Is<Booking>(b => b.Status == BookingStatus.Confirmed), It.IsAny<CancellationToken>()), Times.Once);
-        _paymentRepositoryMock.Verify(x => x.AddAsync(It.Is<BookingPayment>(p => 
-            p.BookingId == bookingId && 
-            p.Amount == 150.00m && 
+        _paymentRepositoryMock.Verify(x => x.AddAsync(It.Is<BookingPayment>(p =>
+            p.BookingId == bookingId &&
+            p.Amount == 150.00m &&
             p.PaymentMethod == "credit_card" &&
             p.Status == "Captured"), It.IsAny<CancellationToken>()), Times.Once);
         _contextMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -102,7 +102,7 @@ public class PaymentServiceTests
 
         Assert.Contains("Amount", exception.Errors.Keys);
         Assert.Equal("Payment amount must be greater than zero", exception.Errors["Amount"].First());
-        
+
         _bookingRepositoryMock.Verify(x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -157,7 +157,7 @@ public class PaymentServiceTests
         var userId = Guid.NewGuid();
         var differentUserId = Guid.NewGuid();
         var bookingId = Guid.NewGuid();
-        
+
         var request = new PaymentRequest(
             BookingId: bookingId,
             Amount: 100.00m,
@@ -191,7 +191,7 @@ public class PaymentServiceTests
         // Arrange
         var userId = Guid.NewGuid();
         var bookingId = Guid.NewGuid();
-        
+
         var request = new PaymentRequest(
             BookingId: bookingId,
             Amount: 100.00m,
@@ -226,7 +226,7 @@ public class PaymentServiceTests
         // Arrange
         var userId = Guid.NewGuid();
         var bookingId = Guid.NewGuid();
-        
+
         var request = new PaymentRequest(
             BookingId: bookingId,
             Amount: 200.00m,
@@ -259,8 +259,8 @@ public class PaymentServiceTests
         // Assert
         Assert.NotNull(result);
         Assert.Equal("Captured", result.Status);
-        
-        _paymentRepositoryMock.Verify(x => x.AddAsync(It.Is<BookingPayment>(p => 
+
+        _paymentRepositoryMock.Verify(x => x.AddAsync(It.Is<BookingPayment>(p =>
             p.PaymentMethod == paymentMethod), It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -270,7 +270,7 @@ public class PaymentServiceTests
         // Arrange
         var userId = Guid.NewGuid();
         var bookingId = Guid.NewGuid();
-        
+
         var request = new PaymentRequest(
             BookingId: bookingId,
             Amount: 100.00m,
@@ -318,7 +318,7 @@ public class PaymentServiceTests
         var userId = Guid.NewGuid();
         var transactionId1 = Guid.NewGuid();
         var transactionId2 = Guid.NewGuid();
-        
+
         var payments = new List<BookingPayment>
         {
             new BookingPayment
@@ -465,7 +465,7 @@ public class PaymentServiceTests
         // Verify sorting is applied (specific verification depends on sort field and order)
         var firstPayment = result.Data.First();
         var lastPayment = result.Data.Last();
-        
+
         switch (sortBy.ToLowerInvariant())
         {
             case "amount":
@@ -489,7 +489,7 @@ public class PaymentServiceTests
         // Arrange
         var userId = Guid.NewGuid();
         var payments = new List<BookingPayment>();
-        
+
         // Create 25 payments for pagination testing
         for (int i = 0; i < 25; i++)
         {
@@ -558,7 +558,7 @@ public class PaymentServiceTests
         // Assert
         Assert.NotNull(result);
         Assert.True(result.Length > 0);
-        
+
         // Verify the receipt contains expected information
         var receiptContent = System.Text.Encoding.UTF8.GetString(result);
         Assert.Contains("PAYMENT RECEIPT", receiptContent);
@@ -597,7 +597,7 @@ public class PaymentServiceTests
         // Assert
         Assert.NotNull(result);
         Assert.True(result.Length > 0);
-        
+
         // Verify the receipt contains expected HTML structure and information
         var receiptContent = System.Text.Encoding.UTF8.GetString(result);
         Assert.Contains("<!DOCTYPE html>", receiptContent);
@@ -657,9 +657,9 @@ public class PaymentServiceTests
         // Assert
         Assert.NotNull(result);
         Assert.True(result.Length > 0);
-        
+
         var receiptContent = System.Text.Encoding.UTF8.GetString(result);
-        
+
         if (format.ToLowerInvariant() == "pdf")
         {
             // Should return PDF format (plain text)

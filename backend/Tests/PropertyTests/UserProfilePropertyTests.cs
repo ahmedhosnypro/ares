@@ -81,7 +81,7 @@ public class UserProfilePropertyTests : IDisposable
             var profile = _userProfileService.GetProfileAsync(user.Id).Result;
 
             // Assert - Verify all required fields are present and correct
-            var hasAllRequiredFields = 
+            var hasAllRequiredFields =
                 profile.UserId == user.Id &&
                 profile.FirstName == user.FirstName &&
                 profile.LastName == user.LastName &&
@@ -98,7 +98,7 @@ public class UserProfilePropertyTests : IDisposable
                 profile.VerificationStatus != null;
 
             // Verify address information is correctly mapped
-            var addressCorrect = 
+            var addressCorrect =
                 profile.Address != null &&
                 profile.Address.Street == (address?.AddressLine ?? string.Empty) &&
                 profile.Address.City == (address?.City ?? string.Empty) &&
@@ -107,7 +107,7 @@ public class UserProfilePropertyTests : IDisposable
                 profile.Address.Country == (address?.Country ?? string.Empty);
 
             // Verify verification status is correctly calculated
-            var verificationCorrect = 
+            var verificationCorrect =
                 profile.VerificationStatus != null &&
                 profile.VerificationStatus.Email == user.EmailConfirmed &&
                 profile.VerificationStatus.Phone == user.PhoneNumberConfirmed &&
@@ -175,7 +175,7 @@ public class UserProfilePropertyTests : IDisposable
             var updatedProfile = _userProfileService.GetProfileAsync(user.Id).Result;
 
             // Assert - Verify all changes were persisted
-            var changesPersistedCorrectly = 
+            var changesPersistedCorrectly =
                 updateResponse.Success &&
                 updatedProfile.FirstName == newFirstName &&
                 updatedProfile.LastName == newLastName &&
@@ -187,7 +187,7 @@ public class UserProfilePropertyTests : IDisposable
                 updatedProfile.Address.Country == newAddress.Country;
 
             // Verify the changes are different from original values
-            var actuallyChanged = 
+            var actuallyChanged =
                 updatedProfile.FirstName != originalFirstName ||
                 updatedProfile.LastName != originalLastName;
 
@@ -226,7 +226,7 @@ public class UserProfilePropertyTests : IDisposable
             var updatedProfile = _userProfileService.GetProfileAsync(user.Id).Result;
 
             // Assert - Verify photo upload succeeded
-            var uploadSucceeded = 
+            var uploadSucceeded =
                 !string.IsNullOrEmpty(photoUrl) &&
                 photoUrl.StartsWith("/uploads/profiles/") &&
                 photoUrl.Contains(user.Id.ToString()) &&
@@ -256,12 +256,12 @@ public class UserProfilePropertyTests : IDisposable
 
             // Create a basic user profile
             var user = CreateTestUserWithProfile(seed);
-            
+
             // Get profile and verify completeness is within valid range
             var profile = _userProfileService.GetProfileAsync(user.Id).Result;
 
             // Verify completeness is a valid percentage (0-100)
-            var completenessValid = 
+            var completenessValid =
                 profile.ProfileCompleteness >= 0 &&
                 profile.ProfileCompleteness <= 100;
 
@@ -361,7 +361,7 @@ public class UserProfilePropertyTests : IDisposable
             // Create two test users
             var user1 = CreateTestUserWithProfile(seed);
             var user2 = CreateTestUserWithProfile(seed + 1);
-            
+
             // Set phone for user1
             var existingPhone = $"+1555{seed:D7}";
             user1.PhoneNumber = existingPhone;

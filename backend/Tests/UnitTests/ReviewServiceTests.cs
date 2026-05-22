@@ -214,7 +214,7 @@ public class ReviewServiceTests
         var vehicleId = Guid.NewGuid();
         var bookingId = Guid.NewGuid();
         var request = new CreateReviewRequest(vehicleId, bookingId, 5, "Excellent car!");
-        
+
         var vehicle = CreateTestVehicle(vehicleId);
         var booking = CreateTestCompletedBooking(bookingId, userId, vehicleId);
         var createdReview = CreateTestReview(vehicleId, userId, bookingId, 5, "Excellent car!");
@@ -286,7 +286,7 @@ public class ReviewServiceTests
         var vehicleId = Guid.NewGuid();
         var bookingId = Guid.NewGuid();
         var request = new CreateReviewRequest(vehicleId, bookingId, 5, "Great car!");
-        
+
         var vehicle = CreateTestVehicle(vehicleId);
         var booking = CreateTestCompletedBooking(bookingId, otherUserId, vehicleId); // Different user
 
@@ -312,7 +312,7 @@ public class ReviewServiceTests
         var differentVehicleId = Guid.NewGuid();
         var bookingId = Guid.NewGuid();
         var request = new CreateReviewRequest(vehicleId, bookingId, 5, "Great car!");
-        
+
         var vehicle = CreateTestVehicle(vehicleId);
         var booking = CreateTestCompletedBooking(bookingId, userId, differentVehicleId); // Different vehicle
 
@@ -340,7 +340,7 @@ public class ReviewServiceTests
         var vehicleId = Guid.NewGuid();
         var bookingId = Guid.NewGuid();
         var request = new CreateReviewRequest(vehicleId, bookingId, 5, "Great car!");
-        
+
         var vehicle = CreateTestVehicle(vehicleId);
         var booking = CreateTestBooking(bookingId, userId, vehicleId, status);
 
@@ -366,7 +366,7 @@ public class ReviewServiceTests
         var vehicleId = Guid.NewGuid();
         var bookingId = Guid.NewGuid();
         var request = new CreateReviewRequest(vehicleId, bookingId, 5, "Great car!");
-        
+
         var vehicle = CreateTestVehicle(vehicleId);
         var booking = CreateTestBooking(bookingId, userId, vehicleId, BookingStatus.Completed);
         booking.ReturnDate = DateTime.UtcNow.AddDays(1); // Future date
@@ -393,7 +393,7 @@ public class ReviewServiceTests
         var vehicleId = Guid.NewGuid();
         var bookingId = Guid.NewGuid();
         var request = new CreateReviewRequest(vehicleId, bookingId, 5, "Great car!");
-        
+
         var vehicle = CreateTestVehicle(vehicleId);
         var booking = CreateTestCompletedBooking(bookingId, userId, vehicleId);
         var existingReview = CreateTestReview(vehicleId, userId, bookingId, 4, "Good car");
@@ -425,7 +425,7 @@ public class ReviewServiceTests
         var vehicleId = Guid.NewGuid();
         var bookingId = Guid.NewGuid();
         var request = new CreateReviewRequest(vehicleId, bookingId, 4, "Good car!");
-        
+
         var vehicle = CreateTestVehicle(vehicleId);
         var booking = CreateTestBooking(bookingId, userId, vehicleId, status);
         booking.ReturnDate = DateTime.UtcNow.AddDays(-1); // Past date
@@ -455,7 +455,7 @@ public class ReviewServiceTests
         var vehicleId = Guid.NewGuid();
         var bookingId = Guid.NewGuid();
         var request = new CreateReviewRequest(vehicleId, bookingId, rating, "Test comment");
-        
+
         var vehicle = CreateTestVehicle(vehicleId);
         var booking = CreateTestCompletedBooking(bookingId, userId, vehicleId);
         var createdReview = CreateTestReview(vehicleId, userId, bookingId, rating, "Test comment");
@@ -478,7 +478,7 @@ public class ReviewServiceTests
         var vehicleId = Guid.NewGuid();
         var bookingId = Guid.NewGuid();
         var request = new CreateReviewRequest(vehicleId, bookingId, 5, null);
-        
+
         var vehicle = CreateTestVehicle(vehicleId);
         var booking = CreateTestCompletedBooking(bookingId, userId, vehicleId);
         var createdReview = CreateTestReview(vehicleId, userId, bookingId, 5, null);
@@ -577,7 +577,7 @@ public class ReviewServiceTests
         _bookingRepositoryMock.Setup(x => x.GetBookingWithDetailsAsync(booking.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(booking);
 
-        var existingReviews = hasExistingReview 
+        var existingReviews = hasExistingReview
             ? new List<Review> { createdReview }.AsQueryable()
             : new List<Review>().AsQueryable();
         var mockReviewsDbSet = existingReviews.BuildMockDbSet();
@@ -594,9 +594,9 @@ public class ReviewServiceTests
     {
         _vehicleRepositoryMock.Verify(x => x.GetByIdAsync(vehicleId, It.IsAny<CancellationToken>()), Times.Once);
         _bookingRepositoryMock.Verify(x => x.GetBookingWithDetailsAsync(bookingId, It.IsAny<CancellationToken>()), Times.Once);
-        _reviewRepositoryMock.Verify(x => x.AddAsync(It.Is<Review>(r => 
-            r.VehicleId == vehicleId && 
-            r.UserId == userId && 
+        _reviewRepositoryMock.Verify(x => x.AddAsync(It.Is<Review>(r =>
+            r.VehicleId == vehicleId &&
+            r.UserId == userId &&
             r.BookingId == bookingId), It.IsAny<CancellationToken>()), Times.Once);
         _reviewRepositoryMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }

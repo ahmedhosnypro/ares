@@ -63,7 +63,7 @@ public class BookingManagementPropertyTests : IDisposable
 
             // Test pagination for different pages
             var totalPages = (int)Math.Ceiling((double)bookingCount / pageSize);
-            
+
             for (int page = 1; page <= Math.Min(totalPages, 3); page++) // Test first 3 pages max
             {
                 var request = new BookingListRequest(
@@ -197,7 +197,7 @@ public class BookingManagementPropertyTests : IDisposable
 
             // Test date range filter
             var midDate = baseDate.AddDays(bookingCount / 2 * 3);
-            var dateRangeBookings = bookings.Where(b => 
+            var dateRangeBookings = bookings.Where(b =>
                 b.PickupDate >= baseDate && b.PickupDate <= midDate).ToList();
 
             if (dateRangeBookings.Any())
@@ -270,7 +270,7 @@ public class BookingManagementPropertyTests : IDisposable
             var result = _bookingService.GetBookingDetailsAsync(booking.Id, userId).Result;
 
             // Assert - Verify all required fields are present and correct
-            var hasAllRequiredFields = 
+            var hasAllRequiredFields =
                 result.Id == booking.Id &&
                 result.Car != null &&
                 result.Car.Id == vehicleId &&
@@ -648,11 +648,11 @@ public class BookingManagementPropertyTests : IDisposable
         {
             // Create separate vehicle for each booking to avoid conflicts
             var (_, newVehicleId) = CreateTestUserAndVehicle(100 + i);
-            
+
             var pickupDate = baseDate.AddDays(i * 5); // Non-overlapping bookings
             var returnDate = pickupDate.AddDays(2);
             var status = statuses[i % statuses.Length];
-            
+
             var booking = CreateTestBooking(newVehicleId, userId, pickupDate, returnDate, status);
             bookings.Add(booking);
         }

@@ -293,8 +293,8 @@ public class UserProfileServiceTests
 
         // Assert
         Assert.True(result.Success);
-        _contextMock.Verify(x => x.AddUserAddress(It.Is<UserAddress>(a => 
-            a.UserId == userId && 
+        _contextMock.Verify(x => x.AddUserAddress(It.Is<UserAddress>(a =>
+            a.UserId == userId &&
             a.IsPrimary == true &&
             a.AddressLine == request.Address.Street)), Times.Once);
     }
@@ -326,7 +326,7 @@ public class UserProfileServiceTests
         Assert.Contains(userId.ToString(), result);
         Assert.EndsWith(".jpg", result);
 
-        _userRepositoryMock.Verify(x => x.UpdateAsync(It.Is<ApplicationUser>(u => 
+        _userRepositoryMock.Verify(x => x.UpdateAsync(It.Is<ApplicationUser>(u =>
             u.ProfileImage == result), It.IsAny<CancellationToken>()), Times.Once);
         _contextMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -495,7 +495,7 @@ public class UserProfileServiceTests
     private List<Verification> CreateTestVerifications(Guid userId, int count = 2)
     {
         var verifications = new List<Verification>();
-        
+
         if (count >= 1)
         {
             verifications.Add(new Verification
@@ -562,7 +562,7 @@ public class UserProfileServiceTests
         _userRepositoryMock.Setup(x => x.GetByIdAsync(user.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        var userAddresses = userAddress != null 
+        var userAddresses = userAddress != null
             ? new List<UserAddress> { userAddress }.AsQueryable()
             : new List<UserAddress>().AsQueryable();
         var mockUserAddressDbSet = userAddresses.BuildMockDbSet();
@@ -586,12 +586,12 @@ public class UserProfileServiceTests
         _userRepositoryMock.Setup(x => x.GetByIdAsync(user.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        var users = phoneExists 
+        var users = phoneExists
             ? new List<ApplicationUser> { new ApplicationUser { Id = Guid.NewGuid(), PhoneNumber = newPhone } }.AsQueryable()
             : new List<ApplicationUser>().AsQueryable();
         var mockUsersDbSet = users.BuildMockDbSet();
 
-        var userAddresses = userAddress != null 
+        var userAddresses = userAddress != null
             ? new List<UserAddress> { userAddress }.AsQueryable()
             : new List<UserAddress>().AsQueryable();
         var mockUserAddressDbSet = userAddresses.BuildMockDbSet();

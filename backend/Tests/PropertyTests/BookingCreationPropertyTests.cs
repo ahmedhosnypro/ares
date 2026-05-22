@@ -262,7 +262,7 @@ public class BookingCreationPropertyTests : IDisposable
                 try
                 {
                     var response = _bookingService.CreateBookingAsync(request, userId).Result;
-                    
+
                     if (response == null || string.IsNullOrEmpty(response.BookingNumber))
                     {
                         allBookingsSucceeded = false;
@@ -602,7 +602,7 @@ public class BookingCreationPropertyTests : IDisposable
         {
             var pickupDate = baseDate.AddDays(i * 5); // Non-overlapping bookings
             var returnDate = pickupDate.AddDays(2);
-            
+
             var booking = CreateTestBooking(vehicleId, userId, pickupDate, returnDate);
             bookings.Add(booking);
         }

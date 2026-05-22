@@ -79,9 +79,9 @@ public class VehicleSearchPropertyTests : IDisposable
 
             // Assert - Verify pagination properties
             var expectedTotalPages = totalVehicles == 0 ? 0 : (int)Math.Ceiling(totalVehicles / (double)limit);
-            var expectedItemCount = totalVehicles == 0 ? 0 : 
-                page > expectedTotalPages ? 0 : 
-                page == expectedTotalPages ? totalVehicles - ((page - 1) * limit) : 
+            var expectedItemCount = totalVehicles == 0 ? 0 :
+                page > expectedTotalPages ? 0 :
+                page == expectedTotalPages ? totalVehicles - ((page - 1) * limit) :
                 limit;
 
             return result.TotalCount == totalVehicles &&
@@ -328,7 +328,7 @@ public class VehicleSearchPropertyTests : IDisposable
             // Create bookings for some vehicles to make them unavailable
             var searchStartDate = DateTime.UtcNow.AddDays(1);
             var searchEndDate = DateTime.UtcNow.AddDays(3);
-            
+
             CreateOverlappingBookings(vehicles.Take(bookedVehiclesCount), userId, searchStartDate, searchEndDate);
 
             var request = new VehicleSearchRequest(
@@ -388,7 +388,7 @@ public class VehicleSearchPropertyTests : IDisposable
             foreach (var vehicle in result.Data)
             {
                 var actualVehicle = _context.Vehicles.FirstOrDefault(v => v.Id == vehicle.VehicleId);
-                
+
                 if (vehicle.Category != "SUV" ||
                     actualVehicle?.Transmission != "Automatic" ||
                     vehicle.DailyRate < 75m ||
@@ -455,7 +455,7 @@ public class VehicleSearchPropertyTests : IDisposable
     private List<Vehicle> CreateTestVehicles(Guid userId, int count)
     {
         var vehicles = new List<Vehicle>();
-        
+
         for (int i = 0; i < count; i++)
         {
             var vehicle = new Vehicle
@@ -478,7 +478,7 @@ public class VehicleSearchPropertyTests : IDisposable
                 IsActive = true,
                 ApprovedAt = DateTime.UtcNow
             };
-            
+
             vehicles.Add(vehicle);
         }
 
@@ -492,7 +492,7 @@ public class VehicleSearchPropertyTests : IDisposable
         var vehicles = new List<Vehicle>();
         var categories = new[] { "SUV", "Sedan", "Hatchback", "Coupe" };
         var transmissions = new[] { "Automatic", "Manual" };
-        
+
         for (int i = 0; i < count; i++)
         {
             var vehicle = new Vehicle
@@ -515,7 +515,7 @@ public class VehicleSearchPropertyTests : IDisposable
                 IsActive = true,
                 ApprovedAt = DateTime.UtcNow
             };
-            
+
             vehicles.Add(vehicle);
         }
 
@@ -527,7 +527,7 @@ public class VehicleSearchPropertyTests : IDisposable
     private List<Vehicle> CreateVehiclesForSorting(Guid userId, int count)
     {
         var vehicles = new List<Vehicle>();
-        
+
         for (int i = 0; i < count; i++)
         {
             var vehicle = new Vehicle
@@ -550,7 +550,7 @@ public class VehicleSearchPropertyTests : IDisposable
                 IsActive = true,
                 ApprovedAt = DateTime.UtcNow
             };
-            
+
             vehicles.Add(vehicle);
 
             // Create some reviews for rating-based sorting

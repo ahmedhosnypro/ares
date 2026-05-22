@@ -108,9 +108,9 @@ public class RepositoryPaginationPropertyTests : IDisposable
 
             // Assert - Verify pagination properties
             var expectedTotalPages = (int)Math.Ceiling(totalBookings / (double)pageSize);
-            var expectedItemCount = totalBookings == 0 ? 0 : 
-                page > expectedTotalPages ? 0 : 
-                page == expectedTotalPages ? totalBookings - ((page - 1) * pageSize) : 
+            var expectedItemCount = totalBookings == 0 ? 0 :
+                page > expectedTotalPages ? 0 :
+                page == expectedTotalPages ? totalBookings - ((page - 1) * pageSize) :
                 pageSize;
 
             return result.TotalCount == totalBookings &&
@@ -216,9 +216,9 @@ public class RepositoryPaginationPropertyTests : IDisposable
 
             // Assert - Verify pagination properties
             var expectedTotalPages = (int)Math.Ceiling(totalPayments / (double)pageSize);
-            var expectedItemCount = totalPayments == 0 ? 0 : 
-                page > expectedTotalPages ? 0 : 
-                page == expectedTotalPages ? totalPayments - ((page - 1) * pageSize) : 
+            var expectedItemCount = totalPayments == 0 ? 0 :
+                page > expectedTotalPages ? 0 :
+                page == expectedTotalPages ? totalPayments - ((page - 1) * pageSize) :
                 pageSize;
 
             return result.TotalCount == totalPayments &&

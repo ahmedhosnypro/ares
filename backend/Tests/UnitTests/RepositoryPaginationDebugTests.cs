@@ -48,11 +48,11 @@ public class RepositoryPaginationDebugTests : IDisposable
         Assert.Equal(1, result.Page);
         Assert.Equal(1, result.PageSize);
         Assert.Empty(result.Data);
-        
+
         // Debug the failing assertion
         var expectedTotalPages = 0;
         var actualTotalPages = result.TotalPages;
-        
+
         Assert.Equal(expectedTotalPages, actualTotalPages);
         Assert.False(result.HasPreviousPage);
         Assert.False(result.HasNextPage);

@@ -77,12 +77,12 @@ public class LocationAutocompletePropertyTests : IDisposable
             {
                 var shouldMatch = i % 3 == 0; // Every 3rd location should match
                 var location = CreateTestLocation(userId, i, query, shouldMatch);
-                
+
                 if (shouldMatch)
                 {
                     matchingLocations++;
                 }
-                
+
                 locations.Add(location);
             }
 
@@ -98,7 +98,7 @@ public class LocationAutocompletePropertyTests : IDisposable
             {
                 var displayTextMatches = suggestion.DisplayText.ToLower().Contains(queryLower);
                 var addressMatches = suggestion.Address.ToLower().Contains(queryLower);
-                
+
                 if (!displayTextMatches && !addressMatches)
                 {
                     return false; // Found a suggestion that doesn't match the query
@@ -270,7 +270,7 @@ public class LocationAutocompletePropertyTests : IDisposable
 
         // Ensure minimum 3 characters
         var baseQuery = input.Length >= 3 ? input.Substring(0, Math.Min(input.Length, 50)) : input + "test";
-        
+
         // Clean up the query to be more realistic
         return baseQuery.Replace("\0", "").Replace("\n", "").Replace("\r", "").Trim();
     }

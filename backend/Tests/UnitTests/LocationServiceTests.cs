@@ -213,7 +213,7 @@ public class LocationServiceTests
             Assert.Contains(query, suggestions[0].DisplayText);
         }
 
-        _locationRepositoryMock.Verify(x => x.AutocompleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), 
+        _locationRepositoryMock.Verify(x => x.AutocompleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Exactly(testCases.Length));
     }
 
