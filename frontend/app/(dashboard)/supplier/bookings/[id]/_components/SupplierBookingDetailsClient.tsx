@@ -116,9 +116,9 @@ function FieldRow({ label, value }: FieldRowProps) {
       >
         {label}
       </Typography>
-      <Typography variant="body2" sx={{ fontWeight: 600, textAlign: "right" }}>
+      <Box sx={{ typography: "body2", fontWeight: 600, textAlign: "right" }}>
         {value ?? "—"}
-      </Typography>
+      </Box>
     </Stack>
   );
 }
