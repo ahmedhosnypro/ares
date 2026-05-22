@@ -41,6 +41,7 @@ namespace Backend.Infrastructure.Data
         public DbSet<BookingCancellation> BookingCancellations { get; set; }
         public DbSet<PaymentMethod> PaymentMethods { get; set; }
         public DbSet<InspectionPhoto> InspectionPhotos { get; set; }
+        public DbSet<InspectionImage> InspectionImages { get; set; }
         public DbSet<VehicleAvailability> VehicleAvailabilities { get; set; }
         // Explicit interface implementation for IApplicationDbContext
         IQueryable<Vehicle> IApplicationDbContext.Vehicles => Vehicles;

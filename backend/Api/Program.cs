@@ -124,6 +124,9 @@ builder.Services.AddScoped<ISupplierVehicleService, SupplierVehicleService>();
 builder.Services.AddScoped<ISupplierBookingService, SupplierBookingService>();
 builder.Services.AddScoped<ISupplierEarningsService, SupplierEarningsService>();
 builder.Services.AddScoped<ISupplierNotificationService, SupplierNotificationService>();
+// ─── Inspector / Inspection workflow ──────────────────────────────────
+builder.Services.AddScoped<IInspectorManagementService, InspectorManagementService>();
+builder.Services.AddScoped<IInspectionService, InspectionService>();
 builder.Services.AddScoped<Backend.Application.Services.ISettingsService, Backend.Infrastructure.Services.SettingsService>();
 builder.Services.AddHostedService<Backend.Infrastructure.Services.BookingStatusUpdateService>();
 

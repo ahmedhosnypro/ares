@@ -77,7 +77,7 @@ public static class DbInitializer
         RoleManager<IdentityRole<Guid>> roleManager,
         ILogger logger)
     {
-        foreach (var role in new[] { "Customer", "Admin", "Supplier" })
+        foreach (var role in new[] { "Customer", "Admin", "Supplier", "Inspector" })
         {
             if (await roleManager.RoleExistsAsync(role))
             {
