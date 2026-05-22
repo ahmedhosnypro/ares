@@ -23,18 +23,18 @@ import { logger } from "@/utils/logger";
  * accepts. Anything else (Confirmed / inspection-workflow values) is
  * intentionally NOT exposed to the operator here.
  */
-export const OPERATIONAL_STATUSES = ["Pending", "Active", "Completed", "Cancelled"] as const;
-export type OperationalStatus = (typeof OPERATIONAL_STATUSES)[number];
+const OPERATIONAL_STATUSES = ["Pending", "Active", "Completed", "Cancelled"] as const;
+type OperationalStatus = (typeof OPERATIONAL_STATUSES)[number];
 
 interface ChangeStatusModalProps {
-  open: boolean;
-  bookingId: string | null;
-  currentStatus?: string | null;
-  accessToken?: string;
+  readonly open: boolean;
+  readonly bookingId: string | null;
+  readonly currentStatus?: string | null;
+  readonly accessToken?: string;
   /** Called after a successful status change. */
-  onSuccess?: (newStatus: OperationalStatus) => void;
+  readonly onSuccess?: (newStatus: OperationalStatus) => void;
   /** Called on close (cancel or backdrop click). */
-  onClose: () => void;
+  readonly onClose: () => void;
 }
 
 /**
@@ -57,10 +57,8 @@ export default function ChangeStatusModal({
 
   useEffect(() => {
     if (open) {
-      const normalized = (currentStatus ?? "").toString();
-      const match = OPERATIONAL_STATUSES.find(
-        s => s.toLowerCase() === normalized.toLowerCase()
-      );
+      const normalized = currentStatus ?? "";
+      const match = OPERATIONAL_STATUSES.find(s => s.toLowerCase() === normalized.toLowerCase());
       setSelected(match ?? "");
       setError(null);
     }
@@ -77,9 +75,7 @@ export default function ChangeStatusModal({
         onClose();
       } catch (e) {
         logger.error("Failed to change booking status", e);
-        setError(
-          e instanceof Error ? e.message : "Failed to change status. Please try again."
-        );
+        setError(e instanceof Error ? e.message : "Failed to change status. Please try again.");
       } finally {
         setSubmitting(false);
       }
@@ -104,11 +100,7 @@ export default function ChangeStatusModal({
               <Typography variant="body2" color="text.secondary">
                 Current:
               </Typography>
-              <Chip
-                size="small"
-                label={currentStatus}
-                sx={{ fontWeight: 600, textTransform: "capitalize" }}
-              />
+              <Chip size="small" label={currentStatus} sx={{ fontWeight: 600, textTransform: "capitalize" }} />
             </Stack>
           )}
 
@@ -154,12 +146,7 @@ export default function ChangeStatusModal({
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button
-          variant="outlined"
-          disabled={submitting}
-          onClick={onClose}
-          sx={{ borderRadius: 2 }}
-        >
+        <Button variant="outlined" disabled={submitting} onClick={onClose} sx={{ borderRadius: 2 }}>
           Cancel
         </Button>
         <Button

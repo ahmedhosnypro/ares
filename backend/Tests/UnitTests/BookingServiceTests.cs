@@ -41,7 +41,7 @@ public class BookingServiceTests
         var vehicleId = Guid.NewGuid();
         var pickupDate = DateTime.UtcNow.AddDays(1);
         var returnDate = DateTime.UtcNow.AddDays(3);
-        
+
         var request = new CreateBookingRequest(
             VehicleId: vehicleId,
             PickupLocationId: Guid.NewGuid(),
@@ -96,7 +96,7 @@ public class BookingServiceTests
         var vehicleId = Guid.NewGuid();
         var pickupDate = DateTime.UtcNow.AddDays(1);
         var returnDate = DateTime.UtcNow.AddDays(3);
-        
+
         var request = new CreateBookingRequest(
             VehicleId: vehicleId,
             PickupLocationId: Guid.NewGuid(),
@@ -128,7 +128,7 @@ public class BookingServiceTests
         var vehicleId = Guid.NewGuid();
         var pickupDate = DateTime.UtcNow.AddDays(1);
         var returnDate = DateTime.UtcNow.AddDays(3);
-        
+
         var request = new CreateBookingRequest(
             VehicleId: vehicleId,
             PickupLocationId: Guid.NewGuid(),
@@ -163,7 +163,7 @@ public class BookingServiceTests
         var vehicleId = Guid.NewGuid();
         var pickupDate = DateTime.UtcNow.AddDays(3);
         var returnDate = DateTime.UtcNow.AddDays(1); // Return date before pickup date
-        
+
         var request = new CreateBookingRequest(
             VehicleId: vehicleId,
             PickupLocationId: Guid.NewGuid(),
@@ -192,7 +192,7 @@ public class BookingServiceTests
         var driverId = Guid.NewGuid();
         var pickupDate = DateTime.UtcNow.AddDays(1);
         var returnDate = DateTime.UtcNow.AddDays(5);
-        
+
         var request = new CreateBookingRequest(
             VehicleId: vehicleId,
             PickupLocationId: Guid.NewGuid(),
@@ -231,8 +231,8 @@ public class BookingServiceTests
         Assert.Equal(400.00m, result.TotalPrice); // 4 days * $100
         Assert.Equal(BookingStatus.Pending.ToString(), result.Status);
 
-        _bookingRepositoryMock.Verify(x => x.AddAsync(It.Is<Booking>(b => 
-            b.DriverId == driverId && 
+        _bookingRepositoryMock.Verify(x => x.AddAsync(It.Is<Booking>(b =>
+            b.DriverId == driverId &&
             b.RequiresDriver == true &&
             b.TotalDays == 4), It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -250,7 +250,7 @@ public class BookingServiceTests
         var vehicleId = Guid.NewGuid();
         var pickupDate = DateTime.UtcNow.AddDays(1);
         var returnDate = pickupDate.AddDays(days);
-        
+
         var request = new CreateBookingRequest(
             VehicleId: vehicleId,
             PickupLocationId: Guid.NewGuid(),
@@ -286,8 +286,8 @@ public class BookingServiceTests
 
         // Assert
         Assert.Equal(expectedTotal, result.TotalPrice);
-        _bookingRepositoryMock.Verify(x => x.AddAsync(It.Is<Booking>(b => 
-            b.TotalDays == days && 
+        _bookingRepositoryMock.Verify(x => x.AddAsync(It.Is<Booking>(b =>
+            b.TotalDays == days &&
             b.TotalPrice == expectedTotal), It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -299,7 +299,7 @@ public class BookingServiceTests
         var vehicleId = Guid.NewGuid();
         var pickupDate = DateTime.UtcNow.AddDays(1);
         var returnDate = DateTime.UtcNow.AddDays(2);
-        
+
         var request = new CreateBookingRequest(
             VehicleId: vehicleId,
             PickupLocationId: Guid.NewGuid(),
@@ -677,6 +677,10 @@ public class BookingServiceTests
             Language: "en"
         );
 
+        var emptyPayments = new List<BookingPayment>().AsQueryable();
+        var paymentsDbSet = CreateMockDbSet(emptyPayments);
+        _contextMock.Setup(x => x.Payments).Returns(paymentsDbSet.Object);
+
         _bookingRepositoryMock.Setup(x => x.GetUserBookingsAsync(
             userId, null, null, null, null, null, null, null, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(bookings);
@@ -732,6 +736,10 @@ public class BookingServiceTests
             Size: 5,
             Language: "en"
         );
+
+        var emptyPayments = new List<BookingPayment>().AsQueryable();
+        var paymentsDbSet = CreateMockDbSet(emptyPayments);
+        _contextMock.Setup(x => x.Payments).Returns(paymentsDbSet.Object);
 
         _bookingRepositoryMock.Setup(x => x.GetUserBookingsAsync(
             userId, suppliers, statuses, carId, fromDate, toDate, keyword, pickupLocation, dropOffLocation, It.IsAny<CancellationToken>()))

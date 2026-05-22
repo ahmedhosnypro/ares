@@ -190,18 +190,18 @@ export default function BookingsClient() {
   // ── Renderers ────────────────────────────────────────────────────────
   const renderTableBody = () => {
     if (loading) {
-      return (
-        <TableRow>
+      return [
+        <TableRow key="loading">
           <TableCell colSpan={8} align="center" sx={{ py: 10 }}>
             <CircularProgress />
           </TableCell>
-        </TableRow>
-      );
+        </TableRow>,
+      ];
     }
 
     if (bookings.length === 0) {
-      return (
-        <TableRow>
+      return [
+        <TableRow key="empty">
           <TableCell colSpan={8} align="center" sx={{ py: 10 }}>
             <Box sx={{ textAlign: "center", opacity: 0.6 }}>
               <Avatar
@@ -223,8 +223,8 @@ export default function BookingsClient() {
               </Typography>
             </Box>
           </TableCell>
-        </TableRow>
-      );
+        </TableRow>,
+      ];
     }
 
     return bookings.map((booking: Booking) => {
@@ -270,9 +270,7 @@ export default function BookingsClient() {
                 <CarIcon fontSize="small" />
               </Avatar>
               <Box>
-                <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
-                  {booking.car?.name ?? "Unknown Vehicle"}
-                </Typography>
+                <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{booking.car?.name ?? "Unknown Vehicle"}</Typography>
                 <Typography variant="caption" color="text.secondary">
                   {booking.car?.plateNumber ?? "No Plate"}
                 </Typography>
@@ -412,11 +410,7 @@ export default function BookingsClient() {
           { label: "Pending Bookings", value: stats?.pendingBookings ?? "-", color: "warning" },
           {
             label: "Completed Bookings",
-            value:
-              stats?.totalCompletedBookings ??
-              stats?.completedBookings ??
-              stats?.completedToday ??
-              "-",
+            value: stats?.totalCompletedBookings ?? stats?.completedBookings ?? stats?.completedToday ?? "-",
             color: "info",
           },
         ].map(stat => (
@@ -428,8 +422,7 @@ export default function BookingsClient() {
                 borderRadius: 3,
                 border: "1px solid",
                 borderColor: "divider",
-                bgcolor: theme =>
-                  alpha(theme.palette[stat.color as "success" | "warning" | "info"].main, 0.04),
+                bgcolor: theme => alpha(theme.palette[stat.color as "success" | "warning" | "info"].main, 0.04),
                 display: "flex",
                 flexDirection: "column",
                 gap: 1,
@@ -459,10 +452,7 @@ export default function BookingsClient() {
       </Stack>
 
       {/* ── SEARCH & TABLE SECTION ── */}
-      <Paper
-        elevation={0}
-        sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" }}
-      >
+      <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
         {/* Filter Bar */}
         <Stack
           direction={{ xs: "column", md: "row" }}
@@ -654,10 +644,7 @@ export default function BookingsClient() {
           Change Status
         </MenuItem>
         <Divider />
-        <MenuItem
-          onClick={handleDeleteClick}
-          sx={{ fontSize: 14, gap: 1.5, color: "error.main", fontWeight: 600 }}
-        >
+        <MenuItem onClick={handleDeleteClick} sx={{ fontSize: 14, gap: 1.5, color: "error.main", fontWeight: 600 }}>
           <DeleteIcon fontSize="small" />
           Delete Booking
         </MenuItem>
