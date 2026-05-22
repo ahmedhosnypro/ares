@@ -198,14 +198,15 @@ export default function CreateBookingClient() {
 
   // ── Derived pricing ───────────────────────────────────────────────
   const dailyRate = vehicle?.dailyRate ?? 0;
-  const { totalDays, totalPrice, datesValid } = useMemo(() => {
+  const { totalDays, totalPrice, datesValid, daysString } = useMemo(() => {
     const p = pickupDate ? new Date(pickupDate) : null;
     const r = returnDate ? new Date(returnDate) : null;
     if (!p || !r || isNaN(p.getTime()) || isNaN(r.getTime()) || p >= r) {
-      return { totalDays: 0, totalPrice: 0, datesValid: false };
+      return { totalDays: 0, totalPrice: 0, datesValid: false, daysString: "" };
     }
     const days = Math.round((r.getTime() - p.getTime()) / (1000 * 60 * 60 * 24));
-    return { totalDays: days, totalPrice: days * dailyRate, datesValid: true };
+    const daysString = days === 1 ? "" : "s";
+    return { totalDays: days, totalPrice: days * dailyRate, datesValid: true, daysString };
   }, [pickupDate, returnDate, dailyRate]);
 
   // ── Validity checks for each section ──────────────────────────────
@@ -217,7 +218,7 @@ export default function CreateBookingClient() {
   // ── Submit ────────────────────────────────────────────────────────
   const handleSubmit = () => {
     void (async () => {
-      if (!session?.accessToken || !canSubmit || !customer || !vehicle) return;
+      if (!session?.accessToken || !customer || !vehicle || !datesValid || submitting) return;
       setSubmitting(true);
       setError(null);
       try {
@@ -304,7 +305,12 @@ export default function CreateBookingClient() {
         {/* ── LEFT — sections stack ── */}
         <Stack spacing={3}>
           {/* 1. Customer Selection */}
-          <SectionCard step={1} title="Customer" subtitle="Search and pick the customer for this booking" done={customerDone}>
+          <SectionCard
+            step={1}
+            title="Customer"
+            subtitle="Search and pick the customer for this booking"
+            done={customerDone}
+          >
             <TextField
               placeholder="Search by name, email or phone…"
               value={customerSearch}
@@ -393,7 +399,14 @@ export default function CreateBookingClient() {
                       }}
                     >
                       <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-                        <Avatar sx={{ width: 32, height: 32, bgcolor: alpha(theme.palette.primary.main, 0.08), color: "primary.main" }}>
+                        <Avatar
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            bgcolor: alpha(theme.palette.primary.main, 0.08),
+                            color: "primary.main",
+                          }}
+                        >
                           <PersonIcon fontSize="small" />
                         </Avatar>
                         <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -460,7 +473,12 @@ export default function CreateBookingClient() {
                     <Avatar
                       variant="rounded"
                       src={toImageUrl(vehicle.thumbnail ?? undefined)}
-                      sx={{ width: 48, height: 48, bgcolor: alpha(theme.palette.primary.main, 0.08), color: "primary.main" }}
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        bgcolor: alpha(theme.palette.primary.main, 0.08),
+                        color: "primary.main",
+                      }}
                     >
                       <CarIcon />
                     </Avatar>
@@ -522,7 +540,12 @@ export default function CreateBookingClient() {
                         <Avatar
                           variant="rounded"
                           src={toImageUrl(v.thumbnail ?? undefined)}
-                          sx={{ width: 44, height: 44, bgcolor: alpha(theme.palette.primary.main, 0.08), color: "primary.main" }}
+                          sx={{
+                            width: 44,
+                            height: 44,
+                            bgcolor: alpha(theme.palette.primary.main, 0.08),
+                            color: "primary.main",
+                          }}
                         >
                           <CarIcon fontSize="small" />
                         </Avatar>
@@ -546,7 +569,12 @@ export default function CreateBookingClient() {
           </SectionCard>
 
           {/* 3. Booking Information */}
-          <SectionCard step={3} title="Booking Information" subtitle="Dates and pickup / dropoff details" done={datesDone}>
+          <SectionCard
+            step={3}
+            title="Booking Information"
+            subtitle="Dates and pickup / dropoff details"
+            done={datesDone}
+          >
             <Box
               sx={{
                 display: "grid",
@@ -574,9 +602,7 @@ export default function CreateBookingClient() {
                 slotProps={{ inputLabel: { shrink: true } }}
                 error={!datesValid && pickupDate !== "" && returnDate !== ""}
                 helperText={
-                  !datesValid && pickupDate !== "" && returnDate !== ""
-                    ? "Return date must be after pickup date"
-                    : ""
+                  !datesValid && pickupDate !== "" && returnDate !== "" ? "Return date must be after pickup date" : ""
                 }
                 fullWidth
               />
@@ -646,7 +672,7 @@ export default function CreateBookingClient() {
                 Total Days
               </Typography>
               <Typography sx={{ fontWeight: 600 }}>
-                {datesValid ? `${String(totalDays)} day${totalDays === 1 ? "" : "s"}` : "—"}
+                {datesValid ? `${String(totalDays)} day${daysString}` : "—"}
               </Typography>
             </Stack>
             <Divider />
@@ -659,12 +685,9 @@ export default function CreateBookingClient() {
               </Typography>
             </Stack>
           </Stack>
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ display: "block", mt: 2, lineHeight: 1.5 }}
-          >
-            Pricing updates live as you change vehicle and dates. The server confirms the final amount on save. Payment is collected through a separate flow — creating a booking does not require completing payment.
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 2, lineHeight: 1.5 }}>
+            Pricing updates live as you change vehicle and dates. The server confirms the final amount on save. Payment
+            is collected through a separate flow — creating a booking does not require completing payment.
           </Typography>
         </Paper>
       </Box>
