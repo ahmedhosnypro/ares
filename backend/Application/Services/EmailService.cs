@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Mail;
 using Microsoft.Extensions.Configuration;
 
-namespace Backend.Application.Services; 
+namespace Backend.Application.Services;
 
 public class EmailService : IEmailService
 {

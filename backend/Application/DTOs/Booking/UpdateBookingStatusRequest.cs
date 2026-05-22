@@ -8,6 +8,6 @@ namespace Backend.Application.DTOs.Booking;
 public record UpdateBookingStatusRequest(
     [Required]
     string Status,
-    
+
     string? Remarks
 );

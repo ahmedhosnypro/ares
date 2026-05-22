@@ -57,8 +57,8 @@ public class VehicleService : IVehicleService
         {
             var averageRating = await GetAverageRatingAsync(vehicle.Id, cancellationToken);
             var reviewCount = await GetReviewCountAsync(vehicle.Id, cancellationToken);
-            var primaryImage = vehicle.Images.FirstOrDefault(i => i.IsPrimary)?.ImageUrl 
-                             ?? vehicle.Images.FirstOrDefault()?.ImageUrl 
+            var primaryImage = vehicle.Images.FirstOrDefault(i => i.IsPrimary)?.ImageUrl
+                             ?? vehicle.Images.FirstOrDefault()?.ImageUrl
                              ?? string.Empty;
 
             vehicleDtos.Add(new VehicleListDto(
@@ -646,11 +646,11 @@ public class VehicleService : IVehicleService
         }
 
         // Check if license plate already exists for another vehicle
-        if (!string.IsNullOrWhiteSpace(request.LicensePlate) && 
+        if (!string.IsNullOrWhiteSpace(request.LicensePlate) &&
             request.LicensePlate != vehicle.LicensePlate)
         {
             var existingVehicle = await _context.Vehicles
-                .FirstOrDefaultAsync(v => v.LicensePlate == request.LicensePlate && v.Id != vehicleId, 
+                .FirstOrDefaultAsync(v => v.LicensePlate == request.LicensePlate && v.Id != vehicleId,
                     cancellationToken);
 
             if (existingVehicle != null)
@@ -662,37 +662,37 @@ public class VehicleService : IVehicleService
         // Update only provided fields
         if (!string.IsNullOrWhiteSpace(request.Make))
             vehicle.Make = request.Make;
-        
+
         if (!string.IsNullOrWhiteSpace(request.Model))
             vehicle.Model = request.Model;
-        
+
         if (request.Year.HasValue)
             vehicle.Year = request.Year.Value;
-        
+
         if (!string.IsNullOrWhiteSpace(request.Color))
             vehicle.Color = request.Color;
-        
+
         if (!string.IsNullOrWhiteSpace(request.LicensePlate))
             vehicle.LicensePlate = request.LicensePlate;
-        
+
         if (!string.IsNullOrWhiteSpace(request.Transmission))
             vehicle.Transmission = request.Transmission;
-        
+
         if (!string.IsNullOrWhiteSpace(request.FuelType))
             vehicle.FuelType = request.FuelType;
-        
+
         if (request.Seats.HasValue)
             vehicle.Seats = request.Seats.Value;
-        
+
         if (request.PricePerDay.HasValue)
             vehicle.PricePerDay = request.PricePerDay.Value;
-        
+
         if (!string.IsNullOrWhiteSpace(request.LocationCity))
             vehicle.LocationCity = request.LocationCity;
-        
+
         if (request.Description != null)
             vehicle.Description = request.Description;
-        
+
         // Capture the previous status BEFORE we mutate `vehicle.Status` so we
         // can detect a Pending → Approved / Rejected transition and fire the
         // matching supplier notification once the save succeeds.

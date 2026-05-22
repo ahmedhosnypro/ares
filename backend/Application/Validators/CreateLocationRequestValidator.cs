@@ -51,9 +51,9 @@ public class CreateLocationRequestValidator : AbstractValidator<CreateLocationRe
 
         // At least one location field should be provided
         RuleFor(x => x)
-            .Must(x => !string.IsNullOrWhiteSpace(x.AddressLine) || 
-                      !string.IsNullOrWhiteSpace(x.City) || 
-                      !string.IsNullOrWhiteSpace(x.Governorate) || 
+            .Must(x => !string.IsNullOrWhiteSpace(x.AddressLine) ||
+                      !string.IsNullOrWhiteSpace(x.City) ||
+                      !string.IsNullOrWhiteSpace(x.Governorate) ||
                       !string.IsNullOrWhiteSpace(x.Country))
             .WithMessage("At least one location field (Address Line, City, Governorate, or Country) must be provided");
     }

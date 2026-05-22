@@ -50,7 +50,7 @@ public class CreateUserRequestValidator : AbstractValidator<CreateUserRequest>
         RuleFor(x => x.Status)
             .MaximumLength(50)
             .WithMessage("Status must not exceed 50 characters")
-            .Must(status => string.IsNullOrWhiteSpace(status) || 
+            .Must(status => string.IsNullOrWhiteSpace(status) ||
                            new[] { "Active", "Inactive", "Suspended", "Pending" }.Contains(status))
             .WithMessage("Status must be one of: Active, Inactive, Suspended, Pending")
             .When(x => !string.IsNullOrWhiteSpace(x.Status));

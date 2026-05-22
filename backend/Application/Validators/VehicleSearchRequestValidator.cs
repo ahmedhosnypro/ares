@@ -39,7 +39,7 @@ public class VehicleSearchRequestValidator : AbstractValidator<VehicleSearchRequ
             .LessThanOrEqualTo(100).WithMessage("Limit must not exceed 100");
 
         RuleFor(x => x.SortBy)
-            .Must(sortBy => string.IsNullOrWhiteSpace(sortBy) || 
+            .Must(sortBy => string.IsNullOrWhiteSpace(sortBy) ||
                            new[] { "price", "distance", "rating" }.Contains(sortBy.ToLower()))
             .When(x => !string.IsNullOrWhiteSpace(x.SortBy))
             .WithMessage("SortBy must be one of: price, distance, rating");

@@ -98,7 +98,7 @@ public class PaymentService : IPaymentService
         // We only store the reference and method type in the payment record
 
         await _paymentRepository.AddAsync(payment, cancellationToken);
-        
+
         // Save all changes (both booking and payment) since they share the same context
         await _context.SaveChangesAsync(cancellationToken);
 

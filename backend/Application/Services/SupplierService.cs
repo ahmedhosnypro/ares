@@ -64,8 +64,8 @@ public class SupplierService : ISupplierService
         {
             var roles = await _userManager.GetRolesAsync(supplier);
             var companyProfile = await _supplierRepository.GetCompanyProfileAsync(supplier.Id, cancellationToken);
-            
-            var companyProfileDto = companyProfile != null 
+
+            var companyProfileDto = companyProfile != null
                 ? new CompanyProfileDto(
                     companyProfile.CompanyName,
                     companyProfile.CommercialRegistrationNumber,
@@ -125,8 +125,8 @@ public class SupplierService : ISupplierService
 
         var roles = await _userManager.GetRolesAsync(supplier);
         var companyProfile = await _supplierRepository.GetCompanyProfileAsync(supplierId, cancellationToken);
-        
-        var companyProfileDto = companyProfile != null 
+
+        var companyProfileDto = companyProfile != null
             ? new CompanyProfileDto(
                 companyProfile.CompanyName,
                 companyProfile.CommercialRegistrationNumber,

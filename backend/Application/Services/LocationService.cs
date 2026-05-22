@@ -77,9 +77,9 @@ public class LocationService : ILocationService
         string keyword,
         CancellationToken cancellationToken = default)
     {
-        var filter = string.IsNullOrWhiteSpace(keyword) 
-            ? null 
-            : (System.Linq.Expressions.Expression<Func<UserAddress, bool>>)(l => 
+        var filter = string.IsNullOrWhiteSpace(keyword)
+            ? null
+            : (System.Linq.Expressions.Expression<Func<UserAddress, bool>>)(l =>
                 (l.City != null && l.City.Contains(keyword)) ||
                 (l.Governorate != null && l.Governorate.Contains(keyword)) ||
                 (l.Country != null && l.Country.Contains(keyword)) ||
@@ -233,7 +233,7 @@ public class LocationService : ILocationService
 
         await _locationRepository.DeleteAsync(location, cancellationToken);
         await _locationRepository.SaveChangesAsync(cancellationToken);
-        
+
         return true;
     }
 

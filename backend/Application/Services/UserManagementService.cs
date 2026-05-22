@@ -62,7 +62,7 @@ public class UserManagementService : IUserManagementService
 
         // Build filter expression
         System.Linq.Expressions.Expression<Func<ApplicationUser, bool>>? predicate = null;
-        
+
         var hasRoleFilter = userIdsInRole != null;
         var hasStatusFilter = !string.IsNullOrEmpty(filter?.Status);
         var hasSearchTerm = !string.IsNullOrEmpty(filter?.SearchTerm);
@@ -72,12 +72,12 @@ public class UserManagementService : IUserManagementService
             var searchTerm = filter?.SearchTerm;
             var status = filter?.Status;
 
-            predicate = u => 
+            predicate = u =>
                 (!hasRoleFilter || userIdsInRole!.Contains(u.Id)) &&
                 (!hasStatusFilter || u.Status == status) &&
-                (!hasSearchTerm || 
-                    (u.FirstName != null && u.FirstName.Contains(searchTerm!)) || 
-                    (u.LastName != null && u.LastName.Contains(searchTerm!)) || 
+                (!hasSearchTerm ||
+                    (u.FirstName != null && u.FirstName.Contains(searchTerm!)) ||
+                    (u.LastName != null && u.LastName.Contains(searchTerm!)) ||
                     (u.Email != null && u.Email.Contains(searchTerm!)));
         }
 
@@ -296,7 +296,7 @@ public class UserManagementService : IUserManagementService
         if (request.Roles != null)
         {
             var currentRoles = await _userManager.GetRolesAsync(user);
-            
+
             // Remove current roles
             if (currentRoles.Any())
             {

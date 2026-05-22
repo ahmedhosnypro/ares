@@ -83,10 +83,10 @@ public class AuthService : IAuthService
 
         // Generate email confirmation token
         var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-        
+
         // Encode the token for use in URL
         var encodedToken = System.Web.HttpUtility.UrlEncode(emailToken);
-        
+
         // Construct frontend verification URL
         // In a real scenario, the frontend URL should come from configuration
         var frontendUrl = _configuration["Frontend:Url"] ?? "http://localhost:3000";
@@ -170,7 +170,7 @@ public class AuthService : IAuthService
 
         // Verify password
         var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: true);
-        
+
         if (!result.Succeeded)
         {
             if (result.IsLockedOut)
@@ -194,13 +194,13 @@ public class AuthService : IAuthService
         // Generate and store refresh token
         var ipAddress = "0.0.0.0"; // Will be set from controller
         var refreshToken = CreateRefreshToken(ipAddress);
-        
+
         // Initialize refresh tokens list if null
         if (user.RefreshTokens == null)
         {
             user.RefreshTokens = new List<RefreshToken>();
         }
-        
+
         user.RefreshTokens.Add(refreshToken);
 
         // Remove old refresh tokens
@@ -470,8 +470,8 @@ public class AuthService : IAuthService
     {
         // Remove refresh tokens older than X days (keep for audit trail)
         var ttl = int.Parse(_configuration["Jwt:RefreshTokenTTL"] ?? "90");
-        user.RefreshTokens.RemoveAll(x => 
-            !x.IsActive && 
+        user.RefreshTokens.RemoveAll(x =>
+            !x.IsActive &&
             x.CreatedAt.AddDays(ttl) <= DateTime.UtcNow);
     }
 
@@ -482,7 +482,7 @@ public class AuthService : IAuthService
         {
             return new List<string>();
         }
-        
+
         return new List<string> { "Customer", "Supplier", "Admin" };
     }
 

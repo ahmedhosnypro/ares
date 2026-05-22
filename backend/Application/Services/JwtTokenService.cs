@@ -19,11 +19,11 @@ public class JwtTokenService : IJwtTokenService
 
     public string GenerateToken(ApplicationUser user, IList<string> roles, bool stayConnected = false)
     {
-        var secretKey = _configuration["Jwt:SecretKey"] 
+        var secretKey = _configuration["Jwt:SecretKey"]
             ?? throw new InvalidOperationException("JWT SecretKey is not configured");
-        var issuer = _configuration["Jwt:Issuer"] 
+        var issuer = _configuration["Jwt:Issuer"]
             ?? throw new InvalidOperationException("JWT Issuer is not configured");
-        var audience = _configuration["Jwt:Audience"] 
+        var audience = _configuration["Jwt:Audience"]
             ?? throw new InvalidOperationException("JWT Audience is not configured");
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));

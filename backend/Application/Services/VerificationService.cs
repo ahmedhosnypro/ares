@@ -51,7 +51,7 @@ namespace Backend.Application.Services
             // 1. Check if user already has an approved verification
             var hasApproved = await _context.Verifications
                 .AnyAsync(v => v.UserId == userId && v.Status == VerificationRequestStatus.Approved.ToString(), cancellationToken);
-            
+
             if (hasApproved)
             {
                 throw new ConflictException("User is already verified and cannot submit another request.");

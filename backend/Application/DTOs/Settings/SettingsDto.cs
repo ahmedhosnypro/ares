@@ -11,7 +11,7 @@ public class SettingsDto
 
     [Required]
     public string Language { get; set; } = "en";
-    
+
     [Required]
     public string Currency { get; set; } = "USD";
 }

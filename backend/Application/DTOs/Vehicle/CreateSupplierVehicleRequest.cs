@@ -16,16 +16,16 @@ namespace Backend.Application.DTOs.Vehicle;
 /// First version supports a single image URL (<see cref="ImageUrl"/>).
 /// </summary>
 public record CreateSupplierVehicleRequest(
-    [Required] [MaxLength(100)] string Make,
-    [Required] [MaxLength(100)] string Model,
+    [Required][MaxLength(100)] string Make,
+    [Required][MaxLength(100)] string Model,
     [Required] int Year,
-    [Required] [MaxLength(50)] string Color,
-    [Required] [MaxLength(50)] string LicensePlate,
-    [Required] [MaxLength(50)] string Transmission,
-    [Required] [MaxLength(50)] string FuelType,
+    [Required][MaxLength(50)] string Color,
+    [Required][MaxLength(50)] string LicensePlate,
+    [Required][MaxLength(50)] string Transmission,
+    [Required][MaxLength(50)] string FuelType,
     [Required] int Seats,
     [Required] decimal PricePerDay,
-    [Required] [MaxLength(100)] string LocationCity,
+    [Required][MaxLength(100)] string LocationCity,
     string? Description,
     string? ImageUrl
 );
