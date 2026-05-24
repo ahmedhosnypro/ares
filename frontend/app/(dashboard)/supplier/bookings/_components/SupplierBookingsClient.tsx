@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import {
+  Alert,
   Box,
   Typography,
   IconButton,
@@ -43,6 +44,7 @@ import {
   type SupplierBookingListItemDto,
 } from "@/api-clients/supplier-bookings/supplier-bookings";
 import { toImageUrl } from "@/utils/image-url";
+
 // ── CONSTANTS & HELPERS ─────────────────────────────────────────────────
 const getStatusConfig = (status?: string) => {
   const s = status?.toLowerCase() ?? "";
@@ -58,6 +60,22 @@ const formatCompactDate = (dateString?: string) => {
   const d = new Date(dateString);
   if (isNaN(d.getTime())) return "—";
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+};
+
+/**
+ * Short-form id for the "#XXXXX" hint under the customer name. Falls back
+ * gracefully if both the booking number and id are missing so we never
+ * render bare "#" or crash on `id.split("-")`.
+ */
+const shortBookingRef = (booking: { bookingNumber?: string; id: string }) => {
+  if (booking.bookingNumber && booking.bookingNumber.trim().length > 0) {
+    return booking.bookingNumber;
+  }
+  if (booking.id) {
+    const [head] = booking.id.split("-");
+    if (head && head.length > 0) return head;
+  }
+  return "—";
 };
 
 // ── MAIN PAGE COMPONENT ─────────────────────────────────────────────────
@@ -77,7 +95,7 @@ export default function SupplierBookingsClient() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [activeBooking, setActiveBooking] = useState<SupplierBookingListItemDto | null>(null);
 
-  const { bookings, loading, totalPages, totalCount } = useSupplierBookings(
+  const { bookings, loading, error, totalPages, totalCount } = useSupplierBookings(
     session?.accessToken,
     page,
     size,
@@ -120,6 +138,18 @@ export default function SupplierBookingsClient() {
       ];
     }
 
+    if (error) {
+      return [
+        <TableRow key="error">
+          <TableCell colSpan={8} sx={{ py: 4 }}>
+            <Alert severity="error" sx={{ borderRadius: 2 }}>
+              {error}
+            </Alert>
+          </TableCell>
+        </TableRow>,
+      ];
+    }
+
     if (bookings.length === 0) {
       return [
         <TableRow key="empty">
@@ -151,6 +181,8 @@ export default function SupplierBookingsClient() {
     return bookings.map((booking: SupplierBookingListItemDto) => {
       const statusConfig = getStatusConfig(booking.bookingStatus);
       const statusColor = theme.palette[statusConfig.colorKey].main;
+      const customerLabel =
+        booking.customerName && booking.customerName.trim().length > 0 ? booking.customerName : "Unknown Customer";
 
       return (
         <TableRow
@@ -160,20 +192,18 @@ export default function SupplierBookingsClient() {
             transition: "background 0.15s",
             "&:last-child td": { border: 0 },
             "&:hover": { bgcolor: theme => alpha(theme.palette.primary.main, 0.03) },
-            cursor: "pointer",
+            cursor: booking.id ? "pointer" : "default",
           }}
           onClick={() => {
-            router.push(`/supplier/bookings/${booking.id}`);
+            if (booking.id) router.push(`/supplier/bookings/${booking.id}`);
           }}
         >
           {/* Booking / Customer */}
           <TableCell sx={{ pl: 3 }}>
             <Box>
-              <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
-                {booking.customerName ?? "Unknown Customer"}
-              </Typography>
+              <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{customerLabel}</Typography>
               <Typography variant="caption" color="text.secondary">
-                #{booking.bookingNumber ?? booking.id.split("-")[0]}
+                #{shortBookingRef(booking)}
               </Typography>
             </Box>
           </TableCell>

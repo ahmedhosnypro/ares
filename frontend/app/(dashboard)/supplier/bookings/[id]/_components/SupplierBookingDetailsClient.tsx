@@ -34,6 +34,7 @@ import {
 } from "@/api-clients/supplier-bookings/supplier-bookings";
 import { toImageUrl } from "@/utils/image-url";
 import { logger } from "@/utils/logger";
+import { ApiError } from "@/utils/api-client";
 
 const formatDateLong = (s?: string | null) => {
   if (!s) return "—";
@@ -140,11 +141,20 @@ export default function SupplierBookingDetailsClient({ bookingId }: { readonly b
         setBooking(data);
       } catch (e: unknown) {
         logger.error("Failed to load supplier booking details", e);
-        const err = e as { response?: { status?: number }; status?: number; message?: string };
-        if (err.response?.status === 404 || err.status === 404) {
-          setError("Booking not found, or you don't have permission to view it.");
+        if (e instanceof ApiError) {
+          if (e.status === 404) {
+            setError("Booking not found, or you don't have permission to view it.");
+          } else if (e.status === 401) {
+            setError("Your session has expired. Please sign in again.");
+          } else if (e.status === 403) {
+            setError("You don't have permission to view this booking.");
+          } else {
+            setError(`Failed to load booking details (${String(e.status)}).`);
+          }
+        } else if (e instanceof Error) {
+          setError(e.message);
         } else {
-          setError(e instanceof Error ? e.message : (err.message ?? "Failed to load booking details."));
+          setError("Failed to load booking details.");
         }
       } finally {
         setLoading(false);
@@ -180,6 +190,7 @@ export default function SupplierBookingDetailsClient({ bookingId }: { readonly b
   }
 
   const statusColorKey = getStatusConfig(booking.status);
+  const shortRef = booking.bookingNumber ?? (booking.id ? booking.id.split("-")[0] : "—");
 
   return (
     <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, maxWidth: 1200, mx: "auto" }}>
@@ -206,7 +217,7 @@ export default function SupplierBookingDetailsClient({ bookingId }: { readonly b
           </Tooltip>
           <Box>
             <Typography variant="h4" sx={{ fontWeight: 800 }}>
-              Booking #{booking.bookingNumber ?? booking.id.split("-")[0]}
+              Booking #{shortRef}
             </Typography>
             <Stack direction="row" spacing={1} sx={{ alignItems: "center", mt: 0.5 }}>
               <Chip

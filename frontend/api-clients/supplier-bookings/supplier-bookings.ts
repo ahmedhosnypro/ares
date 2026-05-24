@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
-import { apiFetchJson } from "@/utils/api-client";
+import { apiFetchJson, ApiError } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
+
+// ── Wire types ────────────────────────────────────────────────────────────────
 
 export interface SupplierBookingListItemDto {
   id: string;
@@ -17,17 +19,51 @@ export interface SupplierBookingListItemDto {
   bookingStatus?: string;
   paymentStatus?: string;
   createdAt?: string;
-  [key: string]: unknown;
 }
 
 export interface PagedResult<T> {
+  data?: T[];
   items?: T[];
   resultData?: T[];
-  data?: T[];
+  page?: number;
+  pageSize?: number;
   totalCount?: number;
   totalPages?: number;
   pageInfo?: Array<{ totalRecords: number }>;
 }
+
+interface RawSupplierBookingListItem extends Omit<SupplierBookingListItemDto, "id"> {
+  id?: string;
+}
+
+interface UseSupplierBookingsResult {
+  bookings: SupplierBookingListItemDto[];
+  loading: boolean;
+  error: string | null;
+  totalPages: number;
+  totalCount: number;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function readErrorMessage(err: unknown): string {
+  if (err instanceof ApiError) {
+    if (err.status === 401) return "Your session has expired. Please sign in again.";
+    if (err.status === 403) return "You don't have permission to view bookings.";
+    return `Failed to load bookings (${String(err.status)}).`;
+  }
+  if (err instanceof Error) return err.message;
+  return "Failed to load bookings.";
+}
+
+function normalizeRows(raw: RawSupplierBookingListItem[]): SupplierBookingListItemDto[] {
+  return raw.map(item => ({
+    ...item,
+    id: item.bookingId ?? item.id ?? "",
+  }));
+}
+
+// ── List hook ─────────────────────────────────────────────────────────────────
 
 export const useSupplierBookings = (
   accessToken: string | undefined,
@@ -36,60 +72,72 @@ export const useSupplierBookings = (
   search: string = "",
   bookingStatus: string = "",
   paymentStatus: string = ""
-) => {
+): UseSupplierBookingsResult => {
   const [bookings, setBookings] = useState<SupplierBookingListItemDto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [totalPages, setTotalPages] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
-    const fetchBookings = async () => {
-      if (!accessToken) return;
+    if (!accessToken) return;
 
+    let cancelled = false;
+
+    const fetchBookings = async () => {
       setLoading(true);
+      setError(null);
       try {
         const params = new URLSearchParams();
-        if (search) params.set("search", search);
+        if (search.trim()) params.set("search", search.trim());
         if (bookingStatus && bookingStatus !== "All") params.set("bookingStatus", bookingStatus);
         if (paymentStatus && paymentStatus !== "All") params.set("paymentStatus", paymentStatus);
         params.set("page", String(page));
         params.set("pageSize", String(pageSize));
 
-        const responseData = await apiFetchJson<PagedResult<SupplierBookingListItemDto>>(
+        const responseData = await apiFetchJson<PagedResult<RawSupplierBookingListItem>>(
           `/api/supplier/bookings?${params.toString()}`,
-          {
-            method: "GET",
-            accessToken: accessToken,
-          }
+          { method: "GET", accessToken }
         );
 
-        const rawItems = responseData.items || responseData.resultData || responseData.data || [];
-        const items = rawItems.map(item => ({
-          ...item,
-          id: item.bookingId || item.id || "",
-        }));
+        if (cancelled) return;
+
+        const rawItems = responseData.data ?? responseData.items ?? responseData.resultData ?? [];
+        const items = normalizeRows(rawItems);
+
+        const resolvedTotalCount = responseData.totalCount ?? responseData.pageInfo?.[0]?.totalRecords ?? 0;
+        const resolvedTotalPages = responseData.totalPages ?? Math.ceil(resolvedTotalCount / pageSize);
 
         setBookings(items);
-        setTotalCount(responseData.totalCount || responseData.pageInfo?.[0]?.totalRecords || 0);
-        setTotalPages(responseData.totalPages || Math.ceil((responseData.totalCount || 0) / pageSize) || 1);
-      } catch (error) {
-        logger.error("Error fetching supplier bookings", error);
+        setTotalCount(resolvedTotalCount);
+        setTotalPages(resolvedTotalPages);
+      } catch (err) {
+        if (cancelled) return;
+        logger.error("Error fetching supplier bookings", err);
+        setBookings([]);
+        setTotalCount(0);
+        setTotalPages(0);
+        setError(readErrorMessage(err));
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
-    const delayDebounceFn = setTimeout(() => {
+    const delay = search.trim().length > 0 ? 300 : 0;
+    const timer = setTimeout(() => {
       void fetchBookings();
-    }, 300);
+    }, delay);
 
     return () => {
-      clearTimeout(delayDebounceFn);
+      cancelled = true;
+      clearTimeout(timer);
     };
   }, [accessToken, page, pageSize, search, bookingStatus, paymentStatus]);
 
-  return { bookings, loading, totalPages, totalCount };
+  return { bookings, loading, error, totalPages, totalCount };
 };
+
+// ── Details ───────────────────────────────────────────────────────────────────
 
 export interface SupplierBookingDetailsDto {
   id: string;
