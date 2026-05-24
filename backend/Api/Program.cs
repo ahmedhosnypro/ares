@@ -124,6 +124,7 @@ try
     builder.Services.AddScoped<ISupplierBookingService, SupplierBookingService>();
     builder.Services.AddScoped<ISupplierEarningsService, SupplierEarningsService>();
     builder.Services.AddScoped<ISupplierNotificationService, SupplierNotificationService>();
+    builder.Services.AddScoped<ISupplierReviewService, SupplierReviewService>();
     // ─── Inspector / Inspection workflow ──────────────────────────────────
     builder.Services.AddScoped<IInspectorManagementService, InspectorManagementService>();
     builder.Services.AddScoped<IInspectionService, InspectionService>();

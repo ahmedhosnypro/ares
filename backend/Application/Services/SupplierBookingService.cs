@@ -67,6 +67,10 @@ public class SupplierBookingService : ISupplierBookingService
             .Where(b => b.Vehicle != null && b.Vehicle.UserId == supplierId);
 
         // ── Search across booking number, customer name, vehicle make/model ──────
+        // We also match the concatenated "First Last" form so a user typing
+        // "john smith" finds bookings for John Smith (FirstName + " " + LastName
+        // matches), not just rows where one of those names contains the whole
+        // search term.
         if (!string.IsNullOrWhiteSpace(filter.Search))
         {
             var search = filter.Search.Trim().ToLower();
@@ -74,8 +78,12 @@ public class SupplierBookingService : ISupplierBookingService
                 (b.BookingNumber != null && b.BookingNumber.ToLower().Contains(search)) ||
                 (b.User != null && b.User.FirstName != null && b.User.FirstName.ToLower().Contains(search)) ||
                 (b.User != null && b.User.LastName != null && b.User.LastName.ToLower().Contains(search)) ||
+                (b.User != null && b.User.FirstName != null && b.User.LastName != null &&
+                    ((b.User.FirstName + " " + b.User.LastName).ToLower().Contains(search))) ||
                 (b.Vehicle != null && b.Vehicle.Make != null && b.Vehicle.Make.ToLower().Contains(search)) ||
-                (b.Vehicle != null && b.Vehicle.Model != null && b.Vehicle.Model.ToLower().Contains(search)));
+                (b.Vehicle != null && b.Vehicle.Model != null && b.Vehicle.Model.ToLower().Contains(search)) ||
+                (b.Vehicle != null && b.Vehicle.Make != null && b.Vehicle.Model != null &&
+                    ((b.Vehicle.Make + " " + b.Vehicle.Model).ToLower().Contains(search))));
         }
 
         // ── Booking-status filter (case-insensitive, validated to enum) ──────────
