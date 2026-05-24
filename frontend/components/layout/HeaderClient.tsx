@@ -111,6 +111,10 @@ export default function HeaderClient({ session }: HeaderClientProps) {
           transition: "all 0.3s ease",
           borderBottom: "1px solid",
           borderColor: "header.border",
+          // Use a dark background during the preload phase if we're in dark mode
+          ".preload &": {
+            bgcolor: "#0a0e0f", // Match theme background
+          },
         }}
       >
         <Container maxWidth="lg" sx={{ maxWidth: { xs: "100%", lg: "1200px" } }}>

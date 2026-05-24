@@ -39,11 +39,6 @@ export function AppThemeProvider({ children, initialTheme = "light" }: AppThemeP
     <ThemeContext.Provider value={{ mode, toggleTheme }}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <style jsx global>{`
-          html {
-            color-scheme: ${mode};
-          }
-        `}</style>
         {children}
       </ThemeProvider>
     </ThemeContext.Provider>

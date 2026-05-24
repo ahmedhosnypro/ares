@@ -14,12 +14,24 @@ export default function HomeLoading() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          bgcolor: "grey.300",
+          bgcolor: "#050708", // Dark fallback for hero
         }}
       >
         <Container maxWidth="md" sx={{ position: "relative", zIndex: 2, px: 3 }}>
-          <Skeleton variant="text" width="80%" height={80} animation="wave" sx={{ mx: "auto", mb: 2 }} />
-          <Skeleton variant="text" width="60%" height={40} animation="wave" sx={{ mx: "auto" }} />
+          <Skeleton
+            variant="text"
+            width="80%"
+            height={80}
+            animation="wave"
+            sx={{ mx: "auto", mb: 2, bgcolor: "rgba(255,255,255,0.1)" }}
+          />
+          <Skeleton
+            variant="text"
+            width="60%"
+            height={40}
+            animation="wave"
+            sx={{ mx: "auto", bgcolor: "rgba(255,255,255,0.1)" }}
+          />
         </Container>
       </Box>
 
@@ -33,7 +45,12 @@ export default function HomeLoading() {
           mb: 8,
         }}
       >
-        <Skeleton variant="rounded" height={120} animation="wave" sx={{ borderRadius: 2 }} />
+        <Skeleton
+          variant="rounded"
+          height={120}
+          animation="wave"
+          sx={{ borderRadius: 2, bgcolor: "rgba(255,255,255,0.05)" }}
+        />
       </Container>
 
       {/* Trust Indicators Skeleton */}
@@ -47,8 +64,20 @@ export default function HomeLoading() {
         >
           {Array.from({ length: 3 }).map((_, i) => (
             <Box key={i} sx={{ textAlign: "center" }}>
-              <Skeleton variant="circular" width={60} height={60} animation="wave" sx={{ mx: "auto", mb: 2 }} />
-              <Skeleton variant="text" width="60%" height={24} animation="wave" sx={{ mx: "auto" }} />
+              <Skeleton
+                variant="circular"
+                width={60}
+                height={60}
+                animation="wave"
+                sx={{ mx: "auto", mb: 2, bgcolor: "rgba(255,255,255,0.05)" }}
+              />
+              <Skeleton
+                variant="text"
+                width="60%"
+                height={24}
+                animation="wave"
+                sx={{ mx: "auto", bgcolor: "rgba(255,255,255,0.05)" }}
+              />
             </Box>
           ))}
         </Box>
@@ -59,8 +88,20 @@ export default function HomeLoading() {
 
       {/* Vehicle Classes Skeleton */}
       <Container maxWidth="xl" sx={{ py: 10 }}>
-        <Skeleton variant="text" width={300} height={48} animation="wave" sx={{ mx: "auto", mb: 1 }} />
-        <Skeleton variant="text" width={400} height={24} animation="wave" sx={{ mx: "auto", mb: 5 }} />
+        <Skeleton
+          variant="text"
+          width={300}
+          height={48}
+          animation="wave"
+          sx={{ mx: "auto", mb: 1, bgcolor: "rgba(255,255,255,0.05)" }}
+        />
+        <Skeleton
+          variant="text"
+          width={400}
+          height={24}
+          animation="wave"
+          sx={{ mx: "auto", mb: 5, bgcolor: "rgba(255,255,255,0.05)" }}
+        />
         <Box
           sx={{
             display: "grid",
@@ -69,7 +110,13 @@ export default function HomeLoading() {
           }}
         >
           {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} variant="rounded" height={400} animation="wave" sx={{ borderRadius: 2 }} />
+            <Skeleton
+              key={i}
+              variant="rounded"
+              height={400}
+              animation="wave"
+              sx={{ borderRadius: 2, bgcolor: "rgba(255,255,255,0.05)" }}
+            />
           ))}
         </Box>
       </Container>

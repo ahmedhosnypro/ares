@@ -44,14 +44,18 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: { readonly children: React.ReactNode }) {
   // Detect theme preference on server
   const initialTheme = await getServerTheme();
+  const bgFallbackColor = initialTheme === "dark" ? "#0a0e0f" : "#f4f6f8";
 
   return (
-    <html lang="en" data-theme={initialTheme}>
+    <html lang="en" data-theme={initialTheme} style={{ backgroundColor: bgFallbackColor }}>
       <head>
         <link rel="manifest" href="/site.webmanifest" />
         <meta name="color-scheme" content="light dark" />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} preload`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} preload`}
+        style={{ backgroundColor: bgFallbackColor }}
+      >
         <ThemeWatcher />
         <MuiProvider initialTheme={initialTheme}>
           <AuthProvider>

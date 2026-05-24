@@ -2,11 +2,23 @@ import { Box, Card, CardContent, Container, Skeleton, Stack } from "@mui/materia
 
 export default function PopularDestinationsSkeleton() {
   return (
-    <Box sx={{ py: { xs: 6, md: 10 }, bgcolor: "grey.50" }}>
+    <Box sx={{ py: { xs: 6, md: 10 }, bgcolor: "background.default" }}>
       <Container maxWidth="xl">
         <Stack spacing={2} sx={{ alignItems: "center", mb: 6 }}>
-          <Skeleton variant="text" width={400} height={60} animation="wave" />
-          <Skeleton variant="text" width={600} height={24} animation="wave" />
+          <Skeleton
+            variant="text"
+            width={400}
+            height={60}
+            animation="wave"
+            sx={{ bgcolor: "rgba(255,255,255,0.05)" }}
+          />
+          <Skeleton
+            variant="text"
+            width={600}
+            height={24}
+            animation="wave"
+            sx={{ bgcolor: "rgba(255,255,255,0.05)" }}
+          />
         </Stack>
 
         <Box
@@ -25,20 +37,50 @@ export default function PopularDestinationsSkeleton() {
                 overflow: "hidden",
                 border: "1px solid",
                 borderColor: "divider",
+                bgcolor: "background.paper",
               }}
             >
-              <Skeleton variant="rectangular" height={200} animation="wave" />
+              <Skeleton
+                variant="rectangular"
+                height={200}
+                animation="wave"
+                sx={{ bgcolor: "rgba(255,255,255,0.05)" }}
+              />
               <CardContent sx={{ p: 3 }}>
-                <Skeleton variant="text" width="80%" height={32} animation="wave" />
-                <Skeleton variant="text" width="60%" height={20} animation="wave" sx={{ mt: 1 }} />
-                <Skeleton variant="text" width="50%" height={16} animation="wave" sx={{ mt: 2 }} />
+                <Skeleton
+                  variant="text"
+                  width="80%"
+                  height={32}
+                  animation="wave"
+                  sx={{ bgcolor: "rgba(255,255,255,0.05)" }}
+                />
+                <Skeleton
+                  variant="text"
+                  width="60%"
+                  height={20}
+                  animation="wave"
+                  sx={{ mt: 1, bgcolor: "rgba(255,255,255,0.05)" }}
+                />
+                <Skeleton
+                  variant="text"
+                  width="50%"
+                  height={16}
+                  animation="wave"
+                  sx={{ mt: 2, bgcolor: "rgba(255,255,255,0.05)" }}
+                />
               </CardContent>
             </Card>
           ))}
         </Box>
 
         <Box sx={{ textAlign: "center", mt: 6 }}>
-          <Skeleton variant="rounded" width={250} height={48} animation="wave" sx={{ mx: "auto", borderRadius: 1.5 }} />
+          <Skeleton
+            variant="rounded"
+            width={250}
+            height={48}
+            animation="wave"
+            sx={{ mx: "auto", borderRadius: 1.5, bgcolor: "rgba(255,255,255,0.05)" }}
+          />
         </Box>
       </Container>
     </Box>
