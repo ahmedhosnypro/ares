@@ -1,1 +1,23 @@
 @import "tailwindcss";
+
+/* 1. Explicit theme variables for initial canvas drawing */
+:root,
+html[data-theme="light"] {
+  --background-color: #f4f6f8;
+  --text-color: #10212b;
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  --background-color: #0a0e0f;
+  --text-color: #ffffff;
+  color-scheme: dark;
+}
+
+/* 2. Lock down the HTML and Body styles before JS/MUI hydration kicks in */
+html,
+body {
+  background-color: var(--background-color) !important;
+  color: var(--text-color);
+  min-height: 100vh;
+}
