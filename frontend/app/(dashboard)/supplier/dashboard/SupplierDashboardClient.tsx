@@ -26,7 +26,6 @@ import {
   Stack,
   Button,
   Divider,
-  Skeleton,
   Alert,
   alpha,
   useTheme,
@@ -51,6 +50,7 @@ import {
   type SupplierDashboardStats,
 } from "@/api-clients/supplier-dashboard/supplier-dashboard";
 import { logger } from "@/utils/logger";
+import VehicleStats, { type StatItem } from "@/app/(dashboard)/_components/VehicleStats";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -69,14 +69,7 @@ const itemVariants = {
   },
 };
 
-type StatColor = "primary" | "success" | "warning" | "info";
 
-interface StatItem {
-  title: string;
-  value: string;
-  icon: React.ReactNode;
-  color: StatColor;
-}
 
 interface ActivityItem {
   id: string;
@@ -234,25 +227,25 @@ export default function SupplierDashboardClient() {
   const summaryData = useMemo<StatItem[]>(
     () => [
       {
-        title: "Total Vehicles",
+        label: "Total Vehicles",
         value: stats ? formatCount(safeNum(stats.totalVehicles)) : "—",
         icon: <DirectionsCarIcon fontSize="medium" />,
         color: "primary",
       },
       {
-        title: "Pending Vehicles",
+        label: "Pending Vehicles",
         value: stats ? formatCount(safeNum(stats.pendingVehicles)) : "—",
         icon: <HourglassTopIcon fontSize="medium" />,
         color: "warning",
       },
       {
-        title: "Active Bookings",
+        label: "Active Bookings",
         value: stats ? formatCount(safeNum(stats.activeBookings)) : "—",
         icon: <EventAvailableIcon fontSize="medium" />,
         color: "info",
       },
       {
-        title: "Total Earnings",
+        label: "Total Earnings",
         value: stats ? formatCurrency(safeNum(stats.totalEarnings)) : "—",
         icon: <AttachMoneyIcon fontSize="medium" />,
         color: "success",
@@ -280,70 +273,9 @@ export default function SupplierDashboardClient() {
 
       <motion.div variants={containerVariants} initial="hidden" animate="visible">
         {/* ── Stats cards (live data) ───────────────────────────────────── */}
-        <Grid container spacing={2.5} sx={{ mb: 3 }}>
-          {summaryData.map((stat, index) => (
-            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
-              <motion.div variants={itemVariants}>
-                <Card
-                  elevation={0}
-                  sx={{
-                    borderRadius: 2,
-                    border: "1px solid",
-                    borderColor: "divider",
-                    bgcolor: "background.paper",
-                    transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-                    boxShadow: theme => theme.palette.shadow.card,
-                    "&:hover": {
-                      transform: "translateY(-3px)",
-                      boxShadow: theme => theme.palette.shadow.cardHover,
-                    },
-                  }}
-                >
-                  <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                      <Avatar
-                        sx={{
-                          bgcolor: alpha(theme.palette[stat.color].main, 0.12),
-                          color: `${stat.color}.main`,
-                          width: 56,
-                          height: 56,
-                        }}
-                      >
-                        {stat.icon}
-                      </Avatar>
-                      <Box sx={{ minWidth: 0, flexGrow: 1 }}>
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{ fontWeight: 600, fontSize: "0.85rem", mb: 0.25 }}
-                          noWrap
-                        >
-                          {stat.title}
-                        </Typography>
-                        {statsLoading ? (
-                          <Skeleton
-                            variant="text"
-                            width="60%"
-                            sx={{ fontSize: "2.125rem", lineHeight: 1.1 }}
-                            aria-label={`Loading ${stat.title}`}
-                          />
-                        ) : (
-                          <Typography
-                            variant="h4"
-                            sx={{ fontWeight: 800, letterSpacing: "-0.5px", lineHeight: 1.1 }}
-                            noWrap
-                          >
-                            {stat.value}
-                          </Typography>
-                        )}
-                      </Box>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-          ))}
-        </Grid>
+        <motion.div variants={itemVariants}>
+          <VehicleStats items={summaryData} loading={statsLoading} sx={{ mb: 3 }} />
+        </motion.div>
 
         {/* ── Analytics charts row ──────────────────────────────────────── */}
         <Grid container spacing={3} sx={{ mb: 3 }}>

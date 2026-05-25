@@ -18,6 +18,8 @@ type AuthResponse = {
     emailVerified: boolean;
   };
   token?: string;
+  refreshToken?: string;
+  expiresAt?: string;
   message?: string;
 };
 
@@ -52,6 +54,36 @@ function handleAuthError(res: Response, data: AuthResponse): never {
   throw new Error(data.message || "An unexpected error occurred");
 }
 
+async function refreshAccessToken(token: any) {
+  try {
+    const baseUrl = getApiBaseUrl();
+    const response = await fetch(`${baseUrl}/api/auth/refresh-token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken: token.refreshToken }),
+    });
+
+    const refreshedTokens = await response.json();
+
+    if (!response.ok) {
+      throw refreshedTokens;
+    }
+
+    return {
+      ...token,
+      accessToken: refreshedTokens.token,
+      refreshToken: refreshedTokens.refreshToken,
+      accessTokenExpires: new Date(refreshedTokens.expiresAt).getTime(),
+    };
+  } catch (error) {
+    logger.error("Error refreshing access token:", error);
+    return {
+      ...token,
+      error: "RefreshAccessTokenError",
+    };
+  }
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -82,6 +114,8 @@ export const authOptions: NextAuthOptions = {
               roles: data.user.roles,
               emailVerified: data.user.emailVerified,
               accessToken: data.token,
+              refreshToken: data.refreshToken || "",
+              expiresAt: data.expiresAt || "",
             };
           }
 
@@ -98,16 +132,26 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     // 1. نقل الداتا من الباك إند للتوكن المشفر بتاع NextAuth
-    jwt({ token, user }) {
-      const u = user as typeof user | undefined;
-      if (u) {
-        token.id = u.id;
-        token.firstName = u.firstName;
-        token.lastName = u.lastName;
-        token.roles = u.roles;
-        token.accessToken = u.accessToken;
+    async jwt({ token, user }) {
+      // Initial sign in
+      if (user) {
+        token.id = user.id;
+        token.firstName = user.firstName;
+        token.lastName = user.lastName;
+        token.roles = user.roles;
+        token.accessToken = user.accessToken;
+        token.refreshToken = user.refreshToken;
+        token.accessTokenExpires = new Date(user.expiresAt).getTime();
+        return token;
       }
-      return token;
+
+      // Return previous token if the access token has not expired yet
+      if (Date.now() < token.accessTokenExpires) {
+        return token;
+      }
+
+      // Access token has expired, try to refresh it
+      return await refreshAccessToken(token);
     },
     // 2. نقل الداتا من التوكن للـ Session عشان الفرونت إند يعرف يقرأها
     session({ session, token }) {
@@ -116,6 +160,8 @@ export const authOptions: NextAuthOptions = {
       session.user.lastName = token.lastName;
       session.user.roles = token.roles;
       session.accessToken = token.accessToken;
+      session.refreshToken = token.refreshToken;
+      session.accessTokenExpires = token.accessTokenExpires;
 
       return session;
     },

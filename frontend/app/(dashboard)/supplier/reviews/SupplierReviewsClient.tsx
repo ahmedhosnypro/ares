@@ -55,6 +55,9 @@ import {
   ReportProblemRounded as ReportIcon,
   VisibilityOutlined as ViewIcon,
   DirectionsCarFilledTwoTone as CarIcon,
+  StarRounded as StarIcon,
+  EmojiEventsRounded as TopRatedIcon,
+  HourglassTopRounded as PendingIcon,
 } from "@mui/icons-material";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
@@ -78,7 +81,7 @@ import RatingStars from "./_components/RatingStars";
 import ReplyReviewDialog from "./_components/ReplyReviewDialog";
 import ReportReviewDialog from "./_components/ReportReviewDialog";
 import ReviewDetailsDialog from "./_components/ReviewDetailsDialog";
-import ReviewStatsCards from "./_components/ReviewStatsCards";
+import VehicleStats from "@/app/(dashboard)/_components/VehicleStats";
 
 // ── Filter dropdown options — kept in sync with the backend ──────────────────
 
@@ -332,6 +335,44 @@ export default function SupplierReviewsClient() {
     [vehicleFilter, ratingFilter, replyStatusFilter, fromDate, toDate]
   );
 
+  const reviewStatsItems = useMemo(() => {
+    let averageRatingStr = "—";
+    if (stats) {
+      averageRatingStr = Number.isFinite(stats.averageRating) ? stats.averageRating.toFixed(2) : "0.00";
+    }
+
+    return [
+      {
+        label: "Average Rating",
+        value: averageRatingStr,
+        color: "warning",
+        icon: <StarIcon fontSize="medium" />,
+        subtitle: "Across all your vehicles",
+      },
+      {
+        label: "Total Reviews",
+        value: stats ? Math.max(0, Math.trunc(stats.totalReviews || 0)).toLocaleString() : "—",
+        color: "primary",
+        icon: <ReviewIcon fontSize="medium" />,
+        subtitle: "Lifetime customer reviews",
+      },
+      {
+        label: "5-Star Reviews",
+        value: stats ? Math.max(0, Math.trunc(stats.fiveStarReviews || 0)).toLocaleString() : "—",
+        color: "success",
+        icon: <TopRatedIcon fontSize="medium" />,
+        subtitle: "Top-rated bookings",
+      },
+      {
+        label: "Pending Replies",
+        value: stats ? Math.max(0, Math.trunc(stats.pendingReplies || 0)).toLocaleString() : "—",
+        color: "info",
+        icon: <PendingIcon fontSize="medium" />,
+        subtitle: "Reviews awaiting your reply",
+      },
+    ];
+  }, [stats]);
+
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <Box sx={{ p: { xs: 1.5, sm: 3, md: 4 }, maxWidth: 1300, mx: "auto" }}>
@@ -356,7 +397,7 @@ export default function SupplierReviewsClient() {
           {statsError}
         </Alert>
       )}
-      <ReviewStatsCards stats={stats} loading={statsLoading} />
+      <VehicleStats items={reviewStatsItems} loading={statsLoading} />
 
       {/* FILTERS */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -370,7 +411,7 @@ export default function SupplierReviewsClient() {
             onChange={e => {
               setVehicleFilter(e.target.value);
             }}
-            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3, bgcolor: "background.paper" } }}
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "background.paper" } }}
           >
             <MenuItem value="">All vehicles</MenuItem>
             {vehicles.map(v => (
@@ -391,7 +432,7 @@ export default function SupplierReviewsClient() {
             onChange={e => {
               setRatingFilter(e.target.value);
             }}
-            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3, bgcolor: "background.paper" } }}
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "background.paper" } }}
           >
             {RATING_OPTIONS.map(opt => (
               <MenuItem key={opt.value} value={opt.value}>
@@ -410,7 +451,7 @@ export default function SupplierReviewsClient() {
             onChange={e => {
               setReplyStatusFilter(e.target.value as SupplierReviewReplyStatus);
             }}
-            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3, bgcolor: "background.paper" } }}
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "background.paper" } }}
           >
             {REPLY_STATUS_OPTIONS.map(opt => (
               <MenuItem key={opt.value} value={opt.value}>
@@ -430,7 +471,7 @@ export default function SupplierReviewsClient() {
               setFromDate(e.target.value);
             }}
             slotProps={{ inputLabel: { shrink: true } }}
-            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3, bgcolor: "background.paper" } }}
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "background.paper" } }}
           />
         </Grid>
         <Grid size={{ xs: 6, sm: 6, md: 2 }}>
@@ -444,7 +485,7 @@ export default function SupplierReviewsClient() {
               setToDate(e.target.value);
             }}
             slotProps={{ inputLabel: { shrink: true } }}
-            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3, bgcolor: "background.paper" } }}
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "background.paper" } }}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 1 }}>
@@ -457,7 +498,7 @@ export default function SupplierReviewsClient() {
             onChange={e => {
               setSortBy(e.target.value as SupplierReviewSortBy);
             }}
-            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3, bgcolor: "background.paper" } }}
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "background.paper" } }}
           >
             {SORT_OPTIONS.map(opt => (
               <MenuItem key={opt.value} value={opt.value}>
@@ -490,7 +531,7 @@ export default function SupplierReviewsClient() {
             <Paper
               elevation={0}
               sx={{
-                borderRadius: 4,
+                borderRadius: 2,
                 border: "1px solid",
                 borderColor: "divider",
                 py: 8,
@@ -523,7 +564,7 @@ export default function SupplierReviewsClient() {
         return (
           <Paper
             elevation={0}
-            sx={{ borderRadius: 4, border: "1px solid", borderColor: "divider", overflow: "hidden" }}
+            sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider", overflow: "hidden" }}
           >
             <TableContainer sx={{ overflowX: "auto" }}>
               <Table sx={{ minWidth: isMobile ? 720 : 1000 }}>

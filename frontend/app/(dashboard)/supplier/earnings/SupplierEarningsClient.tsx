@@ -22,6 +22,7 @@
  * touched.
  */
 
+import { useMemo } from "react";
 import {
   Box,
   Grid,
@@ -43,46 +44,13 @@ import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import DirectionsCarFilledTwoToneIcon from "@mui/icons-material/DirectionsCarFilledTwoTone";
+import VehicleStats, { type StatItem } from "@/app/(dashboard)/_components/VehicleStats";
 
 // ── Stat card config ─────────────────────────────────────────────────────────
 // Titles + icons only. Values are deliberately left blank — the data-wiring
 // pass will fill them in via the `stats` endpoint.
 
-type StatColor = "primary" | "success" | "warning" | "info";
 
-interface StatSlot {
-  readonly title: string;
-  readonly subtitle: string;
-  readonly icon: React.ReactNode;
-  readonly color: StatColor;
-}
-
-const STAT_SLOTS: readonly StatSlot[] = [
-  {
-    title: "Total Earnings",
-    subtitle: "Lifetime, completed bookings",
-    icon: <AttachMoneyIcon fontSize="medium" />,
-    color: "success",
-  },
-  {
-    title: "This Month",
-    subtitle: "Revenue this calendar month",
-    icon: <CalendarMonthIcon fontSize="medium" />,
-    color: "primary",
-  },
-  {
-    title: "Last Month",
-    subtitle: "Revenue previous calendar month",
-    icon: <HistoryIcon fontSize="medium" />,
-    color: "info",
-  },
-  {
-    title: "Completed Bookings",
-    subtitle: "Lifetime, completed only",
-    icon: <EventAvailableIcon fontSize="medium" />,
-    color: "warning",
-  },
-];
 
 // Five empty rows for the "top performing vehicles" leaderboard. Pure
 // placeholder skeletons — no demo data, no make/model strings.
@@ -115,6 +83,37 @@ function ScaffoldingBadge() {
 export default function SupplierEarningsClient() {
   const theme = useTheme();
 
+  const earningsStatsItems = useMemo<readonly StatItem[]>(() => [
+    {
+      label: "Total Earnings",
+      value: "—",
+      subtitle: "Lifetime, completed bookings",
+      icon: <AttachMoneyIcon fontSize="medium" />,
+      color: "success",
+    },
+    {
+      label: "This Month",
+      value: "—",
+      subtitle: "Revenue this calendar month",
+      icon: <CalendarMonthIcon fontSize="medium" />,
+      color: "primary",
+    },
+    {
+      label: "Last Month",
+      value: "—",
+      subtitle: "Revenue previous calendar month",
+      icon: <HistoryIcon fontSize="medium" />,
+      color: "info",
+    },
+    {
+      label: "Completed Bookings",
+      value: "—",
+      subtitle: "Lifetime, completed only",
+      icon: <EventAvailableIcon fontSize="medium" />,
+      color: "warning",
+    },
+  ], []);
+
   return (
     <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: "background.default", fontFamily: "inherit" }}>
       {/* ── Page header ───────────────────────────────────────────────── */}
@@ -131,61 +130,7 @@ export default function SupplierEarningsClient() {
         </Typography>
       </Box>
 
-      {/* ── Stat-card slots ───────────────────────────────────────────── */}
-      <Grid container spacing={2.5} sx={{ mb: 3 }}>
-        {STAT_SLOTS.map(slot => (
-          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={slot.title}>
-            <Card
-              elevation={0}
-              sx={{
-                borderRadius: 2,
-                border: "1px solid",
-                borderColor: "divider",
-                bgcolor: "background.paper",
-              }}
-            >
-              <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Avatar
-                    sx={{
-                      bgcolor: alpha(theme.palette[slot.color].main, 0.12),
-                      color: `${slot.color}.main`,
-                      width: 56,
-                      height: 56,
-                    }}
-                  >
-                    {slot.icon}
-                  </Avatar>
-                  <Box sx={{ minWidth: 0, flexGrow: 1 }}>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ fontWeight: 600, fontSize: "0.85rem", mb: 0.25 }}
-                      noWrap
-                    >
-                      {slot.title}
-                    </Typography>
-                    <Skeleton
-                      variant="text"
-                      width="55%"
-                      sx={{ fontSize: "2.125rem", lineHeight: 1.1 }}
-                      animation={false}
-                      aria-label={`${slot.title} value placeholder`}
-                    />
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ display: "block", mt: 0.25, fontWeight: 500 }}
-                    >
-                      {slot.subtitle}
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+      <VehicleStats items={earningsStatsItems} loading={true} sx={{ mb: 3 }} />
 
       {/* ── Chart frame + Top vehicles ────────────────────────────────── */}
       <Grid container spacing={3}>
