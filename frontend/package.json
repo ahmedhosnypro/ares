@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint . --concurrency=auto --cache",
     "lint:fix": "eslint . --fix --concurrency=auto --cache",
-    "generate-api-types": "openapi-typescript http://localhost:5000/swagger/v1/swagger.json -o ./types/generated/api.d.ts",
+    "generate-api-types": "openapi-typescript http://localhost:5000/swagger/v1/swagger.json -o ./types/generated/api.d.ts --root-types",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "tsc": "tsc --extendedDiagnostics --noEmit",

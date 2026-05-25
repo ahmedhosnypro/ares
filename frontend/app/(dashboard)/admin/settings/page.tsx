@@ -4,10 +4,12 @@ import { useState, type SyntheticEvent } from "react";
 import { Box, Stack, Tab, Tabs, Typography } from "@mui/material";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import GavelRoundedIcon from "@mui/icons-material/GavelRounded";
+import InfoRoundedIcon from "@mui/icons-material/InfoRounded";
 import GeneralSettingsTab from "./_components/GeneralSettingsTab";
 import TermsSettingsTab from "./_components/TermsSettingsTab";
+import AboutSettingsTab from "./_components/AboutSettingsTab";
 
-type SettingsTabKey = "general" | "terms";
+type SettingsTabKey = "general" | "terms" | "about";
 
 export default function AdminSettingsPage() {
   const [tab, setTab] = useState<SettingsTabKey>("general");
@@ -25,7 +27,7 @@ export default function AdminSettingsPage() {
             Platform Settings
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Manage global configuration and terms of service
+            Manage global configuration, terms of service, and about page
           </Typography>
         </Box>
       </Stack>
@@ -39,11 +41,13 @@ export default function AdminSettingsPage() {
             label="Terms of Service"
             value="terms"
           />
+          <Tab icon={<InfoRoundedIcon fontSize="small" />} iconPosition="start" label="About Page" value="about" />
         </Tabs>
       </Box>
 
       {tab === "general" && <GeneralSettingsTab />}
       {tab === "terms" && <TermsSettingsTab />}
+      {tab === "about" && <AboutSettingsTab />}
     </Box>
   );
 }

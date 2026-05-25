@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { Card, CardContent, Typography, Box, CircularProgress, useTheme } from "@mui/material";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { Card, CardContent, Typography, Box, useTheme, Skeleton } from "@mui/material";
 import { PieChart, Pie, Tooltip, ResponsiveContainer } from "recharts";
 import { apiFetchJson } from "@/utils/api-client";
 import { useSession } from "next-auth/react";
@@ -20,93 +20,127 @@ export default function BookingOverview() {
   const [error, setError] = useState(false);
   const [stats, setStats] = useState<{ name: string; value: number; fill: string }[]>([]);
   const [total, setTotal] = useState(0);
-
-  const fetchBookings = useCallback(async () => {
-    if (!session?.accessToken) return;
-    try {
-      setLoading(true);
-      setError(false);
-      const data = await apiFetchJson<{
-        resultData?: RawBooking[];
-        data?: RawBooking[];
-        items?: RawBooking[];
-      }>("api/admin/bookings/search/1/10000", {
-        method: "POST",
-        accessToken: session.accessToken,
-        body: JSON.stringify({
-          userId: null,
-          suppliers: session.user.roles.includes("Supplier") ? [session.user.id] : null,
-          statuses: null,
-          carId: null,
-          filter: {
-            from: null,
-            to: null,
-            keyword: null,
-            pickupLocation: null,
-            dropOffLocation: null,
-          },
-          page: 1,
-          size: 10000,
-          language: "en",
-        }),
-      });
-
-      const bookingsList = data.resultData || data.data || data.items || [];
-
-      const counts: Record<string, number> = {
-        Pending: 0,
-        Confirmed: 0,
-        Active: 0,
-        Completed: 0,
-        Cancelled: 0,
-      };
-
-      let totalBookings = 0;
-
-      bookingsList.forEach((b: RawBooking) => {
-        const status = b.status || "Pending";
-        if (status in counts) {
-          counts[status]++;
-          totalBookings++;
-        }
-      });
-
-      // Map status to colors using theme
-      const statusColorMap: Record<string, string> = {
-        Pending: theme.palette.status.pending.main,
-        Confirmed: theme.palette.status.confirmed.main,
-        Active: theme.palette.status.active.main,
-        Completed: theme.palette.status.completed.main,
-        Cancelled: theme.palette.status.cancelled.main,
-      };
-
-      const formattedStats = EXPECTED_STATUSES.map(key => ({
-        name: key,
-        value: counts[key] || 0,
-        fill: statusColorMap[key] || theme.palette.status.pending.main,
-      }));
-
-      setStats(formattedStats);
-      setTotal(totalBookings);
-    } catch (err) {
-      logger.error("Failed to fetch bookings for overview", err);
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  }, [session, theme.palette.status]);
+  const isMounted = useRef(true);
 
   useEffect(() => {
-    if (session) {
-      void fetchBookings();
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  const fetchBookings = useCallback(
+    async (isInitial = false) => {
+      if (!session?.accessToken) return;
+      try {
+        if (isInitial) {
+          setLoading(true);
+        }
+        setError(false);
+
+        const data = await apiFetchJson<{
+          resultData?: RawBooking[];
+          data?: RawBooking[];
+          items?: RawBooking[];
+        }>("api/admin/bookings/search/1/10000", {
+          method: "POST",
+          accessToken: session.accessToken,
+          body: JSON.stringify({
+            userId: null,
+            suppliers: session.user.roles.includes("Supplier") ? [session.user.id] : null,
+            statuses: null,
+            carId: null,
+            filter: {
+              from: null,
+              to: null,
+              keyword: null,
+              pickupLocation: null,
+              dropOffLocation: null,
+            },
+            page: 1,
+            size: 10000,
+            language: "en",
+          }),
+        });
+
+        if (!isMounted.current) return;
+
+        const bookingsList = data.resultData || data.data || data.items || [];
+
+        const counts: Record<string, number> = {
+          Pending: 0,
+          Confirmed: 0,
+          Active: 0,
+          Completed: 0,
+          Cancelled: 0,
+        };
+
+        let totalBookings = 0;
+
+        bookingsList.forEach((b: RawBooking) => {
+          const status = b.status || "Pending";
+          if (status in counts) {
+            counts[status]++;
+            totalBookings++;
+          }
+        });
+
+        // Map status to colors using theme
+        const statusColorMap: Record<string, string> = {
+          Pending: theme.palette.status.pending.main,
+          Confirmed: theme.palette.status.confirmed.main,
+          Active: theme.palette.status.active.main,
+          Completed: theme.palette.status.completed.main,
+          Cancelled: theme.palette.status.cancelled.main,
+        };
+
+        const formattedStats = EXPECTED_STATUSES.map(key => ({
+          name: key,
+          value: counts[key] || 0,
+          fill: statusColorMap[key] || theme.palette.status.pending.main,
+        }));
+
+        setStats(formattedStats);
+        setTotal(totalBookings);
+      } catch (err) {
+        logger.error("Failed to fetch bookings for overview", err);
+        if (isInitial) setError(true);
+      } finally {
+        if (isMounted.current) {
+          setLoading(false);
+        }
+      }
+    },
+    [session, theme.palette.status]
+  );
+
+  useEffect(() => {
+    if (session && loading) {
+      void fetchBookings(true);
     }
-  }, [session, fetchBookings]);
+  }, [session, fetchBookings, loading]);
 
   const renderContent = () => {
     if (loading) {
       return (
-        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 250 }}>
-          <CircularProgress />
+        <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, alignItems: "center", minHeight: 250 }}>
+          <Box sx={{ width: { xs: "100%", md: "50%" }, display: "flex", justifyContent: "center" }}>
+            <Skeleton variant="circular" width={200} height={200} />
+          </Box>
+          <Box
+            sx={{
+              width: { xs: "100%", md: "50%" },
+              pl: { xs: 0, md: 4 },
+              mt: { xs: 4, md: 0 },
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+            }}
+          >
+            {[1, 2, 3, 4, 5].map(i => (
+              <Skeleton key={i} variant="text" height={30} width="80%" />
+            ))}
+          </Box>
         </Box>
       );
     }
@@ -145,7 +179,8 @@ export default function BookingOverview() {
                 animationBegin={0}
               />
               <Tooltip
-                formatter={(value: unknown) => [`${(value as number).toLocaleString()} Bookings`, "Count"]}
+                formatter={(value: number, name: string) => [`${value.toLocaleString()} ${name.toLowerCase()}`, ""]}
+                separator=""
                 contentStyle={{ borderRadius: 8, border: "none", boxShadow: theme.shadows[3] }}
               />
             </PieChart>

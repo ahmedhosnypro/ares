@@ -139,6 +139,8 @@ export default async function ProfilePage() {
   const emergencyPhone: string = emergencyContact.phone;
   const emergencyRelationship: string = emergencyContact.relationship;
 
+  const isAdmin = session.user.roles.includes("Admin");
+
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default", py: { xs: 4, md: 6 } }}>
       <Container maxWidth="lg">
@@ -166,21 +168,25 @@ export default async function ProfilePage() {
                 />
               </ProfileCard>
 
-              <ProfileCard>
-                <VerificationStatus
-                  emailVerified={verificationStatus.email}
-                  phoneVerified={verificationStatus.phone}
-                  licenseVerified={verificationStatus.driverLicense}
-                />
-              </ProfileCard>
+              {!isAdmin && (
+                <>
+                  <ProfileCard>
+                    <VerificationStatus
+                      emailVerified={verificationStatus.email}
+                      phoneVerified={verificationStatus.phone}
+                      licenseVerified={verificationStatus.driverLicense}
+                    />
+                  </ProfileCard>
 
-              <ProfileCard>
-                <IdentityVerificationCard accessToken={session.accessToken} />
-              </ProfileCard>
+                  <ProfileCard>
+                    <IdentityVerificationCard accessToken={session.accessToken} />
+                  </ProfileCard>
 
-              <ProfileCard>
-                <DriverLicenseCard accessToken={session.accessToken} />
-              </ProfileCard>
+                  <ProfileCard>
+                    <DriverLicenseCard accessToken={session.accessToken} />
+                  </ProfileCard>
+                </>
+              )}
 
               <ProfileCard>
                 <PreferencesSection

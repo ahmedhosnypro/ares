@@ -20,6 +20,7 @@ public interface IApplicationDbContext
     IQueryable<Notification> Notifications { get; }
     IQueryable<SystemSetting> SystemSettings { get; }
     IQueryable<TermsSection> TermsSections { get; }
+    IQueryable<AboutSection> AboutSections { get; }
     IQueryable<Driver> Drivers { get; }
     void AddFavorite(Favorite favorite);
     void AddBookingCancellation(BookingCancellation cancellation);
