@@ -21,7 +21,15 @@ export type RequestBody<
 export type ResponseBody<
   T extends keyof paths,
   M extends keyof paths[T] & ("get" | "post" | "put" | "patch" | "delete"),
-  S extends keyof paths[T][M]["responses"] & (number | string) = 200,
-> = paths[T][M]["responses"][S] extends { content: { "application/json": infer R } } ? R : never;
+  S extends number | string = 200,
+> = paths[T][M] extends { responses: infer Responses }
+  ? Responses extends Record<string | number, unknown>
+    ? S extends keyof Responses
+      ? Responses[S] extends { content: { "application/json": infer R } }
+        ? R
+        : never
+      : never
+    : never
+  : never;
 
 export type { components, paths };

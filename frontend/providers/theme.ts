@@ -73,6 +73,7 @@ declare module "@mui/material/styles" {
       activeBg: string;
       hoverBg: string;
       divider: string;
+      border: string;
     };
     icon: {
       business: {
@@ -162,6 +163,7 @@ declare module "@mui/material/styles" {
       activeBg?: string;
       hoverBg?: string;
       divider?: string;
+      border?: string;
     };
     icon?: {
       business?: {
@@ -273,6 +275,7 @@ const lightPalette: PaletteOptions = {
     activeBg: "#0f5b5b",
     hoverBg: "#e2e8f0",
     divider: "#e2e8f0",
+    border: "#e2e8f0",
   },
   icon: {
     business: {
@@ -377,12 +380,13 @@ const darkPalette: PaletteOptions = {
     },
   },
   sidebar: {
-    background: "#0a0e0f",
+    background: "#111618",
     text: "#ffffff",
     textMuted: "#b3b9c1",
     activeBg: "#2d8b8b",
     hoverBg: "#1a1f23",
     divider: "#1a1f23",
+    border: "#1a1f23",
   },
   icon: {
     business: {

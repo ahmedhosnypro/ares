@@ -516,7 +516,8 @@ export default function DashboardShell({
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
               width: drawerWidth,
-              border: "none",
+              borderRight: "1px solid",
+              borderColor: "sidebar.border",
               bgcolor: "sidebar.background",
             },
           }}
@@ -531,7 +532,8 @@ export default function DashboardShell({
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
               width: drawerWidth,
-              border: "none",
+              borderRight: "1px solid",
+              borderColor: "sidebar.border",
               bgcolor: "sidebar.background",
               overflowX: "hidden",
               transition: theme =>
