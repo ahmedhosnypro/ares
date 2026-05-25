@@ -127,7 +127,7 @@ export default function CreateCarPage() {
         <Typography color="text.secondary">Fill in the details to list a new car in the system</Typography>
       </Stack>
 
-      <Card sx={{ p: { xs: 2, md: 4 }, borderRadius: 4, border: "1px solid", borderColor: "divider" }}>
+      <Card sx={{ p: { xs: 2, md: 4 }, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
         <Grid container spacing={3}>
           {/* Car Identity */}
           <Grid size={{ xs: 12, sm: 6 }}>
@@ -319,7 +319,7 @@ export default function CreateCarPage() {
               router.push("/admin/vehicles");
             }}
             variant="outlined"
-            sx={{ borderRadius: 3, px: 4, fontWeight: 700 }}
+            sx={{ borderRadius: 2, px: 4, fontWeight: 700 }}
           >
             Cancel
           </Button>
@@ -328,7 +328,7 @@ export default function CreateCarPage() {
             variant="contained"
             disabled={loading}
             sx={{
-              borderRadius: 3,
+              borderRadius: 2,
               px: 6,
               fontWeight: 700,
               background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,

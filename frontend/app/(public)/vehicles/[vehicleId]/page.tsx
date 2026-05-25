@@ -209,20 +209,20 @@ export default async function VehicleDetailsPage({ params }: PageProps) {
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, lg: 8 }}>
             <Stack spacing={3}>
-              <Paper elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3, p: 2 }}>
+              <Paper elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: 2 }}>
                 <Gallery images={vehicle.images} vehicleLabel={`${vehicle.make} ${vehicle.model}`} />
               </Paper>
 
               <Paper
                 elevation={0}
-                sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3, p: { xs: 2, md: 3 } }}
+                sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: { xs: 2, md: 3 } }}
               >
                 <VehicleInfo vehicle={vehicle} />
               </Paper>
 
               <Paper
                 elevation={0}
-                sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3, p: { xs: 2, md: 3 } }}
+                sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: { xs: 2, md: 3 } }}
               >
                 <ReviewSection reviews={reviews} />
               </Paper>
@@ -231,7 +231,7 @@ export default async function VehicleDetailsPage({ params }: PageProps) {
 
           <Grid size={{ xs: 12, lg: 4 }}>
             <Box sx={{ position: { lg: "sticky" }, top: { lg: 96 } }}>
-              <Paper elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3 }}>
+              <Paper elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2 }}>
                 <BookingCard vehicle={vehicle} locationOptions={locations} />
               </Paper>
             </Box>

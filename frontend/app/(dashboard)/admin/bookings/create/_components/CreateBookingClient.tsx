@@ -59,7 +59,7 @@ function SectionCard({ title, subtitle, step, done, children }: SectionCardProps
       elevation={0}
       sx={{
         p: 3,
-        borderRadius: 3,
+        borderRadius: 2,
         border: "1px solid",
         borderColor: done ? "success.main" : "divider",
         bgcolor: theme => (done ? alpha(theme.palette.success.main, 0.02) : "background.paper"),
@@ -651,7 +651,7 @@ export default function CreateBookingClient() {
           elevation={0}
           sx={{
             p: 3,
-            borderRadius: 3,
+            borderRadius: 2,
             border: "1px solid",
             borderColor: "divider",
             height: "fit-content",

@@ -22,13 +22,11 @@ import {
   Stack,
   CircularProgress,
   InputAdornment,
-  Card,
   Pagination,
   Tooltip,
   useTheme,
   useMediaQuery,
   alpha,
-  Grid,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -49,36 +47,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import { deleteSupplier } from "@/api-clients/suppliers/suppliers";
 import { getSuppliers, type Supplier } from "@/api-clients/suppliers/suppliers";
 import { logger } from "@/utils/logger";
-
-// ── UI Card ─────────────────────────────
-interface StatCardProps {
-  readonly label: string;
-  readonly value: number | string;
-  readonly color: string;
-}
-
-function StatCard({ label, value, color }: StatCardProps) {
-  return (
-    <Card
-      elevation={0}
-      sx={{
-        p: 2,
-        borderRadius: 2,
-        border: "1px solid",
-        borderColor: "divider",
-        background: (t: Theme) =>
-          `linear-gradient(135deg, ${t.palette.background.paper} 0%, ${alpha(color, 0.08)} 100%)`,
-      }}
-    >
-      <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 700 }}>
-        {label}
-      </Typography>
-      <Typography variant="h4" sx={{ fontWeight: 800, color }}>
-        {value}
-      </Typography>
-    </Card>
-  );
-}
+import VehicleStats from "@/app/(dashboard)/_components/VehicleStats";
 
 // ── Mobile Card for each supplier row ───
 interface SupplierMobileCardProps {
@@ -245,6 +214,30 @@ export default function SuppliersPage() {
   const activeSuppliers = suppliers.filter(s => s.status === "active").length;
   const blockedSuppliers = suppliers.filter(s => s.status === "blocked").length;
 
+  const supplierStatsItems = useMemo(
+    () => [
+      {
+        label: "Total Suppliers",
+        value: totalSuppliers,
+        color: "primary",
+        icon: <BusinessIcon fontSize="small" />,
+      },
+      {
+        label: "Active",
+        value: activeSuppliers,
+        color: "success",
+        icon: <CheckCircleIcon fontSize="small" />,
+      },
+      {
+        label: "Blocked",
+        value: blockedSuppliers,
+        color: "error",
+        icon: <BlockIcon fontSize="small" />,
+      },
+    ],
+    [totalSuppliers, activeSuppliers, blockedSuppliers]
+  );
+
   // ── PAGINATION ────────────────────────
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -294,17 +287,7 @@ export default function SuppliersPage() {
       </Stack>
 
       {/* STATS */}
-      <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <StatCard label="Total Suppliers" value={totalSuppliers} color={theme.palette.primary.main} />
-        </Grid>
-        <Grid size={{ xs: 6, sm: 4 }}>
-          <StatCard label="Active" value={activeSuppliers} color={theme.palette.success.main} />
-        </Grid>
-        <Grid size={{ xs: 6, sm: 4 }}>
-          <StatCard label="Blocked" value={blockedSuppliers} color={theme.palette.error.main} />
-        </Grid>
-      </Grid>
+      <VehicleStats items={supplierStatsItems} />
 
       {/* FILTER */}
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>

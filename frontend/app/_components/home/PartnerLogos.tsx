@@ -21,7 +21,7 @@ export default function PartnerLogos({ suppliers = [] }: Readonly<PartnerLogosPr
       sx={{
         py: { xs: 6, md: 8 },
         bgcolor: "background.paper",
-        borderRadius: 3,
+        borderRadius: 2,
       }}
     >
       <Container

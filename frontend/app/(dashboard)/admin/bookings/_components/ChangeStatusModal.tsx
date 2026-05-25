@@ -90,7 +90,7 @@ export default function ChangeStatusModal({
       onClose={() => {
         if (!submitting) onClose();
       }}
-      slotProps={{ paper: { sx: { borderRadius: 3, p: 1, minWidth: 380 } } }}
+      slotProps={{ paper: { sx: { borderRadius: 2, p: 1, minWidth: 380 } } }}
     >
       <DialogTitle sx={{ fontWeight: 700, pb: 1 }}>Change Booking Status</DialogTitle>
       <DialogContent>

@@ -57,7 +57,7 @@ export default async function CheckoutPage({ params }: PageProps) {
   const session = await getServerSession(authOptions);
 
   if (!session?.accessToken) {
-    redirect(`/login?callbackUrl=/booking/checkout/${bookingId}`);
+    redirect(`/sign-in?callbackUrl=/booking/checkout/${bookingId}`);
   }
 
   const booking = await fetchBookingDetails(bookingId, session.accessToken);
@@ -89,7 +89,7 @@ export default async function CheckoutPage({ params }: PageProps) {
               elevation={0}
               sx={{
                 p: 3,
-                borderRadius: 4,
+                borderRadius: 2,
                 border: "1px solid",
                 borderColor: "divider",
                 position: "sticky",

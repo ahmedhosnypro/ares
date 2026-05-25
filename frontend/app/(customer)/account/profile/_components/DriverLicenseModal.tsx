@@ -217,7 +217,7 @@ export default function DriverLicenseModal({
       slotProps={{
         paper: {
           sx: {
-            borderRadius: 3,
+            borderRadius: 2,
           },
         },
       }}

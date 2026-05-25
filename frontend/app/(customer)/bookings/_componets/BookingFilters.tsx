@@ -52,7 +52,7 @@ export default function BookingFilters({ onFilterChange }: Readonly<BookingFilte
         flexDirection: "column",
         gap: 3,
         p: { xs: 2, md: 3 },
-        borderRadius: 3,
+        borderRadius: 2,
         border: "1px solid",
         borderColor: "border.main",
         bgcolor: "background.paper",

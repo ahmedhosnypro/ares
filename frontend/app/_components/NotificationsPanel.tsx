@@ -223,7 +223,7 @@ export default function NotificationsPanel({ iconColor = "inherit" }: Notificati
               width: { xs: "calc(100vw - 32px)", sm: 380 },
               maxWidth: "calc(100vw - 16px)",
               maxHeight: 520,
-              borderRadius: 3,
+              borderRadius: 2,
               border: "1px solid",
               borderColor: "divider",
               overflow: "hidden",

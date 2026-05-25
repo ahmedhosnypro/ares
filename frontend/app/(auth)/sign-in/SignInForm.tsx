@@ -356,7 +356,7 @@ export default function SignInForm() {
               Don&apos;t have an account?{" "}
               <MuiLink
                 component={Link}
-                href="/register"
+                href="/sign-up"
                 sx={{ fontWeight: 700, textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
               >
                 Create a free account

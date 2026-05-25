@@ -168,7 +168,7 @@ export default function ResetPasswordClient({ email, token }: ResetPasswordClien
             textAlign: "center",
             p: 3,
             bgcolor: "success.light",
-            borderRadius: 3,
+            borderRadius: 2,
             border: "1px solid",
             borderColor: "success.main",
           }}
@@ -201,7 +201,7 @@ export default function ResetPasswordClient({ email, token }: ResetPasswordClien
             textAlign: "center",
             p: 3,
             bgcolor: "error.light",
-            borderRadius: 3,
+            borderRadius: 2,
             border: "1px solid",
             borderColor: "error.main",
           }}

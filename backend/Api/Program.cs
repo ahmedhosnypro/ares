@@ -129,6 +129,7 @@ try
     builder.Services.AddScoped<IInspectorManagementService, InspectorManagementService>();
     builder.Services.AddScoped<IInspectionService, InspectionService>();
     builder.Services.AddScoped<Backend.Application.Services.ISettingsService, Backend.Infrastructure.Services.SettingsService>();
+    builder.Services.AddScoped<Backend.Application.Services.ITermsService, Backend.Application.Services.TermsService>();
     builder.Services.AddHostedService<Backend.Infrastructure.Services.BookingStatusUpdateService>();
 
     // Register FluentValidation

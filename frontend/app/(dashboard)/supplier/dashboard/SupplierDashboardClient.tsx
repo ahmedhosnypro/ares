@@ -69,8 +69,6 @@ const itemVariants = {
   },
 };
 
-
-
 interface ActivityItem {
   id: string;
   type: "booking" | "payment" | "user" | "vehicle";

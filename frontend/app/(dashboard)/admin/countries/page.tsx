@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, memo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -18,10 +18,8 @@ import {
   Stack,
   CircularProgress,
   InputAdornment,
-  Card,
   Pagination,
   Tooltip,
-  useTheme,
   alpha,
   Dialog,
   DialogTitle,
@@ -29,7 +27,6 @@ import {
   DialogActions,
   Button,
 } from "@mui/material";
-import Grid from "@mui/material/Grid";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 import {
@@ -40,65 +37,10 @@ import {
 } from "@mui/icons-material";
 import { useSession } from "next-auth/react";
 import { useCountries, checkCountry, deleteCountry, type Country } from "@/api-clients/countries/countries";
-
-// ── TYPES ──
-interface StatCardProps {
-  label: string;
-  value: number;
-  color: string;
-  icon: React.ReactNode;
-}
-
-// ── STAT CARD ──
-const StatCard = memo(function StatCard({ label, value, color, icon }: StatCardProps) {
-  return (
-    <Card
-      elevation={0}
-      sx={{
-        p: { xs: 2, sm: 2.5 },
-        borderRadius: 2,
-        border: "1px solid",
-        borderColor: "divider",
-        position: "relative",
-        overflow: "hidden",
-        background: theme =>
-          `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${alpha(color, 0.08)} 100%)`,
-        transition: "transform 0.2s, box-shadow 0.2s",
-        "&:hover": {
-          transform: "translateY(-2px)",
-          boxShadow: () => `0 8px 24px ${alpha(color, 0.18)}`,
-        },
-      }}
-    >
-      <Box
-        sx={{
-          position: "absolute",
-          top: -18,
-          right: -18,
-          width: 80,
-          height: 80,
-          borderRadius: "50%",
-          bgcolor: alpha(color, 0.1),
-        }}
-      />
-      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-        <Avatar sx={{ bgcolor: alpha(color, 0.15), color, width: 40, height: 40 }}>{icon}</Avatar>
-        <Box>
-          <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-            {label}
-          </Typography>
-          <Typography variant="h4" sx={{ color, lineHeight: 1.1, fontWeight: 800 }}>
-            {value}
-          </Typography>
-        </Box>
-      </Stack>
-    </Card>
-  );
-});
+import VehicleStats from "@/app/(dashboard)/_components/VehicleStats";
 
 // ── MAIN PAGE ──
 export default function AdminCountriesPage() {
-  const theme = useTheme();
   const { data: session } = useSession();
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -108,6 +50,24 @@ export default function AdminCountriesPage() {
 
   const { countries, loading, page, totalPages, totalRecords, setPage, search, setSearch, refresh } = useCountries(
     session?.accessToken
+  );
+
+  const countryStatsItems = useMemo(
+    () => [
+      {
+        label: "Total Countries",
+        value: totalRecords,
+        color: "primary",
+        icon: <CountryIcon fontSize="small" />,
+      },
+      {
+        label: "Active Regions",
+        value: totalRecords, // Approximation since countries are derived from active locations
+        color: "success",
+        icon: <MapIcon fontSize="small" />,
+      },
+    ],
+    [totalRecords]
   );
 
   // ── HANDLERS ──
@@ -177,24 +137,7 @@ export default function AdminCountriesPage() {
       </Stack>
 
       {/* STATS */}
-      <Grid container spacing={2} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <StatCard
-            label="Total Countries"
-            value={totalRecords}
-            color={theme.palette.primary.main}
-            icon={<CountryIcon fontSize="small" />}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <StatCard
-            label="Active Regions"
-            value={totalRecords} // Approximation since countries are derived from active locations
-            color={theme.palette.success.main}
-            icon={<MapIcon fontSize="small" />}
-          />
-        </Grid>
-      </Grid>
+      <VehicleStats items={countryStatsItems} />
 
       {/* FILTER */}
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>

@@ -73,7 +73,7 @@ export default function VerifyEmailClient({ userId, token }: Readonly<VerifyEmai
           maxWidth: 450,
           width: "100%",
           p: 5,
-          borderRadius: 4,
+          borderRadius: 2,
           bgcolor: "background.paper",
           boxShadow: 3,
           textAlign: "center",

@@ -50,7 +50,7 @@ export default function WhyChooseUsSection() {
         py: { xs: 6, md: 10 },
         px: { xs: 3, md: 6 },
         mx: { xs: -2, md: -3 },
-        borderRadius: 3, // Reduced from 6 (48px) to 3 (24px) for structured look
+        borderRadius: 2, // Reduced from 6 (48px) to 3 (24px) for structured look
       }}
     >
       <Box sx={{ maxWidth: 1200, mx: "auto" }}>

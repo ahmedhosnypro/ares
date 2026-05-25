@@ -46,6 +46,9 @@ import {
   EditOutlined as EditIcon,
   SyncAltOutlined as ChangeStatusIcon,
   DeleteOutlined as DeleteIcon,
+  PlayCircleTwoTone as ActiveIcon,
+  HourglassEmptyTwoTone as PendingIcon,
+  CheckCircleTwoTone as CompletedIcon,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -59,6 +62,7 @@ import { toImageUrl } from "@/utils/image-url";
 import { logger } from "@/utils/logger";
 import Link from "next/link";
 import ChangeStatusModal from "./ChangeStatusModal";
+import VehicleStats from "@/app/(dashboard)/_components/VehicleStats";
 
 // ── CONSTANTS & HELPERS ─────────────────────────────────────────────────
 const getStatusConfig = (status?: string) => {
@@ -134,6 +138,32 @@ export default function BookingsClient() {
   );
 
   const { stats, loading: statsLoading } = useAdminBookingStats(session?.accessToken, user);
+
+  const bookingItems = useMemo(
+    () => [
+      {
+        label: "Active Bookings",
+        value: statsLoading ? "—" : (stats?.activeBookings ?? 0),
+        color: "success",
+        icon: <ActiveIcon fontSize="small" />,
+      },
+      {
+        label: "Pending Bookings",
+        value: statsLoading ? "—" : (stats?.pendingBookings ?? 0),
+        color: "warning",
+        icon: <PendingIcon fontSize="small" />,
+      },
+      {
+        label: "Completed Bookings",
+        value: statsLoading
+          ? "—"
+          : (stats?.totalCompletedBookings ?? stats?.completedBookings ?? stats?.completedToday ?? 0),
+        color: "info",
+        icon: <CompletedIcon fontSize="small" />,
+      },
+    ],
+    [stats, statsLoading]
+  );
 
   // ── Handlers ─────────────────────────────────────────────────────────
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -427,55 +457,10 @@ export default function BookingsClient() {
       </Stack>
 
       {/* ── OPERATIONAL CARDS ── */}
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 4, width: "100%" }}>
-        {[
-          { label: "Active Bookings", value: stats?.activeBookings ?? "-", color: "success" },
-          { label: "Pending Bookings", value: stats?.pendingBookings ?? "-", color: "warning" },
-          {
-            label: "Completed Bookings",
-            value: stats?.totalCompletedBookings ?? stats?.completedBookings ?? stats?.completedToday ?? "-",
-            color: "info",
-          },
-        ].map(stat => (
-          <Box sx={{ flex: 1 }} key={stat.label}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 2.5,
-                borderRadius: 3,
-                border: "1px solid",
-                borderColor: "divider",
-                bgcolor: theme => alpha(theme.palette[stat.color as "success" | "warning" | "info"].main, 0.04),
-                display: "flex",
-                flexDirection: "column",
-                gap: 1,
-              }}
-            >
-              <Typography
-                variant="caption"
-                sx={{
-                  fontWeight: 600,
-                  color: "text.secondary",
-                  textTransform: "uppercase",
-                  letterSpacing: 0.5,
-                }}
-              >
-                {stat.label}
-              </Typography>
-              {statsLoading ? (
-                <CircularProgress size={24} sx={{ mt: 1 }} />
-              ) : (
-                <Typography variant="h4" sx={{ fontWeight: 800, color: `${stat.color}.main` }}>
-                  {stat.value}
-                </Typography>
-              )}
-            </Paper>
-          </Box>
-        ))}
-      </Stack>
+      <VehicleStats items={bookingItems} />
 
       {/* ── SEARCH & TABLE SECTION ── */}
-      <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
+      <Paper elevation={0} sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
         {/* Filter Bar */}
         <Stack
           direction={{ xs: "column", md: "row" }}

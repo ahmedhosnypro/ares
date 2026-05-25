@@ -50,8 +50,6 @@ import VehicleStats, { type StatItem } from "@/app/(dashboard)/_components/Vehic
 // Titles + icons only. Values are deliberately left blank — the data-wiring
 // pass will fill them in via the `stats` endpoint.
 
-
-
 // Five empty rows for the "top performing vehicles" leaderboard. Pure
 // placeholder skeletons — no demo data, no make/model strings.
 const TOP_VEHICLE_SLOTS = [0, 1, 2, 3, 4] as const;
@@ -83,36 +81,39 @@ function ScaffoldingBadge() {
 export default function SupplierEarningsClient() {
   const theme = useTheme();
 
-  const earningsStatsItems = useMemo<readonly StatItem[]>(() => [
-    {
-      label: "Total Earnings",
-      value: "—",
-      subtitle: "Lifetime, completed bookings",
-      icon: <AttachMoneyIcon fontSize="medium" />,
-      color: "success",
-    },
-    {
-      label: "This Month",
-      value: "—",
-      subtitle: "Revenue this calendar month",
-      icon: <CalendarMonthIcon fontSize="medium" />,
-      color: "primary",
-    },
-    {
-      label: "Last Month",
-      value: "—",
-      subtitle: "Revenue previous calendar month",
-      icon: <HistoryIcon fontSize="medium" />,
-      color: "info",
-    },
-    {
-      label: "Completed Bookings",
-      value: "—",
-      subtitle: "Lifetime, completed only",
-      icon: <EventAvailableIcon fontSize="medium" />,
-      color: "warning",
-    },
-  ], []);
+  const earningsStatsItems = useMemo<readonly StatItem[]>(
+    () => [
+      {
+        label: "Total Earnings",
+        value: "—",
+        subtitle: "Lifetime, completed bookings",
+        icon: <AttachMoneyIcon fontSize="medium" />,
+        color: "success",
+      },
+      {
+        label: "This Month",
+        value: "—",
+        subtitle: "Revenue this calendar month",
+        icon: <CalendarMonthIcon fontSize="medium" />,
+        color: "primary",
+      },
+      {
+        label: "Last Month",
+        value: "—",
+        subtitle: "Revenue previous calendar month",
+        icon: <HistoryIcon fontSize="medium" />,
+        color: "info",
+      },
+      {
+        label: "Completed Bookings",
+        value: "—",
+        subtitle: "Lifetime, completed only",
+        icon: <EventAvailableIcon fontSize="medium" />,
+        color: "warning",
+      },
+    ],
+    []
+  );
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: "background.default", fontFamily: "inherit" }}>

@@ -133,7 +133,7 @@ export default function ForgotPasswordForm() {
                   textAlign: "center",
                   p: 3,
                   bgcolor: "success.light",
-                  borderRadius: 3,
+                  borderRadius: 2,
                   border: "1px solid",
                   borderColor: "success.main",
                 }}

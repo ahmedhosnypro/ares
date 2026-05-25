@@ -328,7 +328,7 @@ export default function SupplierBookingsClient() {
       </Stack>
 
       {/* ── SEARCH & TABLE SECTION ── */}
-      <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
+      <Paper elevation={0} sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
         {/* Filter Bar */}
         <Stack
           direction={{ xs: "column", md: "row" }}

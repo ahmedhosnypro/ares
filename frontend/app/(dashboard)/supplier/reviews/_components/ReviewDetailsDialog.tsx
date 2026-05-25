@@ -58,7 +58,7 @@ export default function ReviewDetailsDialog({ open, review, onClose, onReply, on
       onClose={onClose}
       fullWidth
       maxWidth="sm"
-      slotProps={{ paper: { sx: { borderRadius: 3, mx: { xs: 2, sm: "auto" } } } }}
+      slotProps={{ paper: { sx: { borderRadius: 2, mx: { xs: 2, sm: "auto" } } } }}
     >
       <DialogTitle
         sx={{

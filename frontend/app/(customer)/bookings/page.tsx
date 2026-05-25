@@ -13,7 +13,7 @@ export default async function MyBookingsPage() {
         <Container maxWidth="sm">
           <Box
             sx={{
-              borderRadius: 3,
+              borderRadius: 2,
               border: "1px solid",
               borderColor: "border.main",
               bgcolor: "background.paper",

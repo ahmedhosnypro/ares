@@ -114,7 +114,7 @@ function ReportReviewDialogInner({ open, review, submitting, onClose, onSubmit }
       }}
       fullWidth
       maxWidth="sm"
-      slotProps={{ paper: { sx: { borderRadius: 3, mx: { xs: 2, sm: "auto" } } } }}
+      slotProps={{ paper: { sx: { borderRadius: 2, mx: { xs: 2, sm: "auto" } } } }}
     >
       <DialogTitle
         sx={{

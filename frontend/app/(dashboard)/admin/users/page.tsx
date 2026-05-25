@@ -22,7 +22,6 @@ import {
   Stack,
   CircularProgress,
   InputAdornment,
-  Card,
   Pagination,
   Tooltip,
   useTheme,
@@ -31,7 +30,6 @@ import {
   type Theme,
   type SelectChangeEvent,
 } from "@mui/material";
-import Grid from "@mui/material/Grid";
 
 import Link from "next/link";
 import SearchIcon from "@mui/icons-material/Search";
@@ -39,38 +37,10 @@ import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import BlockIcon from "@mui/icons-material/Block";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import PeopleIcon from "@mui/icons-material/People";
 import { toggleUserStatus, getUsers, type User } from "@/api-clients/users/users";
 import { logger } from "@/utils/logger";
-
-interface StatCardProps {
-  readonly label: string;
-  readonly value: string | number;
-  readonly color: string;
-}
-
-// ── UI Card ─────────────────────────────
-function StatCard({ label, value, color }: StatCardProps) {
-  return (
-    <Card
-      elevation={0}
-      sx={{
-        p: 2,
-        borderRadius: 2,
-        border: "1px solid",
-        borderColor: "divider",
-        background: (theme: Theme) =>
-          `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${alpha(color, 0.08)} 100%)`,
-      }}
-    >
-      <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 700 }}>
-        {label}
-      </Typography>
-      <Typography variant="h4" sx={{ fontWeight: 800, color }}>
-        {value}
-      </Typography>
-    </Card>
-  );
-}
+import VehicleStats from "@/app/(dashboard)/_components/VehicleStats";
 
 interface UserMobileCardProps {
   readonly u: User;
@@ -241,6 +211,30 @@ export default function UsersPage() {
   const totalUsers = users.length;
   const activeUsers = users.filter(u => u.status === "active").length;
   const blockedUsers = users.filter(u => u.status === "blocked").length;
+
+  const userStatsItems = useMemo(
+    () => [
+      {
+        label: "Total Users",
+        value: totalUsers,
+        color: "primary",
+        icon: <PeopleIcon fontSize="small" />,
+      },
+      {
+        label: "Active Users",
+        value: activeUsers,
+        color: "success",
+        icon: <CheckCircleIcon fontSize="small" />,
+      },
+      {
+        label: "Blocked Users",
+        value: blockedUsers,
+        color: "error",
+        icon: <BlockIcon fontSize="small" />,
+      },
+    ],
+    [totalUsers, activeUsers, blockedUsers]
+  );
 
   // ── PAGINATION ────────────────────────
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
@@ -519,17 +513,7 @@ export default function UsersPage() {
       </Stack>
 
       {/* STATS */}
-      <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <StatCard label="Total Users" value={totalUsers} color={theme.palette.primary.main} />
-        </Grid>
-        <Grid size={{ xs: 6, sm: 4 }}>
-          <StatCard label="Active Users" value={activeUsers} color={theme.palette.success.main} />
-        </Grid>
-        <Grid size={{ xs: 6, sm: 4 }}>
-          <StatCard label="Blocked Users" value={blockedUsers} color={theme.palette.error.main} />
-        </Grid>
-      </Grid>
+      <VehicleStats items={userStatsItems} />
 
       {/* FILTER */}
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>

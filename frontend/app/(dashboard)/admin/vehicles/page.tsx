@@ -2,7 +2,7 @@
 
 // cspell:ignore refetches
 
-import React, { useState, memo, useCallback, useMemo, useEffect } from "react";
+import { useState, memo, useCallback, useMemo, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -21,7 +21,6 @@ import {
   CircularProgress,
   LinearProgress,
   InputAdornment,
-  Card,
   MenuItem,
   Pagination,
   Tooltip,
@@ -44,10 +43,8 @@ import {
   DeleteOutlineRounded as DeleteIcon,
   DirectionsCarFilledTwoTone as CarIcon,
   SearchRounded as SearchIcon,
-  CheckCircleTwoTone as AvailableIcon,
-  KeyTwoTone as RentalIcon,
-  AssessmentTwoTone as InventoryIcon,
 } from "@mui/icons-material";
+import VehicleStats from "@/app/(dashboard)/_components/VehicleStats";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
@@ -139,63 +136,6 @@ const getStatusConfig = (v: Vehicle): { label: string; colorKey: StatusColor } =
   return { label: "Unavailable", colorKey: "info" };
 };
 
-// ── STAT CARD ──
-interface StatCardProps {
-  label: string;
-  value: number;
-  color: string;
-  icon: React.ReactNode;
-}
-
-const StatCard = memo(function StatCard({ label, value, color, icon }: StatCardProps) {
-  return (
-    <Card
-      elevation={0}
-      sx={{
-        p: { xs: 2, sm: 2.5 },
-        borderRadius: 4,
-        border: "1px solid",
-        borderColor: "divider",
-        position: "relative",
-        overflow: "hidden",
-        background: theme =>
-          `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${alpha(color, 0.08)} 100%)`,
-        transition: "transform 0.2s, box-shadow 0.2s",
-        "&:hover": {
-          transform: "translateY(-2px)",
-          boxShadow: () => `0 8px 24px ${alpha(color, 0.18)}`,
-        },
-      }}
-    >
-      <Box
-        sx={{
-          position: "absolute",
-          top: -18,
-          right: -18,
-          width: 80,
-          height: 80,
-          borderRadius: "50%",
-          bgcolor: alpha(color, 0.1),
-        }}
-      />
-      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-        <Avatar sx={{ bgcolor: alpha(color, 0.15), color, width: 40, height: 40 }}>{icon}</Avatar>
-        <Box>
-          <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-            {label}
-          </Typography>
-          <Typography
-            variant="h4"
-            sx={{ fontWeight: 800, color, lineHeight: 1.1, fontSize: { xs: "1.6rem", sm: "2.125rem" } }}
-          >
-            {value}
-          </Typography>
-        </Box>
-      </Stack>
-    </Card>
-  );
-});
-
 // ── ACTION BUTTONS ──
 const ActionButtons = memo(function ActionButtons({
   vehicleId,
@@ -281,7 +221,7 @@ const VehicleMobileCard = memo(function VehicleMobileCard({
       sx={{
         p: 2,
         mb: 2,
-        borderRadius: 3,
+        borderRadius: 2,
         border: "1px solid",
         borderColor: "divider",
         transition: "background 0.15s",
@@ -514,7 +454,7 @@ export default function AdminCarsPage() {
         <Paper
           elevation={0}
           sx={{
-            borderRadius: 4,
+            borderRadius: 2,
             border: "1px solid",
             borderColor: "divider",
             py: 8,
@@ -618,7 +558,7 @@ export default function AdminCarsPage() {
         elevation={0}
         sx={{
           position: "relative",
-          borderRadius: 4,
+          borderRadius: 2,
           border: "1px solid",
           borderColor: "divider",
           overflow: "hidden",
@@ -904,7 +844,7 @@ export default function AdminCarsPage() {
           sx={{
             px: 2.5,
             py: 1.2,
-            borderRadius: 3,
+            borderRadius: 2,
             fontWeight: 700,
             color: "primary.contrastText",
             cursor: "pointer",
@@ -947,32 +887,7 @@ export default function AdminCarsPage() {
       )}
 
       {/* STATS */}
-      <Grid container spacing={2} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <StatCard
-            label="Total Assets"
-            value={total}
-            color={theme.palette.primary.main}
-            icon={<InventoryIcon fontSize="small" />}
-          />
-        </Grid>
-        <Grid size={{ xs: 6, sm: 4 }}>
-          <StatCard
-            label="Available"
-            value={availableCount}
-            color={theme.palette.success.main}
-            icon={<AvailableIcon fontSize="small" />}
-          />
-        </Grid>
-        <Grid size={{ xs: 6, sm: 4 }}>
-          <StatCard
-            label="On Rental"
-            value={rentalCount}
-            color={theme.palette.warning.main}
-            icon={<RentalIcon fontSize="small" />}
-          />
-        </Grid>
-      </Grid>
+      <VehicleStats total={total} availableCount={availableCount} rentalCount={rentalCount} />
 
       {/* FILTER ROW — search + four dropdowns. All four flow through `vehicleFilter`
           into the backend; the search input is debounced inside the hook so each
@@ -987,7 +902,7 @@ export default function AdminCarsPage() {
             onChange={e => {
               setSearch(e.target.value);
             }}
-            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3, bgcolor: "background.paper" } }}
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "background.paper" } }}
             slotProps={{
               input: {
                 startAdornment: (
@@ -1009,7 +924,7 @@ export default function AdminCarsPage() {
             onChange={e => {
               setStatusFilter(e.target.value as VehicleStatusFilter);
             }}
-            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3, bgcolor: "background.paper" } }}
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "background.paper" } }}
           >
             {STATUS_OPTIONS.map(opt => (
               <MenuItem key={opt.value} value={opt.value}>
@@ -1028,7 +943,7 @@ export default function AdminCarsPage() {
             onChange={e => {
               setSupplierFilter(e.target.value);
             }}
-            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3, bgcolor: "background.paper" } }}
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "background.paper" } }}
           >
             <MenuItem value="">All suppliers</MenuItem>
             {suppliers.map(s => (
@@ -1048,7 +963,7 @@ export default function AdminCarsPage() {
             onChange={e => {
               setTransmissionFilter(e.target.value);
             }}
-            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3, bgcolor: "background.paper" } }}
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "background.paper" } }}
           >
             {TRANSMISSION_OPTIONS.map(opt => (
               <MenuItem key={opt.value} value={opt.value}>
@@ -1067,7 +982,7 @@ export default function AdminCarsPage() {
             onChange={e => {
               setSortBy(e.target.value as VehicleSortBy);
             }}
-            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3, bgcolor: "background.paper" } }}
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "background.paper" } }}
           >
             {SORT_OPTIONS.map(opt => (
               <MenuItem key={opt.value} value={opt.value}>
@@ -1112,7 +1027,7 @@ export default function AdminCarsPage() {
         fullWidth
         maxWidth="xs"
         slotProps={{
-          paper: { sx: { borderRadius: 3, p: 1, mx: { xs: 2, sm: "auto" } } },
+          paper: { sx: { borderRadius: 2, p: 1, mx: { xs: 2, sm: "auto" } } },
         }}
       >
         <DialogTitle sx={{ fontWeight: 700 }}>Delete Vehicle</DialogTitle>
