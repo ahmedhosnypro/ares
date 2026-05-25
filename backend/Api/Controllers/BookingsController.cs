@@ -530,7 +530,7 @@ public class AdminBookingsController : ControllerBase
         if (limit < 1) limit = 1;
         if (limit > 50) limit = 50;
 
-        var query = _context.Vehicles.Where(v => v.IsActive && v.Status == "Active" && v.AvailabilityStatus == "Available");
+        var query = _context.Vehicles.Where(v => v.IsActive && v.AvailabilityStatus == "Available");
 
         // Suppliers should only see their own fleet in the picker.
         var isAdmin = User.IsInRole("Admin");
