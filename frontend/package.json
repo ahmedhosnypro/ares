@@ -7,8 +7,8 @@
     "dev:full": "bash ../scripts/dev.sh",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
+    "lint": "eslint . --concurrency=auto --cache",
+    "lint:fix": "eslint . --fix --concurrency=auto --cache",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "tsc": "tsc --extendedDiagnostics --noEmit",
@@ -24,6 +24,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@biomejs/biome": "^2.4.15",
     "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
@@ -70,6 +71,7 @@
     "globals": "^17.6.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.2",
+    "openapi-typescript": "^7.13.0",
     "postcss": "^8.5.14",
     "prettier": "^3.8.3",
     "sharp": "^0.34.5",

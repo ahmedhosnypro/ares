@@ -282,7 +282,7 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
             elevation={0}
             sx={{
               p: 3,
-              borderRadius: 3,
+              borderRadius: 2,
               border: "1px solid",
               borderColor: "divider",
             }}
@@ -353,7 +353,7 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
             elevation={0}
             sx={{
               p: 3,
-              borderRadius: 3,
+              borderRadius: 2,
               border: "1px solid",
               borderColor: "divider",
             }}
@@ -441,7 +441,7 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
           elevation={0}
           sx={{
             p: 3,
-            borderRadius: 3,
+            borderRadius: 2,
             border: "1px solid",
             borderColor: "divider",
             height: "fit-content",

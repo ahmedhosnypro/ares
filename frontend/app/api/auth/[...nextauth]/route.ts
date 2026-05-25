@@ -1,5 +1,6 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { JWT } from "next-auth/jwt";
 import { getApiBaseUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
 
@@ -54,7 +55,7 @@ function handleAuthError(res: Response, data: AuthResponse): never {
   throw new Error(data.message || "An unexpected error occurred");
 }
 
-async function refreshAccessToken(token: any) {
+async function refreshAccessToken(token: JWT): Promise<JWT> {
   try {
     const baseUrl = getApiBaseUrl();
     const response = await fetch(`${baseUrl}/api/auth/refresh-token`, {
@@ -63,7 +64,7 @@ async function refreshAccessToken(token: any) {
       body: JSON.stringify({ refreshToken: token.refreshToken }),
     });
 
-    const refreshedTokens = await response.json();
+    const refreshedTokens = (await response.json()) as AuthResponse;
 
     if (!response.ok) {
       throw refreshedTokens;
@@ -71,9 +72,11 @@ async function refreshAccessToken(token: any) {
 
     return {
       ...token,
-      accessToken: refreshedTokens.token,
-      refreshToken: refreshedTokens.refreshToken,
-      accessTokenExpires: new Date(refreshedTokens.expiresAt).getTime(),
+      accessToken: refreshedTokens.token ?? token.accessToken,
+      refreshToken: refreshedTokens.refreshToken ?? token.refreshToken,
+      accessTokenExpires: refreshedTokens.expiresAt
+        ? new Date(refreshedTokens.expiresAt).getTime()
+        : token.accessTokenExpires,
     };
   } catch (error) {
     logger.error("Error refreshing access token:", error);
@@ -132,9 +135,9 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     // 1. نقل الداتا من الباك إند للتوكن المشفر بتاع NextAuth
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       // Initial sign in
-      if (user) {
+      if (trigger === "signIn") {
         token.id = user.id;
         token.firstName = user.firstName;
         token.lastName = user.lastName;

@@ -21,7 +21,7 @@ export default function SupportSection({ support }: Readonly<SupportSectionProps
       sx={{
         bgcolor: "primary.main", // Solid color throughout - no split background
         color: "primary.contrastText",
-        borderRadius: 3, // Reduced from 6 (48px) to 3 (24px) for structured look
+        borderRadius: 2, // Reduced from 6 (48px) to 3 (24px) for structured look
         overflow: "hidden",
       }}
     >

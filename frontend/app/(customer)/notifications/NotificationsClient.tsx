@@ -284,7 +284,7 @@ export default function NotificationsClient() {
         </Alert>
       )}
 
-      <Card elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
+      <Card elevation={0} sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
         {renderContent()}
       </Card>
     </Container>

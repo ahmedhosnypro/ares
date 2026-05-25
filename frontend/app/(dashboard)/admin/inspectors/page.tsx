@@ -25,46 +25,23 @@ import {
   Button,
   Snackbar,
   Alert,
-  Card,
   useTheme,
   useMediaQuery,
   alpha,
   type Theme,
   type SelectChangeEvent,
 } from "@mui/material";
-import Grid from "@mui/material/Grid";
 import Link from "next/link";
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import BlockIcon from "@mui/icons-material/Block";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import AddIcon from "@mui/icons-material/Add";
+import PeopleIcon from "@mui/icons-material/People";
 import { listInspectors, updateInspectorStatus, type Inspector } from "@/api-clients/inspectors/inspectors";
 import { logger } from "@/utils/logger";
 import AddInspectorDialog from "./_components/AddInspectorDialog";
-
-function StatCard({ label, value, color }: { readonly label: string; readonly value: number; readonly color: string }) {
-  return (
-    <Card
-      elevation={0}
-      sx={{
-        p: 2,
-        borderRadius: 2,
-        border: "1px solid",
-        borderColor: "divider",
-        background: (theme: Theme) =>
-          `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${alpha(color, 0.08)} 100%)`,
-      }}
-    >
-      <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 700 }}>
-        {label}
-      </Typography>
-      <Typography variant="h4" sx={{ fontWeight: 800, color }}>
-        {value}
-      </Typography>
-    </Card>
-  );
-}
+import VehicleStats from "@/app/(dashboard)/_components/VehicleStats";
 
 export default function InspectorsPage() {
   const theme = useTheme();
@@ -117,6 +94,30 @@ export default function InspectorsPage() {
       inactive: inspectors.filter(i => !i.isActive).length,
     };
   }, [inspectors]);
+
+  const inspectorStatsItems = useMemo(
+    () => [
+      {
+        label: "Total Inspectors",
+        value: stats.total,
+        color: "primary",
+        icon: <PeopleIcon fontSize="small" />,
+      },
+      {
+        label: "Active",
+        value: stats.active,
+        color: "success",
+        icon: <CheckCircleIcon fontSize="small" />,
+      },
+      {
+        label: "Disabled",
+        value: stats.inactive,
+        color: "error",
+        icon: <BlockIcon fontSize="small" />,
+      },
+    ],
+    [stats]
+  );
 
   const handleToggleActive = (inspector: Inspector) => {
     void (async () => {
@@ -176,17 +177,7 @@ export default function InspectorsPage() {
       </Stack>
 
       {/* STATS */}
-      <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <StatCard label="Total Inspectors" value={stats.total} color={theme.palette.primary.main} />
-        </Grid>
-        <Grid size={{ xs: 6, sm: 4 }}>
-          <StatCard label="Active" value={stats.active} color={theme.palette.success.main} />
-        </Grid>
-        <Grid size={{ xs: 6, sm: 4 }}>
-          <StatCard label="Disabled" value={stats.inactive} color={theme.palette.error.main} />
-        </Grid>
-      </Grid>
+      <VehicleStats items={inspectorStatsItems} />
 
       {/* FILTERS */}
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>

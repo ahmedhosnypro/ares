@@ -2,9 +2,9 @@ import { notFound, redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { Box, Container, Paper, Stack, Typography, Button, Divider, Grid } from "@mui/material";
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
-import ReceiptIcon from "@mui/icons-material/Receipt";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
+import ReceiptDownloadButton from "./ReceiptDownloadButton";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { toApiUrl } from "@/utils/api-client";
 import { formatCurrency } from "@/utils/currency-helpers";
@@ -74,7 +74,7 @@ export default async function ConfirmationPage({ params }: PageProps) {
   const session = await getServerSession(authOptions);
 
   if (!session?.accessToken) {
-    redirect(`/login?callbackUrl=/bookings/confirmation/${bookingId}`);
+    redirect(`/sign-in?callbackUrl=/bookings/confirmation/${bookingId}`);
   }
 
   const booking = await fetchBookingDetails(bookingId, session.accessToken);
@@ -108,7 +108,7 @@ export default async function ConfirmationPage({ params }: PageProps) {
             Your reservation has been successfully placed and paid.
           </Typography>
 
-          <Box sx={{ bgcolor: "grey.50", borderRadius: 4, p: { xs: 2, md: 4 }, mb: 4, textAlign: "left" }}>
+          <Box sx={{ bgcolor: "background.default", borderRadius: 2, p: { xs: 2, md: 4 }, mb: 4, textAlign: "left" }}>
             <Grid container spacing={3}>
               <Grid size={12}>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
@@ -169,23 +169,12 @@ export default async function ConfirmationPage({ params }: PageProps) {
           </Box>
 
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ justifyContent: "center" }}>
-            {transactionId && (
-              <Button
-                variant="contained"
-                size="large"
-                startIcon={<ReceiptIcon />}
-                href={toApiUrl(`/api/v1/payments/${transactionId}/receipt`)}
-                target="_blank"
-                sx={{ borderRadius: 3, py: 1.5, px: 4, fontWeight: 700 }}
-              >
-                Download Receipt
-              </Button>
-            )}
+            {transactionId && <ReceiptDownloadButton transactionId={transactionId} />}
             <Button
               variant="outlined"
               size="large"
               href="/bookings"
-              sx={{ borderRadius: 3, py: 1.5, px: 4, fontWeight: 700 }}
+              sx={{ borderRadius: 2, py: 1.5, px: 4, fontWeight: 700 }}
             >
               My Bookings
             </Button>

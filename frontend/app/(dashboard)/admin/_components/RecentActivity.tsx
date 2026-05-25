@@ -125,7 +125,7 @@ const bestBookingTs = (b: RawBooking): string | undefined => b.createdAt ?? (b.f
 const bestPaymentTs = (b: RawBooking): string | undefined =>
   b.updatedAt ?? b.createdAt ?? (b.from ? b.from : undefined);
 
-// ── Fallback: build 5-item list from existing working APIs ────────────────────
+// ── Fallback: build single most-recent event from existing working APIs ───────
 async function fetchViaFallbackApis(
   accessToken: string,
   isSupplier: boolean,
@@ -260,13 +260,9 @@ async function fetchViaFallbackApis(
     break; // Paged results are sorted newest-first by the backend; first entry is the latest
   }
 
-  return [...latestByType.values()]
-    .sort(
-      (a, b) =>
-        // Items without timestamps go to bottom
-        (b.createdAt ? new Date(b.createdAt).getTime() : 0) - (a.createdAt ? new Date(a.createdAt).getTime() : 0)
-    )
-    .slice(0, 5);
+  return [...latestByType.values()].sort(
+    (a, b) => (b.createdAt ? new Date(b.createdAt).getTime() : 0) - (a.createdAt ? new Date(a.createdAt).getTime() : 0)
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -286,7 +282,19 @@ export default function RecentActivity() {
       const data = await apiFetchJson<RecentActivityItem[]>("api/dashboard/recent-summary", {
         accessToken: session.accessToken,
       });
-      return Array.isArray(data) ? data : [];
+      if (!Array.isArray(data)) return [];
+      // One entry per type — keep the latest of each, sorted newest-first
+      const byType = new Map<RecentActivityItem["type"], RecentActivityItem>();
+      for (const item of data) {
+        const prev = byType.get(item.type);
+        if (!prev || new Date(item.createdAt) > new Date(prev.createdAt)) {
+          byType.set(item.type, item);
+        }
+      }
+      return [...byType.values()].sort(
+        (a, b) =>
+          (b.createdAt ? new Date(b.createdAt).getTime() : 0) - (a.createdAt ? new Date(a.createdAt).getTime() : 0)
+      );
     } catch (err: unknown) {
       const status = err instanceof ApiError ? err.status : 0;
       if (status !== 404) {

@@ -54,13 +54,13 @@ export async function apiFetchJson<T>(endpoint: string, options: ApiFetchOptions
   if (!response.ok) {
     const errorBody = await response.text();
     logger.debug("Backend Error Details", errorBody);
-    
+
     // If we get a 401 and we have an access token, the token might be expired
     // The session will be automatically refreshed on the next getSession() call
     if (response.status === 401 && accessToken) {
       logger.warn("Received 401 with access token - token may be expired");
     }
-    
+
     throw new ApiError(response.status, response.statusText, errorBody);
   }
 

@@ -16,7 +16,7 @@ export default function ProfileCard({ children }: ProfileCardProps) {
   return (
     <Card
       sx={{
-        borderRadius: 3,
+        borderRadius: 2,
         boxShadow: t => t.palette.shadow.card,
         border: t => `1px solid ${t.palette.border.main}`,
         transition: "box-shadow 0.3s ease",

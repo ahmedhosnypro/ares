@@ -57,7 +57,7 @@ export default function BookingCard({ booking }: Readonly<{ booking: BookingItem
         flexDirection: "column",
         gap: { xs: 2, md: 0 },
         p: { xs: 2, sm: 3 },
-        borderRadius: 3,
+        borderRadius: 2,
         border: "1px solid",
         borderColor: "border.main",
         bgcolor: "background.paper",

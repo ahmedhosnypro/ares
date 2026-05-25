@@ -57,16 +57,17 @@ public class DbInitializerTests
 
         await DbInitializer.InitializeAsync(serviceProviderMock.Object, seedDemoData: true);
 
-        // 3 core demo vehicles + 17 from VehicleSeeder = 20 total
-        Assert.Equal(20, await context.Vehicles.CountAsync());
-        // 3 core vehicles × 3 images + 17 seeded vehicles × 3 images = 60 total
-        Assert.Equal(60, await context.VehicleImages.CountAsync());
-        // 3 core vehicles: 5 features + 17 seeded vehicles with varying features
+        // 4 core demo vehicles + 17 from VehicleSeeder = 21 total
+        Assert.Equal(21, await context.Vehicles.CountAsync());
+        // 4 core vehicles × 3 images + 17 seeded vehicles × 3 images = 63 total
+        Assert.Equal(63, await context.VehicleImages.CountAsync());
+        // 4 core vehicles: sedan(2) + suv(2) + compact(1) + recent(5) = 10 features
+        // + 17 seeded vehicles with varying features:
         // Compact (5 vehicles × 3 features) + Standard (5 vehicles × 4 features) + Premium (7 vehicles × 6 features) = 15 + 20 + 42 = 77
-        // Plus 5 original features = 82 total
-        Assert.Equal(82, await context.VehicleFeatures.CountAsync());
+        // Total: 10 + 77 = 87
+        Assert.Equal(87, await context.VehicleFeatures.CountAsync());
         Assert.Equal(6, await context.UserAddresses.CountAsync());
-        Assert.Equal(2, await context.Bookings.CountAsync());
+        Assert.Equal(4, await context.Bookings.CountAsync()); // 2 core + 2 recent notification bookings
         Assert.Equal(2, await context.Reviews.CountAsync());
         Assert.True(await context.CompanyProfiles.AnyAsync());
         Assert.True(await context.Users.AnyAsync(u => u.Email == "supplier.demo@ares.local"));

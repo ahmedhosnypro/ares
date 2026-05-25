@@ -3,7 +3,18 @@
 import React, { memo } from "react";
 import { useSession } from "next-auth/react";
 import { useAdminVehicleStats } from "@/api-clients/cars/cars";
-import { Card, Box, Stack, Avatar, Typography, useTheme, alpha, Skeleton, type SxProps, type Theme } from "@mui/material";
+import {
+  Card,
+  Box,
+  Stack,
+  Avatar,
+  Typography,
+  useTheme,
+  alpha,
+  Skeleton,
+  type SxProps,
+  type Theme,
+} from "@mui/material";
 import Grid from "@mui/material/Grid";
 import {
   AssessmentTwoTone as InventoryIcon,
@@ -86,11 +97,7 @@ const StatCard = memo(function StatCard({ label, value, color, icon, change, isU
             </Typography>
           )}
           {subtitle && (
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ display: "block", mt: 0.25, fontWeight: 500 }}
-            >
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.25, fontWeight: 500 }}>
               {subtitle}
             </Typography>
           )}
@@ -188,9 +195,7 @@ export default function VehicleStats({
 
   // Standard vehicle stats API fetch fallback
   const shouldFetchStats = total === undefined && !items;
-  const { stats: vehicleStats } = useAdminVehicleStats(
-    shouldFetchStats ? session?.accessToken : undefined
-  );
+  const { stats: vehicleStats } = useAdminVehicleStats(shouldFetchStats ? session?.accessToken : undefined);
 
   // Compile final items list to render
   const finalItems: readonly StatItem[] = items ?? [
@@ -227,9 +232,7 @@ export default function VehicleStats({
   }
 
   // Combine standard sx with prop-passed sx in a type-safe array of objects/functions
-  const combinedSx = (sx
-    ? [{ mb: 4 }, sx]
-    : [{ mb: 4 }]) as SxProps<Theme>;
+  const combinedSx = (sx ? [{ mb: 4 }, sx] : [{ mb: 4 }]) as SxProps<Theme>;
 
   return (
     <Grid container spacing={2} sx={combinedSx}>

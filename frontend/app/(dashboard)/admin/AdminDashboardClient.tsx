@@ -7,7 +7,6 @@ import {
   Card,
   CardContent,
   Typography,
-  Avatar,
   Table,
   TableBody,
   TableCell,
@@ -17,9 +16,7 @@ import {
   Chip,
   IconButton,
   LinearProgress,
-  useTheme,
   CircularProgress,
-  alpha,
 } from "@mui/material";
 import { motion } from "framer-motion";
 import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
@@ -27,8 +24,6 @@ import StorefrontIcon from "@mui/icons-material/Storefront";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import { useSession } from "next-auth/react";
 import { apiFetchJson } from "@/utils/api-client";
@@ -36,6 +31,8 @@ import { logger } from "@/utils/logger";
 import { DashboardSummary } from "./types";
 import BookingOverview from "./_components/BookingOverview";
 import RecentActivity from "./_components/RecentActivity";
+import { useAdminVehicleStats } from "@/api-clients/cars/cars";
+import VehicleStats from "@/app/(dashboard)/_components/VehicleStats";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -85,12 +82,13 @@ interface RawBooking {
 }
 
 export default function AdminDashboardClient() {
-  const theme = useTheme();
   const { data: session, status } = useSession();
 
   const [summaryData, setSummaryData] = useState<SummaryItem[]>([]);
   const [recentBookings, setRecentBookings] = useState<BookingListItem[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const { stats: vehicleStats } = useAdminVehicleStats(session?.accessToken);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -257,6 +255,15 @@ export default function AdminDashboardClient() {
     );
   }
 
+  const summaryItems = summaryData.map(stat => ({
+    label: stat.title,
+    value: stat.title === "Active Vehicles" ? (vehicleStats?.availableVehicles ?? stat.value) : stat.value,
+    color: stat.color,
+    icon: stat.icon,
+    change: stat.change,
+    isUp: stat.isUp,
+  }));
+
   return (
     <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: "background.default", fontFamily: "inherit" }}>
       {/* Greeting (kept — replaces the page title that now lives in the navbar) */}
@@ -268,82 +275,9 @@ export default function AdminDashboardClient() {
       </Box>
 
       <motion.div variants={containerVariants} initial="hidden" animate="visible">
-        {/* Stat cards — restyled to match new design (horizontal layout: icon-left, content-right) */}
-        <Grid container spacing={2.5} sx={{ mb: 3 }}>
-          {summaryData.map((stat, index) => (
-            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
-              <motion.div variants={itemVariants}>
-                <Card
-                  elevation={0}
-                  sx={{
-                    borderRadius: 2,
-                    border: "1px solid",
-                    borderColor: "divider",
-                    bgcolor: "background.paper",
-                    transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-                    boxShadow: theme => theme.palette.shadow.card,
-                    "&:hover": {
-                      transform: "translateY(-3px)",
-                      boxShadow: theme => theme.palette.shadow.cardHover,
-                    },
-                  }}
-                >
-                  <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                      <Avatar
-                        sx={{
-                          bgcolor: alpha(theme.palette[stat.color].main, 0.12),
-                          color: `${stat.color}.main`,
-                          width: 56,
-                          height: 56,
-                        }}
-                      >
-                        {stat.icon}
-                      </Avatar>
-                      <Box sx={{ minWidth: 0, flexGrow: 1 }}>
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{ fontWeight: 600, fontSize: "0.85rem", mb: 0.25 }}
-                          noWrap
-                        >
-                          {stat.title}
-                        </Typography>
-                        <Typography
-                          variant="h4"
-                          sx={{ fontWeight: 800, letterSpacing: "-0.5px", lineHeight: 1.1 }}
-                          noWrap
-                        >
-                          {stat.value}
-                        </Typography>
-                      </Box>
-                    </Box>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 1.5 }}>
-                      {stat.isUp ? (
-                        <TrendingUpIcon sx={{ fontSize: 16, color: "success.main" }} />
-                      ) : (
-                        <TrendingDownIcon sx={{ fontSize: 16, color: "error.main" }} />
-                      )}
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          fontWeight: 700,
-                          color: stat.isUp ? "success.main" : "error.main",
-                          fontSize: "0.78rem",
-                        }}
-                      >
-                        {stat.change}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.78rem" }}>
-                        from last month
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-          ))}
-        </Grid>
+        <motion.div variants={itemVariants}>
+          <VehicleStats items={summaryItems} />
+        </motion.div>
 
         <Grid container spacing={3} sx={{ mb: 4 }}>
           <Grid size={{ xs: 12, lg: 6 }}>

@@ -407,7 +407,7 @@ function SuccessView({ firstName, email: _email, callbackUrl }: SuccessViewProps
       sx={{
         textAlign: "center",
         p: 4,
-        borderRadius: 3,
+        borderRadius: 2,
         bgcolor: "success.light",
         border: "1px solid",
         borderColor: "success.main",

@@ -106,7 +106,7 @@ export default function PaymentForm({ bookingId, amount, accessToken }: PaymentF
   };
 
   return (
-    <Paper elevation={0} sx={{ p: { xs: 3, md: 4 }, borderRadius: 4, border: "1px solid", borderColor: "divider" }}>
+    <Paper elevation={0} sx={{ p: { xs: 3, md: 4 }, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
       <Stack spacing={3}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <CreditCardIcon color="primary" />

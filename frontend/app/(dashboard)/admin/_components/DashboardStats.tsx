@@ -11,6 +11,7 @@ import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import { useSession } from "next-auth/react";
 import { apiFetchJson } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
+import { useAdminVehicleStats } from "@/api-clients/cars/cars";
 
 interface DashboardSummary {
   totalSuppliers: number;
@@ -35,6 +36,8 @@ export default function DashboardStats() {
   const { data: session, status } = useSession();
   const [summaryData, setSummaryData] = useState<StatItem[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const { stats: vehicleStats } = useAdminVehicleStats(session?.accessToken);
 
   useEffect(() => {
     if (status === "loading") return;
@@ -166,7 +169,7 @@ export default function DashboardStats() {
               </Box>
               {/* text.primary هيخلي اللون أسود في اللايت، وأبيض في الدارك تلقائياً */}
               <Typography variant="h4" sx={{ color: "text.primary", fontWeight: "800", mb: 0.5 }}>
-                {stat.value}
+                {stat.title === "Active Vehicles" ? (vehicleStats?.availableVehicles ?? stat.value) : stat.value}
               </Typography>
               {/* text.secondary للون الرمادي المريح للعين */}
               <Typography

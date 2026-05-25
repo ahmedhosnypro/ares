@@ -186,7 +186,7 @@ export default function DriverLicenseTab() {
 
     if (licenses.length === 0) {
       return (
-        <Paper sx={{ borderRadius: 3, p: 4, textAlign: "center", opacity: 0.6 }}>
+        <Paper sx={{ borderRadius: 2, p: 4, textAlign: "center", opacity: 0.6 }}>
           <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 700 }}>
             No driver license requests found
           </Typography>
@@ -209,7 +209,7 @@ export default function DriverLicenseTab() {
                 sx={{
                   p: 2,
                   mb: 2,
-                  borderRadius: 3,
+                  borderRadius: 2,
                   border: "1px solid",
                   borderColor: "divider",
                   ...(pending && {
@@ -320,7 +320,7 @@ export default function DriverLicenseTab() {
     }
 
     return (
-      <Paper sx={{ borderRadius: 3 }}>
+      <Paper sx={{ borderRadius: 2 }}>
         <TableContainer sx={{ overflowX: "auto" }}>
           <Table sx={{ minWidth: 900 }}>
             <TableHead>

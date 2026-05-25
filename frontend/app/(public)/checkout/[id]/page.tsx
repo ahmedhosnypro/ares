@@ -74,7 +74,7 @@ function BookingSummary({ intent }: BookingSummaryProps) {
   return (
     <Paper
       elevation={0}
-      sx={{ p: 3, borderRadius: 4, border: "1px solid", borderColor: "divider", position: "sticky", top: 24 }}
+      sx={{ p: 3, borderRadius: 2, border: "1px solid", borderColor: "divider", position: "sticky", top: 24 }}
     >
       <Typography variant="h6" sx={{ fontWeight: 800, mb: 3 }}>
         Your Booking
@@ -153,7 +153,7 @@ function AuthGate({ vehicleId }: AuthGateProps) {
   const callbackUrl = `/checkout/${vehicleId}`;
 
   return (
-    <Paper elevation={0} sx={{ p: { xs: 3, md: 4 }, borderRadius: 4, border: "1px solid", borderColor: "divider" }}>
+    <Paper elevation={0} sx={{ p: { xs: 3, md: 4 }, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
       <Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
         Almost there!
       </Typography>

@@ -326,7 +326,30 @@ public static class DbInitializer
         // ── Extended vehicle catalog (Egypt market, 2015–2024) ────────────
         await VehicleSeeder.SeedAsync(context, logger);
 
+        await SeedTermsAsync(context);
+        await SeedActivityDataAsync(context, userManager, logger);
+
         logger.LogInformation("Demo seed data created successfully.");
+    }
+
+    private static async Task SeedTermsAsync(ApplicationDbContext context)
+    {
+        if (await context.TermsSections.AnyAsync()) return;
+
+        var sections = new[]
+        {
+            new TermsSection { Id = Guid.Parse("10000001-0000-0000-0000-000000000001"), Title = "Acceptance of Terms", Content = "By accessing or using the Ares Car Rental platform, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.", Order = 1 },
+            new TermsSection { Id = Guid.Parse("10000001-0000-0000-0000-000000000002"), Title = "Eligibility", Content = "You must be at least 21 years of age and hold a valid driver's license to rent a vehicle through Ares. By using our platform, you represent and warrant that you meet these requirements.", Order = 2 },
+            new TermsSection { Id = Guid.Parse("10000001-0000-0000-0000-000000000003"), Title = "Reservations and Payments", Content = "All reservations are subject to vehicle availability. Full payment is required at the time of booking. We accept major credit cards and debit cards. Prices are displayed in the selected currency and include applicable taxes.", Order = 3 },
+            new TermsSection { Id = Guid.Parse("10000001-0000-0000-0000-000000000004"), Title = "Cancellation Policy", Content = "Cancellations made more than 48 hours before the rental start time are eligible for a full refund. Cancellations within 48 hours may be subject to a cancellation fee equal to one day's rental charge.", Order = 4 },
+            new TermsSection { Id = Guid.Parse("10000001-0000-0000-0000-000000000005"), Title = "Vehicle Use", Content = "Vehicles must be used in accordance with local traffic laws. Off-road use, racing, or use under the influence of alcohol or drugs is strictly prohibited. The renter is responsible for all traffic violations incurred during the rental period.", Order = 5 },
+            new TermsSection { Id = Guid.Parse("10000001-0000-0000-0000-000000000006"), Title = "Insurance and Liability", Content = "Basic insurance coverage is included with every rental. The renter assumes liability for damages not covered by the included insurance. Additional coverage options are available at checkout.", Order = 6 },
+            new TermsSection { Id = Guid.Parse("10000001-0000-0000-0000-000000000007"), Title = "Privacy", Content = "Your use of the platform is also governed by our Privacy Policy, which is incorporated into these Terms by reference. We collect and process personal data as described in the Privacy Policy.", Order = 7 },
+            new TermsSection { Id = Guid.Parse("10000001-0000-0000-0000-000000000008"), Title = "Changes to Terms", Content = "Ares reserves the right to modify these Terms at any time. Continued use of the platform after changes are posted constitutes your acceptance of the revised Terms.", Order = 8 },
+        };
+
+        await context.TermsSections.AddRangeAsync(sections);
+        await context.SaveChangesAsync();
     }
 
     private static async Task<ApplicationUser> EnsureUserAsync(
@@ -820,5 +843,156 @@ public static class DbInitializer
             Comment = comment,
             AdminResponse = null
         });
+    }
+
+    // ── Activity seed — one recent event per dashboard feed type ─────────────
+    private static async Task SeedActivityDataAsync(
+        ApplicationDbContext context,
+        UserManager<ApplicationUser> userManager,
+        ILogger logger)
+    {
+        var now = DateTime.UtcNow;
+
+        // 1. Recent user registration (2 days ago)
+        var recentUserId = Guid.Parse("a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1");
+        var recentUser = await EnsureUserAsync(
+            userManager,
+            recentUserId,
+            "recent.user@ares.local",
+            "Layla",
+            "Hassan",
+            FormatValidPhone("+201011223344"),
+            null,
+            "Customer");
+
+        // Backdate CreatedAt so the dashboard shows a realistic timestamp
+        var recentUserEntity = await context.Users.FirstOrDefaultAsync(u => u.Id == recentUserId);
+        if (recentUserEntity != null && recentUserEntity.CreatedAt > now.AddDays(-3))
+        {
+            recentUserEntity.CreatedAt = now.AddDays(-2);
+            await context.SaveChangesAsync();
+        }
+
+        // 2. Recent vehicle added (8 days ago)
+        var recentVehicleId = Guid.Parse("a2a2a2a2-a2a2-a2a2-a2a2-a2a2a2a2a2a2");
+        var recentVehicle = await EnsureVehicleAsync(
+            context,
+            recentVehicleId,
+            SupplierId,
+            "Kia",
+            "Sportage",
+            2023,
+            "Silver",
+            "KIA-2023-ACT",
+            "Automatic",
+            "Petrol",
+            5,
+            110m,
+            "Cairo",
+            "Modern crossover with advanced safety features.",
+            "Standard",
+            "Available",
+            "uploads/seed/vehicles/midi.png");
+
+        if (recentVehicle.CreatedAt > now.AddDays(-9))
+        {
+            recentVehicle.CreatedAt = now.AddDays(-8);
+        }
+
+        // Add images for recent vehicle
+        await EnsureVehicleImageAsync(context, Guid.Parse("a2a2a2a2-a2a2-a2a2-a2a2-a2a2a2a2a2a1"), recentVehicle.Id, "uploads/seed/vehicles/midi.png", "uploads/seed/vehicles/midi.png", true, 1);
+        await EnsureVehicleImageAsync(context, Guid.Parse("a2a2a2a2-a2a2-a2a2-a2a2-a2a2a2a2a2a2"), recentVehicle.Id, "uploads/seed/vehicles/mini.png", "uploads/seed/vehicles/mini.png", false, 2);
+        await EnsureVehicleImageAsync(context, Guid.Parse("a2a2a2a2-a2a2-a2a2-a2a2-a2a2a2a2a2a3"), recentVehicle.Id, "uploads/seed/vehicles/maxi.png", "uploads/seed/vehicles/maxi.png", false, 3);
+
+        // Add features for recent vehicle
+        await EnsureVehicleFeatureAsync(context, Guid.Parse("a2a2a2a2-a2a2-a2a2-a2a2-a2a2a2a2a2b1"), recentVehicle.Id, "Comfort", "Air Conditioning", "Automatic climate control");
+        await EnsureVehicleFeatureAsync(context, Guid.Parse("a2a2a2a2-a2a2-a2a2-a2a2-a2a2a2a2a2b2"), recentVehicle.Id, "Safety", "Rear Camera", "Parking camera with sensors");
+        await EnsureVehicleFeatureAsync(context, Guid.Parse("a2a2a2a2-a2a2-a2a2-a2a2-a2a2a2a2a2b3"), recentVehicle.Id, "Technology", "Bluetooth", "Hands-free calling and audio streaming");
+        await EnsureVehicleFeatureAsync(context, Guid.Parse("a2a2a2a2-a2a2-a2a2-a2a2-a2a2a2a2a2b4"), recentVehicle.Id, "Safety", "Cruise Control", "Adaptive cruise control");
+        await EnsureVehicleFeatureAsync(context, Guid.Parse("a2a2a2a2-a2a2-a2a2-a2a2-a2a2a2a2a2b5"), recentVehicle.Id, "Safety", "Blind Spot Monitor", "Lane change assist");
+
+        await context.SaveChangesAsync();
+
+        // 3. Recent booking — Pending (3 days ago)
+        var recentBookingId = Guid.Parse("a3a3a3a3-a3a3-a3a3-a3a3-a3a3a3a3a3a3");
+        var recentBooking = await EnsureBookingAsync(
+            context,
+            recentBookingId,
+            recentUserId,
+            recentVehicleId,
+            now.AddDays(2),
+            now.AddDays(5),
+            "Cairo Airport",
+            "Giza Pyramids",
+            3,
+            330m,
+            "Pending");
+
+        if (recentBooking.CreatedAt > now.AddDays(-4))
+        {
+            recentBooking.CreatedAt = now.AddDays(-3);
+            recentBooking.UpdatedAt = now.AddDays(-3);
+        }
+
+        await context.SaveChangesAsync();
+
+        // 4. Recent payment — a Confirmed booking updated 3 hours ago
+        var recentPaymentBookingId = Guid.Parse("a4a4a4a4-a4a4-a4a4-a4a4-a4a4a4a4a4a4");
+        var recentPaymentBooking = await EnsureBookingAsync(
+            context,
+            recentPaymentBookingId,
+            CustomerId,
+            SedanVehicleId,
+            now.AddDays(7),
+            now.AddDays(10),
+            "Nasr City",
+            "Cairo Airport",
+            3,
+            285m,
+            "Confirmed");
+
+        if (recentPaymentBooking.UpdatedAt > now.AddHours(-4))
+        {
+            recentPaymentBooking.CreatedAt = now.AddDays(-1);
+            recentPaymentBooking.UpdatedAt = now.AddHours(-3);
+        }
+
+        await context.SaveChangesAsync();
+
+        // 5. Recent verification (5 days ago)
+        var recentVerificationId = Guid.Parse("a5a5a5a5-a5a5-a5a5-a5a5-a5a5a5a5a5a5");
+        var existingVerification = await context.Verifications
+            .FirstOrDefaultAsync(v => v.Id == recentVerificationId);
+
+        if (existingVerification == null)
+        {
+            var verification = new Verification
+            {
+                Id = recentVerificationId,
+                UserId = recentUserId,
+                VerificationType = "Identity",
+                DocumentType = "NationalId",
+                Status = "Pending",
+                SubmittedAt = now.AddDays(-5),
+                CreatedAt = now.AddDays(-5),
+                UpdatedAt = now.AddDays(-5),
+            };
+            await context.Verifications.AddAsync(verification);
+            await context.SaveChangesAsync();
+        }
+        else
+        {
+            existingVerification.UserId = recentUserId;
+            existingVerification.Status = "Pending";
+            if (existingVerification.CreatedAt > now.AddDays(-4))
+            {
+                existingVerification.CreatedAt = now.AddDays(-5);
+                existingVerification.UpdatedAt = now.AddDays(-5);
+                existingVerification.SubmittedAt = now.AddDays(-5);
+            }
+            await context.SaveChangesAsync();
+        }
+
+        logger.LogInformation("Activity seed data created successfully (booking, payment, user, vehicle, verification).");
     }
 }

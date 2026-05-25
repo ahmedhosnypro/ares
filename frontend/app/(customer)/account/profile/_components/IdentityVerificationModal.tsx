@@ -178,7 +178,7 @@ export default function IdentityVerificationModal({
       slotProps={{
         paper: {
           sx: {
-            borderRadius: 3,
+            borderRadius: 2,
           },
         },
       }}
