@@ -351,11 +351,9 @@ public class AuthService : IAuthService
         _logger.LogInformation("Refresh token attempt from IP: {IpAddress}", ipAddress);
 
         // Find user with the refresh token
-        var users = await _context.Users
-            .Where(u => u.RefreshTokens.Any(t => t.Token == request.RefreshToken))
-            .ToListAsync(cancellationToken);
-
-        var user = users.FirstOrDefault();
+        var user = await _context.Users
+            .Include(u => u.RefreshTokens)
+            .FirstOrDefaultAsync(u => u.RefreshTokens.Any(t => t.Token == request.RefreshToken), cancellationToken);
 
         if (user == null)
         {

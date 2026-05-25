@@ -183,7 +183,7 @@ export default function DashboardShell({
                     transition: "all 0.2s ease",
                     "&:hover": {
                       bgcolor: isActive ? "sidebar.activeBg" : "sidebar.hoverBg",
-                      color: theme => (theme.palette.mode === "dark" ? "common.white" : "sidebar.text"),
+                      color: theme => (isActive || theme.palette.mode === "dark" ? "common.white" : "sidebar.text"),
                     },
                   }}
                 >
@@ -249,7 +249,7 @@ export default function DashboardShell({
               variant="subtitle2"
               sx={{
                 fontWeight: 700,
-                color: "common.white",
+                color: "sidebar.text",
                 whiteSpace: "nowrap",
                 overflow: "hidden",
                 textOverflow: "ellipsis",

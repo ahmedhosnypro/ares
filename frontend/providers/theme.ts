@@ -267,12 +267,12 @@ const lightPalette: PaletteOptions = {
     },
   },
   sidebar: {
-    background: "#0f172a",
-    text: "#cbd5e1",
-    textMuted: "#94a3b8",
-    activeBg: "#3b82f6",
-    hoverBg: "#1e293b",
-    divider: "#1e293b",
+    background: "#ffffff",
+    text: "#10212b",
+    textMuted: "#4a5568",
+    activeBg: "#0f5b5b",
+    hoverBg: "#e2e8f0",
+    divider: "#e2e8f0",
   },
   icon: {
     business: {
@@ -377,12 +377,12 @@ const darkPalette: PaletteOptions = {
     },
   },
   sidebar: {
-    background: "#0f172a",
-    text: "#cbd5e1",
-    textMuted: "#94a3b8",
-    activeBg: "#3b82f6",
-    hoverBg: "#1e293b",
-    divider: "#1e293b",
+    background: "#0a0e0f",
+    text: "#ffffff",
+    textMuted: "#b3b9c1",
+    activeBg: "#2d8b8b",
+    hoverBg: "#1a1f23",
+    divider: "#1a1f23",
   },
   icon: {
     business: {
