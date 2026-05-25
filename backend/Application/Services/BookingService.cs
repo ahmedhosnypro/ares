@@ -214,6 +214,7 @@ public class BookingService : IBookingService
     public async Task<BookingDetailsDto> GetBookingDetailsAsync(
         Guid bookingId,
         Guid userId,
+        bool isAdmin = false,
         CancellationToken cancellationToken = default)
     {
         var booking = await _bookingRepository.GetBookingWithDetailsAsync(bookingId, cancellationToken);
@@ -223,8 +224,8 @@ public class BookingService : IBookingService
             throw new NotFoundException($"Booking with ID {bookingId} not found");
         }
 
-        // Verify booking belongs to authenticated user
-        if (booking.UserId != userId)
+        // Verify booking belongs to authenticated user or user is admin
+        if (!isAdmin && booking.UserId != userId)
         {
             throw new ForbiddenException("You do not have permission to view this booking");
         }

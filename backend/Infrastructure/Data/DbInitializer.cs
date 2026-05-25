@@ -1,10 +1,12 @@
-using Backend.Domain.Entities;
+﻿using Backend.Domain.Entities;
 using Backend.Domain.Entities.Enums;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using PhoneNumbers;
+using System.IO;
 
 namespace Backend.Infrastructure.Data;
 
@@ -35,9 +37,6 @@ public static class DbInitializer
     private static readonly Guid SharmAddressId = Guid.Parse("aaaabbbb-cccc-dddd-eeee-111111111111");
     private static readonly Guid HurghadaAddressId = Guid.Parse("aaaabbbb-cccc-dddd-eeee-222222222222");
     private static readonly Guid CustomerAddressId = Guid.Parse("aaaabbbb-cccc-dddd-eeee-333333333333");
-    private static readonly Guid SedanVehicleId = Guid.Parse("11111111-1111-1111-1111-111111111111");
-    private static readonly Guid SuvVehicleId = Guid.Parse("22222222-2222-2222-2222-222222222222");
-    private static readonly Guid CompactVehicleId = Guid.Parse("33333333-3333-3333-3333-333333333333");
 
     private static string FormatValidPhone(string phone)
     {
@@ -54,6 +53,7 @@ public static class DbInitializer
         var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var context = serviceProvider.GetRequiredService<ApplicationDbContext>();
         var logger = serviceProvider.GetRequiredService<ILogger<ApplicationDbContext>>();
+        var env = serviceProvider.GetRequiredService<IWebHostEnvironment>();
 
         try
         {
@@ -61,6 +61,7 @@ public static class DbInitializer
 
             if (seedDemoData)
             {
+                await SyncSeederAssetsAsync(env, logger);
                 await SeedDemoDataAsync(context, userManager, logger);
             }
 
@@ -72,6 +73,54 @@ public static class DbInitializer
             throw;
         }
     }
+
+    private static async Task SyncSeederAssetsAsync(IWebHostEnvironment env, ILogger logger)
+    {
+        try
+        {
+            var contentRoot = env.ContentRootPath;
+        var webRoot = env.WebRootPath;
+
+        if (string.IsNullOrEmpty(webRoot))
+        {
+            webRoot = Path.Combine(contentRoot, "wwwroot");
+        }
+
+        var sourcePath = Path.GetFullPath(Path.Combine(contentRoot, "..", "Infrastructure", "Data", "SeedData", "Assets", "seed"));
+        var targetRoot = Path.Combine(webRoot, "uploads", "seed");
+
+        if (!Directory.Exists(sourcePath))
+        {
+            logger.LogWarning("Seeder assets source directory not found: {SourcePath}", sourcePath);
+            return;
+        }
+
+        logger.LogInformation("Syncing seeder assets from {Source} to {Target}", sourcePath, targetRoot);
+
+        if (!Directory.Exists(targetRoot))
+        {
+            Directory.CreateDirectory(targetRoot);
+        }
+
+        foreach (string dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
+        {
+            Directory.CreateDirectory(dirPath.Replace(sourcePath, targetRoot));
+        }
+
+        foreach (string newPath in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
+        {
+            var targetPath = newPath.Replace(sourcePath, targetRoot);
+            if (!File.Exists(targetPath))
+            {
+                File.Copy(newPath, targetPath, true);
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Failed to sync seeder assets");
+    }
+}
 
     private static async Task SeedRolesAsync(
         RoleManager<IdentityRole<Guid>> roleManager,
@@ -213,143 +262,14 @@ public static class DbInitializer
         await context.SaveChangesAsync();
         logger.LogInformation("Locations and company profiles seeded successfully.");
 
-        var sedanVehicle = await EnsureVehicleAsync(
-            context,
-            SedanVehicleId,
-            supplier.Id,
-            "Toyota",
-            "Camry",
-            2024,
-            "White",
-            "SED-2024",
-            "Automatic",
-            "Hybrid",
-            5,
-            95m,
-            "Cairo",
-            "Comfortable sedan for business trips and city rides.",
-            "Standard",
-            "Available",
-            "uploads/seed/vehicles/mini.png");
-
-        var suvVehicle = await EnsureVehicleAsync(
-            context,
-            SuvVehicleId,
-            supplier.Id,
-            "Nissan",
-            "X-Trail",
-            2024,
-            "Black",
-            "SUV-2024",
-            "Automatic",
-            "Petrol",
-            7,
-            140m,
-            "Alexandria",
-            "Spacious SUV ready for family travel and road trips.",
-            "Premium",
-            "Available",
-            "uploads/seed/vehicles/midi.png");
-
-        var compactVehicle = await EnsureVehicleAsync(
-            context,
-            CompactVehicleId,
-            supplier.Id,
-            "Hyundai",
-            "i20",
-            2023,
-            "Blue",
-            "CMP-2023",
-            "Manual",
-            "Petrol",
-            4,
-            70m,
-            "Giza",
-            "Compact and economical for short city commutes.",
-            "Compact",
-            "Available",
-            "uploads/seed/vehicles/maxi.png");
-
-        await EnsureVehicleImageAsync(context, Guid.Parse("44444444-4444-4444-4444-444444444441"), sedanVehicle.Id, "uploads/seed/vehicles/mini.png", "uploads/seed/vehicles/mini.png", true, 1);
-        await EnsureVehicleImageAsync(context, Guid.Parse("44444444-4444-4444-4444-444444444442"), sedanVehicle.Id, "uploads/seed/vehicles/midi.png", "uploads/seed/vehicles/midi.png", false, 2);
-        await EnsureVehicleImageAsync(context, Guid.Parse("44444444-4444-4444-4444-444444444443"), sedanVehicle.Id, "uploads/seed/vehicles/maxi.png", "uploads/seed/vehicles/maxi.png", false, 3);
-
-        await EnsureVehicleImageAsync(context, Guid.Parse("55555555-5555-5555-5555-555555555551"), suvVehicle.Id, "uploads/seed/vehicles/midi.png", "uploads/seed/vehicles/midi.png", true, 1);
-        await EnsureVehicleImageAsync(context, Guid.Parse("55555555-5555-5555-5555-555555555552"), suvVehicle.Id, "uploads/seed/vehicles/maxi.png", "uploads/seed/vehicles/maxi.png", false, 2);
-        await EnsureVehicleImageAsync(context, Guid.Parse("55555555-5555-5555-5555-555555555553"), suvVehicle.Id, "uploads/seed/vehicles/mini.png", "uploads/seed/vehicles/mini.png", false, 3);
-
-        await EnsureVehicleImageAsync(context, Guid.Parse("66666666-6666-6666-6666-666666666661"), compactVehicle.Id, "uploads/seed/vehicles/maxi.png", "uploads/seed/vehicles/maxi.png", true, 1);
-        await EnsureVehicleImageAsync(context, Guid.Parse("66666666-6666-6666-6666-666666666662"), compactVehicle.Id, "uploads/seed/vehicles/mini.png", "uploads/seed/vehicles/mini.png", false, 2);
-        await EnsureVehicleImageAsync(context, Guid.Parse("66666666-6666-6666-6666-666666666663"), compactVehicle.Id, "uploads/seed/vehicles/midi.png", "uploads/seed/vehicles/midi.png", false, 3);
-
-        await EnsureVehicleFeatureAsync(context, Guid.Parse("77777777-7777-7777-7777-777777777771"), sedanVehicle.Id, "Comfort", "Air Conditioning", "Dual-zone automatic climate control");
-        await EnsureVehicleFeatureAsync(context, Guid.Parse("77777777-7777-7777-7777-777777777772"), sedanVehicle.Id, "Safety", "Rear Camera", "Parking camera with sensors");
-        await EnsureVehicleFeatureAsync(context, Guid.Parse("77777777-7777-7777-7777-777777777773"), suvVehicle.Id, "Comfort", "3rd Row", "Seats up to seven passengers");
-        await EnsureVehicleFeatureAsync(context, Guid.Parse("77777777-7777-7777-7777-777777777774"), suvVehicle.Id, "Technology", "Bluetooth", "Hands-free calling and audio streaming");
-        await EnsureVehicleFeatureAsync(context, Guid.Parse("77777777-7777-7777-7777-777777777775"), compactVehicle.Id, "Efficiency", "Fuel Saver", "Low consumption for city driving");
-
-        await context.SaveChangesAsync();
-        logger.LogInformation("Vehicles and features seeded successfully.");
-
-        var sedanBooking = await EnsureBookingAsync(
-            context,
-            Guid.Parse("88888888-8888-8888-8888-888888888881"),
-            customer.Id,
-            sedanVehicle.Id,
-            DateTime.UtcNow.AddDays(-14),
-            DateTime.UtcNow.AddDays(-11),
-            "Cairo Downtown",
-            "Cairo Airport",
-            3,
-            285m,
-            "Completed");
-
-        var suvBooking = await EnsureBookingAsync(
-            context,
-            Guid.Parse("88888888-8888-8888-8888-888888888882"),
-            customer.Id,
-            suvVehicle.Id,
-            DateTime.UtcNow.AddDays(-10),
-            DateTime.UtcNow.AddDays(-7),
-            "Alexandria Corniche",
-            "Alexandria Station",
-            3,
-            420m,
-            "Completed");
-
-        await EnsureReviewAsync(context, Guid.Parse("99999999-9999-9999-9999-999999999991"), sedanBooking.Id, customer.Id, sedanVehicle.Id, 5, "Smooth pickup, clean car, and easy drop-off.");
-        await EnsureReviewAsync(context, Guid.Parse("99999999-9999-9999-9999-999999999992"), suvBooking.Id, customer.Id, suvVehicle.Id, 4, "Great for family travel and comfortable on the highway.");
-
-        await context.SaveChangesAsync();
-        logger.LogInformation("Bookings and reviews seeded successfully.");
-
-        // ── Extended vehicle catalog (Egypt market, 2015–2024) ────────────
+        // ΓöÇΓöÇ Extended vehicle catalog (Egypt market, 2015ΓÇô2024) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
         await VehicleSeeder.SeedAsync(context, logger);
 
-        await SeedTermsAsync(context);
+        await TermsSeeder.SeedAsync(context);
+        await AboutSeeder.SeedAsync(context);
         await SeedActivityDataAsync(context, userManager, logger);
 
         logger.LogInformation("Demo seed data created successfully.");
-    }
-
-    private static async Task SeedTermsAsync(ApplicationDbContext context)
-    {
-        if (await context.TermsSections.AnyAsync()) return;
-
-        var sections = new[]
-        {
-            new TermsSection { Id = Guid.Parse("10000001-0000-0000-0000-000000000001"), Title = "Acceptance of Terms", Content = "By accessing or using the Ares Car Rental platform, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.", Order = 1 },
-            new TermsSection { Id = Guid.Parse("10000001-0000-0000-0000-000000000002"), Title = "Eligibility", Content = "You must be at least 21 years of age and hold a valid driver's license to rent a vehicle through Ares. By using our platform, you represent and warrant that you meet these requirements.", Order = 2 },
-            new TermsSection { Id = Guid.Parse("10000001-0000-0000-0000-000000000003"), Title = "Reservations and Payments", Content = "All reservations are subject to vehicle availability. Full payment is required at the time of booking. We accept major credit cards and debit cards. Prices are displayed in the selected currency and include applicable taxes.", Order = 3 },
-            new TermsSection { Id = Guid.Parse("10000001-0000-0000-0000-000000000004"), Title = "Cancellation Policy", Content = "Cancellations made more than 48 hours before the rental start time are eligible for a full refund. Cancellations within 48 hours may be subject to a cancellation fee equal to one day's rental charge.", Order = 4 },
-            new TermsSection { Id = Guid.Parse("10000001-0000-0000-0000-000000000005"), Title = "Vehicle Use", Content = "Vehicles must be used in accordance with local traffic laws. Off-road use, racing, or use under the influence of alcohol or drugs is strictly prohibited. The renter is responsible for all traffic violations incurred during the rental period.", Order = 5 },
-            new TermsSection { Id = Guid.Parse("10000001-0000-0000-0000-000000000006"), Title = "Insurance and Liability", Content = "Basic insurance coverage is included with every rental. The renter assumes liability for damages not covered by the included insurance. Additional coverage options are available at checkout.", Order = 6 },
-            new TermsSection { Id = Guid.Parse("10000001-0000-0000-0000-000000000007"), Title = "Privacy", Content = "Your use of the platform is also governed by our Privacy Policy, which is incorporated into these Terms by reference. We collect and process personal data as described in the Privacy Policy.", Order = 7 },
-            new TermsSection { Id = Guid.Parse("10000001-0000-0000-0000-000000000008"), Title = "Changes to Terms", Content = "Ares reserves the right to modify these Terms at any time. Continued use of the platform after changes are posted constitutes your acceptance of the revised Terms.", Order = 8 },
-        };
-
-        await context.TermsSections.AddRangeAsync(sections);
-        await context.SaveChangesAsync();
     }
 
     private static async Task<ApplicationUser> EnsureUserAsync(
@@ -845,7 +765,7 @@ public static class DbInitializer
         });
     }
 
-    // ── Activity seed — one recent event per dashboard feed type ─────────────
+    // ΓöÇΓöÇ Activity seed ΓÇö one recent event per dashboard feed type ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
     private static async Task SeedActivityDataAsync(
         ApplicationDbContext context,
         UserManager<ApplicationUser> userManager,
@@ -874,90 +794,13 @@ public static class DbInitializer
         }
 
         // 2. Recent vehicle added (8 days ago)
-        var recentVehicleId = Guid.Parse("a2a2a2a2-a2a2-a2a2-a2a2-a2a2a2a2a2a2");
-        var recentVehicle = await EnsureVehicleAsync(
-            context,
-            recentVehicleId,
-            SupplierId,
-            "Kia",
-            "Sportage",
-            2023,
-            "Silver",
-            "KIA-2023-ACT",
-            "Automatic",
-            "Petrol",
-            5,
-            110m,
-            "Cairo",
-            "Modern crossover with advanced safety features.",
-            "Standard",
-            "Available",
-            "uploads/seed/vehicles/midi.png");
+        
 
-        if (recentVehicle.CreatedAt > now.AddDays(-9))
-        {
-            recentVehicle.CreatedAt = now.AddDays(-8);
-        }
+        // 3. Recent booking ΓÇö Pending (3 days ago)
+        
 
-        // Add images for recent vehicle
-        await EnsureVehicleImageAsync(context, Guid.Parse("a2a2a2a2-a2a2-a2a2-a2a2-a2a2a2a2a2a1"), recentVehicle.Id, "uploads/seed/vehicles/midi.png", "uploads/seed/vehicles/midi.png", true, 1);
-        await EnsureVehicleImageAsync(context, Guid.Parse("a2a2a2a2-a2a2-a2a2-a2a2-a2a2a2a2a2a2"), recentVehicle.Id, "uploads/seed/vehicles/mini.png", "uploads/seed/vehicles/mini.png", false, 2);
-        await EnsureVehicleImageAsync(context, Guid.Parse("a2a2a2a2-a2a2-a2a2-a2a2-a2a2a2a2a2a3"), recentVehicle.Id, "uploads/seed/vehicles/maxi.png", "uploads/seed/vehicles/maxi.png", false, 3);
-
-        // Add features for recent vehicle
-        await EnsureVehicleFeatureAsync(context, Guid.Parse("a2a2a2a2-a2a2-a2a2-a2a2-a2a2a2a2a2b1"), recentVehicle.Id, "Comfort", "Air Conditioning", "Automatic climate control");
-        await EnsureVehicleFeatureAsync(context, Guid.Parse("a2a2a2a2-a2a2-a2a2-a2a2-a2a2a2a2a2b2"), recentVehicle.Id, "Safety", "Rear Camera", "Parking camera with sensors");
-        await EnsureVehicleFeatureAsync(context, Guid.Parse("a2a2a2a2-a2a2-a2a2-a2a2-a2a2a2a2a2b3"), recentVehicle.Id, "Technology", "Bluetooth", "Hands-free calling and audio streaming");
-        await EnsureVehicleFeatureAsync(context, Guid.Parse("a2a2a2a2-a2a2-a2a2-a2a2-a2a2a2a2a2b4"), recentVehicle.Id, "Safety", "Cruise Control", "Adaptive cruise control");
-        await EnsureVehicleFeatureAsync(context, Guid.Parse("a2a2a2a2-a2a2-a2a2-a2a2-a2a2a2a2a2b5"), recentVehicle.Id, "Safety", "Blind Spot Monitor", "Lane change assist");
-
-        await context.SaveChangesAsync();
-
-        // 3. Recent booking — Pending (3 days ago)
-        var recentBookingId = Guid.Parse("a3a3a3a3-a3a3-a3a3-a3a3-a3a3a3a3a3a3");
-        var recentBooking = await EnsureBookingAsync(
-            context,
-            recentBookingId,
-            recentUserId,
-            recentVehicleId,
-            now.AddDays(2),
-            now.AddDays(5),
-            "Cairo Airport",
-            "Giza Pyramids",
-            3,
-            330m,
-            "Pending");
-
-        if (recentBooking.CreatedAt > now.AddDays(-4))
-        {
-            recentBooking.CreatedAt = now.AddDays(-3);
-            recentBooking.UpdatedAt = now.AddDays(-3);
-        }
-
-        await context.SaveChangesAsync();
-
-        // 4. Recent payment — a Confirmed booking updated 3 hours ago
-        var recentPaymentBookingId = Guid.Parse("a4a4a4a4-a4a4-a4a4-a4a4-a4a4a4a4a4a4");
-        var recentPaymentBooking = await EnsureBookingAsync(
-            context,
-            recentPaymentBookingId,
-            CustomerId,
-            SedanVehicleId,
-            now.AddDays(7),
-            now.AddDays(10),
-            "Nasr City",
-            "Cairo Airport",
-            3,
-            285m,
-            "Confirmed");
-
-        if (recentPaymentBooking.UpdatedAt > now.AddHours(-4))
-        {
-            recentPaymentBooking.CreatedAt = now.AddDays(-1);
-            recentPaymentBooking.UpdatedAt = now.AddHours(-3);
-        }
-
-        await context.SaveChangesAsync();
+        // 4. Recent payment ΓÇö a Confirmed booking updated 3 hours ago
+        
 
         // 5. Recent verification (5 days ago)
         var recentVerificationId = Guid.Parse("a5a5a5a5-a5a5-a5a5-a5a5-a5a5a5a5a5a5");
@@ -996,3 +839,5 @@ public static class DbInitializer
         logger.LogInformation("Activity seed data created successfully (booking, payment, user, vehicle, verification).");
     }
 }
+
+

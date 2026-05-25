@@ -44,6 +44,7 @@ public interface IBookingService
     Task<BookingDetailsDto> GetBookingDetailsAsync(
         Guid bookingId,
         Guid userId,
+        bool isAdmin = false,
         CancellationToken cancellationToken = default);
 
     /// <summary>

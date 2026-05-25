@@ -51,13 +51,15 @@ public class BookingController : ControllerBase
         }
 
         var userId = Guid.Parse(userIdClaim.Value);
+        var isAdmin = User.IsInRole("Admin");
 
-        var result = await _bookingService.GetBookingDetailsAsync(id, userId, cancellationToken);
+        var result = await _bookingService.GetBookingDetailsAsync(id, userId, isAdmin, cancellationToken);
 
         _logger.LogInformation(
-            "Retrieved booking details for booking {BookingId}, user {UserId}",
+            "Retrieved booking details for booking {BookingId}, user {UserId}, isAdmin: {IsAdmin}",
             id,
-            userId);
+            userId,
+            isAdmin);
 
         return Ok(result);
     }

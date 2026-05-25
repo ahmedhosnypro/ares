@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from "react";
 import Image from "next/image";
-import { Avatar, Box, CircularProgress, IconButton, LinearProgress, Typography } from "@mui/material";
+import { Alert, Avatar, Box, CircularProgress, IconButton, LinearProgress, Snackbar, Typography } from "@mui/material";
 import CameraAltRoundedIcon from "@mui/icons-material/CameraAltRounded";
 import { toApiUrl } from "@/utils/api-client";
 import { toImageUrl } from "@/utils/image-url";
@@ -29,6 +29,11 @@ export default function ProfileHeader({
 }: ProfileHeaderProps) {
   const [currentPhoto, setCurrentPhoto] = useState(photoUrl);
   const [isUploading, setIsUploading] = useState(false);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "success" | "error" }>({
+    open: false,
+    message: "",
+    severity: "success",
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageClick = () => {
@@ -64,12 +69,26 @@ export default function ProfileHeader({
       const newPhotoUrl = data.profilePhotoUrl ?? data.ProfilePhotoUrl ?? data.photoUrl ?? URL.createObjectURL(file);
 
       setCurrentPhoto(newPhotoUrl);
+      setSnackbar({
+        open: true,
+        message: "Profile picture updated successfully!",
+        severity: "success",
+      });
     } catch (error) {
       logger.error("Upload profile photo error", error);
+      setSnackbar({
+        open: true,
+        message: "Failed to upload profile picture. Please try again.",
+        severity: "error",
+      });
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
   };
 
   const safeName = firstName || lastName ? `${firstName} ${lastName}`.trim() : "Valued Customer";
@@ -177,6 +196,18 @@ export default function ProfileHeader({
           }}
         />
       </Box>
+
+      {/* Notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={5000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled" sx={{ width: "100%" }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

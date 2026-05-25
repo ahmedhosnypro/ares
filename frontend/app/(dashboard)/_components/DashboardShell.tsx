@@ -25,7 +25,6 @@ import {
 } from "@mui/material";
 import {
   Menu as MenuIcon,
-  Home as HomeIcon,
   Person as PersonIcon,
   KeyboardArrowDown as KeyboardArrowDownIcon,
   Search as SearchIcon,
@@ -37,6 +36,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import ThemeSwitcher from "@/components/ui/ThemeSwitcher";
 import NotificationsBell from "./NotificationsBell";
+import LogoutConfirmDialog from "./LogoutConfirmDialog";
 
 const APP_BAR_HEIGHT = 72;
 const EXPANDED_DRAWER_WIDTH = 260;
@@ -79,6 +79,7 @@ export default function DashboardShell({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
@@ -183,7 +184,7 @@ export default function DashboardShell({
                     transition: "all 0.2s ease",
                     "&:hover": {
                       bgcolor: isActive ? "sidebar.activeBg" : "sidebar.hoverBg",
-                      color: theme => (theme.palette.mode === "dark" ? "common.white" : "sidebar.text"),
+                      color: theme => (isActive || theme.palette.mode === "dark" ? "common.white" : "sidebar.text"),
                     },
                   }}
                 >
@@ -249,7 +250,7 @@ export default function DashboardShell({
               variant="subtitle2"
               sx={{
                 fontWeight: 700,
-                color: "common.white",
+                color: "sidebar.text",
                 whiteSpace: "nowrap",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
@@ -274,19 +275,6 @@ export default function DashboardShell({
             </Typography>
           </Box>
           <Box sx={{ display: isSidebarCollapsed ? "none" : "flex", alignItems: "center", gap: 1 }}>
-            <IconButton
-              size="small"
-              onClick={e => {
-                e.stopPropagation();
-                void handleLogout();
-              }}
-              sx={{
-                color: "sidebar.textMuted",
-                "&:hover": { color: "error.main", bgcolor: "sidebar.hoverBg" },
-              }}
-            >
-              <ExitIcon fontSize="small" />
-            </IconButton>
             <KeyboardArrowDownIcon sx={{ color: "sidebar.textMuted", fontSize: 20 }} />
           </Box>
         </Box>
@@ -332,7 +320,6 @@ export default function DashboardShell({
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "10px",
               textDecoration: "none",
               color: "inherit",
             }}
@@ -345,38 +332,47 @@ export default function DashboardShell({
                 sizes="72px"
                 style={{
                   objectFit: "contain",
-                  filter: theme.palette.mode === "dark" ? "none" : "invert(1) brightness(0.5)",
+                  filter: theme.palette.mode === "dark" ? "brightness(0) invert(1)" : "invert(1) brightness(0.5)",
+                  mixBlendMode: theme.palette.mode === "dark" ? "screen" : "multiply",
                 }}
               />
             </Box>
+          </Link>
+
+          <Box sx={{ display: "flex", alignItems: "baseline", gap: 1.5, minWidth: 0 }}>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 800,
+                color: "text.primary",
+                letterSpacing: "-0.5px",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {pageTitle}
+            </Typography>
             <Typography
               variant="caption"
               sx={{
-                fontWeight: 600,
+                fontWeight: 700,
                 color: "text.secondary",
-                fontSize: "0.72rem",
-                letterSpacing: "1.5px",
+                fontSize: "0.75rem",
+                letterSpacing: "1px",
                 textTransform: "uppercase",
                 display: { xs: "none", sm: "block" },
+                bgcolor: "action.hover",
+                px: 1,
+                py: 0.25,
+                borderRadius: 1,
+                border: "1px solid",
+                borderColor: "divider",
               }}
             >
               {sidebarLabel}
             </Typography>
-          </Link>
-
-          <Typography
-            variant="h5"
-            sx={{
-              fontWeight: 800,
-              color: "text.primary",
-              letterSpacing: "-0.5px",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            {pageTitle}
-          </Typography>
+          </Box>
 
           <Box sx={{ flexGrow: 1 }} />
 
@@ -413,24 +409,16 @@ export default function DashboardShell({
 
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <ThemeSwitcher />
-            <IconButton
-              component={Link}
-              href="/"
-              aria-label="back to site"
-              sx={{ display: { xs: "none", md: "inline-flex" }, color: "text.secondary" }}
-            >
-              <HomeIcon />
-            </IconButton>
+            <NotificationsBell allNotificationsHref={notificationsHref} allNotificationsLabel={notificationsLabel} />
             <IconButton
               onClick={() => {
-                void handleLogout();
+                setLogoutDialogOpen(true);
               }}
               aria-label="logout"
               sx={{ color: "error.main", "&:hover": { bgcolor: "error.lighter" } }}
             >
               <ExitIcon />
             </IconButton>
-            <NotificationsBell allNotificationsHref={notificationsHref} allNotificationsLabel={notificationsLabel} />
           </Box>
         </Toolbar>
       </AppBar>
@@ -476,7 +464,8 @@ export default function DashboardShell({
         <Divider sx={{ my: 0.5 }} />
         <MenuItem
           onClick={() => {
-            void handleLogout();
+            handleClose();
+            setLogoutDialogOpen(true);
           }}
           sx={{
             py: 1,
@@ -516,7 +505,8 @@ export default function DashboardShell({
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
               width: drawerWidth,
-              border: "none",
+              borderRight: "1px solid",
+              borderColor: "sidebar.border",
               bgcolor: "sidebar.background",
             },
           }}
@@ -531,7 +521,8 @@ export default function DashboardShell({
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
               width: drawerWidth,
-              border: "none",
+              borderRight: "1px solid",
+              borderColor: "sidebar.border",
               bgcolor: "sidebar.background",
               overflowX: "hidden",
               transition: theme =>
@@ -563,6 +554,14 @@ export default function DashboardShell({
       >
         {children}
       </Box>
+
+      <LogoutConfirmDialog
+        open={logoutDialogOpen}
+        onOpenChange={setLogoutDialogOpen}
+        onConfirm={() => {
+          void handleLogout();
+        }}
+      />
     </Box>
   );
 }
