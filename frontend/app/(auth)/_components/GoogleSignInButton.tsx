@@ -226,8 +226,7 @@ export default function GoogleSignInButton({
 
       if (notDisplayed || skipped) {
         setIsPrompting(false);
-        const reason =
-          notification.getNotDisplayedReason?.() ?? notification.getSkippedReason?.() ?? "unknown_reason";
+        const reason = notification.getNotDisplayedReason?.() ?? notification.getSkippedReason?.() ?? "unknown_reason";
         logger.warn("Google prompt was not displayed:", reason);
         onError?.("Google sign-in was cancelled or blocked by the browser. Please try again.");
         return;
