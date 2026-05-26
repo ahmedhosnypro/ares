@@ -29,6 +29,20 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
         builder.Property(u => u.ProfileImage)
             .HasMaxLength(500);
 
+        // ── External auth (Google OAuth) ──────────────────────────────────
+        builder.Property(u => u.GoogleId)
+            .HasMaxLength(64);
+
+        builder.Property(u => u.AuthProvider)
+            .HasMaxLength(20)
+            .HasDefaultValue("Local");
+
+        // Unique index on GoogleId — filtered so multiple NULLs are allowed
+        // (most users won't have a Google linkage).
+        builder.HasIndex(u => u.GoogleId)
+            .IsUnique()
+            .HasFilter("[GoogleId] IS NOT NULL");
+
         // Date of birth — nullable, no DB constraint beyond type
         builder.Property(u => u.DateOfBirth)
             .HasColumnType("date"); // store as DATE, not DATETIME2

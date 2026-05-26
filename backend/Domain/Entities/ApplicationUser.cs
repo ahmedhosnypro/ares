@@ -28,6 +28,23 @@ namespace Backend.Domain.Entities
 
         public string? ProfileImage { get; set; }
 
+        // ── External auth (Google OAuth) ──────────────────────────────────
+        // Google's "sub" claim — stable, unique per Google account. Nullable
+        // because users registered via email/password don't have one until
+        // they link with Google.
+        [MaxLength(64)]
+        public string? GoogleId { get; set; }
+
+        // How this account was originally created / how it last authenticated.
+        // "Local" (email+password) or "Google". Defaults to "Local" for
+        // legacy rows via migration.
+        [MaxLength(20)]
+        public string? AuthProvider { get; set; }
+
+        // When the user's email was verified (set automatically by Google
+        // sign-up because Google already verified the email).
+        public DateTime? EmailVerifiedAt { get; set; }
+
         public DateTime? DateOfBirth { get; set; }
 
         [MaxLength(10)]

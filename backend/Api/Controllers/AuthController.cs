@@ -24,11 +24,16 @@ namespace Backend.Api.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly IGoogleAuthService _googleAuthService;
     private readonly ILogger<AuthController> _logger;
 
-    public AuthController(IAuthService authService, ILogger<AuthController> logger)
+    public AuthController(
+        IAuthService authService,
+        IGoogleAuthService googleAuthService,
+        ILogger<AuthController> logger)
     {
         _authService = authService;
+        _googleAuthService = googleAuthService;
         _logger = logger;
     }
 
@@ -296,6 +301,48 @@ public class AuthController : ControllerBase
         var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
         await _authService.RevokeTokenAsync(request.RefreshToken, ipAddress, cancellationToken);
         return Ok(new { Message = "Token revoked successfully" });
+    }
+
+    /// <summary>
+    /// Sign in (or sign up) with a Google ID token.
+    /// </summary>
+    /// <remarks>
+    /// The frontend obtains a Google ID token via Google Identity Services
+    /// and forwards it here. The backend cryptographically validates the
+    /// token (audience = configured ClientId), creates a new
+    /// ApplicationUser if none exists, links a Google identity to an
+    /// existing email/password account if the email matches, and finally
+    /// issues the same JWT + refresh token pair as the regular login flow.
+    ///
+    /// Only the **Customer**, **Supplier**, and **Driver** roles are
+    /// allowed via this endpoint — Admin / Inspector accounts must be
+    /// provisioned through the administrative flow.
+    /// </remarks>
+    /// <response code="200">Authentication successful — JWT and refresh token returned.</response>
+    /// <response code="400">Invalid request payload.</response>
+    /// <response code="401">Google ID token is invalid or expired.</response>
+    /// <response code="403">Role not allowed, or account blocked / locked.</response>
+    [HttpPost("google")]
+    [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<LoginResponse>> GoogleSignIn(
+        [FromBody] GoogleLoginRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (request is null || string.IsNullOrWhiteSpace(request.IdToken) || string.IsNullOrWhiteSpace(request.Role))
+        {
+            return BadRequest(new
+            {
+                StatusCode = 400,
+                Message = "idToken and role are required.",
+            });
+        }
+
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var response = await _googleAuthService.SignInWithGoogleAsync(request, ipAddress, cancellationToken);
+        return Ok(response);
     }
 
     [HttpGet("demo-roles")]

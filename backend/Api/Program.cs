@@ -106,6 +106,7 @@ try
     // Add Email Service
     builder.Services.AddScoped<IEmailService, EmailService>();
     builder.Services.AddScoped<IAuthService, AuthService>();
+    builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
     builder.Services.AddScoped<ILocationService, LocationService>();
     builder.Services.AddScoped<IVehicleService, VehicleService>();
     builder.Services.AddScoped<IBookingService, BookingService>();
