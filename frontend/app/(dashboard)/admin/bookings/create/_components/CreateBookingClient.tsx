@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import {
+  Autocomplete,
   Box,
   Container,
   Typography,
@@ -28,6 +29,10 @@ import {
   PlaceOutlined as PlaceIcon,
   CheckCircleRounded as CheckIcon,
 } from "@mui/icons-material";
+import { darken } from "@mui/material/styles";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
@@ -37,6 +42,7 @@ import {
   type CustomerPickerItem,
   type VehiclePickerItem,
 } from "@/api-clients/bookings/bookings";
+import { toApiUrl } from "@/utils/api-client";
 import { toImageUrl } from "@/utils/image-url";
 import { logger } from "@/utils/logger";
 
@@ -51,6 +57,16 @@ interface SectionCardProps {
   readonly step: number;
   readonly done?: boolean;
   readonly children: React.ReactNode;
+}
+
+interface LocationSuggestionApi {
+  readonly locationId?: string;
+  readonly displayText?: string;
+}
+
+interface LocationOption {
+  readonly id: string;
+  readonly label: string;
 }
 
 function SectionCard({ title, subtitle, step, done, children }: SectionCardProps) {
@@ -105,8 +121,8 @@ export default function CreateBookingClient() {
   // ── Form state ─────────────────────────────────────────────────────
   const [customer, setCustomer] = useState<CustomerPickerItem | null>(null);
   const [vehicle, setVehicle] = useState<VehiclePickerItem | null>(null);
-  const [pickupDate, setPickupDate] = useState("");
-  const [returnDate, setReturnDate] = useState("");
+  const [pickupDate, setPickupDate] = useState<Date | null>(null);
+  const [returnDate, setReturnDate] = useState<Date | null>(null);
   const [pickupLocation, setPickupLocation] = useState("");
   const [dropOffLocation, setDropOffLocation] = useState("");
 
@@ -118,6 +134,10 @@ export default function CreateBookingClient() {
   const [vehicleSearch, setVehicleSearch] = useState("");
   const [vehicleOptions, setVehicleOptions] = useState<VehiclePickerItem[]>([]);
   const [vehicleLoading, setVehicleLoading] = useState(false);
+  const [pickupLocationOptions, setPickupLocationOptions] = useState<LocationOption[]>([]);
+  const [pickupLocationLoading, setPickupLocationLoading] = useState(false);
+  const [dropOffLocationOptions, setDropOffLocationOptions] = useState<LocationOption[]>([]);
+  const [dropOffLocationLoading, setDropOffLocationLoading] = useState(false);
 
   // ── Submit state ──────────────────────────────────────────────────
   const [submitting, setSubmitting] = useState(false);
@@ -127,12 +147,13 @@ export default function CreateBookingClient() {
   useEffect(() => {
     const token = session?.accessToken;
     if (!token) return;
+    const trimmedQuery = customerSearch.trim();
     const controller = new AbortController();
 
     const runSearch = async () => {
       setCustomerLoading(true);
       try {
-        const data = await searchCustomersPicker(token, customerSearch, 20, controller.signal);
+        const data = await searchCustomersPicker(token, trimmedQuery, 20, controller.signal);
         setCustomerOptions(data);
       } catch (e) {
         if (!(e instanceof DOMException && e.name === "AbortError")) {
@@ -165,8 +186,8 @@ export default function CreateBookingClient() {
           token,
           {
             search: vehicleSearch,
-            pickupDate: pickupDate ? new Date(pickupDate).toISOString() : undefined,
-            returnDate: returnDate ? new Date(returnDate).toISOString() : undefined,
+            pickupDate: pickupDate ? pickupDate.toISOString() : undefined,
+            returnDate: returnDate ? returnDate.toISOString() : undefined,
             limit: 20,
           },
           controller.signal
@@ -196,11 +217,100 @@ export default function CreateBookingClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vehicleSearch, pickupDate, returnDate, session?.accessToken]);
 
+  // ── Location autocomplete (pickup/dropoff) ─────────────────────────
+  const fetchLocationSuggestions = async (query: string, type: "pickup" | "dropoff", signal: AbortSignal) => {
+    const response = await fetch(
+      toApiUrl(`/api/locations/autocomplete?query=${encodeURIComponent(query)}&type=${type}`),
+      { signal, cache: "no-store" }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Autocomplete failed with ${String(response.status)}`);
+    }
+
+    const payload = (await response.json()) as { suggestions?: readonly LocationSuggestionApi[] };
+    return (payload.suggestions ?? [])
+      .map(suggestion => {
+        const id = suggestion.locationId ?? "";
+        const label = suggestion.displayText ?? "";
+        return id !== "" && label !== "" ? { id, label } : null;
+      })
+      .filter((item): item is LocationOption => item !== null);
+  };
+
+  useEffect(() => {
+    const trimmedQuery = pickupLocation.trim();
+    if (trimmedQuery.length < 3) {
+      setPickupLocationOptions([]);
+      setPickupLocationLoading(false);
+      return;
+    }
+
+    let active = true;
+    const controller = new AbortController();
+    setPickupLocationLoading(true);
+    const handle = setTimeout(() => {
+      void fetchLocationSuggestions(trimmedQuery, "pickup", controller.signal)
+        .then(options => {
+          if (active) setPickupLocationOptions(options);
+        })
+        .catch((error: unknown) => {
+          if (!(error instanceof DOMException && error.name === "AbortError")) {
+            logger.error("Pickup location autocomplete error", error);
+          }
+          if (active) setPickupLocationOptions([]);
+        })
+        .finally(() => {
+          if (active) setPickupLocationLoading(false);
+        });
+    }, 300);
+
+    return () => {
+      active = false;
+      clearTimeout(handle);
+      controller.abort();
+    };
+  }, [pickupLocation]);
+
+  useEffect(() => {
+    const trimmedQuery = dropOffLocation.trim();
+    if (trimmedQuery.length < 3) {
+      setDropOffLocationOptions([]);
+      setDropOffLocationLoading(false);
+      return;
+    }
+
+    let active = true;
+    const controller = new AbortController();
+    setDropOffLocationLoading(true);
+    const handle = setTimeout(() => {
+      void fetchLocationSuggestions(trimmedQuery, "dropoff", controller.signal)
+        .then(options => {
+          if (active) setDropOffLocationOptions(options);
+        })
+        .catch((error: unknown) => {
+          if (!(error instanceof DOMException && error.name === "AbortError")) {
+            logger.error("Dropoff location autocomplete error", error);
+          }
+          if (active) setDropOffLocationOptions([]);
+        })
+        .finally(() => {
+          if (active) setDropOffLocationLoading(false);
+        });
+    }, 300);
+
+    return () => {
+      active = false;
+      clearTimeout(handle);
+      controller.abort();
+    };
+  }, [dropOffLocation]);
+
   // ── Derived pricing ───────────────────────────────────────────────
   const dailyRate = vehicle?.dailyRate ?? 0;
   const { totalDays, totalPrice, datesValid, daysString } = useMemo(() => {
-    const p = pickupDate ? new Date(pickupDate) : null;
-    const r = returnDate ? new Date(returnDate) : null;
+    const p = pickupDate;
+    const r = returnDate;
     if (!p || !r || isNaN(p.getTime()) || isNaN(r.getTime()) || p >= r) {
       return { totalDays: 0, totalPrice: 0, datesValid: false, daysString: "" };
     }
@@ -214,23 +324,26 @@ export default function CreateBookingClient() {
   const vehicleDone = !!vehicle;
   const datesDone = datesValid && !!pickupLocation && !!dropOffLocation;
   const canSubmit = customerDone && vehicleDone && datesDone && !submitting;
+  const showDateError = !!pickupDate && !!returnDate && !datesValid;
 
   // ── Submit ────────────────────────────────────────────────────────
   const handleSubmit = () => {
     void (async () => {
-      if (!session?.accessToken || !customer || !vehicle || !datesValid || submitting) return;
+      if (!session?.accessToken || !customer || !vehicle || !datesValid || submitting || !pickupDate || !returnDate)
+        return;
       setSubmitting(true);
       setError(null);
       try {
         const result = await createBooking(session.accessToken, {
           vehicleId: vehicle.id,
-          pickupDate: new Date(pickupDate).toISOString(),
-          returnDate: new Date(returnDate).toISOString(),
+          pickupDate: pickupDate.toISOString(),
+          returnDate: returnDate.toISOString(),
           pickupLocation,
           dropOffLocation,
           customerUserId: customer.id,
         });
-        router.push(`/admin/bookings/${result.bookingId}`);
+        const bookingNumber = encodeURIComponent(result.bookingNumber);
+        router.push(`/admin/bookings?created=1&bookingNumber=${bookingNumber}`);
       } catch (e) {
         logger.error("Failed to create booking", e);
         setError(e instanceof Error ? e.message : "Failed to create booking.");
@@ -311,123 +424,239 @@ export default function CreateBookingClient() {
             subtitle="Search and pick the customer for this booking"
             done={customerDone}
           >
-            <TextField
-              placeholder="Search by name, email or phone…"
-              value={customerSearch}
-              onChange={e => {
-                setCustomerSearch(e.target.value);
+            <Autocomplete
+              options={customerOptions}
+              value={customer}
+              inputValue={customerSearch}
+              onInputChange={(_, value) => {
+                setCustomerSearch(value);
               }}
-              fullWidth
-              size="small"
-              sx={{ mb: 2, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+              onChange={(_, value) => {
+                setCustomer(value);
+                if (value) {
+                  setCustomerSearch(value.fullName || value.email || value.phone || "");
+                } else {
+                  setCustomerSearch("");
+                }
+              }}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              getOptionLabel={option => option.fullName || option.email || option.phone || "Unnamed customer"}
+              loading={customerLoading}
               slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon sx={{ color: "text.disabled" }} />
-                    </InputAdornment>
-                  ),
-                  endAdornment: customerLoading ? (
-                    <InputAdornment position="end">
-                      <CircularProgress size={16} />
-                    </InputAdornment>
-                  ) : undefined,
+                paper: {
+                  sx: {
+                    bgcolor: theme => darken(theme.palette.background.paper, 0.04),
+                  },
                 },
               }}
-            />
-
-            {customer ? (
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 2,
-                  borderRadius: 2,
-                  border: "1px solid",
-                  borderColor: "success.main",
-                  bgcolor: theme => alpha(theme.palette.success.main, 0.04),
-                }}
-              >
-                <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
-                  <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-                    <Avatar sx={{ bgcolor: "success.main" }}>
-                      <PersonIcon />
+              noOptionsText={
+                customerSearch.trim().length < 3
+                  ? "Type at least 3 characters to search customers."
+                  : "No customers found."
+              }
+              renderOption={(props, option) => (
+                <li {...props}>
+                  <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", width: "100%" }}>
+                    <Avatar
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        bgcolor: alpha(theme.palette.primary.main, 0.08),
+                        color: "primary.main",
+                      }}
+                    >
+                      <PersonIcon fontSize="small" />
                     </Avatar>
-                    <Box>
-                      <Typography sx={{ fontWeight: 700 }}>{customer.fullName || "—"}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {customer.email ?? "no email"} · {customer.phone ?? "no phone"}
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography sx={{ fontWeight: 600 }} noWrap>
+                        {option.fullName || "Unnamed"}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" noWrap>
+                        {option.email ?? "no email"} · {option.phone ?? "no phone"}
                       </Typography>
                     </Box>
                   </Stack>
-                  <Button
-                    variant="text"
-                    size="small"
-                    onClick={() => {
-                      setCustomer(null);
-                    }}
-                  >
-                    Change
-                  </Button>
-                </Stack>
-              </Paper>
-            ) : (
-              <Box sx={{ maxHeight: 260, overflowY: "auto" }}>
-                {customerOptions.length === 0 && !customerLoading && (
-                  <Typography variant="body2" color="text.secondary">
-                    Start typing to search for customers.
-                  </Typography>
-                )}
-                <Stack spacing={1}>
-                  {customerOptions.map(c => (
-                    <Paper
-                      key={c.id}
-                      elevation={0}
-                      onClick={() => {
-                        setCustomer(c);
-                      }}
-                      sx={{
-                        p: 1.5,
-                        borderRadius: 2,
-                        border: "1px solid",
-                        borderColor: "divider",
-                        cursor: "pointer",
-                        transition: "all 0.15s",
-                        "&:hover": {
-                          borderColor: "primary.main",
-                          bgcolor: theme => alpha(theme.palette.primary.main, 0.03),
-                        },
-                      }}
-                    >
-                      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-                        <Avatar
-                          sx={{
-                            width: 32,
-                            height: 32,
-                            bgcolor: alpha(theme.palette.primary.main, 0.08),
-                            color: "primary.main",
-                          }}
-                        >
-                          <PersonIcon fontSize="small" />
-                        </Avatar>
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography sx={{ fontWeight: 600 }} noWrap>
-                            {c.fullName || "Unnamed"}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary" noWrap>
-                            {c.email ?? "no email"} · {c.phone ?? "no phone"}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    </Paper>
-                  ))}
-                </Stack>
-              </Box>
-            )}
+                </li>
+              )}
+              renderInput={params => (
+                <TextField
+                  {...params}
+                  label="Customer"
+                  placeholder="Search by name, email, or phone…"
+                  fullWidth
+                  size="small"
+                  slotProps={{
+                    input: {
+                      ...params.slotProps.input,
+                      startAdornment: (
+                        <>
+                          <InputAdornment position="start">
+                            <SearchIcon sx={{ color: "text.disabled" }} />
+                          </InputAdornment>
+                          {params.slotProps.input.startAdornment}
+                        </>
+                      ),
+                      endAdornment: (
+                        <>
+                          {customerLoading ? <CircularProgress size={16} sx={{ mr: 1 }} /> : null}
+                          {params.slotProps.input.endAdornment}
+                        </>
+                      ),
+                    },
+                  }}
+                />
+              )}
+            />
           </SectionCard>
 
-          {/* 2. Vehicle Selection */}
+          {/* 2. Booking Information */}
           <SectionCard
             step={2}
+            title="Booking Information"
+            subtitle="Dates and pickup / dropoff details"
+            done={datesDone}
+          >
+            <Box
+              sx={{
+                display: "grid",
+                gap: 2,
+                gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+              }}
+            >
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DatePicker
+                  label="Pickup Date"
+                  value={pickupDate}
+                  onChange={value => {
+                    setPickupDate(value);
+                  }}
+                  disablePast
+                  slotProps={{ textField: { fullWidth: true } }}
+                />
+                <DatePicker
+                  label="Return Date"
+                  value={returnDate}
+                  onChange={value => {
+                    setReturnDate(value);
+                  }}
+                  minDate={pickupDate ?? new Date()}
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      error: showDateError,
+                      helperText: showDateError ? "Return date must be after pickup date" : "",
+                    },
+                  }}
+                />
+              </LocalizationProvider>
+              <Autocomplete
+                freeSolo
+                options={pickupLocationOptions}
+                loading={pickupLocationLoading}
+                inputValue={pickupLocation}
+                slotProps={{
+                  paper: {
+                    sx: {
+                      bgcolor: theme => darken(theme.palette.background.paper, 0.04),
+                    },
+                  },
+                }}
+                onInputChange={(_, value) => {
+                  setPickupLocation(value);
+                }}
+                onChange={(_, value) => {
+                  if (typeof value === "string") {
+                    setPickupLocation(value);
+                  } else if (value?.label) {
+                    setPickupLocation(value.label);
+                  }
+                }}
+                getOptionLabel={option => (typeof option === "string" ? option : option.label)}
+                renderInput={params => (
+                  <TextField
+                    {...params}
+                    label="Pickup Location"
+                    placeholder="e.g. Cairo International Airport"
+                    fullWidth
+                    slotProps={{
+                      input: {
+                        ...params.slotProps.input,
+                        startAdornment: (
+                          <>
+                            <InputAdornment position="start">
+                              <PlaceIcon fontSize="small" sx={{ color: "text.disabled" }} />
+                            </InputAdornment>
+                            {params.slotProps.input.startAdornment}
+                          </>
+                        ),
+                        endAdornment: (
+                          <>
+                            {pickupLocationLoading ? <CircularProgress size={16} sx={{ mr: 1 }} /> : null}
+                            {params.slotProps.input.endAdornment}
+                          </>
+                        ),
+                      },
+                    }}
+                  />
+                )}
+              />
+              <Autocomplete
+                freeSolo
+                options={dropOffLocationOptions}
+                loading={dropOffLocationLoading}
+                inputValue={dropOffLocation}
+                slotProps={{
+                  paper: {
+                    sx: {
+                      bgcolor: theme => darken(theme.palette.background.paper, 0.04),
+                    },
+                  },
+                }}
+                onInputChange={(_, value) => {
+                  setDropOffLocation(value);
+                }}
+                onChange={(_, value) => {
+                  if (typeof value === "string") {
+                    setDropOffLocation(value);
+                  } else if (value?.label) {
+                    setDropOffLocation(value.label);
+                  }
+                }}
+                getOptionLabel={option => (typeof option === "string" ? option : option.label)}
+                renderInput={params => (
+                  <TextField
+                    {...params}
+                    label="Dropoff Location"
+                    placeholder="e.g. Downtown Office"
+                    fullWidth
+                    slotProps={{
+                      input: {
+                        ...params.slotProps.input,
+                        startAdornment: (
+                          <>
+                            <InputAdornment position="start">
+                              <PlaceIcon fontSize="small" sx={{ color: "text.disabled" }} />
+                            </InputAdornment>
+                            {params.slotProps.input.startAdornment}
+                          </>
+                        ),
+                        endAdornment: (
+                          <>
+                            {dropOffLocationLoading ? <CircularProgress size={16} sx={{ mr: 1 }} /> : null}
+                            {params.slotProps.input.endAdornment}
+                          </>
+                        ),
+                      },
+                    }}
+                  />
+                )}
+              />
+            </Box>
+          </SectionCard>
+
+          {/* 3. Vehicle Selection */}
+          <SectionCard
+            step={3}
             title="Vehicle"
             subtitle="Only available vehicles are shown for the selected dates"
             done={vehicleDone}
@@ -567,83 +796,6 @@ export default function CreateBookingClient() {
               </Box>
             )}
           </SectionCard>
-
-          {/* 3. Booking Information */}
-          <SectionCard
-            step={3}
-            title="Booking Information"
-            subtitle="Dates and pickup / dropoff details"
-            done={datesDone}
-          >
-            <Box
-              sx={{
-                display: "grid",
-                gap: 2,
-                gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-              }}
-            >
-              <TextField
-                type="date"
-                label="Pickup Date"
-                value={pickupDate}
-                onChange={e => {
-                  setPickupDate(e.target.value);
-                }}
-                slotProps={{ inputLabel: { shrink: true } }}
-                fullWidth
-              />
-              <TextField
-                type="date"
-                label="Return Date"
-                value={returnDate}
-                onChange={e => {
-                  setReturnDate(e.target.value);
-                }}
-                slotProps={{ inputLabel: { shrink: true } }}
-                error={!datesValid && pickupDate !== "" && returnDate !== ""}
-                helperText={
-                  !datesValid && pickupDate !== "" && returnDate !== "" ? "Return date must be after pickup date" : ""
-                }
-                fullWidth
-              />
-              <TextField
-                label="Pickup Location"
-                value={pickupLocation}
-                onChange={e => {
-                  setPickupLocation(e.target.value);
-                }}
-                placeholder="e.g. Cairo International Airport"
-                fullWidth
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <PlaceIcon fontSize="small" sx={{ color: "text.disabled" }} />
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
-              <TextField
-                label="Dropoff Location"
-                value={dropOffLocation}
-                onChange={e => {
-                  setDropOffLocation(e.target.value);
-                }}
-                placeholder="e.g. Downtown Office"
-                fullWidth
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <PlaceIcon fontSize="small" sx={{ color: "text.disabled" }} />
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
-            </Box>
-          </SectionCard>
         </Stack>
 
         {/* ── RIGHT — Pricing Summary ── */}
@@ -685,10 +837,17 @@ export default function CreateBookingClient() {
               </Typography>
             </Stack>
           </Stack>
-          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 2, lineHeight: 1.5 }}>
-            Pricing updates live as you change vehicle and dates. The server confirms the final amount on save. Payment
-            is collected through a separate flow — creating a booking does not require completing payment.
-          </Typography>
+          <Stack spacing={0.5} sx={{ mt: 2 }}>
+            <Typography variant="caption" color="text.secondary">
+              Pricing updates live as you change vehicle and dates.
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              The server confirms the final amount on save.
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Payment is collected through a separate flow — creating a booking does not require completing payment.
+            </Typography>
+          </Stack>
         </Paper>
       </Box>
     </Container>

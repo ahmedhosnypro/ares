@@ -1,4 +1,5 @@
 import { Box, Button, Card, Chip, Container, Divider, Grid, Stack, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import DirectionsCarRoundedIcon from "@mui/icons-material/DirectionsCarRounded";
 import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
 import { apiFetchJson } from "@/utils/api-client";
@@ -37,7 +38,8 @@ function HeroSection({ section }: Readonly<{ section: AboutSection }>) {
         sx={{
           position: "absolute",
           inset: 0,
-          background: "linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 60%)",
+          background: theme =>
+            `linear-gradient(135deg, ${alpha(theme.palette.primary.contrastText, 0.06)} 0%, transparent 60%)`,
           pointerEvents: "none",
         }}
       />

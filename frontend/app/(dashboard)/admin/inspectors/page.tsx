@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-nested-conditional */
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";

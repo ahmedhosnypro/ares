@@ -199,10 +199,6 @@ export default function GoogleSignInButton({
   }, [scriptLoaded, isConfigured, clientId, handleSuccess]);
 
   const openDialog = () => {
-    if (!isConfigured) {
-      onError?.("Google sign-in is not configured. Please contact support.");
-      return;
-    }
     setDialogOpen(true);
   };
 
@@ -246,6 +242,10 @@ export default function GoogleSignInButton({
   };
 
   const isWorking = isPrompting || isExchanging;
+
+  if (!isConfigured) {
+    return null;
+  }
 
   return (
     <>

@@ -99,6 +99,51 @@ public class VehicleServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task SearchVehiclesAsync_WithExcludeUserId_ShouldFilterOutSupplierVehicles()
+    {
+        // Arrange
+        var supplierId = Guid.NewGuid();
+        var request = new VehicleSearchRequest(
+            PickupLocationId: Guid.NewGuid(),
+            ReturnLocationId: null,
+            PickupDate: DateTime.Today.AddDays(1),
+            ReturnDate: DateTime.Today.AddDays(3),
+            ExcludeUserId: supplierId);
+
+        var supplierVehicle = CreateVehicle(Guid.NewGuid(), "Toyota", "Camry", 100);
+        supplierVehicle.UserId = supplierId;
+        var customerVehicle = CreateVehicle(Guid.NewGuid(), "Honda", "Civic", 90);
+        customerVehicle.UserId = Guid.NewGuid();
+
+        var vehicles = new List<Vehicle> { supplierVehicle, customerVehicle };
+        var reviewsQueryable = CreateMockReviewsQueryable();
+
+        _vehicleRepositoryMock.Setup(x => x.SearchAvailableVehiclesAsync(
+                request.PickupLocationId,
+                request.ReturnLocationId,
+                request.PickupDate,
+                request.ReturnDate,
+                request.Category,
+                request.Transmission,
+                request.MinPrice,
+                request.MaxPrice,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(vehicles);
+
+        _contextMock.Setup(x => x.Reviews)
+            .Returns(reviewsQueryable);
+
+        // Act
+        var result = await _vehicleService.SearchVehiclesAsync(request);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Single(result.Data);
+        Assert.Equal("Honda", result.Data[0].Make);
+        Assert.Equal("Civic", result.Data[0].Model);
+    }
+
+    [Fact]
     public async Task SearchVehiclesAsync_WithCategoryFilter_ShouldReturnOnlyMatchingVehicles()
     {
         // Arrange

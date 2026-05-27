@@ -140,16 +140,34 @@ public class ReviewService : IReviewService
         // platform activity. Best-effort — never roll back the review save.
         if (_notificationService is not null)
         {
+            var vehicleLabel = string.IsNullOrWhiteSpace(vehicle.Make) && string.IsNullOrWhiteSpace(vehicle.Model)
+                ? "a vehicle"
+                : $"{vehicle.Make} {vehicle.Model}".Trim();
+
             try
             {
-                var vehicleLabel = string.IsNullOrWhiteSpace(vehicle.Make) && string.IsNullOrWhiteSpace(vehicle.Model)
-                    ? "a vehicle"
-                    : $"{vehicle.Make} {vehicle.Model}".Trim();
                 await _notificationService.NotifyAdminsAsync(
                     "New review submitted",
                     $"A customer submitted a {request.Rating}-star review for {vehicleLabel}.",
                     "ReviewSubmitted",
                     cancellationToken);
+            }
+            catch
+            {
+                // Best-effort only.
+            }
+
+            try
+            {
+                if (vehicle.UserId != Guid.Empty)
+                {
+                    await _notificationService.CreateNotificationAsync(
+                        vehicle.UserId,
+                        "New Review Received",
+                        $"You received a new {request.Rating}-star review for {vehicleLabel}.",
+                        $"ReviewReceived:{booking.Id}",
+                        cancellationToken);
+                }
             }
             catch
             {

@@ -33,6 +33,7 @@ import {
   FormControl,
   InputLabel,
   Divider,
+  Alert,
 } from "@mui/material";
 import {
   SearchRounded as SearchIcon,
@@ -50,7 +51,7 @@ import {
   HourglassEmptyTwoTone as PendingIcon,
   CheckCircleTwoTone as CompletedIcon,
 } from "@mui/icons-material";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
   useBookings,
@@ -94,6 +95,7 @@ const getInitials = (name?: string) => {
 export default function BookingsClient() {
   const theme = useTheme();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session } = useSession();
 
   // Filters / paging
@@ -116,6 +118,8 @@ export default function BookingsClient() {
   // Change status modal
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [statusBooking, setStatusBooking] = useState<{ id: string; status: string } | null>(null);
+  const created = searchParams.get("created") === "1";
+  const bookingNumber = searchParams.get("bookingNumber");
 
   // Local optimistic patch — after a successful status change, reflect the
   // new value in-table without waiting for the next refetch.
@@ -455,6 +459,12 @@ export default function BookingsClient() {
           New Booking
         </Box>
       </Stack>
+
+      {created && (
+        <Alert severity="success" sx={{ mb: 3 }}>
+          Booking{bookingNumber ? ` ${bookingNumber}` : ""} created and pending customer payment.
+        </Alert>
+      )}
 
       {/* ── OPERATIONAL CARDS ── */}
       <VehicleStats items={bookingItems} />

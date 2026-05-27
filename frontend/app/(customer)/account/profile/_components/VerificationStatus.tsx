@@ -9,23 +9,33 @@ interface VerificationStatusProps {
   readonly emailVerified: boolean;
   readonly phoneVerified: boolean;
   readonly licenseVerified: boolean;
+  readonly kycStatus?: string;
 }
 
 interface VerificationItemProps {
   readonly label: string;
   readonly isVerified: boolean;
+  readonly isPending?: boolean;
   readonly actionText: string;
   readonly icon: React.ReactNode;
   readonly isLast: boolean;
 }
 
-function VerificationItem({ label, isVerified, actionText, icon, isLast }: VerificationItemProps) {
+function VerificationItem({ label, isVerified, isPending, actionText, icon, isLast }: VerificationItemProps) {
   return (
     <>
       <ListItem
         sx={{ px: 0, py: 1.5 }}
         secondaryAction={
-          !isVerified ? (
+          isPending ? (
+            <Chip
+              label="Pending Approval"
+              size="small"
+              color="warning"
+              variant="outlined"
+              sx={{ fontWeight: 700, fontSize: "0.7rem" }}
+            />
+          ) : !isVerified ? (
             <Chip
               label={actionText}
               size="small"
@@ -54,11 +64,13 @@ function VerificationItem({ label, isVerified, actionText, icon, isLast }: Verif
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              bgcolor: isVerified ? "success.light" : "warning.light",
-              color: isVerified ? "success.dark" : "warning.dark",
+              bgcolor: isPending ? "warning.light" : isVerified ? "success.light" : "error.light",
+              color: isPending ? "warning.dark" : isVerified ? "success.dark" : "error.dark",
             }}
           >
-            {isVerified ? (
+            {isPending ? (
+              <WarningAmberRoundedIcon sx={{ fontSize: 16 }} />
+            ) : isVerified ? (
               <CheckCircleRoundedIcon sx={{ fontSize: 16 }} />
             ) : (
               <WarningAmberRoundedIcon sx={{ fontSize: 16 }} />
@@ -81,23 +93,38 @@ function VerificationItem({ label, isVerified, actionText, icon, isLast }: Verif
   );
 }
 
-export default function VerificationStatus({ emailVerified, phoneVerified, licenseVerified }: VerificationStatusProps) {
+export default function VerificationStatus({
+  emailVerified,
+  phoneVerified,
+  licenseVerified,
+  kycStatus,
+}: VerificationStatusProps) {
   const items = [
     {
       label: "Email Address",
       isVerified: emailVerified,
+      isPending: false,
       actionText: "Verify",
       icon: <EmailRoundedIcon sx={{ fontSize: 15 }} />,
     },
     {
       label: "Phone Number",
       isVerified: phoneVerified,
+      isPending: false,
       actionText: "Verify",
       icon: <PhoneRoundedIcon sx={{ fontSize: 15 }} />,
     },
     {
+      label: "Identity Verification",
+      isVerified: kycStatus?.toLowerCase() === "approved",
+      isPending: kycStatus?.toLowerCase() === "pending",
+      actionText: "Verify",
+      icon: <BadgeRoundedIcon sx={{ fontSize: 15 }} />,
+    },
+    {
       label: "Driver's License",
       isVerified: licenseVerified,
+      isPending: false,
       actionText: "Upload",
       icon: <BadgeRoundedIcon sx={{ fontSize: 15 }} />,
     },

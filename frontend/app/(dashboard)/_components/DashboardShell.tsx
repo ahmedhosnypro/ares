@@ -415,7 +415,7 @@ export default function DashboardShell({
                 setLogoutDialogOpen(true);
               }}
               aria-label="logout"
-              sx={{ color: "error.main", "&:hover": { bgcolor: "error.lighter" } }}
+              sx={{ color: "error.main", "&:hover": { bgcolor: theme => alpha(theme.palette.error.main, 0.08) } }}
             >
               <ExitIcon />
             </IconButton>
@@ -473,7 +473,7 @@ export default function DashboardShell({
             mx: 1,
             gap: 1.5,
             color: "error.main",
-            "&:hover": { bgcolor: "error.lighter" },
+            "&:hover": { bgcolor: theme => alpha(theme.palette.error.main, 0.08) },
           }}
         >
           <ListItemIcon sx={{ color: "inherit", minWidth: "auto" }}>

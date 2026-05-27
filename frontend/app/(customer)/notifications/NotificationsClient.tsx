@@ -101,6 +101,8 @@ export default function NotificationsClient() {
             "BookingRejected",
             "BookingCompleted",
             "ReviewAvailable",
+            "ReviewReceived",
+            "SupplierReply",
             "InspectionApproved",
             "InspectionRejected",
           ].includes(tag)

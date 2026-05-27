@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -47,6 +47,30 @@ export default function AdminCountriesPage() {
   const [openDelete, setOpenDelete] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  // ── FETCH COUNTRY CODES FOR CDN ──
+  const [countryCodes, setCountryCodes] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    fetch("https://flagcdn.com/en/codes.json")
+      .then(res => res.json())
+      .then((data: Record<string, string>) => {
+        const reversed = Object.entries(data).reduce<Record<string, string>>((acc, [code, name]) => {
+          acc[name.toLowerCase()] = code;
+          return acc;
+        }, {});
+
+        // Add common aliases
+        reversed["usa"] = "us";
+        reversed["uk"] = "gb";
+        reversed["uae"] = "ae";
+
+        setCountryCodes(reversed);
+      })
+      .catch((_err: unknown) => {
+        // Ignoring the error silently to fall back to the icon
+      });
+  }, []);
 
   const { countries, loading, page, totalPages, totalRecords, setPage, search, setSearch, refresh } = useCountries(
     session?.accessToken
@@ -224,7 +248,21 @@ export default function AdminCountriesPage() {
                               justifyContent: "center",
                             }}
                           >
-                            <CountryIcon fontSize="small" color="primary" />
+                            {countryCodes[c.name.toLowerCase()] ? (
+                              <Box
+                                component="img"
+                                src={`https://flagcdn.com/w40/${countryCodes[c.name.toLowerCase()]}.png`}
+                                srcSet={`https://flagcdn.com/w80/${countryCodes[c.name.toLowerCase()]}.png 2x`}
+                                alt={c.name}
+                                sx={{
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "cover",
+                                }}
+                              />
+                            ) : (
+                              <CountryIcon fontSize="small" color="primary" />
+                            )}
                           </Box>
                           <Typography sx={{ fontWeight: 700, fontSize: { xs: 13, sm: 15 } }}>{c.name}</Typography>
                         </Stack>

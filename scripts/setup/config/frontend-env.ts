@@ -24,6 +24,9 @@ export interface FrontendEnvConfig {
   nextPublicEnableAnalytics: boolean;
   nextPublicEnableDebug: boolean;
 
+  // Google OAuth
+  nextPublicGoogleClientId?: string;
+
   // Google Maps (optional)
   nextPublicGoogleMapsApiKey?: string;
 
@@ -96,7 +99,7 @@ export async function promptFrontendConfig(defaults: FrontendEnvConfig): Promise
     {
       type: "confirm",
       name: "addOptionalServices",
-      message: "Configure optional services (Google Maps, Stripe)?",
+      message: "Configure optional services (Google Auth, Maps, Stripe)?",
       initial: false,
     },
   ]);
@@ -121,6 +124,12 @@ export async function promptFrontendConfig(defaults: FrontendEnvConfig): Promise
     const optionalResponse = await prompts([
       {
         type: "text",
+        name: "nextPublicGoogleClientId",
+        message: "Google Client ID (optional, press Enter to skip)",
+        initial: "",
+      },
+      {
+        type: "text",
         name: "nextPublicGoogleMapsApiKey",
         message: "Google Maps API key (optional, press Enter to skip)",
         initial: "",
@@ -140,6 +149,9 @@ export async function promptFrontendConfig(defaults: FrontendEnvConfig): Promise
     ]);
 
     // Only add non-empty optional values
+    if (optionalResponse.nextPublicGoogleClientId as string) {
+      config.nextPublicGoogleClientId = optionalResponse.nextPublicGoogleClientId as string;
+    }
     if (optionalResponse.nextPublicGoogleMapsApiKey as string) {
       config.nextPublicGoogleMapsApiKey = optionalResponse.nextPublicGoogleMapsApiKey as string;
     }
@@ -184,6 +196,11 @@ NEXT_PUBLIC_APP_URL=${config.nextPublicAppUrl}
 # ============================================
 NEXT_PUBLIC_ENABLE_ANALYTICS=${String(config.nextPublicEnableAnalytics)}
 NEXT_PUBLIC_ENABLE_DEBUG=${String(config.nextPublicEnableDebug)}
+
+# ============================================
+# Google OAuth Configuration
+# ============================================
+${config.nextPublicGoogleClientId ? `NEXT_PUBLIC_GOOGLE_CLIENT_ID=${config.nextPublicGoogleClientId}` : "# NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-google-client-id"}
 
 # ============================================
 # Optional Services

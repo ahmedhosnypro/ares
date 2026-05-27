@@ -4,6 +4,7 @@ using Backend.Application.Services;
 using Backend.Application.Validators;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Backend.Api.Controllers;
 
@@ -66,6 +67,16 @@ public class VehiclesController : ControllerBase
         [FromQuery] int limit = 20,
         CancellationToken cancellationToken = default)
     {
+        Guid? excludeUserId = null;
+        if (User?.Identity?.IsAuthenticated == true && User.IsInRole("Supplier"))
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim != null && Guid.TryParse(userIdClaim.Value, out var userId))
+            {
+                excludeUserId = userId;
+            }
+        }
+
         var request = new VehicleSearchRequest(
             pickupLocationId,
             returnLocationId,
@@ -77,7 +88,8 @@ public class VehiclesController : ControllerBase
             maxPrice,
             sortBy,
             page,
-            limit);
+            limit,
+            ExcludeUserId: excludeUserId);
 
         var validator = new VehicleSearchRequestValidator();
         var validationResult = await validator.ValidateAsync(request, cancellationToken);

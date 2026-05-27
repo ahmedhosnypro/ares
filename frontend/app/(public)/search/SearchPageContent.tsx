@@ -37,6 +37,7 @@ interface SearchPageContentProps {
   readonly selectedLocation: PublicLocation | undefined;
   readonly category?: string;
   readonly transmission?: string;
+  readonly sort?: string;
 }
 
 function VehicleCard({ vehicle }: Readonly<{ vehicle: PublicVehicleCard }>) {
@@ -315,6 +316,7 @@ export default function SearchPageContent({
   selectedLocation,
   category,
   transmission,
+  sort,
 }: SearchPageContentProps) {
   const theme = useTheme();
 
@@ -326,7 +328,15 @@ export default function SearchPageContent({
     return undefined;
   };
 
+  const getSortDisplayName = (s?: string): string | undefined => {
+    if (s === "newest") return "Newest first";
+    if (s === "price") return "Price: Low to High";
+    if (s === "rating") return "Top Rated";
+    return undefined;
+  };
+
   const categoryDisplayName = getCategoryDisplayName(category);
+  const sortDisplayName = getSortDisplayName(sort);
 
   return (
     <Box
@@ -370,7 +380,7 @@ export default function SearchPageContent({
             </Box>
 
             {/* Compact search form - single row on desktop */}
-            <Box sx={{ width: "100%", maxWidth: "1000px" }}>
+            <Container maxWidth="xl" sx={{ width: "100%" }}>
               <SearchFormFilter
                 locations={locations}
                 defaultLocationId={pickupLocationId}
@@ -378,9 +388,10 @@ export default function SearchPageContent({
                 defaultReturnDate={returnDate}
                 defaultCategory={category}
                 defaultTransmission={transmission}
+                defaultSort={sort}
                 vehicles={vehicles}
               />
-            </Box>
+            </Container>
 
             {/* Compact search tags */}
             <Box
@@ -420,6 +431,15 @@ export default function SearchPageContent({
                 <Chip
                   label={transmission}
                   color="info"
+                  variant="filled"
+                  size="small"
+                  sx={{ fontSize: "0.75rem", fontWeight: 600 }}
+                />
+              )}
+              {sortDisplayName && (
+                <Chip
+                  label={sortDisplayName}
+                  color="warning"
                   variant="filled"
                   size="small"
                   sx={{ fontSize: "0.75rem", fontWeight: 600 }}

@@ -130,6 +130,8 @@ export default function NotificationsPanel({ iconColor = "inherit" }: Notificati
             "BookingRejected",
             "BookingCompleted",
             "ReviewAvailable",
+            "ReviewReceived",
+            "SupplierReply",
             "InspectionApproved",
             "InspectionRejected",
           ].includes(tag)

@@ -50,7 +50,7 @@ export default function HeaderClient({ session }: HeaderClientProps) {
   const [selectedCurrency, setSelectedCurrency] = useState("USD");
 
   const navigationLinks = [
-    { label: "Fleet", href: "/fleet" },
+    { label: "Fleet", href: "/search" },
     { label: "Locations", href: "/locations" },
     { label: "Offers & Deals", href: "/offers" },
     { label: "About Us", href: "/about" },

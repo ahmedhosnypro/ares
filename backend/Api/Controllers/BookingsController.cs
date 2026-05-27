@@ -54,6 +54,12 @@ public class BookingsController : ControllerBase
         }
 
         var userId = Guid.Parse(userIdClaim.Value);
+        var isAdminOrSupplier = User.IsInRole("Admin") || User.IsInRole("Supplier");
+
+        if (request.CustomerUserId.HasValue && !isAdminOrSupplier)
+        {
+            return Forbid();
+        }
 
         // Validate request
         var validator = new CreateBookingRequestValidator(_vehicleRepository);

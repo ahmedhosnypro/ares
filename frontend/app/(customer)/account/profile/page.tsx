@@ -175,6 +175,7 @@ export default async function ProfilePage() {
                       emailVerified={verificationStatus.email}
                       phoneVerified={verificationStatus.phone}
                       licenseVerified={verificationStatus.driverLicense}
+                      kycStatus={verificationStatus.kyc}
                     />
                   </ProfileCard>
 

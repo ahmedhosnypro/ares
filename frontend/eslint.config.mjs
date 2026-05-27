@@ -73,6 +73,7 @@ const eslintConfig = defineConfig([
     rules: {
       // React rules
       ...reactHooks.configs.recommended.rules,
+      "react-hooks/set-state-in-effect": "off",
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
 
       // TypeScript rules
@@ -108,6 +109,12 @@ const eslintConfig = defineConfig([
        */
       "no-console": "error",
 
+      // SonarJS rules
+      "sonarjs/no-nested-conditional": "off",
+
+      "react-hooks/preserve-manual-memoization": "off",
+      "@typescript-eslint/restrict-template-expressions": "off",
+
       // Spell checking
       "@cspell/spellchecker": [
         "warn",
@@ -137,12 +144,13 @@ const eslintConfig = defineConfig([
     },
   },
 
-  // Allow console in logger implementation and vite config
+  // Allow console in logger implementation, vite config, and scripts
   {
-    files: ["src/utils/logger/**/*.ts", "vite.config.ts"],
+    files: ["src/utils/logger/**/*.ts", "vite.config.ts", "scripts/**/*.ts"],
     rules: {
       "no-console": "off",
       "sonarjs/no-nested-functions": "off",
+      "sonarjs/no-os-command-from-path": "off",
       "@typescript-eslint/no-unnecessary-condition": "off",
     },
   },

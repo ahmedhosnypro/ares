@@ -54,7 +54,6 @@ export default function IdentityVerificationCard({ accessToken }: IdentityVerifi
   }, [accessToken]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial async fetch on mount
     void load();
   }, [load]);
 
@@ -63,8 +62,8 @@ export default function IdentityVerificationCard({ accessToken }: IdentityVerifi
     setModalOpen(false);
   }, []);
 
-  const status = verification?.status ?? "NotVerified";
-  const canSubmit = status === "NotVerified" || status === "Rejected";
+  const status = (verification?.status ?? "NotVerified").toLowerCase();
+  const canSubmit = status === "notverified" || status === "rejected";
 
   return (
     <Box sx={{ p: 3 }}>
@@ -105,7 +104,7 @@ export default function IdentityVerificationCard({ accessToken }: IdentityVerifi
 
       {state === "ready" && (
         <Stack spacing={2}>
-          {status === "Approved" && (
+          {status === "approved" && (
             <>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Chip
@@ -128,12 +127,12 @@ export default function IdentityVerificationCard({ accessToken }: IdentityVerifi
             </>
           )}
 
-          {status === "Pending" && (
+          {status === "pending" && (
             <>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Chip
                   icon={<HourglassTopRoundedIcon sx={{ fontSize: 16 }} />}
-                  label="Pending review"
+                  label="Pending Approval"
                   size="small"
                   color="warning"
                   variant="outlined"
@@ -157,7 +156,7 @@ export default function IdentityVerificationCard({ accessToken }: IdentityVerifi
             </>
           )}
 
-          {status === "Rejected" && (
+          {status === "rejected" && (
             <>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Chip
@@ -189,7 +188,7 @@ export default function IdentityVerificationCard({ accessToken }: IdentityVerifi
             </>
           )}
 
-          {status !== "Approved" && status !== "Pending" && status !== "Rejected" && (
+          {status !== "approved" && status !== "pending" && status !== "rejected" && (
             <>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Chip
@@ -218,7 +217,7 @@ export default function IdentityVerificationCard({ accessToken }: IdentityVerifi
               }}
               sx={{ fontWeight: 700, alignSelf: "flex-start" }}
             >
-              {status === "Rejected" ? "Resubmit Documents" : "Verify Identity"}
+              {status === "rejected" ? "Resubmit Documents" : "Verify Identity"}
             </Button>
           )}
         </Stack>
