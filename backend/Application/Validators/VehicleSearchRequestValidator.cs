@@ -40,8 +40,8 @@ public class VehicleSearchRequestValidator : AbstractValidator<VehicleSearchRequ
 
         RuleFor(x => x.SortBy)
             .Must(sortBy => string.IsNullOrWhiteSpace(sortBy) ||
-                           new[] { "price", "distance", "rating" }.Contains(sortBy.ToLower()))
+                           new[] { "price", "distance", "rating", "newest", "date" }.Contains(sortBy.ToLower()))
             .When(x => !string.IsNullOrWhiteSpace(x.SortBy))
-            .WithMessage("SortBy must be one of: price, distance, rating");
+            .WithMessage("SortBy must be one of: price, distance, rating, newest, date");
     }
 }

@@ -1,4 +1,4 @@
-/* eslint-disable sonarjs/no-nested-conditional, sonarjs/cognitive-complexity, sonarjs/pseudo-random */
+/* eslint-disable sonarjs/cognitive-complexity, sonarjs/pseudo-random */
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";

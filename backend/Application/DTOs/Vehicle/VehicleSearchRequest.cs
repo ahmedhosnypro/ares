@@ -14,4 +14,5 @@ public record VehicleSearchRequest(
     decimal? MaxPrice = null,
     string? SortBy = null,
     int Page = 1,
-    int Limit = 20);
+    int Limit = 20,
+    Guid? ExcludeUserId = null);

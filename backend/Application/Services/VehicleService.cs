@@ -51,6 +51,12 @@ public class VehicleService : IVehicleService
             cancellationToken);
 
         var vehicleList = vehicles.ToList();
+        if (request.ExcludeUserId.HasValue)
+        {
+            vehicleList = vehicleList
+                .Where(vehicle => vehicle.UserId != request.ExcludeUserId.Value)
+                .ToList();
+        }
 
         var vehicleDtos = new List<VehicleListDto>();
         foreach (var vehicle in vehicleList)
@@ -284,6 +290,7 @@ public class VehicleService : IVehicleService
             "price" => vehicles.OrderBy(v => v.DailyRate).ToList(),
             "distance" => vehicles.OrderBy(v => v.Distance ?? double.MaxValue).ToList(),
             "rating" => vehicles.OrderByDescending(v => v.Rating).ToList(),
+            "newest" or "date" => vehicles.OrderByDescending(v => v.CreatedAt).ToList(),
             _ => vehicles
         };
     }

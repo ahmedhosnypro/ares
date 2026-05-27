@@ -80,6 +80,16 @@ async function main() {
   const ASPNET_ENV = await ask("Environment", "Development");
   const ASPNET_URLS = await ask("URLs", "http://localhost:5000");
 
+  console.log("\nGoogle OAuth");
+  const WANT_GOOGLE = (await ask("Enable Google Auth? [y/N]", "n")).toLowerCase() === "y";
+  let GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID";
+  let GOOGLE_CLIENT_SECRET = "";
+
+  if (WANT_GOOGLE) {
+    GOOGLE_CLIENT_ID = await ask("Google Client ID", "YOUR_GOOGLE_CLIENT_ID");
+    GOOGLE_CLIENT_SECRET = await ask("Google Client Secret", "", true);
+  }
+
   rl.close();
 
   let CORS_BLOCK = "";
@@ -99,6 +109,10 @@ Jwt__Issuer=${JWT_ISSUER}
 Jwt__Audience=${JWT_AUDIENCE}
 Jwt__ExpirationMinutes=${JWT_EXP}
 Jwt__ExtendedExpirationDays=${JWT_EXT}
+
+# Google OAuth
+Google__ClientId=${GOOGLE_CLIENT_ID}
+GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
 
 # CORS
 ${CORS_BLOCK}

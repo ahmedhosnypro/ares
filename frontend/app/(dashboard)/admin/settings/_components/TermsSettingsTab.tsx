@@ -94,6 +94,10 @@ export default function TermsSettingsTab() {
   };
 
   const handleSave = async () => {
+    if (!session?.accessToken) {
+      setErrorMsg("You must be signed in to perform this action.");
+      return;
+    }
     setSaving(true);
     try {
       if (editingId) {
@@ -114,6 +118,10 @@ export default function TermsSettingsTab() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!session?.accessToken) {
+      setErrorMsg("You must be signed in to perform this action.");
+      return;
+    }
     setDeleting(id);
     try {
       await axios.delete(toApiUrl(`/api/terms/${id}`), { headers: authHeader });

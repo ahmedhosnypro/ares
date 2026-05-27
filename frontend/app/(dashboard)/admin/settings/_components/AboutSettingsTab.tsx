@@ -101,6 +101,10 @@ export default function AboutSettingsTab() {
   };
 
   const handleSave = async () => {
+    if (!session?.accessToken) {
+      setErrorMsg("You must be signed in to perform this action.");
+      return;
+    }
     setSaving(true);
     try {
       if (editingId) {
@@ -121,6 +125,10 @@ export default function AboutSettingsTab() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!session?.accessToken) {
+      setErrorMsg("You must be signed in to perform this action.");
+      return;
+    }
     setDeleting(id);
     try {
       await axios.delete(toApiUrl(`/api/about/${id}`), { headers: authHeader });

@@ -2,12 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Box, Button, MenuItem, Paper, TextField } from "@mui/material";
+import { Box, MenuItem, Paper, TextField } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import VehicleAutocomplete from "./VehicleAutocomplete";
 import { PublicVehicleCard } from "@/utils/public-data";
 
@@ -23,6 +22,7 @@ interface SearchFormFilterProps {
   readonly defaultReturnDate: string;
   readonly defaultCategory?: string;
   readonly defaultTransmission?: string;
+  readonly defaultSort?: string;
   readonly vehicles: readonly PublicVehicleCard[];
 }
 
@@ -33,6 +33,7 @@ export default function SearchFormFilter({
   defaultReturnDate,
   defaultCategory,
   defaultTransmission,
+  defaultSort,
   vehicles,
 }: SearchFormFilterProps) {
   const router = useRouter();
@@ -42,6 +43,7 @@ export default function SearchFormFilter({
   const [returnDate, setReturnDate] = useState<Date | null>(new Date(defaultReturnDate));
   const [category, setCategory] = useState(defaultCategory || "");
   const [transmission, setTransmission] = useState(defaultTransmission || "");
+  const [sort, setSort] = useState(defaultSort || "");
 
   const vehicleCategories = [
     { value: "", label: "All Categories" },
@@ -56,26 +58,47 @@ export default function SearchFormFilter({
     { value: "Manual", label: "Manual" },
   ];
 
+  const sortOptions = [
+    { value: "", label: "Sort: Default" },
+    { value: "newest", label: "Newest first" },
+    { value: "price", label: "Price: Low to High" },
+    { value: "rating", label: "Top Rated" },
+  ];
+
   const formatDateForUrl = (date: Date | null) => {
     if (!date) return "";
     return date.toISOString().split("T")[0];
   };
 
-  const handleSearch = () => {
+  const handleSearch = (
+    updates: {
+      pickupLocationId?: string;
+      pickupDate?: Date | null;
+      returnDate?: Date | null;
+      category?: string;
+      transmission?: string;
+      sort?: string;
+    } = {}
+  ) => {
     const params = new URLSearchParams({
-      pickupLocationId,
-      pickupDate: formatDateForUrl(pickupDate),
-      returnDate: formatDateForUrl(returnDate),
+      pickupLocationId: updates.pickupLocationId ?? pickupLocationId,
+      pickupDate: formatDateForUrl(updates.pickupDate !== undefined ? updates.pickupDate : pickupDate),
+      returnDate: formatDateForUrl(updates.returnDate !== undefined ? updates.returnDate : returnDate),
     });
 
-    // Only add category if it's not empty (not "All Categories")
-    if (category) {
-      params.set("category", category);
+    const currentCategory = updates.category !== undefined ? updates.category : category;
+    if (currentCategory) {
+      params.set("category", currentCategory);
     }
 
-    // Only add transmission if it's not empty (not "All Transmissions")
-    if (transmission) {
-      params.set("transmission", transmission);
+    const currentTransmission = updates.transmission !== undefined ? updates.transmission : transmission;
+    if (currentTransmission) {
+      params.set("transmission", currentTransmission);
+    }
+
+    const currentSort = updates.sort !== undefined ? updates.sort : sort;
+    if (currentSort) {
+      params.set("sort", currentSort);
     }
 
     router.push(`/search?${params.toString()}`);
@@ -103,7 +126,7 @@ export default function SearchFormFilter({
               xs: "1fr",
               sm: "1fr",
               md: "1fr 1fr", // Two columns on tablet
-              lg: "2fr 1.1fr 1.1fr 1.3fr 1.3fr auto", // Desktop: single row with category and transmission filters
+              lg: "2fr 1.1fr 1.1fr 1.1fr 1.1fr 1.1fr", // Desktop: single row with category, transmission, sort filters
             },
             alignItems: "end",
           }}
@@ -114,7 +137,9 @@ export default function SearchFormFilter({
             label="Pickup location"
             value={pickupLocationId}
             onChange={e => {
-              setPickupLocationId(e.target.value);
+              const newValue = e.target.value;
+              setPickupLocationId(newValue);
+              handleSearch({ pickupLocationId: newValue });
             }}
             slotProps={{
               inputLabel: {
@@ -158,6 +183,7 @@ export default function SearchFormFilter({
             value={pickupDate}
             onChange={newValue => {
               setPickupDate(newValue);
+              handleSearch({ pickupDate: newValue });
             }}
             slotProps={{
               textField: {
@@ -197,6 +223,7 @@ export default function SearchFormFilter({
             value={returnDate}
             onChange={newValue => {
               setReturnDate(newValue);
+              handleSearch({ returnDate: newValue });
             }}
             minDate={pickupDate || undefined}
             slotProps={{
@@ -237,7 +264,9 @@ export default function SearchFormFilter({
             label="Vehicle class"
             value={category}
             onChange={e => {
-              setCategory(e.target.value);
+              const newValue = e.target.value;
+              setCategory(newValue);
+              handleSearch({ category: newValue });
             }}
             slotProps={{
               inputLabel: {
@@ -281,7 +310,9 @@ export default function SearchFormFilter({
             label="Transmission"
             value={transmission}
             onChange={e => {
-              setTransmission(e.target.value);
+              const newValue = e.target.value;
+              setTransmission(newValue);
+              handleSearch({ transmission: newValue });
             }}
             slotProps={{
               inputLabel: {
@@ -319,30 +350,51 @@ export default function SearchFormFilter({
             ))}
           </TextField>
 
-          {/* Search Button */}
-          <Button
-            variant="contained"
-            color="primary"
-            endIcon={<SearchRoundedIcon />}
-            onClick={handleSearch}
-            sx={{
-              minWidth: { xs: "100%", lg: "160px" },
-              minHeight: "56px", // Match input height
-              borderRadius: "12px",
-              px: 3,
-              fontSize: "1rem",
-              fontWeight: "bold",
-              textTransform: "none",
-              boxShadow: theme.palette.shadow.button,
-              "&:hover": {
-                boxShadow: theme.palette.shadow.buttonHover,
-                transform: "translateY(-1px)",
+          {/* Sort Filter */}
+          <TextField
+            select
+            label="Sort by"
+            value={sort}
+            onChange={e => {
+              const newValue = e.target.value;
+              setSort(newValue);
+              handleSearch({ sort: newValue });
+            }}
+            slotProps={{
+              inputLabel: {
+                shrink: true,
+                sx: { fontSize: "0.875rem", fontWeight: 500 },
               },
-              transition: "all 0.2s ease",
+            }}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "12px",
+                minHeight: "56px",
+                fontSize: "1rem",
+                "& fieldset": {
+                  borderColor: theme.palette.border.main,
+                  borderWidth: "1px",
+                },
+                "&:hover fieldset": {
+                  borderColor: theme.palette.primary.main,
+                },
+                "&.Mui-focused fieldset": {
+                  borderWidth: "2px",
+                  borderColor: theme.palette.primary.main,
+                },
+              },
+              "& .MuiSelect-select": {
+                fontSize: "1rem",
+                fontWeight: 500,
+              },
             }}
           >
-            Search cars
-          </Button>
+            {sortOptions.map(option => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </TextField>
         </Box>
 
         {/* Vehicle Autocomplete Search */}

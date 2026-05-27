@@ -38,15 +38,18 @@ public class SupplierReviewService : ISupplierReviewService
     private readonly IApplicationDbContext _context;
     private readonly IReviewRepository _reviewRepository;
     private readonly ILogger<SupplierReviewService> _logger;
+    private readonly INotificationService? _notificationService;
 
     public SupplierReviewService(
         IApplicationDbContext context,
         IReviewRepository reviewRepository,
-        ILogger<SupplierReviewService> logger)
+        ILogger<SupplierReviewService> logger,
+        INotificationService? notificationService = null)
     {
         _context = context;
         _reviewRepository = reviewRepository;
         _logger = logger;
+        _notificationService = notificationService;
     }
 
     /// <inheritdoc />
@@ -248,6 +251,28 @@ public class SupplierReviewService : ISupplierReviewService
 
         await _reviewRepository.UpdateAsync(review, cancellationToken);
         await _reviewRepository.SaveChangesAsync(cancellationToken);
+
+        // Notify the customer that the supplier has replied to their review
+        if (_notificationService is not null)
+        {
+            try
+            {
+                var vehicleLabel = string.IsNullOrWhiteSpace(review.Vehicle?.Make) && string.IsNullOrWhiteSpace(review.Vehicle?.Model)
+                    ? "a vehicle"
+                    : $"{review.Vehicle?.Make} {review.Vehicle?.Model}".Trim();
+
+                await _notificationService.CreateNotificationAsync(
+                    review.UserId,
+                    "Supplier replied to your review",
+                    $"The supplier has replied to your review for {vehicleLabel}.",
+                    $"SupplierReply:{review.BookingId}",
+                    cancellationToken);
+            }
+            catch
+            {
+                // Best-effort only
+            }
+        }
 
         _logger.LogInformation(
             "Supplier {SupplierId} saved reply on review {ReviewId}",

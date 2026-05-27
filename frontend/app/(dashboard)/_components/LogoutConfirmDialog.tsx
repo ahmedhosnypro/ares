@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button, Box } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { Logout as LogoutIcon } from "@mui/icons-material";
 
 interface LogoutConfirmDialogProps {
@@ -64,7 +65,7 @@ export default function LogoutConfirmDialog({ open, onOpenChange, onConfirm }: L
       <Box sx={{ display: "flex", alignItems: "center", gap: 2, px: 3, pt: 2 }}>
         <Box
           sx={{
-            bgcolor: "error.lighter",
+            bgcolor: theme => alpha(theme.palette.error.main, 0.08),
             color: "error.main",
             p: 1.5,
             borderRadius: "50%",

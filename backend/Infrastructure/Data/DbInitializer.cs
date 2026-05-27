@@ -104,12 +104,12 @@ public static class DbInitializer
 
         foreach (string dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
         {
-            Directory.CreateDirectory(dirPath.Replace(sourcePath, targetRoot));
+            Directory.CreateDirectory(Path.Combine(targetRoot, Path.GetRelativePath(sourcePath, dirPath)));
         }
 
         foreach (string newPath in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
         {
-            var targetPath = newPath.Replace(sourcePath, targetRoot);
+            var targetPath = Path.Combine(targetRoot, Path.GetRelativePath(sourcePath, newPath));
             if (!File.Exists(targetPath))
             {
                 File.Copy(newPath, targetPath, true);
@@ -262,7 +262,7 @@ public static class DbInitializer
         await context.SaveChangesAsync();
         logger.LogInformation("Locations and company profiles seeded successfully.");
 
-        // ΓöÇΓöÇ Extended vehicle catalog (Egypt market, 2015ΓÇô2024) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+        // -- Extended vehicle catalog (Egypt market, 2015-2024) ------------
         await VehicleSeeder.SeedAsync(context, logger);
 
         await TermsSeeder.SeedAsync(context);
@@ -796,10 +796,10 @@ public static class DbInitializer
         // 2. Recent vehicle added (8 days ago)
         
 
-        // 3. Recent booking ΓÇö Pending (3 days ago)
+        // 3. Recent booking - Pending (3 days ago)
         
 
-        // 4. Recent payment ΓÇö a Confirmed booking updated 3 hours ago
+        // 4. Recent payment - a Confirmed booking updated 3 hours ago
         
 
         // 5. Recent verification (5 days ago)
@@ -836,7 +836,7 @@ public static class DbInitializer
             await context.SaveChangesAsync();
         }
 
-        logger.LogInformation("Activity seed data created successfully (booking, payment, user, vehicle, verification).");
+        logger.LogInformation("Activity seed data created successfully (verification).");
     }
 }
 

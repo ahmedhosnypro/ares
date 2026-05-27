@@ -34,6 +34,10 @@ export interface BackendEnvConfig {
   // Seeding
   seedDemoData: boolean;
 
+  // Google OAuth
+  googleClientId: string;
+  googleClientSecret: string;
+
   // File Upload
   uploadPath: string;
   maxUploadSizeMb: number;
@@ -76,6 +80,10 @@ export function getDefaultBackendConfig(isDevcontainer = false): BackendEnvConfi
 
     // Seeding
     seedDemoData: true,
+
+    // Google OAuth
+    googleClientId: "YOUR_GOOGLE_CLIENT_ID",
+    googleClientSecret: "",
 
     // File Upload
     uploadPath: "wwwroot/uploads",
@@ -194,6 +202,23 @@ export async function promptBackendConfig(
       message: "Seed demo data?",
       initial: defaults.seedDemoData,
     },
+    {
+      type: "confirm",
+      name: "useGoogleAuth",
+      message: "Configure Google Authentication?",
+      initial: false,
+    },
+    {
+      type: (prev) => (prev ? "text" : null),
+      name: "googleClientId",
+      message: "Google Client ID",
+      initial: defaults.googleClientId,
+    },
+    {
+      type: (prev, values) => (values.useGoogleAuth ? "password" : null),
+      name: "googleClientSecret",
+      message: "Google Client Secret",
+    },
   ]);
 
   // Handle user cancellation (Ctrl+C)
@@ -209,8 +234,8 @@ export async function promptBackendConfig(
     dbPort: response.dbPort as number,
     dbName: response.dbName as string,
     dbIntegratedSecurity: response.dbIntegratedSecurity as boolean,
-    dbUser: (response.dbUser as string) ?? "",
-    dbPassword: (response.dbPassword as string) ?? "",
+    dbUser: response.dbUser as string,
+    dbPassword: response.dbPassword as string,
     jwtSecret: response.jwtSecret as string,
     jwtIssuer: response.jwtIssuer as string,
     jwtAudience: response.jwtAudience as string,
@@ -218,6 +243,8 @@ export async function promptBackendConfig(
     corsOrigins: response.corsOrigins as string,
     logLevel: response.logLevel as string,
     seedDemoData: response.seedDemoData as boolean,
+    googleClientId: (response.googleClientId as string) || defaults.googleClientId,
+    googleClientSecret: (response.googleClientSecret as string) || defaults.googleClientSecret,
   };
 
   return config;
@@ -278,6 +305,15 @@ Jwt__Audience=${config.jwtAudience}
 Jwt__ExpirationMinutes=${String(config.jwtExpirationMinutes)}
 
 # ============================================
+# Google OAuth Configuration
+# ============================================
+# OAuth 2.0 Client ID from Google Cloud Console:
+#   https://console.cloud.google.com/apis/credentials
+# This MUST match the frontend's NEXT_PUBLIC_GOOGLE_CLIENT_ID.
+Google__ClientId=${config.googleClientId}
+GOOGLE_CLIENT_SECRET=${config.googleClientSecret}
+
+# ============================================
 # CORS Configuration
 # ============================================
 Cors__AllowedOrigins=${config.corsOrigins}
@@ -315,6 +351,7 @@ ${config.smtpFromEmail ? `Email__FromEmail=${config.smtpFromEmail}` : "# Email__
 ${config.smtpFromName ? `Email__FromName=${config.smtpFromName}` : "# Email__FromName=Ares Car Rental"}
 `;
 }
+
 
 /**
  * Setup backend environment file

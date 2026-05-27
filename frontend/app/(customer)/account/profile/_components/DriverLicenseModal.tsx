@@ -333,7 +333,6 @@ function ImageFileField({ id, label, file, error, disabled, onChange }: ImageFil
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   useEffect(() => {
     if (!file || file.type === "application/pdf") {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPreviewUrl(null);
       return;
     }

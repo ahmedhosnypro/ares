@@ -152,9 +152,9 @@ public class VehicleRepository : PaginatedRepository<Vehicle>, IVehicleRepositor
         return requested switch
         {
             "compact" or "mini" or "compact-mini" or "economy" =>
-                seats is > 0 and <= 4 && !isSuvKeyword && !isLargeKeyword,
+                seats is > 0 and <= 4 && !isSuvKeyword && !isLargeKeyword && dailyRate <= 60,
             "mid-size" or "midsize" or "standard" =>
-                ((seats == 4 || seats == 5) && dailyRate <= 120 && !isSuvKeyword) || (isLargeKeyword && !isSuvKeyword),
+                ((seats is 4 or 5) && !isSuvKeyword) || (isLargeKeyword && !isSuvKeyword),
             "suv" or "maxi" or "suv-maxi" or "premium" =>
                 isSuvKeyword || (seats >= 5 && dailyRate > 80) || seats >= 6,
             "electric" =>

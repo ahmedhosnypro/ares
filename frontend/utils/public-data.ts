@@ -411,7 +411,8 @@ export async function fetchFeaturedVehicles(
   returnDate: string,
   category?: string,
   limit = 6,
-  transmission?: string
+  transmission?: string,
+  sortBy?: string
 ): Promise<PublicVehicleCard[]> {
   const searchParams: Record<string, string> = {
     pickupLocationId,
@@ -419,7 +420,7 @@ export async function fetchFeaturedVehicles(
     returnDate,
     page: "1",
     limit: String(limit),
-    sortBy: "rating",
+    sortBy: sortBy || "newest",
   };
 
   // Add category filter if provided
