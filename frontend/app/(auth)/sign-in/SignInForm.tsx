@@ -387,6 +387,7 @@ export default function SignInForm() {
               <Box sx={{ flex: 1, height: 1, bgcolor: "divider" }} />
             </Box>
             <GoogleSignInButton
+              requireRole={false}
               disabled={isLoading}
               onError={message => {
                 setServerError(message);

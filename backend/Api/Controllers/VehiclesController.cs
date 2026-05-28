@@ -498,4 +498,26 @@ public class VehiclesController : ControllerBase
         var stats = await _vehicleService.GetAdminVehicleStatsAsync(currentUserId, isAdmin, cancellationToken);
         return Ok(stats);
     }
+
+    /// <summary>
+    /// Upload an image for a vehicle (Admin/Supplier only)
+    /// </summary>
+    /// <param name="id">Vehicle ID</param>
+    /// <param name="file">Image file (max 10MB)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Image information</returns>
+    [HttpPost("/api/admin/cars/{id}/images/upload")]
+    [Authorize(Roles = "Admin,Supplier")]
+    [ProducesResponseType(typeof(VehicleImageDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<VehicleImageDto>> UploadImage(
+        Guid id,
+        IFormFile file,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _vehicleService.UploadImageAsync(id, file, cancellationToken);
+        return CreatedAtAction(nameof(GetImages), new { vehicleId = id }, result);
+    }
 }

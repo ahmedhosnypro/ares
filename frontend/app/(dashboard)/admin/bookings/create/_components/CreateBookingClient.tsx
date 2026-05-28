@@ -136,8 +136,10 @@ export default function CreateBookingClient() {
   const [vehicleLoading, setVehicleLoading] = useState(false);
   const [pickupLocationOptions, setPickupLocationOptions] = useState<LocationOption[]>([]);
   const [pickupLocationLoading, setPickupLocationLoading] = useState(false);
+  const [selectedPickupLocation, setSelectedPickupLocation] = useState<LocationOption | null>(null);
   const [dropOffLocationOptions, setDropOffLocationOptions] = useState<LocationOption[]>([]);
   const [dropOffLocationLoading, setDropOffLocationLoading] = useState(false);
+  const [selectedDropOffLocation, setSelectedDropOffLocation] = useState<LocationOption | null>(null);
 
   // ── Submit state ──────────────────────────────────────────────────
   const [submitting, setSubmitting] = useState(false);
@@ -213,14 +215,20 @@ export default function CreateBookingClient() {
       clearTimeout(handle);
       controller.abort();
     };
-    // vehicle is intentionally NOT a dependency to avoid loop
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vehicleSearch, pickupDate, returnDate, session?.accessToken]);
+  }, [vehicleSearch, pickupDate, returnDate, session?.accessToken, vehicle]);
 
   // ── Location autocomplete (pickup/dropoff) ─────────────────────────
   const fetchLocationSuggestions = async (query: string, type: "pickup" | "dropoff", signal: AbortSignal) => {
+    if (query.length < 3) {
+      const searchParam = query ? `?s=${encodeURIComponent(query)}` : "";
+      const response = await fetch(toApiUrl(`/api/locations/1/10/en${searchParam}`), { signal, cache: "no-store" });
+      if (!response.ok) throw new Error(`Locations failed with ${String(response.status)}`);
+      const payload = (await response.json()) as { resultData?: { _id: string; name: string }[] };
+      return (payload.resultData ?? []).map(item => ({ id: item._id, label: item.name }));
+    }
+
     const response = await fetch(
-      toApiUrl(`/api/locations/autocomplete?query=${encodeURIComponent(query)}&type=${type}`),
+      toApiUrl(`/api/locations/autocomplete?query=${encodeURIComponent(query)}&type=${type}&limit=10`),
       { signal, cache: "no-store" }
     );
 
@@ -240,11 +248,6 @@ export default function CreateBookingClient() {
 
   useEffect(() => {
     const trimmedQuery = pickupLocation.trim();
-    if (trimmedQuery.length < 3) {
-      setPickupLocationOptions([]);
-      setPickupLocationLoading(false);
-      return;
-    }
 
     let active = true;
     const controller = new AbortController();
@@ -274,11 +277,6 @@ export default function CreateBookingClient() {
 
   useEffect(() => {
     const trimmedQuery = dropOffLocation.trim();
-    if (trimmedQuery.length < 3) {
-      setDropOffLocationOptions([]);
-      setDropOffLocationLoading(false);
-      return;
-    }
 
     let active = true;
     const controller = new AbortController();
@@ -455,7 +453,7 @@ export default function CreateBookingClient() {
                   : "No customers found."
               }
               renderOption={(props, option) => (
-                <li {...props}>
+                <li {...props} key={option.id}>
                   <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", width: "100%" }}>
                     <Avatar
                       sx={{
@@ -486,6 +484,7 @@ export default function CreateBookingClient() {
                   fullWidth
                   size="small"
                   slotProps={{
+                    ...params.slotProps,
                     input: {
                       ...params.slotProps.input,
                       startAdornment: (
@@ -550,10 +549,11 @@ export default function CreateBookingClient() {
                 />
               </LocalizationProvider>
               <Autocomplete
-                freeSolo
                 options={pickupLocationOptions}
                 loading={pickupLocationLoading}
                 inputValue={pickupLocation}
+                value={selectedPickupLocation}
+                filterOptions={x => x}
                 slotProps={{
                   paper: {
                     sx: {
@@ -561,24 +561,39 @@ export default function CreateBookingClient() {
                     },
                   },
                 }}
-                onInputChange={(_, value) => {
-                  setPickupLocation(value);
-                }}
-                onChange={(_, value) => {
-                  if (typeof value === "string") {
+                onInputChange={(_, value, reason) => {
+                  if (reason === "input") {
                     setPickupLocation(value);
-                  } else if (value?.label) {
-                    setPickupLocation(value.label);
+                    setSelectedPickupLocation(null);
+                  }
+                  if (reason === "clear") {
+                    setPickupLocation("");
+                    setSelectedPickupLocation(null);
                   }
                 }}
-                getOptionLabel={option => (typeof option === "string" ? option : option.label)}
+                onChange={(_, value) => {
+                  setSelectedPickupLocation(value);
+                  setPickupLocation(value?.label ?? "");
+                }}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                getOptionLabel={option => option.label}
+                noOptionsText="No locations found."
+                renderOption={(props, option) => (
+                  <li {...props} key={option.id}>
+                    <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+                      <PlaceIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                      <Typography variant="body2">{option.label}</Typography>
+                    </Stack>
+                  </li>
+                )}
                 renderInput={params => (
                   <TextField
                     {...params}
                     label="Pickup Location"
-                    placeholder="e.g. Cairo International Airport"
+                    placeholder="Search pickup location…"
                     fullWidth
                     slotProps={{
+                      ...params.slotProps,
                       input: {
                         ...params.slotProps.input,
                         startAdornment: (
@@ -601,10 +616,11 @@ export default function CreateBookingClient() {
                 )}
               />
               <Autocomplete
-                freeSolo
                 options={dropOffLocationOptions}
                 loading={dropOffLocationLoading}
                 inputValue={dropOffLocation}
+                value={selectedDropOffLocation}
+                filterOptions={x => x}
                 slotProps={{
                   paper: {
                     sx: {
@@ -612,24 +628,39 @@ export default function CreateBookingClient() {
                     },
                   },
                 }}
-                onInputChange={(_, value) => {
-                  setDropOffLocation(value);
-                }}
-                onChange={(_, value) => {
-                  if (typeof value === "string") {
+                onInputChange={(_, value, reason) => {
+                  if (reason === "input") {
                     setDropOffLocation(value);
-                  } else if (value?.label) {
-                    setDropOffLocation(value.label);
+                    setSelectedDropOffLocation(null);
+                  }
+                  if (reason === "clear") {
+                    setDropOffLocation("");
+                    setSelectedDropOffLocation(null);
                   }
                 }}
-                getOptionLabel={option => (typeof option === "string" ? option : option.label)}
+                onChange={(_, value) => {
+                  setSelectedDropOffLocation(value);
+                  setDropOffLocation(value?.label ?? "");
+                }}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                getOptionLabel={option => option.label}
+                noOptionsText="No locations found."
+                renderOption={(props, option) => (
+                  <li {...props} key={option.id}>
+                    <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+                      <PlaceIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                      <Typography variant="body2">{option.label}</Typography>
+                    </Stack>
+                  </li>
+                )}
                 renderInput={params => (
                   <TextField
                     {...params}
                     label="Dropoff Location"
-                    placeholder="e.g. Downtown Office"
+                    placeholder="Search dropoff location…"
                     fullWidth
                     slotProps={{
+                      ...params.slotProps,
                       input: {
                         ...params.slotProps.input,
                         startAdornment: (
@@ -658,35 +689,100 @@ export default function CreateBookingClient() {
           <SectionCard
             step={3}
             title="Vehicle"
-            subtitle="Only available vehicles are shown for the selected dates"
+            subtitle={
+              selectedPickupLocation
+                ? "Only available vehicles are shown for the selected dates and location"
+                : "Select a pickup location first to browse available vehicles"
+            }
             done={vehicleDone}
           >
-            <TextField
-              placeholder="Search by make, model, or plate…"
-              value={vehicleSearch}
-              onChange={e => {
-                setVehicleSearch(e.target.value);
-              }}
-              fullWidth
-              size="small"
-              sx={{ mb: 2, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon sx={{ color: "text.disabled" }} />
-                    </InputAdornment>
-                  ),
-                  endAdornment: vehicleLoading ? (
-                    <InputAdornment position="end">
-                      <CircularProgress size={16} />
-                    </InputAdornment>
-                  ) : undefined,
-                },
-              }}
-            />
-
-            {vehicle ? (
+            {!vehicle ? (
+              <Autocomplete
+                disabled={!selectedPickupLocation}
+                options={vehicleOptions}
+                value={vehicle}
+                inputValue={vehicleSearch}
+                onInputChange={(_, value, reason) => {
+                  if (reason === "input") setVehicleSearch(value);
+                  if (reason === "clear") {
+                    setVehicleSearch("");
+                    setVehicle(null);
+                  }
+                }}
+                onChange={(_, value) => {
+                  setVehicle(value);
+                }}
+                loading={vehicleLoading}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                getOptionLabel={option => option.name}
+                filterOptions={x => x}
+                noOptionsText={
+                  !selectedPickupLocation ? "Please select a pickup location first." : "No available vehicles."
+                }
+                slotProps={{
+                  paper: {
+                    sx: { bgcolor: theme => darken(theme.palette.background.paper, 0.04) },
+                  },
+                }}
+                renderOption={(props, option) => (
+                  <li {...props} key={option.id}>
+                    <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", width: "100%", py: 0.5 }}>
+                      <Avatar
+                        variant="rounded"
+                        src={toImageUrl(option.thumbnail ?? undefined)}
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          bgcolor: alpha(theme.palette.primary.main, 0.08),
+                          color: "primary.main",
+                        }}
+                      >
+                        <CarIcon fontSize="small" />
+                      </Avatar>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography sx={{ fontWeight: 600 }} noWrap>
+                          {option.name || "Unnamed"}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" noWrap>
+                          {option.plateNumber ?? "No plate"} · {option.supplierName ?? "—"}
+                        </Typography>
+                      </Box>
+                      <Typography sx={{ fontWeight: 700, color: "success.main", whiteSpace: "nowrap" }}>
+                        {formatCurrency(option.dailyRate ?? 0)}/day
+                      </Typography>
+                    </Stack>
+                  </li>
+                )}
+                renderInput={params => (
+                  <TextField
+                    {...params}
+                    label="Vehicle"
+                    placeholder="Search by make, model, or plate…"
+                    fullWidth
+                    slotProps={{
+                      ...params.slotProps,
+                      input: {
+                        ...params.slotProps.input,
+                        startAdornment: (
+                          <>
+                            <InputAdornment position="start">
+                              <SearchIcon sx={{ color: "text.disabled" }} />
+                            </InputAdornment>
+                            {params.slotProps.input.startAdornment}
+                          </>
+                        ),
+                        endAdornment: (
+                          <>
+                            {vehicleLoading ? <CircularProgress size={16} sx={{ mr: 1 }} /> : null}
+                            {params.slotProps.input.endAdornment}
+                          </>
+                        ),
+                      },
+                    }}
+                  />
+                )}
+              />
+            ) : (
               <Paper
                 elevation={0}
                 sx={{
@@ -737,63 +833,6 @@ export default function CreateBookingClient() {
                   </Stack>
                 </Stack>
               </Paper>
-            ) : (
-              <Box sx={{ maxHeight: 320, overflowY: "auto" }}>
-                {vehicleOptions.length === 0 && !vehicleLoading && (
-                  <Typography variant="body2" color="text.secondary">
-                    No available vehicles for the selected window. Adjust dates or search terms.
-                  </Typography>
-                )}
-                <Stack spacing={1}>
-                  {vehicleOptions.map(v => (
-                    <Paper
-                      key={v.id}
-                      elevation={0}
-                      onClick={() => {
-                        setVehicle(v);
-                      }}
-                      sx={{
-                        p: 1.5,
-                        borderRadius: 2,
-                        border: "1px solid",
-                        borderColor: "divider",
-                        cursor: "pointer",
-                        transition: "all 0.15s",
-                        "&:hover": {
-                          borderColor: "primary.main",
-                          bgcolor: theme => alpha(theme.palette.primary.main, 0.03),
-                        },
-                      }}
-                    >
-                      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-                        <Avatar
-                          variant="rounded"
-                          src={toImageUrl(v.thumbnail ?? undefined)}
-                          sx={{
-                            width: 44,
-                            height: 44,
-                            bgcolor: alpha(theme.palette.primary.main, 0.08),
-                            color: "primary.main",
-                          }}
-                        >
-                          <CarIcon fontSize="small" />
-                        </Avatar>
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography sx={{ fontWeight: 600 }} noWrap>
-                            {v.name || "Unnamed"}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary" noWrap>
-                            {v.plateNumber ?? "No plate"} · {v.supplierName ?? "—"}
-                          </Typography>
-                        </Box>
-                        <Typography sx={{ fontWeight: 700, color: "success.main" }}>
-                          {formatCurrency(v.dailyRate ?? 0)}
-                        </Typography>
-                      </Stack>
-                    </Paper>
-                  ))}
-                </Stack>
-              </Box>
             )}
           </SectionCard>
         </Stack>

@@ -8,6 +8,7 @@ import { useSession } from "next-auth/react";
 
 import {
   createSupplierVehicle,
+  uploadVehicleImage,
   type CreateSupplierVehiclePayload,
 } from "@/api-clients/supplier-vehicles/supplier-vehicles";
 import { logger } from "@/utils/logger";
@@ -28,7 +29,7 @@ export default function CreateSupplierVehiclePage() {
     router.push("/supplier/vehicles");
   };
 
-  const handleSubmit = (values: VehicleFormValues) => {
+  const handleSubmit = (values: VehicleFormValues, imageFile: File | null) => {
     void (async () => {
       if (!session?.accessToken) {
         setApiError("You must be signed in to create a vehicle.");
@@ -50,13 +51,20 @@ export default function CreateSupplierVehiclePage() {
           pricePerDay: values.pricePerDay,
           locationCity: values.locationCity,
           description: values.description?.trim() ? values.description : undefined,
-          imageUrl: values.imageUrl?.trim() ? values.imageUrl : undefined,
+          imageUrl: undefined, // Handled by separate upload
         };
-        await createSupplierVehicle(session.accessToken, payload);
+        const response = await createSupplierVehicle(session.accessToken, payload);
 
-        // Show toast briefly, then redirect to the list. Using a tiny
-        // timeout so the user actually sees the success state before
-        // the route changes.
+        // 2. If a file was selected, upload it now that we have a vehicleId
+        if (imageFile && response.vehicleId) {
+          try {
+            await uploadVehicleImage(session.accessToken, response.vehicleId, imageFile);
+          } catch (uploadErr) {
+            logger.error("Vehicle created but image upload failed", uploadErr);
+          }
+        }
+
+        // Show toast briefly, then redirect to the list.
         setToastOpen(true);
         window.setTimeout(() => {
           router.push("/supplier/vehicles");

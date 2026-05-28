@@ -18,5 +18,7 @@ public record UpdateVehicleRequest(
     [MaxLength(100)] string? LocationCity,
     string? Description,
     [MaxLength(50)] string? Status,
-    [MaxLength(50)] string? AvailabilityStatus
+    [MaxLength(50)] string? AvailabilityStatus,
+    List<VehicleImageUpdateDto>? Images = null,
+    List<VehicleFeatureUpdateDto>? Features = null
 );

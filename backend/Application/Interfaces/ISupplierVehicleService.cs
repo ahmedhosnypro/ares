@@ -48,6 +48,15 @@ public interface ISupplierVehicleService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Uploads an image for a vehicle owned by the supplier.
+    /// </summary>
+    Task<VehicleImageDto> UploadImageAsync(
+        Guid supplierId,
+        Guid vehicleId,
+        Microsoft.AspNetCore.Http.IFormFile file,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Updates an existing supplier-owned vehicle.
     /// Throws <see cref="Backend.Application.Exceptions.ConflictException"/>
     /// if the vehicle is currently in a Rejected (read-only) state.

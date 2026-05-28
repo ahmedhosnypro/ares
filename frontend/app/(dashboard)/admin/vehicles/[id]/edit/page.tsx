@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, ChangeEvent } from "react";
+import { useEffect, useState, ChangeEvent, useRef } from "react";
 import {
   Box,
   Card,
@@ -13,23 +13,36 @@ import {
   MenuItem,
   InputAdornment,
   Alert,
+  IconButton,
+  alpha,
+  useTheme,
 } from "@mui/material";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
-import { updateCar, getCarById } from "@/api-clients/cars/cars";
+import { updateCar, getCarById, uploadCarImage } from "@/api-clients/cars/cars";
 import { createCarSchema } from "../../create/page";
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export default function EditCarPage() {
   const { data: session } = useSession();
   const router = useRouter();
+  const theme = useTheme();
   const params = useParams();
   const id = params.id as string;
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [apiError, setApiError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string | undefined>>({});
+
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     make: "",
@@ -45,6 +58,7 @@ export default function EditCarPage() {
     description: "",
     status: "Active",
     availabilityStatus: "Available",
+    imageUrl: "",
   });
 
   // Load car data
@@ -53,11 +67,16 @@ export default function EditCarPage() {
       try {
         const data = await getCarById(session?.accessToken ?? "", id);
 
-        // Merge the retrieved data into the form structure so we don't lose default keys
+        // Merge the retrieved data into the form structure
         setForm(prev => ({
           ...prev,
           ...data,
+          imageUrl: data.imageUrl || "",
         }));
+
+        if (data.imageUrl) {
+          setFilePreview(data.imageUrl);
+        }
       } catch {
         setApiError("Failed to load car data");
       } finally {
@@ -79,6 +98,34 @@ export default function EditCarPage() {
     setFieldErrors(prev => ({ ...prev, [name]: undefined }));
   };
 
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > MAX_FILE_SIZE) {
+      setFileError("File size exceeds 10MB limit.");
+      return;
+    }
+
+    setFileError(null);
+    setSelectedFile(file);
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFilePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveFile = () => {
+    setSelectedFile(null);
+    setFilePreview(form.imageUrl || null);
+    setFileError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const handleSubmit = () => {
     void (async () => {
       const result = createCarSchema.safeParse(form);
@@ -96,6 +143,8 @@ export default function EditCarPage() {
         return;
       }
 
+      if (fileError) return;
+
       if (!session?.accessToken || !session.user.id) {
         setApiError("You must be logged in to update a vehicle");
         return;
@@ -105,8 +154,17 @@ export default function EditCarPage() {
         setLoading(true);
         setApiError("");
 
+        let finalImageUrl = form.imageUrl;
+
+        // 1. Upload image if selected
+        if (selectedFile) {
+          const uploadRes = await uploadCarImage(session.accessToken, id, selectedFile);
+          finalImageUrl = uploadRes.url;
+        }
+
         await updateCar(session.accessToken, id, {
           ...form,
+          imageUrl: finalImageUrl,
           userId: session.user.id,
         });
 
@@ -139,8 +197,7 @@ export default function EditCarPage() {
 
       <Card sx={{ p: { xs: 2, md: 4 }, borderRadius: 2 }}>
         <Grid container spacing={3}>
-          {/* SAME UI FIELDS (UNCHANGED) */}
-
+          {/* Identity */}
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
@@ -258,6 +315,91 @@ export default function EditCarPage() {
               value={form.description}
               onChange={handleChange}
             />
+          </Grid>
+
+          {/* Image Upload */}
+          <Grid size={{ xs: 12 }}>
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700, color: "text.secondary" }}>
+              Vehicle Image
+            </Typography>
+            <Box
+              sx={{
+                p: 3,
+                border: "2px dashed",
+                borderColor: fileError ? "error.main" : "divider",
+                borderRadius: 2,
+                bgcolor: alpha(theme.palette.background.paper, 0.4),
+                textAlign: "center",
+                cursor: loading ? "default" : "pointer",
+                "&:hover": {
+                  borderColor: loading ? "divider" : "primary.main",
+                  bgcolor: loading
+                    ? alpha(theme.palette.background.paper, 0.4)
+                    : alpha(theme.palette.primary.main, 0.02),
+                },
+              }}
+              onClick={() => !loading && fileInputRef.current?.click()}
+            >
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="image/*"
+                style={{ display: "none" }}
+                disabled={loading}
+              />
+
+              {filePreview ? (
+                <Box sx={{ position: "relative", display: "inline-block" }}>
+                  <Box
+                    component="img"
+                    src={filePreview}
+                    alt="Preview"
+                    sx={{
+                      maxHeight: 240,
+                      maxWidth: "100%",
+                      borderRadius: 2,
+                      display: "block",
+                      boxShadow: theme.shadows[3],
+                    }}
+                  />
+                  {!loading && (
+                    <IconButton
+                      onClick={e => {
+                        e.stopPropagation();
+                        handleRemoveFile();
+                      }}
+                      sx={{
+                        position: "absolute",
+                        top: 8,
+                        right: 8,
+                        bgcolor: alpha(theme.palette.error.main, 0.9),
+                        color: "white",
+                        "&:hover": { bgcolor: theme.palette.error.main },
+                      }}
+                      size="small"
+                    >
+                      <DeleteRoundedIcon fontSize="small" />
+                    </IconButton>
+                  )}
+                </Box>
+              ) : (
+                <Stack spacing={1} sx={{ alignItems: "center" }}>
+                  <CloudUploadIcon sx={{ fontSize: 48, color: "text.disabled" }} />
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                    Click to upload vehicle image
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    JPG, PNG or WebP (max 10MB)
+                  </Typography>
+                </Stack>
+              )}
+            </Box>
+            {fileError && (
+              <Typography variant="caption" color="error" sx={{ mt: 1, display: "block" }}>
+                {fileError}
+              </Typography>
+            )}
           </Grid>
         </Grid>
 

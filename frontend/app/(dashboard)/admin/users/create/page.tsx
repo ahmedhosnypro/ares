@@ -15,7 +15,7 @@ import {
   Divider,
 } from "@mui/material";
 import { z } from "zod";
-import { passwordSchema } from "@/lib/validation/schemas";
+import { passwordSchema, emailSchema } from "@/lib/validation/schemas";
 import { createUser } from "@/api-clients/users/users";
 
 export default function CreateUserPage() {
@@ -36,7 +36,7 @@ export default function CreateUserPage() {
   });
 
   const createUserSchema = z.object({
-    email: z.email({ message: "Invalid email" }),
+    email: emailSchema,
     password: passwordSchema,
     firstName: z.string().min(1, "First name is required"),
     lastName: z.string().min(1, "Last name is required"),

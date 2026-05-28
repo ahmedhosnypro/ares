@@ -12,7 +12,12 @@ namespace Backend.Application.Services;
 /// </summary>
 public class VehicleService : IVehicleService
 {
+    private const long MaxFileSize = 10 * 1024 * 1024; // 10MB
+    private static readonly string[] AllowedExtensions = { ".jpg", ".jpeg", ".png", ".webp" };
+
     private readonly IVehicleRepository _vehicleRepository;
+    // ... rest of fields
+
     private readonly IReviewRepository _reviewRepository;
     private readonly IBookingRepository _bookingRepository;
     private readonly IApplicationDbContext _context;
@@ -640,7 +645,10 @@ public class VehicleService : IVehicleService
         bool isAdmin,
         CancellationToken cancellationToken = default)
     {
-        var vehicle = await _vehicleRepository.GetByIdAsync(vehicleId, cancellationToken);
+        var vehicle = await _context.Vehicles
+            .Include(v => v.Images)
+            .FirstOrDefaultAsync(v => v.Id == vehicleId, cancellationToken);
+
         if (vehicle == null)
         {
             throw new NotFoundException($"Vehicle with ID {vehicleId} not found");
@@ -699,6 +707,79 @@ public class VehicleService : IVehicleService
 
         if (request.Description != null)
             vehicle.Description = request.Description;
+
+        // Update images if provided
+        if (request.Images != null)
+        {
+            // Instead of wholesale RemoveRange + Add (which breaks EF tracking and causes Concurrency Exceptions),
+            // we synchronize the list based on the URL (which is our unique identifier here).
+            var incomingUrls = request.Images.Select(i => i.Url).ToHashSet();
+            
+            // 1. Remove images not in the new list
+            var imagesToRemove = vehicle.Images.Where(i => !incomingUrls.Contains(i.ImageUrl)).ToList();
+            foreach (var img in imagesToRemove)
+            {
+                vehicle.Images.Remove(img);
+            }
+
+            // 2. Update existing and Add new
+            foreach (var incomingImg in request.Images)
+            {
+                var existingImg = vehicle.Images.FirstOrDefault(i => i.ImageUrl == incomingImg.Url);
+                if (existingImg != null)
+                {
+                    existingImg.IsPrimary = incomingImg.IsPrimary;
+                    existingImg.DisplayOrder = 0; // Or whatever logic you use
+                }
+                else
+                {
+                    vehicle.Images.Add(new Domain.Entities.VehicleImage
+                    {
+                        ImageUrl = incomingImg.Url,
+                        IsPrimary = incomingImg.IsPrimary,
+                        DisplayOrder = 0
+                    });
+                }
+            }
+        }
+
+        // Update features if provided
+        if (request.Features != null)
+        {
+            var existingFeatures = await _context.VehicleFeatures
+                .Where(vf => vf.VehicleId == vehicleId)
+                .ToListAsync(cancellationToken);
+
+            var incomingFeatureNames = request.Features.Select(f => f.FeatureName).ToHashSet();
+
+            // 1. Remove features not in the new list
+            var featuresToRemove = existingFeatures.Where(f => !incomingFeatureNames.Contains(f.FeatureName)).ToList();
+            _context.RemoveVehicleFeatures(featuresToRemove);
+
+            // 2. Update existing and Add new
+            foreach (var incomingFeature in request.Features)
+            {
+                var existingFeature = existingFeatures.FirstOrDefault(f => f.FeatureName == incomingFeature.FeatureName);
+                if (existingFeature != null)
+                {
+                    existingFeature.FeatureDescription = incomingFeature.FeatureDescription;
+                    existingFeature.FeatureCategory = incomingFeature.FeatureCategory ?? "General";
+                }
+                else
+                {
+                    _context.AddVehicleFeatures(new List<Domain.Entities.VehicleFeature> 
+                    {
+                        new Domain.Entities.VehicleFeature
+                        {
+                            VehicleId = vehicleId,
+                            FeatureName = incomingFeature.FeatureName,
+                            FeatureDescription = incomingFeature.FeatureDescription,
+                            FeatureCategory = incomingFeature.FeatureCategory ?? "General"
+                        }
+                    });
+                }
+            }
+        }
 
         // Capture the previous status BEFORE we mutate `vehicle.Status` so we
         // can detect a Pending → Approved / Rejected transition and fire the
@@ -875,5 +956,64 @@ public class VehicleService : IVehicleService
             .CountAsync(cancellationToken);
 
         return new AdminVehicleStatsDto(totalVehicles, availableVehicles, onRentalVehicles);
+    }
+
+    public async Task<VehicleImageDto> UploadImageAsync(
+        Guid vehicleId,
+        Microsoft.AspNetCore.Http.IFormFile file,
+        CancellationToken cancellationToken = default)
+    {
+        var vehicle = await _context.Vehicles
+            .FirstOrDefaultAsync(v => v.Id == vehicleId && v.IsActive, cancellationToken);
+
+        if (vehicle == null)
+        {
+            throw new NotFoundException($"Vehicle with ID {vehicleId} not found");
+        }
+
+        // 1. Validate file size
+        if (file.Length > MaxFileSize)
+        {
+            throw new ValidationException("File", "File size exceeds the maximum limit of 10MB.");
+        }
+
+        // 2. Validate file extension
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (!AllowedExtensions.Contains(extension))
+        {
+            throw new ValidationException("File", $"Invalid file type. Allowed types: {string.Join(", ", AllowedExtensions)}");
+        }
+
+        // 3. Save file
+        var fileName = $"{vehicleId}_{Guid.NewGuid()}{extension}";
+        var uploadsFolder = Path.Combine("wwwroot", "uploads", "vehicles");
+        Directory.CreateDirectory(uploadsFolder);
+
+        var filePath = Path.Combine(uploadsFolder, fileName);
+        using (var stream = new FileStream(filePath, FileMode.Create))
+        {
+            await file.CopyToAsync(stream, cancellationToken);
+        }
+
+        var imageUrl = $"/uploads/vehicles/{fileName}";
+
+        // 4. Create database record
+        var isFirstImage = !await _context.VehicleImages.AnyAsync(i => i.VehicleId == vehicleId, cancellationToken);
+        var vehicleImage = new VehicleImage
+        {
+            VehicleId = vehicleId,
+            ImageUrl = imageUrl,
+            IsPrimary = isFirstImage,
+            DisplayOrder = 0
+        };
+
+        _context.AddVehicleImage(vehicleImage);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return new VehicleImageDto(
+            vehicleImage.Id,
+            vehicleImage.ImageUrl,
+            "original",
+            vehicleImage.IsPrimary);
     }
 }

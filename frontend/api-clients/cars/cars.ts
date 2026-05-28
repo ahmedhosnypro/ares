@@ -187,6 +187,7 @@ export interface CarPayload {
   description: string;
   status: string;
   availabilityStatus: string;
+  imageUrl?: string;
 }
 
 export const createCar = async (accessToken: string, payload: CarPayload) => {
@@ -237,6 +238,28 @@ export const updateCar = async (accessToken: string, carId: string, payload: Car
     throw new Error(errorText || "Failed to update car");
   }
   return res.text();
+};
+
+export interface CarImageUploadResponse {
+  imageId: string;
+  url: string;
+  size: string;
+  isPrimary: boolean;
+}
+
+export const uploadCarImage = async (
+  accessToken: string,
+  carId: string,
+  file: File
+): Promise<CarImageUploadResponse> => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  return apiFetchJson<CarImageUploadResponse>(`/api/admin/cars/${carId}/images/upload`, {
+    method: "POST",
+    accessToken,
+    body: formData,
+  });
 };
 
 export const getCarById = async (accessToken: string, id: string): Promise<Vehicle> => {

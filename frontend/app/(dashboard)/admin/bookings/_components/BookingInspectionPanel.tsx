@@ -1,7 +1,6 @@
-/* eslint-disable sonarjs/function-return-type */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type JSX } from "react";
 import {
   Paper,
   Typography,
@@ -34,7 +33,7 @@ interface Props {
   readonly initialInspectionStatus?: string | null;
 }
 
-function statusChipProps(status: string | null | undefined, theme: Theme) {
+function statusChipProps(status: string | null | undefined, theme: Theme): { bg: string; color: string } {
   const map: Record<string, { bg: string; color: string }> = {
     Pending: { bg: alpha(theme.palette.warning.main, 0.15), color: theme.palette.warning.main },
     Approved: { bg: alpha(theme.palette.success.main, 0.15), color: theme.palette.success.main },
@@ -50,7 +49,11 @@ function statusChipProps(status: string | null | undefined, theme: Theme) {
  * inspection status, lets the admin pick an inspector and assign, and shows
  * the resulting assignment once made.
  */
-export default function BookingInspectionPanel({ bookingId, initialInspectorId, initialInspectionStatus }: Props) {
+export default function BookingInspectionPanel({
+  bookingId,
+  initialInspectorId,
+  initialInspectionStatus,
+}: Props): JSX.Element {
   const theme = useTheme();
 
   const [inspectors, setInspectors] = useState<Inspector[]>([]);
@@ -67,7 +70,7 @@ export default function BookingInspectionPanel({ bookingId, initialInspectorId, 
     (initialInspectionStatus && initialInspectionStatus !== "NotRequired" ? initialInspectionStatus : null);
 
   useEffect(() => {
-    const loadInspectors = async () => {
+    const loadInspectors = async (): Promise<void> => {
       try {
         setLoadingInspectors(true);
         const data = await listInspectors(true);
@@ -83,8 +86,8 @@ export default function BookingInspectionPanel({ bookingId, initialInspectorId, 
 
   const assigned = inspectors.find(i => i.userId === selectedInspectorUserId);
 
-  const handleAssign = () => {
-    void (async () => {
+  const handleAssign = (): void => {
+    void (async (): Promise<void> => {
       if (!selectedInspectorUserId) {
         setError("Please select an inspector first.");
         return;
@@ -191,10 +194,11 @@ export default function BookingInspectionPanel({ bookingId, initialInspectorId, 
                   setSelectedInspectorUserId(e.target.value);
                   setError(null);
                 }}
-                renderValue={selected => {
+                renderValue={(selected: string): React.ReactNode => {
                   if (!selected) return <em>Choose an active inspector...</em>;
                   const ins = inspectors.find(i => i.userId === selected);
-                  return ins ? `${ins.firstName} ${ins.lastName} (${ins.employeeCode})` : selected;
+                  const label = ins ? `${ins.firstName} ${ins.lastName} (${ins.employeeCode})` : selected;
+                  return <span>{label}</span>;
                 }}
               >
                 {inspectors.length === 0 ? (

@@ -49,6 +49,8 @@ export interface SupplierVehicleDetails {
   /** Server-side flag — true when the vehicle is in a Rejected state. */
   isReadOnly: boolean;
   createdAt: string;
+  images?: { url: string; isPrimary: boolean }[];
+  features?: { featureName: string; featureDescription?: string; featureCategory?: string }[];
 }
 
 /**
@@ -73,6 +75,17 @@ export interface SupplierVehicleListQuery {
   pageSize?: number;
 }
 
+export interface VehicleImageUpdatePayload {
+  url: string;
+  isPrimary: boolean;
+}
+
+export interface VehicleFeatureUpdatePayload {
+  featureName: string;
+  featureDescription?: string;
+  featureCategory?: string;
+}
+
 export interface CreateSupplierVehiclePayload {
   make: string;
   model: string;
@@ -87,13 +100,18 @@ export interface CreateSupplierVehiclePayload {
   description?: string;
   /** Single primary image URL — see `Image Handling` in the spec. */
   imageUrl?: string;
+  images?: VehicleImageUpdatePayload[];
+  features?: VehicleFeatureUpdatePayload[];
 }
 
 /**
  * Update payload mirrors the backend's partial-update semantics — only
  * fields that are sent get applied.
  */
-export type UpdateSupplierVehiclePayload = Partial<CreateSupplierVehiclePayload>;
+export interface UpdateSupplierVehiclePayload extends Partial<CreateSupplierVehiclePayload> {
+  status?: string;
+  availabilityStatus?: string;
+}
 
 export interface VehicleResponse {
   vehicleId: string;
@@ -156,6 +174,21 @@ export async function updateSupplierVehicle(
   });
 }
 
+/**
+ * General vehicle update for admins.
+ */
+export async function updateVehicle(
+  accessToken: string,
+  vehicleId: string,
+  payload: UpdateSupplierVehiclePayload
+): Promise<VehicleResponse> {
+  return apiFetchJson<VehicleResponse>(`/api/admin/cars/${vehicleId}/edit`, {
+    method: "PUT",
+    accessToken,
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function deleteSupplierVehicle(accessToken: string, vehicleId: string): Promise<VehicleResponse> {
   return apiFetchJson<VehicleResponse>(`/api/supplier/vehicles/${vehicleId}`, {
     method: "DELETE",
@@ -172,6 +205,26 @@ export async function setSupplierVehicleAvailability(
     method: "PATCH",
     accessToken,
     body: JSON.stringify({ available }),
+  });
+}
+
+export async function uploadVehicleImage(
+  accessToken: string,
+  vehicleId: string,
+  file: File,
+  isAdminFlow: boolean = false
+): Promise<{ imageId: string; url: string; size: string; isPrimary: boolean }> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const endpoint = isAdminFlow
+    ? `/api/admin/cars/${vehicleId}/images/upload`
+    : `/api/supplier/vehicles/${vehicleId}/images/upload`;
+
+  return apiFetchJson<{ imageId: string; url: string; size: string; isPrimary: boolean }>(endpoint, {
+    method: "POST",
+    accessToken,
+    body: formData,
   });
 }
 

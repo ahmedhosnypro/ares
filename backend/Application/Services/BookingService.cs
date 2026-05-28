@@ -4,6 +4,7 @@ using Backend.Application.Exceptions;
 using Backend.Application.Interfaces;
 using Backend.Domain.Entities;
 using Backend.Domain.Entities.Enums;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Application.Services;
@@ -18,16 +19,19 @@ public class BookingService : IBookingService
     private readonly IVehicleRepository _vehicleRepository;
     private readonly IApplicationDbContext _context;
     private readonly INotificationService? _notificationService;
+    private readonly UserManager<ApplicationUser> _userManager;
 
     public BookingService(
         IBookingRepository bookingRepository,
         IVehicleRepository vehicleRepository,
         IApplicationDbContext context,
+        UserManager<ApplicationUser> userManager,
         INotificationService? notificationService = null)
     {
         _bookingRepository = bookingRepository;
         _vehicleRepository = vehicleRepository;
         _context = context;
+        _userManager = userManager;
         _notificationService = notificationService;
     }
 
@@ -36,6 +40,16 @@ public class BookingService : IBookingService
         Guid userId,
         CancellationToken cancellationToken = default)
     {
+        // Logic-level guard: admins are not permitted to create bookings
+        if (_userManager != null)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user != null && await _userManager.IsInRoleAsync(user, "Admin"))
+            {
+                throw new ForbiddenException("Administrators are not allowed to create bookings.");
+            }
+        }
+
         // Requirement 4.4: Validate that pickup date is before return date
         if (request.PickupDate >= request.ReturnDate)
         {

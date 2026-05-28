@@ -25,9 +25,10 @@ import {
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
 import { z } from "zod";
+import { emailSchema } from "@/lib/validation/schemas";
 
 const forgotPasswordSchema = z.object({
-  email: z.email({ message: "Please enter a valid email address" }),
+  email: emailSchema,
 });
 
 export default function ForgotPasswordForm() {

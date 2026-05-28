@@ -398,11 +398,11 @@ function ImageFileField({ id, label, file, error, disabled, onChange }: ImageFil
             bgcolor: "background.default",
           }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element -- local blob URL preview only */}
-          <img
+          <Box
+            component="img"
             src={previewUrl}
             alt="License preview"
-            style={{ display: "block", width: "100%", height: "auto", objectFit: "contain" }}
+            sx={{ display: "block", width: "100%", height: "auto", objectFit: "contain" }}
           />
         </Box>
       )}

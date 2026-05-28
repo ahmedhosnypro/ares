@@ -15,7 +15,7 @@ import {
   Divider,
 } from "@mui/material";
 import { z } from "zod";
-import { passwordSchema } from "@/lib/validation/schemas";
+import { passwordSchema, emailSchema } from "@/lib/validation/schemas";
 import { createSupplier } from "@/api-clients/suppliers/suppliers"; // تأكد من المسار الصحيح
 
 export default function CreateSupplierPage() {
@@ -38,7 +38,7 @@ export default function CreateSupplierPage() {
   });
 
   const createSupplierSchema = z.object({
-    email: z.email({ message: "Invalid email" }),
+    email: emailSchema,
     password: passwordSchema,
     firstName: z.string().min(1, "First name is required"),
     lastName: z.string().min(1, "Last name is required"),

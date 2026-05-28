@@ -97,6 +97,11 @@ interface GoogleSignInButtonProps {
    * Disable the button (e.g. while another form is submitting).
    */
   readonly disabled?: boolean;
+  /**
+   * When false, skips the role-picker dialog and goes straight to the Google
+   * prompt. Use on the sign-in page where the account must already exist.
+   */
+  readonly requireRole?: boolean;
 }
 
 /**
@@ -113,6 +118,7 @@ export default function GoogleSignInButton({
   onCancel,
   onError,
   disabled = false,
+  requireRole = true,
 }: GoogleSignInButtonProps) {
   const theme = useTheme();
   const router = useRouter();
@@ -184,31 +190,31 @@ export default function GoogleSignInButton({
     [callbackUrl, onError, router]
   );
 
+  // Keep a stable ref to handleSuccess so the GIS initialize effect doesn't
+  // re-run every time handleSuccess's identity changes.
+  const handleSuccessRef = useRef(handleSuccess);
+  useEffect(() => {
+    handleSuccessRef.current = handleSuccess;
+  }, [handleSuccess]);
+
   // Initialise GIS once the script has loaded and we have a client ID.
+  // handleSuccessRef is used so this effect only runs once per script load,
+  // not every time handleSuccess's identity changes (which caused the
+  // "initialize() called multiple times" warning).
   useEffect(() => {
     if (!scriptLoaded || !isConfigured || !window.google?.accounts.id) return;
     window.google.accounts.id.initialize({
       client_id: clientId,
       callback: (resp: GoogleCredentialResponse) => {
-        void handleSuccess(resp);
+        void handleSuccessRef.current(resp);
       },
       ux_mode: "popup",
       auto_select: false,
       use_fedcm_for_prompt: true,
     });
-  }, [scriptLoaded, isConfigured, clientId, handleSuccess]);
+  }, [scriptLoaded, isConfigured, clientId]);
 
-  const openDialog = () => {
-    setDialogOpen(true);
-  };
-
-  const handleDialogCancel = () => {
-    setDialogOpen(false);
-    onCancel?.();
-  };
-
-  const handleDialogConfirm = () => {
-    setDialogOpen(false);
+  const triggerGooglePrompt = useCallback(() => {
     if (!window.google?.accounts.id) {
       onError?.("Google sign-in is still loading. Please try again in a moment.");
       return;
@@ -239,6 +245,23 @@ export default function GoogleSignInButton({
         }
       }
     });
+  }, [onError]);
+
+  const showRoleDialog = () => {
+    setDialogOpen(true);
+  };
+  const skipToGoogle = () => {
+    triggerGooglePrompt();
+  };
+
+  const handleDialogCancel = () => {
+    setDialogOpen(false);
+    onCancel?.();
+  };
+
+  const handleDialogConfirm = () => {
+    setDialogOpen(false);
+    triggerGooglePrompt();
   };
 
   const isWorking = isPrompting || isExchanging;
@@ -265,7 +288,7 @@ export default function GoogleSignInButton({
         fullWidth
         variant="outlined"
         size="large"
-        onClick={openDialog}
+        onClick={requireRole ? showRoleDialog : skipToGoogle}
         disabled={disabled || isWorking}
         startIcon={isWorking ? null : <GoogleGlyph />}
         sx={{

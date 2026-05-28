@@ -1,6 +1,8 @@
 using Backend.Application.DTOs.Booking;
 using Backend.Application.Interfaces;
+using Backend.Domain.Entities;
 using FluentValidation;
+using Microsoft.AspNetCore.Identity;
 
 namespace Backend.Application.Validators;
 
@@ -11,18 +13,30 @@ namespace Backend.Application.Validators;
 public class CreateBookingRequestValidator : AbstractValidator<CreateBookingRequest>
 {
     private readonly IVehicleRepository _vehicleRepository;
+    private readonly UserManager<ApplicationUser>? _userManager;
+    private readonly Guid _userId;
 
-    public CreateBookingRequestValidator(IVehicleRepository vehicleRepository)
+    public CreateBookingRequestValidator(
+        IVehicleRepository vehicleRepository,
+        UserManager<ApplicationUser>? userManager = null,
+        Guid userId = default)
     {
         _vehicleRepository = vehicleRepository;
+        _userManager = userManager;
+        _userId = userId;
+
+        if (_userManager != null && _userId != Guid.Empty)
+        {
+            RuleFor(x => x)
+                .MustAsync((_, ct) => UserIsNotAdminAsync(ct))
+                .WithMessage("Administrators are not allowed to create bookings.")
+                .WithName("UserId");
+        }
 
         RuleFor(x => x.VehicleId)
             .NotEmpty().WithMessage("Vehicle ID is required")
             .MustAsync(VehicleExistsAsync).WithMessage("Vehicle does not exist");
 
-        // Location fields are now stored as free-text on the entity. A label
-        // OR a legacy non-empty Id is acceptable. We only require that at
-        // least one form of pickup/dropoff location is supplied.
         RuleFor(x => x)
             .Must(x => !string.IsNullOrWhiteSpace(x.PickupLocation) || x.PickupLocationId != Guid.Empty)
             .WithMessage("Pickup location is required")
@@ -47,17 +61,20 @@ public class CreateBookingRequestValidator : AbstractValidator<CreateBookingRequ
             .When(x => x.VehicleId != Guid.Empty && x.PickupDate < x.ReturnDate);
     }
 
-    private async Task<bool> VehicleExistsAsync(Guid vehicleId, CancellationToken cancellationToken)
+    private async Task<bool> UserIsNotAdminAsync(CancellationToken cancellationToken)
     {
-        return await _vehicleRepository.ExistsAsync(vehicleId, cancellationToken);
+        var user = await _userManager!.FindByIdAsync(_userId.ToString());
+        if (user == null) return true;
+        return !await _userManager.IsInRoleAsync(user, "Admin");
     }
 
+    private async Task<bool> VehicleExistsAsync(Guid vehicleId, CancellationToken cancellationToken)
+        => await _vehicleRepository.ExistsAsync(vehicleId, cancellationToken);
+
     private async Task<bool> VehicleIsAvailableAsync(CreateBookingRequest request, CancellationToken cancellationToken)
-    {
-        return await _vehicleRepository.IsAvailableAsync(
+        => await _vehicleRepository.IsAvailableAsync(
             request.VehicleId,
             request.PickupDate,
             request.ReturnDate,
             cancellationToken);
-    }
 }

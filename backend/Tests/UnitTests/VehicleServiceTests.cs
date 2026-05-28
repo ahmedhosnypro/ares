@@ -1313,7 +1313,7 @@ public class VehicleServiceTests : IDisposable
             AvailabilityStatus: "Available"
         );
 
-        var vehiclesQueryable = new List<Vehicle>().AsQueryable().BuildMockDbSet();
+        var vehiclesQueryable = new List<Vehicle> { existingVehicle }.AsQueryable().BuildMockDbSet();
 
         _vehicleRepositoryMock.Setup(x => x.GetByIdAsync(vehicleId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingVehicle);
@@ -1390,7 +1390,7 @@ public class VehicleServiceTests : IDisposable
             AvailabilityStatus: null
         );
 
-        var vehiclesQueryable = new List<Vehicle>().AsQueryable().BuildMockDbSet();
+        var vehiclesQueryable = new List<Vehicle> { existingVehicle }.AsQueryable().BuildMockDbSet();
 
         _vehicleRepositoryMock.Setup(x => x.GetByIdAsync(vehicleId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingVehicle);
@@ -1448,6 +1448,9 @@ public class VehicleServiceTests : IDisposable
             AvailabilityStatus: null
         );
 
+        var vehiclesQueryable = new List<Vehicle>().AsQueryable().BuildMockDbSet();
+        _contextMock.Setup(x => x.Vehicles).Returns(vehiclesQueryable.Object);
+
         _vehicleRepositoryMock.Setup(x => x.GetByIdAsync(vehicleId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Vehicle?)null);
 
@@ -1492,7 +1495,7 @@ public class VehicleServiceTests : IDisposable
             AvailabilityStatus: null
         );
 
-        var vehiclesQueryable = new List<Vehicle> { anotherVehicle }.AsQueryable().BuildMockDbSet();
+        var vehiclesQueryable = new List<Vehicle> { existingVehicle, anotherVehicle }.AsQueryable().BuildMockDbSet();
 
         _vehicleRepositoryMock.Setup(x => x.GetByIdAsync(vehicleId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingVehicle);
@@ -1739,7 +1742,7 @@ public class VehicleServiceTests : IDisposable
             AvailabilityStatus: null
         );
 
-        var vehiclesQueryable = new List<Vehicle>().AsQueryable().BuildMockDbSet();
+        var vehiclesQueryable = new List<Vehicle> { existingVehicle }.AsQueryable().BuildMockDbSet();
 
         _vehicleRepositoryMock.Setup(x => x.GetByIdAsync(vehicleId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingVehicle);

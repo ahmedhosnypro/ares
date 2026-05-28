@@ -3,7 +3,9 @@ using Backend.Application.DTOs.Common;
 using Backend.Application.Interfaces;
 using Backend.Application.Services;
 using Backend.Application.Validators;
+using Backend.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Backend.Api.Controllers;
@@ -20,15 +22,18 @@ public class BookingsController : ControllerBase
     private readonly IBookingService _bookingService;
     private readonly IVehicleRepository _vehicleRepository;
     private readonly ILogger<BookingsController> _logger;
+    private readonly UserManager<ApplicationUser> _userManager;
 
     public BookingsController(
         IBookingService bookingService,
         IVehicleRepository vehicleRepository,
-        ILogger<BookingsController> logger)
+        ILogger<BookingsController> logger,
+        UserManager<ApplicationUser> userManager)
     {
         _bookingService = bookingService;
         _vehicleRepository = vehicleRepository;
         _logger = logger;
+        _userManager = userManager;
     }
 
     /// <summary>
@@ -41,6 +46,7 @@ public class BookingsController : ControllerBase
     [ProducesResponseType(typeof(BookingResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<BookingResponse>> CreateBooking(
         [FromBody] CreateBookingRequest request,
@@ -54,6 +60,13 @@ public class BookingsController : ControllerBase
         }
 
         var userId = Guid.Parse(userIdClaim.Value);
+
+        // Admins are not permitted to create bookings
+        if (User.IsInRole("Admin"))
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { Message = "Administrators are not allowed to create bookings." });
+        }
+
         var isAdminOrSupplier = User.IsInRole("Admin") || User.IsInRole("Supplier");
 
         if (request.CustomerUserId.HasValue && !isAdminOrSupplier)
@@ -62,7 +75,7 @@ public class BookingsController : ControllerBase
         }
 
         // Validate request
-        var validator = new CreateBookingRequestValidator(_vehicleRepository);
+        var validator = new CreateBookingRequestValidator(_vehicleRepository, _userManager, userId);
         var validationResult = await validator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)

@@ -233,6 +233,32 @@ public class SupplierVehiclesController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// Upload an image for a vehicle (Supplier only)
+    /// </summary>
+    /// <param name="id">Vehicle ID</param>
+    /// <param name="file">Image file (max 10MB)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Image information</returns>
+    [HttpPost("{id}/images/upload")]
+    [ProducesResponseType(typeof(VehicleImageDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<VehicleImageDto>> UploadImage(
+        Guid id,
+        IFormFile file,
+        CancellationToken cancellationToken = default)
+    {
+        if (!TryGetSupplierId(out var supplierId, out var unauthorized))
+        {
+            return unauthorized!;
+        }
+
+        var result = await _supplierVehicleService.UploadImageAsync(supplierId, id, file, cancellationToken);
+        return Created($"/api/vehicles/{id}/images", result);
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     /// <summary>

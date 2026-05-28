@@ -22,6 +22,9 @@ namespace Backend.Application.Services;
 /// </summary>
 public class SupplierVehicleService : ISupplierVehicleService
 {
+    private const long MaxFileSize = 10 * 1024 * 1024; // 10MB
+    private static readonly string[] AllowedExtensions = { ".jpg", ".jpeg", ".png", ".webp" };
+
     // ── Status string conventions used across the codebase ───────────────────
     // Vehicle.Status is a free-form string column (not an enum). The values
     // below are the ones the rest of the project already uses.
@@ -306,8 +309,11 @@ public class SupplierVehicleService : ISupplierVehicleService
         UpdateSupplierVehicleRequest request,
         CancellationToken cancellationToken = default)
     {
-        var vehicle = await _vehicleRepository.GetByIdAsync(vehicleId, cancellationToken);
-        if (vehicle is null || !vehicle.IsActive || vehicle.UserId != supplierId)
+        var vehicle = await _context.Vehicles
+            .Include(v => v.Images)
+            .FirstOrDefaultAsync(v => v.Id == vehicleId && v.IsActive && v.UserId == supplierId, cancellationToken);
+
+        if (vehicle is null)
         {
             throw new NotFoundException($"Vehicle with ID {vehicleId} not found");
         }
@@ -349,11 +355,27 @@ public class SupplierVehicleService : ISupplierVehicleService
         if (!string.IsNullOrWhiteSpace(request.LocationCity)) vehicle.LocationCity = request.LocationCity;
         if (request.Description != null) vehicle.Description = request.Description;
 
-        // Single image: replace primary if provided. We do not delete other
-        // images here — that's a follow-up feature when multi-image support
-        // arrives.
-        if (!string.IsNullOrWhiteSpace(request.ImageUrl))
+        // Update images if provided
+        if (request.Images != null)
         {
+            // Remove existing images
+            _context.RemoveVehicleImages(vehicle.Images.ToList());
+            vehicle.Images.Clear();
+            
+            // Add new ones
+            foreach (var img in request.Images)
+            {
+                vehicle.Images.Add(new Domain.Entities.VehicleImage
+                {
+                    ImageUrl = img.Url,
+                    IsPrimary = img.IsPrimary,
+                    DisplayOrder = 0
+                });
+            }
+        }
+        else if (!string.IsNullOrWhiteSpace(request.ImageUrl))
+        {
+            // Fallback for backward compatibility (replaces or adds primary image)
             var primary = vehicle.Images.FirstOrDefault(i => i.IsPrimary);
             if (primary is null)
             {
@@ -362,13 +384,32 @@ public class SupplierVehicleService : ISupplierVehicleService
                     VehicleId = vehicle.Id,
                     ImageUrl = request.ImageUrl,
                     IsPrimary = true,
-                    DisplayOrder = 0,
+                    DisplayOrder = 0
                 });
             }
             else
             {
                 primary.ImageUrl = request.ImageUrl;
             }
+        }
+
+        // Update features if provided
+        if (request.Features != null)
+        {
+            var existingFeatures = await _context.VehicleFeatures
+                .Where(vf => vf.VehicleId == vehicleId)
+                .ToListAsync(cancellationToken);
+            _context.RemoveVehicleFeatures(existingFeatures);
+
+            var newFeatures = request.Features.Select(feature => new Domain.Entities.VehicleFeature
+            {
+                VehicleId = vehicleId,
+                FeatureName = feature.FeatureName,
+                FeatureDescription = feature.FeatureDescription,
+                FeatureCategory = feature.FeatureCategory ?? "General"
+            }).ToList();
+
+            _context.AddVehicleFeatures(newFeatures);
         }
 
         await _vehicleRepository.UpdateAsync(vehicle, cancellationToken);
@@ -450,6 +491,67 @@ public class SupplierVehicleService : ISupplierVehicleService
         return new VehicleResponse(
             vehicleId,
             available ? "Vehicle is now available" : "Vehicle is now unavailable");
+    }
+
+    /// <inheritdoc />
+    public async Task<VehicleImageDto> UploadImageAsync(
+        Guid supplierId,
+        Guid vehicleId,
+        Microsoft.AspNetCore.Http.IFormFile file,
+        CancellationToken cancellationToken = default)
+    {
+        var vehicle = await _context.Vehicles
+            .FirstOrDefaultAsync(v => v.Id == vehicleId && v.IsActive && v.UserId == supplierId, cancellationToken);
+
+        if (vehicle == null)
+        {
+            throw new NotFoundException($"Vehicle with ID {vehicleId} not found");
+        }
+
+        // 1. Validate file size
+        if (file.Length > MaxFileSize)
+        {
+            throw new ValidationException("File", "File size exceeds the maximum limit of 10MB.");
+        }
+
+        // 2. Validate file extension
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (!AllowedExtensions.Contains(extension))
+        {
+            throw new ValidationException("File", $"Invalid file type. Allowed types: {string.Join(", ", AllowedExtensions)}");
+        }
+
+        // 3. Save file
+        var fileName = $"{vehicleId}_{Guid.NewGuid()}{extension}";
+        var uploadsFolder = Path.Combine("wwwroot", "uploads", "vehicles");
+        Directory.CreateDirectory(uploadsFolder);
+
+        var filePath = Path.Combine(uploadsFolder, fileName);
+        using (var stream = new FileStream(filePath, FileMode.Create))
+        {
+            await file.CopyToAsync(stream, cancellationToken);
+        }
+
+        var imageUrl = $"/uploads/vehicles/{fileName}";
+
+        // 4. Create database record
+        var isFirstImage = !await _context.VehicleImages.AnyAsync(i => i.VehicleId == vehicleId, cancellationToken);
+        var vehicleImage = new VehicleImage
+        {
+            VehicleId = vehicleId,
+            ImageUrl = imageUrl,
+            IsPrimary = isFirstImage,
+            DisplayOrder = 0
+        };
+
+        _context.AddVehicleImage(vehicleImage);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return new VehicleImageDto(
+            vehicleImage.Id,
+            vehicleImage.ImageUrl,
+            "original",
+            vehicleImage.IsPrimary);
     }
 
     // ── Helpers (status string interpretation) ───────────────────────────────

@@ -124,6 +124,14 @@ public interface IVehicleService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Uploads an image for a vehicle
+    /// </summary>
+    Task<VehicleImageDto> UploadImageAsync(
+        Guid vehicleId,
+        Microsoft.AspNetCore.Http.IFormFile file,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Updates an existing vehicle (Admin/Supplier only)
     /// </summary>
     /// <param name="vehicleId">Vehicle ID</param>

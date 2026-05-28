@@ -8,6 +8,7 @@ namespace Backend.Application.Interfaces;
 public interface IApplicationDbContext
 {
     IQueryable<Vehicle> Vehicles { get; }
+    IQueryable<VehicleImage> VehicleImages { get; }
     IQueryable<Booking> Bookings { get; }
     IQueryable<BookingPayment> Payments { get; }
     IQueryable<Review> Reviews { get; }
@@ -27,5 +28,9 @@ public interface IApplicationDbContext
     void AddUserAddress(UserAddress userAddress);
     void AddVerification(Verification verification);
     void AddDriver(Driver driver);
+    void AddVehicleImage(VehicleImage image);
+    void RemoveVehicleImages(IEnumerable<VehicleImage> images);
+    void RemoveVehicleFeatures(IEnumerable<VehicleFeature> features);
+    void AddVehicleFeatures(IEnumerable<VehicleFeature> features);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

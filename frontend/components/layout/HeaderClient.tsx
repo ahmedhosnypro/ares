@@ -99,6 +99,7 @@ export default function HeaderClient({ session }: HeaderClientProps) {
 
   // Check if user has admin/supplier role
   const isAdminOrSupplier = session?.user.roles.some(role => role === "Admin" || role === "Supplier");
+  const isAdmin = session?.user.roles.includes("Admin");
 
   return (
     <>
@@ -321,18 +322,20 @@ export default function HeaderClient({ session }: HeaderClientProps) {
                       <ListItemText>My Profile</ListItemText>
                     </MenuItem>
 
-                    <MenuItem
-                      component={Link}
-                      href="/bookings"
-                      onClick={() => {
-                        setUserMenuAnchor(null);
-                      }}
-                    >
-                      <ListItemIcon>
-                        <BookmarksIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText>My Bookings</ListItemText>
-                    </MenuItem>
+                    {!isAdmin && (
+                      <MenuItem
+                        component={Link}
+                        href="/bookings"
+                        onClick={() => {
+                          setUserMenuAnchor(null);
+                        }}
+                      >
+                        <ListItemIcon>
+                          <BookmarksIcon fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>My Bookings</ListItemText>
+                      </MenuItem>
+                    )}
 
                     {isAdminOrSupplier && (
                       <MenuItem
@@ -516,21 +519,23 @@ export default function HeaderClient({ session }: HeaderClientProps) {
                     <ListItemText primary="My Profile" />
                   </ListItemButton>
                 </ListItem>
-                <ListItem disablePadding>
-                  <ListItemButton
-                    component={Link}
-                    href="/bookings"
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                    }}
-                    sx={{ borderRadius: 1.5, mb: 0.5 }}
-                  >
-                    <ListItemIcon>
-                      <BookmarksIcon />
-                    </ListItemIcon>
-                    <ListItemText primary="My Bookings" />
-                  </ListItemButton>
-                </ListItem>
+                {!isAdmin && (
+                  <ListItem disablePadding>
+                    <ListItemButton
+                      component={Link}
+                      href="/bookings"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                      }}
+                      sx={{ borderRadius: 1.5, mb: 0.5 }}
+                    >
+                      <ListItemIcon>
+                        <BookmarksIcon />
+                      </ListItemIcon>
+                      <ListItemText primary="My Bookings" />
+                    </ListItemButton>
+                  </ListItem>
+                )}
                 {isAdminOrSupplier && (
                   <ListItem disablePadding>
                     <ListItemButton

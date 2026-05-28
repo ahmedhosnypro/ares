@@ -19,7 +19,7 @@ export const vehicleFormSchema = z.object({
   pricePerDay: z.number().min(0.01, "Price per day must be greater than 0"),
   locationCity: z.string().trim().min(2, "City is required"),
   description: z.string().optional(),
-  imageUrl: z.url({ message: "Must be a valid URL" }).optional().or(z.literal("")),
+  imageUrl: z.string().optional(),
 });
 
 export type VehicleFormValues = z.infer<typeof vehicleFormSchema>;

@@ -16,6 +16,7 @@ export interface VehicleDetailsViewModel {
   readonly model: string;
   readonly year: number;
   readonly color: string;
+  readonly licensePlate: string;
   readonly transmission: string;
   readonly fuelType: string;
   readonly seats: number;
@@ -26,6 +27,7 @@ export interface VehicleDetailsViewModel {
   readonly availabilityStatus: string;
   readonly images: readonly VehicleImageItem[];
   readonly features: readonly VehicleFeatureItem[];
+  readonly supplierId: string;
   readonly supplierName: string;
   readonly averageRating: number;
   readonly reviewCount: number;

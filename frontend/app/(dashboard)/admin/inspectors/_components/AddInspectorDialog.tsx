@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/slow-regex */
 "use client";
 
 import { useState } from "react";
@@ -20,12 +19,24 @@ import {
 import { createInspector, type CreateInspectorPayload } from "@/api-clients/inspectors/inspectors";
 import { ApiError } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
+import { z } from "zod";
+import { emailSchema, passwordSchema } from "@/lib/validation/schemas";
 
 interface Props {
   readonly open: boolean;
   readonly onClose: () => void;
   readonly onCreated: () => void;
 }
+
+const createInspectorSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: emailSchema,
+  password: passwordSchema,
+  phoneNumber: z.string().optional().or(z.literal("")),
+  employeeCode: z.string().min(1, "Employee code is required"),
+  isAvailable: z.boolean(),
+});
 
 const initial: CreateInspectorPayload = {
   firstName: "",
@@ -50,18 +61,30 @@ export default function AddInspectorDialog({ open, onClose, onCreated }: Props) 
 
   const update = <K extends keyof CreateInspectorPayload>(key: K, value: CreateInspectorPayload[K]) => {
     setForm(f => ({ ...f, [key]: value }));
+    if (errors[key]) {
+      setErrors(prev => {
+        const entries = Object.entries(prev).filter(([k]) => k !== key);
+        return Object.fromEntries(entries);
+      });
+    }
   };
 
   const validate = (): boolean => {
+    const result = createInspectorSchema.safeParse(form);
+    if (result.success) {
+      setErrors({});
+      return true;
+    }
+
     const next: Record<string, string> = {};
-    if (!form.firstName.trim()) next.firstName = "First name is required";
-    if (!form.lastName.trim()) next.lastName = "Last name is required";
-    if (!form.email.trim()) next.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) next.email = "Invalid email";
-    if (!form.password || form.password.length < 6) next.password = "Password must be at least 6 characters";
-    if (!form.employeeCode.trim()) next.employeeCode = "Employee code is required";
+    for (const issue of result.error.issues) {
+      const path = issue.path[0] as string;
+      if (!next[path]) {
+        next[path] = issue.message;
+      }
+    }
     setErrors(next);
-    return Object.keys(next).length === 0;
+    return false;
   };
 
   const handleSubmit = () => {

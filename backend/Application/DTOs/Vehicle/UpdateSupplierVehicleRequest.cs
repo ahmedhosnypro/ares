@@ -25,5 +25,7 @@ public record UpdateSupplierVehicleRequest(
     decimal? PricePerDay,
     [MaxLength(100)] string? LocationCity,
     string? Description,
-    string? ImageUrl
+    string? ImageUrl,
+    List<VehicleImageUpdateDto>? Images = null,
+    List<VehicleFeatureUpdateDto>? Features = null
 );

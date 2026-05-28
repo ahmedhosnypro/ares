@@ -47,6 +47,7 @@ namespace Backend.Infrastructure.Data
         public DbSet<VehicleAvailability> VehicleAvailabilities { get; set; }
         // Explicit interface implementation for IApplicationDbContext
         IQueryable<Vehicle> IApplicationDbContext.Vehicles => Vehicles;
+        IQueryable<VehicleImage> IApplicationDbContext.VehicleImages => VehicleImages;
         IQueryable<Booking> IApplicationDbContext.Bookings => Bookings;
         IQueryable<BookingPayment> IApplicationDbContext.Payments => Payments;
         IQueryable<Review> IApplicationDbContext.Reviews => Reviews;
@@ -85,6 +86,26 @@ namespace Backend.Infrastructure.Data
         public void AddDriver(Driver driver)
         {
             Drivers.Add(driver);
+        }
+
+        public void AddVehicleImage(VehicleImage image)
+        {
+            VehicleImages.Add(image);
+        }
+
+        public void RemoveVehicleImages(IEnumerable<VehicleImage> images)
+        {
+            VehicleImages.RemoveRange(images);
+        }
+
+        public void RemoveVehicleFeatures(IEnumerable<VehicleFeature> features)
+        {
+            VehicleFeatures.RemoveRange(features);
+        }
+
+        public void AddVehicleFeatures(IEnumerable<VehicleFeature> features)
+        {
+            VehicleFeatures.AddRange(features);
         }
 
         protected override void OnModelCreating(ModelBuilder builder)

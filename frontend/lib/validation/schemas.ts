@@ -7,6 +7,10 @@ import { isValidPhoneNumber } from "libphonenumber-js";
 
 // ── primitives ─────────────────────────────────────────────────────────────────
 
+export const emailSchema = z
+  .email({ message: "Enter a valid email address" })
+  .max(256, "Email must not exceed 256 characters");
+
 const phoneSchema = z
   .string()
   .min(1, "Phone number is required")
@@ -32,14 +36,14 @@ export const passwordSchema = z
 // ── auth ───────────────────────────────────────────────────────────────────────
 
 export const signInSchema = z.object({
-  email: z.email({ message: "Enter a valid email address" }).max(256, "Email must not exceed 256 characters"),
+  email: emailSchema,
   password: z.string().min(1, "Password is required"),
 });
 
 export const signUpSchema = z.object({
   firstName: z.string().min(1, "First name is required").max(100, "First name must not exceed 100 characters"),
   lastName: z.string().min(1, "Last name is required").max(100, "Last name must not exceed 100 characters"),
-  email: z.email({ message: "Enter a valid email address" }).max(256, "Email must not exceed 256 characters"),
+  email: emailSchema,
   password: passwordSchema,
   acceptedTerms: z.literal(true, {
     error: "You must accept the Terms of Service",

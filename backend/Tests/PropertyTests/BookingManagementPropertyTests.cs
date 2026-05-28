@@ -35,7 +35,7 @@ public class BookingManagementPropertyTests : IDisposable
         _context = new ApplicationDbContext(options);
         _bookingRepository = new BookingRepository(_context);
         _vehicleRepository = new VehicleRepository(_context);
-        _bookingService = new BookingService(_bookingRepository, _vehicleRepository, _context);
+        _bookingService = new BookingService(_bookingRepository, _vehicleRepository, _context, null!);
 
         // Ensure database is created
         _context.Database.EnsureCreated();

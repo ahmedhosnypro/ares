@@ -236,7 +236,6 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-const handler = NextAuth(authOptions);
+const handler = NextAuth(authOptions) as (req: Request) => Promise<Response>;
 
 export { handler as GET, handler as POST };

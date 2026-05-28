@@ -28,7 +28,8 @@ public class BookingServiceTests
         _bookingService = new BookingService(
             _bookingRepositoryMock.Object,
             _vehicleRepositoryMock.Object,
-            _contextMock.Object);
+            _contextMock.Object,
+            null!);
     }
 
     #region CreateBookingAsync Tests

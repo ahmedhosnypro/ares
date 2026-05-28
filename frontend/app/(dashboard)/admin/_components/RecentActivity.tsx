@@ -308,7 +308,7 @@ export default function RecentActivity() {
     const isSupplier = user.roles.includes("Supplier");
     const userId = user.id;
     return fetchViaFallbackApis(session.accessToken, isSupplier, userId);
-  }, [session]);
+  }, [session?.accessToken, session?.user]);
 
   const fetchActivity = useCallback(() => {
     setLoading(true);
@@ -330,8 +330,7 @@ export default function RecentActivity() {
     if (session?.accessToken) {
       fetchActivity();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.accessToken]);
+  }, [session?.accessToken, fetchActivity]);
 
   // Expose a manual refresh for buttons
   const handleRefresh = fetchActivity;

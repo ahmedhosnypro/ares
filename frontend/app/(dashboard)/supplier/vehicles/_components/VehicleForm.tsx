@@ -13,7 +13,7 @@
  * (admin approval and the row-level toggle, respectively).
  */
 
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useRef, useState } from "react";
 import {
   Alert,
   Box,
@@ -28,7 +28,10 @@ import {
   Typography,
   alpha,
   useTheme,
+  IconButton,
 } from "@mui/material";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 
 import {
   DEFAULT_VEHICLE_FORM,
@@ -38,13 +41,15 @@ import {
   type VehicleFormValues,
 } from "./VehicleForm.schema";
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
 interface VehicleFormProps {
   readonly initialValues?: VehicleFormValues;
   readonly submitLabel: string;
   readonly submitting: boolean;
   readonly apiError?: string | null;
   readonly readOnly?: boolean;
-  readonly onSubmit: (values: VehicleFormValues) => void;
+  readonly onSubmit: (values: VehicleFormValues, imageFile: File | null) => void;
   readonly onCancel: () => void;
 }
 
@@ -58,8 +63,14 @@ export default function VehicleForm({
   onCancel,
 }: VehicleFormProps) {
   const theme = useTheme();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [form, setForm] = useState<VehicleFormValues>(initialValues ?? DEFAULT_VEHICLE_FORM);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof VehicleFormValues, string>>>({});
+
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(form.imageUrl || null);
+  const [fileError, setFileError] = useState<string | null>(null);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -70,8 +81,38 @@ export default function VehicleForm({
     setFieldErrors(prev => ({ ...prev, [name]: undefined }));
   };
 
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > MAX_FILE_SIZE) {
+      setFileError("File size exceeds 10MB limit.");
+      return;
+    }
+
+    setFileError(null);
+    setSelectedFile(file);
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFilePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveFile = () => {
+    setSelectedFile(null);
+    setFilePreview(initialValues?.imageUrl || null);
+    setFileError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const handleSubmitClick = () => {
     if (readOnly) return;
+
     const result = vehicleFormSchema.safeParse(form);
     if (!result.success) {
       const errs: Partial<Record<keyof VehicleFormValues, string>> = {};
@@ -82,7 +123,10 @@ export default function VehicleForm({
       setFieldErrors(errs);
       return;
     }
-    onSubmit(result.data);
+
+    if (fileError) return;
+
+    onSubmit(result.data, selectedFile);
   };
 
   const fieldDisabled = readOnly || submitting;
@@ -97,7 +141,7 @@ export default function VehicleForm({
       }}
     >
       <Grid container spacing={3}>
-        {/* Identity */}
+        {/* ... (rest of the fields) ... */}
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
             fullWidth
@@ -269,19 +313,89 @@ export default function VehicleForm({
           />
         </Grid>
 
-        {/* Image (single URL — first iteration) */}
+        {/* Image Upload */}
         <Grid size={{ xs: 12 }}>
-          <TextField
-            fullWidth
-            label="Vehicle image URL"
-            name="imageUrl"
-            placeholder="https://…/photo.jpg"
-            value={form.imageUrl ?? ""}
-            onChange={handleChange}
-            error={!!fieldErrors.imageUrl}
-            helperText={fieldErrors.imageUrl ?? "Paste the URL of one image. Multi-image upload is coming soon."}
-            disabled={fieldDisabled}
-          />
+          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700, color: "text.secondary" }}>
+            Vehicle Image
+          </Typography>
+          <Box
+            sx={{
+              p: 3,
+              border: "2px dashed",
+              borderColor: fileError ? "error.main" : "divider",
+              borderRadius: 2,
+              bgcolor: alpha(theme.palette.background.paper, 0.4),
+              textAlign: "center",
+              cursor: fieldDisabled ? "default" : "pointer",
+              "&:hover": {
+                borderColor: fieldDisabled ? "divider" : "primary.main",
+                bgcolor: fieldDisabled
+                  ? alpha(theme.palette.background.paper, 0.4)
+                  : alpha(theme.palette.primary.main, 0.02),
+              },
+            }}
+            onClick={() => !fieldDisabled && fileInputRef.current?.click()}
+          >
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept="image/*"
+              style={{ display: "none" }}
+              disabled={fieldDisabled}
+            />
+
+            {filePreview ? (
+              <Box sx={{ position: "relative", display: "inline-block" }}>
+                <Box
+                  component="img"
+                  src={filePreview}
+                  alt="Preview"
+                  sx={{
+                    maxHeight: 240,
+                    maxWidth: "100%",
+                    borderRadius: 2,
+                    display: "block",
+                    boxShadow: theme.shadows[3],
+                  }}
+                />
+                {!fieldDisabled && (
+                  <IconButton
+                    onClick={e => {
+                      e.stopPropagation();
+                      handleRemoveFile();
+                    }}
+                    sx={{
+                      position: "absolute",
+                      top: 8,
+                      right: 8,
+                      bgcolor: alpha(theme.palette.error.main, 0.9),
+                      color: "white",
+                      "&:hover": { bgcolor: theme.palette.error.main },
+                    }}
+                    size="small"
+                  >
+                    <DeleteRoundedIcon fontSize="small" />
+                  </IconButton>
+                )}
+              </Box>
+            ) : (
+              <Stack spacing={1} sx={{ alignItems: "center" }}>
+                <CloudUploadIcon sx={{ fontSize: 48, color: "text.disabled" }} />
+                <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                  Click to upload vehicle image
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  JPG, PNG or WebP (max 10MB)
+                </Typography>
+              </Stack>
+            )}
+          </Box>
+          {fileError && (
+            <Typography variant="caption" color="error" sx={{ mt: 1, display: "block" }}>
+              {fileError}
+            </Typography>
+          )}
         </Grid>
       </Grid>
 

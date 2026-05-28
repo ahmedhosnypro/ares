@@ -10,6 +10,7 @@ import {
   getSupplierVehicleById,
   isRejectedStatus,
   updateSupplierVehicle,
+  uploadVehicleImage,
   type SupplierVehicleDetails,
   type UpdateSupplierVehiclePayload,
 } from "@/api-clients/supplier-vehicles/supplier-vehicles";
@@ -99,12 +100,20 @@ export default function EditSupplierVehiclePage() {
 
   const readOnly = vehicle ? vehicle.isReadOnly || isRejectedStatus(vehicle.status) : false;
 
-  const handleSubmit = (values: VehicleFormValues) => {
+  const handleSubmit = (values: VehicleFormValues, imageFile: File | null) => {
     void (async () => {
       if (!session?.accessToken || !vehicle) return;
       setSubmitting(true);
       setApiError(null);
       try {
+        let imageUrl = values.imageUrl;
+
+        // 1. If a new file was selected, upload it first
+        if (imageFile) {
+          const uploadRes = await uploadVehicleImage(session.accessToken, vehicle.vehicleId, imageFile);
+          imageUrl = uploadRes.url;
+        }
+
         const payload: UpdateSupplierVehiclePayload = {
           make: values.make,
           model: values.model,
@@ -117,7 +126,7 @@ export default function EditSupplierVehiclePage() {
           pricePerDay: values.pricePerDay,
           locationCity: values.locationCity,
           description: values.description?.trim() ? values.description : undefined,
-          imageUrl: values.imageUrl?.trim() ? values.imageUrl : undefined,
+          imageUrl: imageUrl?.trim() ? imageUrl : undefined,
         };
         await updateSupplierVehicle(session.accessToken, vehicle.vehicleId, payload);
 
