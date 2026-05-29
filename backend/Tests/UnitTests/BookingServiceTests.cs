@@ -6,6 +6,7 @@ using Backend.Application.Services;
 using Backend.Domain.Entities;
 using Backend.Domain.Entities.Enums;
 using Backend.Tests.TestUtilities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
@@ -17,6 +18,7 @@ public class BookingServiceTests
     private readonly Mock<IBookingRepository> _bookingRepositoryMock;
     private readonly Mock<IVehicleRepository> _vehicleRepositoryMock;
     private readonly Mock<IApplicationDbContext> _contextMock;
+    private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;
     private readonly BookingService _bookingService;
 
     public BookingServiceTests()
@@ -24,12 +26,45 @@ public class BookingServiceTests
         _bookingRepositoryMock = new Mock<IBookingRepository>();
         _vehicleRepositoryMock = new Mock<IVehicleRepository>();
         _contextMock = new Mock<IApplicationDbContext>();
+        _userManagerMock = MockUserManager();
 
         _bookingService = new BookingService(
             _bookingRepositoryMock.Object,
             _vehicleRepositoryMock.Object,
             _contextMock.Object,
+            _userManagerMock.Object,
             null!);
+    }
+
+    private static Mock<UserManager<ApplicationUser>> MockUserManager()
+    {
+        var store = new Mock<IUserStore<ApplicationUser>>();
+        var options = new Mock<Microsoft.Extensions.Options.IOptions<IdentityOptions>>();
+        var idOptions = new IdentityOptions();
+        options.Setup(o => o.Value).Returns(idOptions);
+        var hasher = new Mock<IPasswordHasher<ApplicationUser>>();
+        var validator = new Mock<IUserValidator<ApplicationUser>>();
+        var validators = new List<IUserValidator<ApplicationUser>> { validator.Object };
+        var pwdValidator = new Mock<IPasswordValidator<ApplicationUser>>();
+        var pwdValidators = new List<IPasswordValidator<ApplicationUser>> { pwdValidator.Object };
+        
+        var userManager = new Mock<UserManager<ApplicationUser>>(
+            store.Object, 
+            options.Object, 
+            hasher.Object, 
+            validators, 
+            pwdValidators, 
+            null!, 
+            null!, 
+            null!, 
+            null!);
+
+        userManager.Setup(x => x.FindByIdAsync(It.IsAny<string>()))
+            .ReturnsAsync((ApplicationUser?)null);
+        userManager.Setup(x => x.IsInRoleAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
+            .ReturnsAsync(false);
+
+        return userManager;
     }
 
     #region CreateBookingAsync Tests
@@ -89,6 +124,77 @@ public class BookingServiceTests
         _bookingRepositoryMock.Verify(x => x.AddAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>()), Times.Once);
         _bookingRepositoryMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
+    [Fact]
+    public async Task CreateBookingAsync_WhenCustomerIsAdmin_ShouldThrowForbiddenException()
+    {
+        // Arrange
+        var initiatorId = Guid.NewGuid();
+        var adminCustomerId = Guid.NewGuid();
+        var vehicleId = Guid.NewGuid();
+        var pickupDate = DateTime.UtcNow.AddDays(1);
+        var returnDate = DateTime.UtcNow.AddDays(3);
+
+        var request = new CreateBookingRequest(
+            VehicleId: vehicleId,
+            PickupLocationId: Guid.NewGuid(),
+            DropOffLocationId: Guid.NewGuid(),
+            PickupDate: pickupDate,
+            ReturnDate: returnDate,
+            DriverId: null,
+            PayLater: false,
+            CustomerUserId: adminCustomerId
+        );
+
+        var adminUser = new ApplicationUser { Id = adminCustomerId };
+        _userManagerMock.Setup(x => x.FindByIdAsync(adminCustomerId.ToString()))
+            .ReturnsAsync(adminUser);
+        _userManagerMock.Setup(x => x.IsInRoleAsync(adminUser, "Admin"))
+            .ReturnsAsync(true);
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<ForbiddenException>(
+            () => _bookingService.CreateBookingAsync(request, initiatorId));
+        Assert.Equal("Administrators are not allowed to have bookings.", exception.Message);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_WhenSupplierBooksOwnVehicle_ShouldThrowForbiddenException()
+    {
+        // Arrange
+        var supplierId = Guid.NewGuid();
+        var vehicleId = Guid.NewGuid();
+        var pickupDate = DateTime.UtcNow.AddDays(1);
+        var returnDate = DateTime.UtcNow.AddDays(3);
+
+        var request = new CreateBookingRequest(
+            VehicleId: vehicleId,
+            PickupLocationId: Guid.NewGuid(),
+            DropOffLocationId: Guid.NewGuid(),
+            PickupDate: pickupDate,
+            ReturnDate: returnDate,
+            DriverId: null,
+            PayLater: false
+        );
+
+        var vehicle = new Vehicle 
+        { 
+            Id = vehicleId, 
+            UserId = supplierId, // Owned by the same user
+            IsActive = true,
+            PricePerDay = 50.00m
+        };
+
+        _vehicleRepositoryMock.Setup(x => x.GetByIdAsync(vehicleId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(vehicle);
+        _vehicleRepositoryMock.Setup(x => x.IsAvailableAsync(vehicleId, pickupDate, returnDate, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<ForbiddenException>(
+            () => _bookingService.CreateBookingAsync(request, supplierId));
+        Assert.Equal("Suppliers are not allowed to book their own vehicles.", exception.Message);
+    }
+
     [Fact]
     public async Task CreateBookingAsync_WithUnavailableVehicle_ShouldThrowConflictException()
     {

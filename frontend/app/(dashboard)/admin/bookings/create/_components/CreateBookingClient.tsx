@@ -190,6 +190,7 @@ export default function CreateBookingClient() {
             search: vehicleSearch,
             pickupDate: pickupDate ? pickupDate.toISOString() : undefined,
             returnDate: returnDate ? returnDate.toISOString() : undefined,
+            customerUserId: customer?.id,
             limit: 20,
           },
           controller.signal
@@ -215,7 +216,7 @@ export default function CreateBookingClient() {
       clearTimeout(handle);
       controller.abort();
     };
-  }, [vehicleSearch, pickupDate, returnDate, session?.accessToken, vehicle]);
+  }, [vehicleSearch, pickupDate, returnDate, session?.accessToken, vehicle, customer?.id]);
 
   // ── Location autocomplete (pickup/dropoff) ─────────────────────────
   const fetchLocationSuggestions = async (query: string, type: "pickup" | "dropoff", signal: AbortSignal) => {

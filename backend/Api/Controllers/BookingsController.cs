@@ -61,10 +61,11 @@ public class BookingsController : ControllerBase
 
         var userId = Guid.Parse(userIdClaim.Value);
 
-        // Admins are not permitted to create bookings
-        if (User.IsInRole("Admin"))
+        // Admins/Suppliers can only create bookings for customers, not for themselves.
+        var isSelfBooking = !request.CustomerUserId.HasValue || request.CustomerUserId.Value == userId;
+        if (isSelfBooking && User.IsInRole("Admin"))
         {
-            return StatusCode(StatusCodes.Status403Forbidden, new { Message = "Administrators are not allowed to create bookings." });
+            return StatusCode(StatusCodes.Status403Forbidden, new { Message = "Administrators are not allowed to create bookings for themselves." });
         }
 
         var isAdminOrSupplier = User.IsInRole("Admin") || User.IsInRole("Supplier");
@@ -277,15 +278,18 @@ public class AdminBookingsController : ControllerBase
     private readonly IBookingService _bookingService;
     private readonly IApplicationDbContext _context;
     private readonly ILogger<AdminBookingsController> _logger;
+    private readonly UserManager<ApplicationUser> _userManager;
 
     public AdminBookingsController(
         IBookingService bookingService,
         IApplicationDbContext context,
-        ILogger<AdminBookingsController> logger)
+        ILogger<AdminBookingsController> logger,
+        UserManager<ApplicationUser> userManager)
     {
         _bookingService = bookingService;
         _context = context;
         _logger = logger;
+        _userManager = userManager;
     }
 
     /// <summary>
@@ -503,7 +507,12 @@ public class AdminBookingsController : ControllerBase
         if (limit < 1) limit = 1;
         if (limit > 50) limit = 50;
 
-        var query = _context.Users.AsQueryable();
+        // Efficiently exclude only Admins from the picker. Suppliers ARE allowed to be customers.
+        var admins = await _userManager.GetUsersInRoleAsync("Admin");
+        var excludedIds = admins.Select(u => u.Id).ToList();
+
+        var query = _context.Users.Where(u => !excludedIds.Contains(u.Id));
+
         if (!string.IsNullOrWhiteSpace(search))
         {
             var term = search.Trim().ToLower();
@@ -543,6 +552,7 @@ public class AdminBookingsController : ControllerBase
         [FromQuery] string? search,
         [FromQuery] DateTime? pickupDate,
         [FromQuery] DateTime? returnDate,
+        [FromQuery] Guid? customerUserId,
         [FromQuery] int limit = 20,
         CancellationToken cancellationToken = default)
     {
@@ -551,7 +561,13 @@ public class AdminBookingsController : ControllerBase
 
         var query = _context.Vehicles.Where(v => v.IsActive && v.AvailabilityStatus == "Available");
 
-        // Suppliers should only see their own fleet in the picker.
+        // If a customer is selected, exclude their own vehicles (suppliers cannot book their own cars).
+        if (customerUserId.HasValue)
+        {
+            query = query.Where(v => v.UserId != customerUserId.Value);
+        }
+
+        // Suppliers should only see their own fleet in the picker when they are the OPERATOR.
         var isAdmin = User.IsInRole("Admin");
         if (!isAdmin)
         {

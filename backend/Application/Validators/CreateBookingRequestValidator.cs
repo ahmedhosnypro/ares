@@ -28,9 +28,9 @@ public class CreateBookingRequestValidator : AbstractValidator<CreateBookingRequ
         if (_userManager != null && _userId != Guid.Empty)
         {
             RuleFor(x => x)
-                .MustAsync((_, ct) => UserIsNotAdminAsync(ct))
-                .WithMessage("Administrators are not allowed to create bookings.")
-                .WithName("UserId");
+                .MustAsync(EffectiveCustomerIsNotAdminAsync)
+                .WithMessage("Administrators are not allowed to have bookings.")
+                .WithName("CustomerUserId");
         }
 
         RuleFor(x => x.VehicleId)
@@ -61,9 +61,10 @@ public class CreateBookingRequestValidator : AbstractValidator<CreateBookingRequ
             .When(x => x.VehicleId != Guid.Empty && x.PickupDate < x.ReturnDate);
     }
 
-    private async Task<bool> UserIsNotAdminAsync(CancellationToken cancellationToken)
+    private async Task<bool> EffectiveCustomerIsNotAdminAsync(CreateBookingRequest request, CancellationToken cancellationToken)
     {
-        var user = await _userManager!.FindByIdAsync(_userId.ToString());
+        var targetId = request.CustomerUserId ?? _userId;
+        var user = await _userManager!.FindByIdAsync(targetId.ToString());
         if (user == null) return true;
         return !await _userManager.IsInRoleAsync(user, "Admin");
     }

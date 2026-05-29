@@ -1,346 +1,240 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
-import {
-  Box,
-  Typography,
-  Paper,
-  CircularProgress,
-  Stack,
-  Divider,
-  Chip,
-  Button,
-  Avatar,
-  IconButton,
-  Grid,
-  alpha,
-  useTheme,
-  Container,
-} from "@mui/material";
-
-import EditIcon from "@mui/icons-material/Edit";
+import { notFound } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { Box, Typography, Container, IconButton, Stack } from "@mui/material";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
-import DirectionsCarFilledIcon from "@mui/icons-material/DirectionsCarFilled";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
-import SpeedIcon from "@mui/icons-material/Speed"; // بدلاً من Settings للمسة عصرية
-import LocalGasStationIcon from "@mui/icons-material/LocalGasStation";
-import EventSeatIcon from "@mui/icons-material/EventSeat";
-import PaidIcon from "@mui/icons-material/Paid";
-
-import { getCarById, Vehicle } from "@/api-clients/cars/cars";
+import VehicleDetailsClient from "@/app/(public)/vehicles/[vehicleId]/_components/vehicle-details/VehicleDetailsClient";
+import {
+  type BookingLocationOption,
+  type VehicleDetailsViewModel,
+  type VehicleReviewViewModel,
+} from "@/app/(public)/vehicles/[vehicleId]/_components/vehicle-details/types";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
+import Link from "next/link";
 
-export default function CarDetailsPage() {
-  const params = useParams();
-  const router = useRouter();
-  const theme = useTheme();
-  const { data: session } = useSession();
+interface PageProps {
+  readonly params: Promise<{ id: string }>;
+}
 
-  const id = Array.isArray(params.id) ? params.id[0] : (params.id as string);
+interface ApiVehicleImageDto {
+  readonly imageId?: string;
+  readonly url?: string;
+  readonly isPrimary?: boolean;
+}
 
-  const [car, setCar] = useState<Vehicle | null>(null);
-  const [loading, setLoading] = useState(true);
+interface ApiVehicleFeatureDto {
+  readonly id?: string;
+  readonly featureName?: string;
+  readonly featureDescription?: string;
+}
 
-  useEffect(() => {
-    if (!id || !session?.accessToken) return;
-
-    const fetchCar = async () => {
-      try {
-        setLoading(true);
-        const carData = await getCarById(session.accessToken, id);
-        setCar(carData);
-      } catch (err) {
-        logger.error("Failed to load car", err);
-        setCar(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void fetchCar();
-  }, [id, session?.accessToken]);
-
-  if (loading) {
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <CircularProgress thickness={5} size={50} sx={{ borderRadius: "50%" }} />
-      </Box>
-    );
-  }
-
-  if (!car) {
-    return (
-      <Container maxWidth="sm" sx={{ mt: 10, textAlign: "center" }}>
-        <Typography variant="h5" sx={{ fontWeight: 700, color: "text.secondary" }}>
-          Vehicle Not Found
-        </Typography>
-        <Button
-          startIcon={<ArrowBackIosNewIcon />}
-          onClick={() => {
-            router.back();
-          }}
-          sx={{ mt: 2 }}
-        >
-          Go Back
-        </Button>
-      </Container>
-    );
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "available":
-        return theme.palette.success.main;
-      case "rented":
-        return theme.palette.warning.main;
-      case "maintenance":
-        return theme.palette.error.main;
-      default:
-        return theme.palette.text.disabled;
-    }
+interface ApiVehicleDto {
+  readonly vehicleId?: string;
+  readonly make?: string;
+  readonly model?: string;
+  readonly year?: number;
+  readonly color?: string;
+  readonly licensePlate?: string;
+  readonly transmission?: string;
+  readonly fuelType?: string;
+  readonly seats?: number;
+  readonly pricePerDay?: number;
+  readonly locationCity?: string;
+  readonly description?: string;
+  readonly status?: string;
+  readonly availabilityStatus?: string;
+  readonly images?: readonly ApiVehicleImageDto[];
+  readonly features?: readonly ApiVehicleFeatureDto[];
+  readonly supplier?: {
+    readonly id?: string;
+    readonly name?: string;
   };
+  readonly averageRating?: number;
+  readonly reviewCount?: number;
+}
+
+interface ApiReviewDto {
+  readonly reviewId?: string;
+  readonly userName?: string;
+  readonly rating?: number;
+  readonly comment?: string;
+  readonly supplierReply?: string;
+  readonly repliedAt?: string;
+  readonly createdAt?: string;
+}
+
+interface ApiLocationsResponse {
+  readonly resultData?: readonly {
+    readonly _id?: string;
+    readonly name?: string;
+    readonly city?: string;
+  }[];
+}
+
+interface ApiPagedResponse<T> {
+  readonly data?: readonly T[];
+  readonly resultData?: readonly T[];
+}
+
+function asString(value: unknown, fallback = ""): string {
+  return typeof value === "string" ? value : fallback;
+}
+
+function asNumber(value: unknown, fallback = 0): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+function normalizeVehicle(vehicle: ApiVehicleDto): VehicleDetailsViewModel {
+  return {
+    vehicleId: asString(vehicle.vehicleId),
+    make: asString(vehicle.make),
+    model: asString(vehicle.model),
+    year: asNumber(vehicle.year),
+    color: asString(vehicle.color),
+    licensePlate: asString(vehicle.licensePlate),
+    transmission: asString(vehicle.transmission),
+    fuelType: asString(vehicle.fuelType),
+    seats: asNumber(vehicle.seats),
+    pricePerDay: asNumber(vehicle.pricePerDay),
+    locationCity: asString(vehicle.locationCity),
+    description: asString(vehicle.description),
+    status: asString(vehicle.status),
+    availabilityStatus: asString(vehicle.availabilityStatus),
+    images: (vehicle.images ?? [])
+      .map(image => ({
+        id: asString(image.imageId),
+        imageUrl: asString(image.url),
+        isPrimary: Boolean(image.isPrimary),
+      }))
+      .filter(image => image.imageUrl !== ""),
+    features: (vehicle.features ?? [])
+      .map(feature => ({
+        id: asString(feature.id),
+        featureName: asString(feature.featureName),
+        featureDescription: asString(feature.featureDescription),
+      }))
+      .filter(feature => feature.featureName !== ""),
+    supplierId: asString(vehicle.supplier?.id),
+    supplierName: asString(vehicle.supplier?.name),
+    averageRating: asNumber(vehicle.averageRating),
+    reviewCount: asNumber(vehicle.reviewCount),
+  };
+}
+
+function normalizeReviews(reviews: readonly ApiReviewDto[]): readonly VehicleReviewViewModel[] {
+  return reviews.map(review => ({
+    reviewId: asString(review.reviewId),
+    userName: asString(review.userName, "Customer"),
+    rating: asNumber(review.rating),
+    comment: asString(review.comment),
+    supplierReply: review.supplierReply ? asString(review.supplierReply) : undefined,
+    repliedAt: review.repliedAt ? asString(review.repliedAt) : undefined,
+    createdAt: asString(review.createdAt),
+  }));
+}
+
+function normalizeLocations(payload: ApiLocationsResponse): readonly BookingLocationOption[] {
+  return (payload.resultData ?? [])
+    .map(location => ({
+      id: asString(location._id),
+      label: asString(location.name),
+      city: asString(location.city),
+    }))
+    .filter(location => location.id !== "" && location.label !== "");
+}
+
+async function fetchVehicleDetails(vehicleId: string): Promise<VehicleDetailsViewModel | null> {
+  const response = await fetch(toApiUrl(`/api/vehicles/${vehicleId}`), { cache: "no-store" });
+  if (!response.ok) {
+    return null;
+  }
+  const payload = (await response.json()) as ApiVehicleDto;
+  return normalizeVehicle(payload);
+}
+
+async function fetchVehicleReviews(vehicleId: string): Promise<readonly VehicleReviewViewModel[]> {
+  const response = await fetch(toApiUrl(`/api/vehicles/${vehicleId}/reviews?page=1&pageSize=8&sortBy=date`), {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    return [];
+  }
+  const payload = (await response.json()) as ApiPagedResponse<ApiReviewDto>;
+  const reviews = payload.data ?? payload.resultData ?? [];
+  return normalizeReviews(reviews);
+}
+
+async function fetchLocations(): Promise<readonly BookingLocationOption[]> {
+  const response = await fetch(toApiUrl("/api/locations/1/50/en"), { cache: "no-store" });
+  if (!response.ok) {
+    return [];
+  }
+  const payload = (await response.json()) as ApiLocationsResponse;
+  return normalizeLocations(payload);
+}
+
+export default async function AdminVehicleDetailsPage({ params }: PageProps) {
+  const { id } = await params;
+
+  const [session, pageData] = await Promise.all([
+    getServerSession(authOptions).catch(() => null),
+    (async () => {
+      try {
+        const [vehicle, reviews, locations] = await Promise.all([
+          fetchVehicleDetails(id),
+          fetchVehicleReviews(id),
+          fetchLocations(),
+        ]);
+        return { vehicle, reviews, locations };
+      } catch (error) {
+        logger.error("Admin vehicle details page error", error);
+        return null;
+      }
+    })(),
+  ]);
+
+  if (!pageData) {
+    return (
+      <Box component="main" sx={{ minHeight: "60vh", display: "grid", placeItems: "center", px: 2 }}>
+        <Typography variant="h6" color="text.secondary" sx={{ textAlign: "center" }}>
+          We were unable to load this vehicle right now.
+        </Typography>
+      </Box>
+    );
+  }
+
+  const { vehicle, reviews, locations } = pageData;
+
+  if (!vehicle) {
+    notFound();
+  }
+
+  const isAdmin = session?.user.roles.includes("Admin") ?? false;
+  const canEdit = isAdmin; // Integrate editing directly into the details page
 
   return (
-    <Box
-      sx={{
-        bgcolor: alpha(theme.palette.background.default, 0.5),
-        minHeight: "100vh",
-        py: { xs: 4, md: 8 },
-      }}
-    >
-      <Container maxWidth="md">
-        {/* Top Header / Navigation */}
-        <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 4 }}>
-          <IconButton
-            onClick={() => {
-              router.back();
-            }}
-            sx={{
-              bgcolor: "background.paper",
-              boxShadow: "shadow.card",
-              "&:hover": { bgcolor: "background.paper", transform: "translateX(-3px)" },
-            }}
-          >
-            <ArrowBackIosNewIcon fontSize="small" />
-          </IconButton>
-
-          <Button
-            variant="contained"
-            disableElevation
-            startIcon={<EditIcon />}
-            onClick={() => {
-              router.push(`/admin/vehicles/${id}/edit`);
-            }}
-            sx={{
-              borderRadius: "14px",
-              textTransform: "none",
-              px: 4,
-              py: 1.2,
-              fontWeight: 700,
-              fontSize: "0.95rem",
-              background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-              boxShadow: `0 8px 20px ${alpha(theme.palette.primary.main, 0.3)}`,
-            }}
-          >
-            Edit Details
-          </Button>
+    <Box sx={{ pb: 4 }}>
+      <Container maxWidth="xl">
+        <Stack direction="row" sx={{ alignItems: "center", mb: 2, mt: 2 }}>
+          <Link href="/admin/vehicles" style={{ textDecoration: "none" }}>
+            <IconButton
+              sx={{
+                bgcolor: "background.paper",
+                boxShadow: 1,
+                mr: 2,
+                "&:hover": { bgcolor: "background.paper", transform: "translateX(-3px)" },
+              }}
+            >
+              <ArrowBackIosNewIcon fontSize="small" />
+            </IconButton>
+          </Link>
+          <Typography variant="h5" sx={{ fontWeight: 700 }}>
+            Vehicle Details
+          </Typography>
         </Stack>
-
-        <Paper
-          elevation={0}
-          sx={{
-            borderRadius: "32px",
-            overflow: "hidden",
-            border: "1px solid",
-            borderColor: "border.light",
-            boxShadow: "shadow.card",
-          }}
-        >
-          {/* Visual Header Section */}
-          <Box
-            sx={{
-              p: { xs: 4, md: 6 },
-              background: `linear-gradient(to bottom right, ${alpha(theme.palette.primary.main, 0.03)}, transparent)`,
-            }}
-          >
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={4} sx={{ alignItems: "center" }}>
-              <Avatar
-                sx={{
-                  width: 100,
-                  height: 100,
-                  bgcolor: "background.paper",
-                  boxShadow: "shadow.card",
-                  color: "primary.main",
-                }}
-              >
-                <DirectionsCarFilledIcon sx={{ fontSize: 50 }} />
-              </Avatar>
-
-              <Box sx={{ textAlign: { xs: "center", sm: "left" }, flexGrow: 1 }}>
-                <Typography variant="h3" gutterBottom sx={{ fontWeight: 900, letterSpacing: "-0.02em" }}>
-                  {car.make}{" "}
-                  <Box component="span" sx={{ color: "primary.main" }}>
-                    {car.model}
-                  </Box>
-                </Typography>
-
-                <Stack direction="row" spacing={1.5} sx={{ justifyContent: { xs: "center", sm: "flex-start" } }}>
-                  <Chip
-                    label={car.year}
-                    sx={{ fontWeight: 800, borderRadius: "8px", bgcolor: alpha(theme.palette.text.primary, 0.05) }}
-                  />
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                      px: 2,
-                      py: 0.5,
-                      borderRadius: "8px",
-                      bgcolor: alpha(getStatusColor(car.availabilityStatus ?? ""), 0.1),
-                      color: getStatusColor(car.availabilityStatus ?? ""),
-                    }}
-                  >
-                    <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "currentColor" }} />
-                    <Typography variant="caption" sx={{ fontWeight: 800, textTransform: "uppercase" }}>
-                      {car.availabilityStatus}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </Box>
-            </Stack>
-          </Box>
-
-          <Divider sx={{ borderStyle: "dashed" }} />
-
-          {/* Details Content */}
-          <Box sx={{ p: { xs: 4, md: 6 } }}>
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <InfoCard
-                  icon={<PaidIcon />}
-                  label="Daily Pricing"
-                  value={`$${String(car.pricePerDay)}`}
-                  color={theme.palette.success.main}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <InfoCard
-                  icon={<LocationOnIcon />}
-                  label="Available At"
-                  value={car.locationCity ?? ""}
-                  color={theme.palette.error.main}
-                />
-              </Grid>
-
-              {/* Grid Mini Stats */}
-              {[
-                { icon: <SpeedIcon />, label: "Transmission", value: car.transmission },
-                { icon: <LocalGasStationIcon />, label: "Fuel Type", value: car.fuelType },
-                { icon: <EventSeatIcon />, label: "Capacity", value: `${String(car.seats)} Seats` },
-                { icon: <DirectionsCarFilledIcon />, label: "Plate ID", value: car.licensePlate },
-              ].map((item, idx) => (
-                <Grid size={{ xs: 6, md: 3 }} key={idx}>
-                  <Box
-                    sx={{
-                      p: 2.5,
-                      borderRadius: "20px",
-                      bgcolor: alpha(theme.palette.action.hover, 0.3),
-                      textAlign: "center",
-                      border: "1px solid transparent",
-                      transition: "0.3s",
-                      "&:hover": { border: "1px solid", borderColor: "border.light", bgcolor: "background.paper" },
-                    }}
-                  >
-                    <Box sx={{ color: "text.secondary", mb: 1 }}>{item.icon}</Box>
-                    <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 0.5 }}>
-                      {item.label}
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                      {item.value}
-                    </Typography>
-                  </Box>
-                </Grid>
-              ))}
-            </Grid>
-
-            {/* Description Section */}
-            <Box sx={{ mt: 6 }}>
-              <Typography
-                variant="subtitle1"
-                sx={{ fontWeight: 800, mb: 2, display: "flex", alignItems: "center", gap: 1 }}
-              >
-                About this Vehicle
-              </Typography>
-              <Typography
-                variant="body1"
-                sx={{
-                  color: "text.secondary",
-                  lineHeight: 1.8,
-                  bgcolor: alpha(theme.palette.primary.main, 0.02),
-                  p: 3,
-                  borderRadius: "20px",
-                  border: `1px left solid ${theme.palette.primary.main}`,
-                }}
-              >
-                {car.description ||
-                  "The owner hasn't provided a detailed description yet, but this vehicle has passed all our quality checks."}
-              </Typography>
-            </Box>
-          </Box>
-        </Paper>
       </Container>
-    </Box>
-  );
-}
-
-interface InfoCardProps {
-  readonly icon: React.ReactNode;
-  readonly label: string;
-  readonly value: string;
-  readonly color: string;
-}
-
-/* Modern Info Card Component */
-function InfoCard({ icon, label, value, color }: InfoCardProps) {
-  return (
-    <Box
-      sx={{
-        p: 3,
-        borderRadius: "24px",
-        display: "flex",
-        alignItems: "center",
-        gap: 3,
-        bgcolor: "background.paper",
-        border: "1px solid",
-        borderColor: "border.light",
-        boxShadow: "shadow.card",
-      }}
-    >
-      <Box
-        sx={{
-          p: 2,
-          borderRadius: "16px",
-          bgcolor: alpha(color, 0.1),
-          color: color,
-          display: "flex",
-        }}
-      >
-        {icon}
-      </Box>
-      <Box>
-        <Typography
-          variant="caption"
-          sx={{ fontWeight: 600, color: "text.secondary", textTransform: "uppercase", letterSpacing: 0.5 }}
-        >
-          {label}
-        </Typography>
-        <Typography variant="h5" sx={{ fontWeight: 800 }}>
-          {value}
-        </Typography>
-      </Box>
+      <VehicleDetailsClient vehicle={vehicle} reviews={reviews} locations={locations} canEdit={canEdit} />
     </Box>
   );
 }
