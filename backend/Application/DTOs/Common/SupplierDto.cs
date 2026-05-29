@@ -7,4 +7,6 @@ public record SupplierDto(
     Guid Id,
     string FullName,
     string? Name = null,
-    string? Email = null);
+    string? Email = null,
+    string? Phone = null,
+    string? CompanyName = null);

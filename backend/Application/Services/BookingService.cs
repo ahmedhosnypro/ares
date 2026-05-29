@@ -15,24 +15,40 @@ namespace Backend.Application.Services;
 /// </summary>
 public class BookingService : IBookingService
 {
+    /// <summary>
+    /// User-facing error message returned when a customer tries to create a
+    /// booking without an approved identity verification. Kept as a constant
+    /// so the message stays consistent between the backend exception and the
+    /// frontend warning copy that QA scripts assert against.
+    /// </summary>
+    public const string IdentityVerificationRequiredMessage =
+        "You must complete identity verification before booking a vehicle.";
+
     private readonly IBookingRepository _bookingRepository;
     private readonly IVehicleRepository _vehicleRepository;
     private readonly IApplicationDbContext _context;
     private readonly INotificationService? _notificationService;
     private readonly UserManager<ApplicationUser> _userManager;
+    // Optional + nullable so the existing unit / property test suites that
+    // instantiate BookingService with positional args keep compiling without
+    // changes. Production DI always provides a real implementation, so the
+    // identity-verification gate below is enforced for real customers.
+    private readonly IVerificationService? _verificationService;
 
     public BookingService(
         IBookingRepository bookingRepository,
         IVehicleRepository vehicleRepository,
         IApplicationDbContext context,
         UserManager<ApplicationUser> userManager,
-        INotificationService? notificationService = null)
+        INotificationService? notificationService = null,
+        IVerificationService? verificationService = null)
     {
         _bookingRepository = bookingRepository;
         _vehicleRepository = vehicleRepository;
         _context = context;
         _userManager = userManager;
         _notificationService = notificationService;
+        _verificationService = verificationService;
     }
 
     public async Task<BookingResponse> CreateBookingAsync(
@@ -47,6 +63,28 @@ public class BookingService : IBookingService
             if (user != null && await _userManager.IsInRoleAsync(user, "Admin"))
             {
                 throw new ForbiddenException("Administrators are not allowed to create bookings.");
+            }
+        }
+
+        // ── Identity-verification gate ───────────────────────────────────
+        // The customer who will *own* the booking must have an approved
+        // identity verification. We resolve that owner here (same logic as
+        // below) so admin-driven creation on behalf of a customer also
+        // honours the gate — an admin must not be able to side-step the
+        // requirement on behalf of an unverified customer.
+        //
+        // The gate is intentionally the first check in this method so an
+        // unverified customer never even probes vehicle availability,
+        // pricing, or any other side-effect-free read.
+        //
+        // The exception is mapped to HTTP 403 by GlobalExceptionHandlerMiddleware.
+        if (_verificationService is not null)
+        {
+            var bookingOwnerId = request.CustomerUserId ?? userId;
+            var isApproved = await _verificationService.IsApprovedAsync(bookingOwnerId, cancellationToken);
+            if (!isApproved)
+            {
+                throw new ForbiddenException(IdentityVerificationRequiredMessage);
             }
         }
 
@@ -97,14 +135,13 @@ public class BookingService : IBookingService
         var ownerUserId = request.CustomerUserId ?? userId;
 
         // Resolve pickup/dropoff label — prefer the explicit string, fall
-        // back to the legacy Id rendered as a string so existing clients
-        // keep working until they migrate off Guid-based locations.
+        // back to the legacy Id. We will resolve it to a human-readable address if it's a GUID.
         var pickupLabel = !string.IsNullOrWhiteSpace(request.PickupLocation)
             ? request.PickupLocation!.Trim()
-            : (request.PickupLocationId != Guid.Empty ? request.PickupLocationId.ToString() : null);
+            : (request.PickupLocationId != Guid.Empty ? await ResolveDisplayLocationAsync(request.PickupLocationId.ToString(), cancellationToken) : null);
         var dropoffLabel = !string.IsNullOrWhiteSpace(request.DropOffLocation)
             ? request.DropOffLocation!.Trim()
-            : (request.DropOffLocationId != Guid.Empty ? request.DropOffLocationId.ToString() : null);
+            : (request.DropOffLocationId != Guid.Empty ? await ResolveDisplayLocationAsync(request.DropOffLocationId.ToString(), cancellationToken) : null);
 
         // Requirement 4.10: Create booking with status "Pending". Payment is
         // a separate flow — booking creation does NOT require payment.
@@ -871,11 +908,14 @@ public class BookingService : IBookingService
     {
         var owner = vehicle?.User;
         var resolvedName = ResolveSupplierName(owner);
+        var companyName = owner?.CompanyProfile?.CompanyName;
         return new SupplierDto(
             owner?.Id ?? Guid.Empty,
             resolvedName,
             resolvedName,
-            owner?.Email);
+            owner?.Email,
+            owner?.PhoneNumber,
+            companyName);
     }
 
     /// <summary>
@@ -944,7 +984,11 @@ public class BookingService : IBookingService
                 ?? string.Empty,
             BuildSupplierDto(booking.Vehicle),
             booking.Vehicle?.LicensePlate,
-            booking.Vehicle?.PricePerDay);
+            booking.Vehicle?.PricePerDay,
+            booking.Vehicle?.Make,
+            booking.Vehicle?.Model,
+            booking.Vehicle?.Year,
+            booking.Vehicle?.AvailabilityStatus);
 
         DriverDto? driverDto = null;
         if (booking.Driver != null)
@@ -961,14 +1005,73 @@ public class BookingService : IBookingService
         BookingCustomerDto? customerDto = null;
         if (booking.User is not null)
         {
+            // Resolve verification status from the most recent verification row (if any).
+            // We surface a simple lifecycle: Approved / Pending / Rejected / NotSubmitted.
+            var latestVerification = await _context.Verifications
+                .Where(v => v.UserId == booking.User.Id)
+                .OrderByDescending(v => v.CreatedAt)
+                .FirstOrDefaultAsync(cancellationToken);
+            var verificationStatus = latestVerification?.Status ?? "NotSubmitted";
+
             customerDto = new BookingCustomerDto(
                 booking.User.Id,
                 $"{booking.User.FirstName} {booking.User.LastName}".Trim(),
                 booking.User.Email,
-                booking.User.PhoneNumber);
+                booking.User.PhoneNumber,
+                booking.User.ProfileImage,
+                booking.User.EmailVerifiedAt.HasValue,
+                verificationStatus);
         }
 
         var inspectionDto = await BuildInspectionOverviewAsync(booking, cancellationToken);
+
+        var pickupName = await ResolveDisplayLocationAsync(booking.PickupLocation, cancellationToken);
+        var dropoffName = await ResolveDisplayLocationAsync(booking.DropoffLocation, cancellationToken);
+
+        // ── Pickup / Return inspection full details ───────────────────────
+        var inspections = await _context.VehicleInspections
+            .Where(i => i.BookingId == booking.Id)
+            .Include(i => i.Inspector)
+            .Include(i => i.Images)
+            .ToListAsync(cancellationToken);
+
+        var pickupInspection = BuildInspectionFullDto(
+            inspections.FirstOrDefault(i => string.Equals(i.InspectionType, "Pickup", StringComparison.OrdinalIgnoreCase)));
+        var returnInspection = BuildInspectionFullDto(
+            inspections.FirstOrDefault(i => string.Equals(i.InspectionType, "Return", StringComparison.OrdinalIgnoreCase)));
+
+        // ── Payment details + refund (best-effort) ────────────────────────
+        BookingPaymentDetailsDto? paymentDetails = null;
+        if (latestPayment is not null)
+        {
+            BookingCancellation? cancellationRecord = null;
+            if (booking.Status == BookingStatus.Cancelled)
+            {
+                cancellationRecord = await _context.BookingCancellations
+                    .Where(c => c.BookingId == booking.Id)
+                    .OrderByDescending(c => c.CreatedAt)
+                    .FirstOrDefaultAsync(cancellationToken);
+            }
+
+            paymentDetails = new BookingPaymentDetailsDto(
+                PaymentId: latestPayment.PaymentId,
+                TransactionId: latestPayment.TransactionId == Guid.Empty ? null : latestPayment.TransactionId,
+                Method: latestPayment.PaymentMethod,
+                Amount: latestPayment.Amount,
+                Currency: latestPayment.Currency,
+                Status: latestPayment.Status,
+                AuthorizationCode: latestPayment.AuthorizationCode,
+                ProcessedAt: latestPayment.ProcessedAt,
+                FailureReason: latestPayment.FailureReason,
+                CreatedAt: latestPayment.CreatedAt,
+                RefundAmount: cancellationRecord?.RefundAmount,
+                RefundStatus: cancellationRecord?.RefundStatus.ToString(),
+                RefundProcessedAt: cancellationRecord?.RefundProcessedAt,
+                RefundMethod: cancellationRecord?.RefundMethod);
+        }
+
+        // ── Activity timeline from real events ────────────────────────────
+        var timeline = await BuildTimelineAsync(booking, inspections, latestPayment, cancellationToken);
 
         return new BookingDetailsDto(
             Id: booking.Id,
@@ -976,8 +1079,8 @@ public class BookingService : IBookingService
             Customer: customerDto,
             Car: vehicleDto,
             Driver: driverDto,
-            PickupLocation: new LocationDto(Guid.Empty, booking.PickupLocation ?? string.Empty),
-            DropOffLocation: new LocationDto(Guid.Empty, booking.DropoffLocation ?? string.Empty),
+            PickupLocation: new LocationDto(Guid.Empty, pickupName),
+            DropOffLocation: new LocationDto(Guid.Empty, dropoffName),
             From: booking.PickupDate ?? DateTime.MinValue,
             To: booking.ReturnDate ?? DateTime.MinValue,
             TotalDays: booking.TotalDays,
@@ -989,7 +1092,148 @@ public class BookingService : IBookingService
             PaymentMethod: latestPayment?.PaymentMethod,
             Inspection: inspectionDto,
             CreatedAt: booking.CreatedAt,
-            UpdatedAt: booking.UpdatedAt);
+            UpdatedAt: booking.UpdatedAt,
+            PickupInspection: pickupInspection,
+            ReturnInspection: returnInspection,
+            PaymentDetails: paymentDetails,
+            Timeline: timeline);
+    }
+
+    /// <summary>
+    /// Maps a VehicleInspection entity (with Inspector + Images) into the
+    /// full inspection DTO used by the admin booking page. Returns null when
+    /// no inspection row of that type exists.
+    /// </summary>
+    private static BookingInspectionFullDto? BuildInspectionFullDto(VehicleInspection? inspection)
+    {
+        if (inspection is null) return null;
+
+        var inspectorName = inspection.Inspector is not null
+            ? $"{inspection.Inspector.FirstName} {inspection.Inspector.LastName}".Trim()
+            : string.Empty;
+
+        var imageUrls = inspection.Images?
+            .OrderBy(i => i.CreatedAt)
+            .Select(i => i.ImageUrl)
+            .ToList() ?? new List<string>();
+
+        return new BookingInspectionFullDto(
+            InspectionId: inspection.InspectionId,
+            InspectionType: inspection.InspectionType,
+            InspectorId: inspection.InspectorId,
+            InspectorName: inspectorName,
+            Status: inspection.Status.ToString(),
+            InspectionDate: inspection.InspectionDate,
+            SubmittedAt: inspection.SubmittedAt,
+            IsSubmitted: inspection.IsSubmitted,
+            OdometerReading: inspection.OdometerReading,
+            FuelLevel: inspection.FuelLevel,
+            GeneralCondition: inspection.GeneralCondition,
+            Notes: inspection.Notes,
+            ImageUrls: imageUrls);
+    }
+
+    /// <summary>
+    /// Builds a real activity timeline from the booking, its inspections and
+    /// the latest payment row. Never emits fake / static entries — every event
+    /// reflects a row that actually exists in the database.
+    /// </summary>
+    private async Task<IReadOnlyList<BookingTimelineEventDto>> BuildTimelineAsync(
+        Booking booking,
+        IReadOnlyList<VehicleInspection> inspections,
+        BookingPayment? latestPayment,
+        CancellationToken cancellationToken)
+    {
+        var events = new List<BookingTimelineEventDto>();
+
+        if (booking.CreatedAt != default)
+        {
+            events.Add(new BookingTimelineEventDto(
+                Type: "BookingCreated",
+                Title: "Booking created",
+                Description: booking.BookingNumber is null
+                    ? null
+                    : $"Booking #{booking.BookingNumber} was created.",
+                OccurredAt: booking.CreatedAt));
+        }
+
+        if (booking.AssignedInspectorId.HasValue)
+        {
+            // Use the earliest inspection record's CreatedAt as the assignment
+            // moment — the inspection row is created when the inspector is
+            // assigned.
+            var assignment = inspections
+                .OrderBy(i => i.CreatedAt)
+                .FirstOrDefault();
+            var occurredAt = assignment?.CreatedAt ?? booking.UpdatedAt;
+            var inspectorName = booking.AssignedInspector is not null
+                ? $"{booking.AssignedInspector.FirstName} {booking.AssignedInspector.LastName}".Trim()
+                : null;
+            events.Add(new BookingTimelineEventDto(
+                Type: "InspectorAssigned",
+                Title: "Inspector assigned",
+                Description: inspectorName is null ? null : $"{inspectorName} was assigned to inspect the vehicle.",
+                OccurredAt: occurredAt));
+        }
+
+        foreach (var insp in inspections.Where(i => i.IsSubmitted && i.SubmittedAt.HasValue))
+        {
+            var isPickup = string.Equals(insp.InspectionType, "Pickup", StringComparison.OrdinalIgnoreCase);
+            events.Add(new BookingTimelineEventDto(
+                Type: isPickup ? "PickupInspectionCompleted" : "ReturnInspectionCompleted",
+                Title: isPickup ? "Pickup inspection completed" : "Return inspection completed",
+                Description: $"Inspection result: {insp.Status}.",
+                OccurredAt: insp.SubmittedAt!.Value));
+        }
+
+        if (latestPayment is not null
+            && string.Equals(latestPayment.Status, "Completed", StringComparison.OrdinalIgnoreCase)
+            && latestPayment.ProcessedAt.HasValue)
+        {
+            events.Add(new BookingTimelineEventDto(
+                Type: "PaymentCompleted",
+                Title: "Payment completed",
+                Description: $"{latestPayment.Amount:0.00} {latestPayment.Currency} via {latestPayment.PaymentMethod}.",
+                OccurredAt: latestPayment.ProcessedAt.Value));
+        }
+
+        if (booking.CancelledAt.HasValue)
+        {
+            events.Add(new BookingTimelineEventDto(
+                Type: "BookingCancelled",
+                Title: "Booking cancelled",
+                Description: booking.CancellationReason,
+                OccurredAt: booking.CancelledAt.Value));
+        }
+
+        if (booking.Status == BookingStatus.Completed
+            && booking.UpdatedAt != default
+            && !booking.CancelledAt.HasValue)
+        {
+            events.Add(new BookingTimelineEventDto(
+                Type: "BookingCompleted",
+                Title: "Booking marked completed",
+                Description: null,
+                OccurredAt: booking.UpdatedAt));
+        }
+
+        // Best-effort refund event from the latest cancellation row.
+        var refund = await _context.BookingCancellations
+            .Where(c => c.BookingId == booking.Id && c.RefundProcessedAt.HasValue)
+            .OrderByDescending(c => c.RefundProcessedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (refund is not null && refund.RefundProcessedAt.HasValue)
+        {
+            events.Add(new BookingTimelineEventDto(
+                Type: "RefundProcessed",
+                Title: "Refund processed",
+                Description: $"Refund {refund.RefundStatus}: {refund.RefundAmount:0.00} {refund.Currency}.",
+                OccurredAt: refund.RefundProcessedAt.Value));
+        }
+
+        return events
+            .OrderBy(e => e.OccurredAt)
+            .ToList();
     }
 
     /// <summary>
@@ -1030,5 +1274,30 @@ public class BookingService : IBookingService
             PostInspectionDate: null);
 
         return Task.FromResult<BookingInspectionOverviewDto?>(dto);
+    }
+
+    /// <summary>
+    /// Resolves a location string (which may be a legacy Guid string) into a human-readable name.
+    /// </summary>
+    private async Task<string> ResolveDisplayLocationAsync(string? locationStr, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(locationStr))
+            return string.Empty;
+
+        if (Guid.TryParse(locationStr, out var guid))
+        {
+            var loc = await _context.UserAddresses.FirstOrDefaultAsync(l => l.Id == guid, cancellationToken);
+            if (loc != null)
+            {
+                var parts = new List<string>();
+                if (!string.IsNullOrWhiteSpace(loc.City)) parts.Add(loc.City);
+                if (!string.IsNullOrWhiteSpace(loc.Governorate)) parts.Add(loc.Governorate);
+                if (!string.IsNullOrWhiteSpace(loc.Country)) parts.Add(loc.Country);
+                if (parts.Count > 0) return string.Join(", ", parts);
+            }
+            return "Unknown Location";
+        }
+
+        return locationStr;
     }
 }
