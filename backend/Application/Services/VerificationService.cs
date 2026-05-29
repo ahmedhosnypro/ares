@@ -44,6 +44,29 @@ namespace Backend.Application.Services
                 RejectionReason: verification.RejectionReason);
         }
 
+        /// <inheritdoc />
+        public async Task<bool> IsApprovedAsync(Guid userId, CancellationToken cancellationToken = default)
+        {
+            // Approved == there exists at least one verification row for this
+            // user with Status == "Approved". The row is also required to
+            // not be expired when ExpiresAt is set — a stale verification
+            // must not bypass the booking gate.
+            //
+            // We deliberately do not throw here; this is a *predicate*
+            // method that callers use to decide whether to surface a
+            // ForbiddenException themselves (see BookingService.CreateBookingAsync).
+            var now = DateTime.UtcNow;
+            var approvedStatus = VerificationRequestStatus.Approved.ToString();
+
+            return await _context.Verifications
+                .AsNoTracking()
+                .AnyAsync(
+                    v => v.UserId == userId
+                         && v.Status == approvedStatus
+                         && (v.ExpiresAt == null || v.ExpiresAt > now),
+                    cancellationToken);
+        }
+
         public async Task<UserVerificationDto> SubmitVerificationAsync(Guid userId, SubmitVerificationRequest request, CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("Submitting verification for user {UserId}", userId);
