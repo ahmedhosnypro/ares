@@ -42,9 +42,10 @@ public class SupplierVehiclesController : ControllerBase
     /// </summary>
     /// <param name="search">Free-text search across make, model, license plate.</param>
     /// <param name="status">Optional admin-status filter (Pending / Approved / Rejected …).</param>
-    /// <param name="availabilityStatus">Optional availability filter (Available / Unavailable).</param>
+    /// <param name="availabilityStatus">Optional availability status filter (Available / Unavailable).</param>
     /// <param name="page">Page number (default 1).</param>
     /// <param name="pageSize">Page size (default 10, capped at 100).</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     [HttpGet]
     [ProducesResponseType(typeof(PagedResult<SupplierVehicleListItemDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

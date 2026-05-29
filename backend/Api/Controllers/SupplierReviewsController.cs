@@ -54,6 +54,7 @@ public class SupplierReviewsController : ControllerBase
     /// <param name="sortBy">"newest" (default) / "oldest" / "highest" / "lowest".</param>
     /// <param name="page">1-based page index (default 1).</param>
     /// <param name="pageSize">Page size (default 10, capped at 100).</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     [HttpGet]
     [ProducesResponseType(typeof(PagedResult<SupplierReviewListItemDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

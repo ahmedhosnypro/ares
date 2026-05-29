@@ -733,7 +733,7 @@ function VehicleTableRow({
               size="small"
               sx={{ borderRadius: 2 }}
               onClick={() => {
-                onNavigate(`/supplier/vehicles/${v.vehicleId}/edit`);
+                onNavigate(`/supplier/vehicles/${v.vehicleId}`);
               }}
             >
               <EditIcon fontSize="small" />

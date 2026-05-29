@@ -70,6 +70,7 @@ public class SupplierEarningsController : ControllerBase
     /// <c>revenue = 0</c> so the chart always has a stable axis.
     /// </summary>
     /// <param name="year">Optional calendar year (defaults to the current UTC year).</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     [HttpGet("chart")]
     [ProducesResponseType(typeof(IReadOnlyList<MonthlyRevenuePointDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
