@@ -259,6 +259,7 @@ export async function searchAvailableVehiclesPicker(
     search?: string;
     pickupDate?: string;
     returnDate?: string;
+    customerUserId?: string;
     limit?: number;
   },
   signal?: AbortSignal
@@ -267,6 +268,7 @@ export async function searchAvailableVehiclesPicker(
   if (args.search?.trim()) params.set("search", args.search.trim());
   if (args.pickupDate) params.set("pickupDate", args.pickupDate);
   if (args.returnDate) params.set("returnDate", args.returnDate);
+  if (args.customerUserId) params.set("customerUserId", args.customerUserId);
   params.set("limit", String(args.limit ?? 20));
   return apiFetchJson<VehiclePickerItem[]>(`/api/admin/bookings/pickers/vehicles?${params.toString()}`, {
     method: "GET",

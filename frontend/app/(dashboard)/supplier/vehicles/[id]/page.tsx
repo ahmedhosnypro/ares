@@ -1,328 +1,241 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import { notFound } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { Box, Typography, Container, IconButton, Stack } from "@mui/material";
+import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+import VehicleDetailsClient from "@/app/(public)/vehicles/[vehicleId]/_components/vehicle-details/VehicleDetailsClient";
 import {
-  Alert,
-  Avatar,
-  Box,
-  Button,
-  Card,
-  CircularProgress,
-  Divider,
-  Grid,
-  IconButton,
-  Stack,
-  Tooltip,
-  Typography,
-  alpha,
-  useTheme,
-} from "@mui/material";
-import {
-  ArrowBackRounded as ArrowBackIcon,
-  EditRounded as EditIcon,
-  DirectionsCarFilledTwoTone as CarIcon,
-  EventSeat as EventSeatIcon,
-  LocalGasStation as FuelIcon,
-  LocationOn as LocationIcon,
-  Paid as PaidIcon,
-  Speed as SpeedIcon,
-} from "@mui/icons-material";
-import Image from "next/image";
-import { useParams, useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
-
-import {
-  getSupplierVehicleById,
-  isRejectedStatus,
-  type SupplierVehicleDetails,
-} from "@/api-clients/supplier-vehicles/supplier-vehicles";
-import { toImageUrl } from "@/utils/image-url";
+  type BookingLocationOption,
+  type VehicleDetailsViewModel,
+  type VehicleReviewViewModel,
+} from "@/app/(public)/vehicles/[vehicleId]/_components/vehicle-details/types";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
-import { AvailabilityChip, StatusChip } from "../_components/StatusChips";
+import Link from "next/link";
 
-export default function SupplierVehicleDetailsPage() {
-  const router = useRouter();
-  const params = useParams();
-  const theme = useTheme();
-  const { data: session, status: sessionStatus } = useSession();
-
-  const id = Array.isArray(params.id) ? params.id[0] : (params.id as string);
-
-  const [vehicle, setVehicle] = useState<SupplierVehicleDetails | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      if (sessionStatus === "loading") return;
-      if (!id) return;
-
-      if (!session?.accessToken) {
-        setLoading(false);
-        setError("You must be signed in to view this vehicle.");
-        return;
-      }
-
-      setLoading(true);
-      setError(null);
-
-      try {
-        const data = await getSupplierVehicleById(session.accessToken, id);
-        if (cancelled) return;
-        setVehicle(data);
-      } catch (err: unknown) {
-        if (cancelled) return;
-        logger.error("Failed to load vehicle details", err);
-        setVehicle(null);
-        setError(
-          err instanceof Error && err.message.toLowerCase().includes("not found")
-            ? "Vehicle not found, or you don't have permission to view it."
-            : "Could not load vehicle details. Please try again shortly."
-        );
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    }
-
-    void load();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [id, session?.accessToken, sessionStatus]);
-
-  if (loading) {
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error || !vehicle) {
-    return (
-      <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 800, mx: "auto" }}>
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 3 }}>
-          <Tooltip title="Back to vehicles">
-            <IconButton
-              onClick={() => {
-                router.push("/supplier/vehicles");
-              }}
-              sx={{ borderRadius: 2 }}
-            >
-              <ArrowBackIcon />
-            </IconButton>
-          </Tooltip>
-          <Typography variant="h5" sx={{ fontWeight: 800 }}>
-            Vehicle details
-          </Typography>
-        </Stack>
-        <Alert severity="warning" variant="outlined" sx={{ borderRadius: 2 }}>
-          {error ?? "Vehicle not found."}
-        </Alert>
-      </Box>
-    );
-  }
-
-  const formattedDate = (() => {
-    const d = new Date(vehicle.createdAt);
-    return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString();
-  })();
-
-  const rejected = isRejectedStatus(vehicle.status);
-
-  return (
-    <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1100, mx: "auto" }}>
-      {/* Header */}
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        sx={{ gap: 2, alignItems: { xs: "flex-start", sm: "center" }, mb: 3, justifyContent: "space-between" }}
-      >
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-          <Tooltip title="Back to vehicles">
-            <IconButton
-              onClick={() => {
-                router.push("/supplier/vehicles");
-              }}
-              sx={{ borderRadius: 2 }}
-            >
-              <ArrowBackIcon />
-            </IconButton>
-          </Tooltip>
-          <Box>
-            <Typography variant="h4" sx={{ fontWeight: 800, fontSize: { xs: "1.5rem", md: "2rem" } }}>
-              {vehicle.make} {vehicle.model}
-            </Typography>
-            <Typography color="text.secondary" variant="body2">
-              {vehicle.year ? `${String(vehicle.year)} · ` : ""}
-              Plate {vehicle.licensePlate || "—"}
-            </Typography>
-          </Box>
-        </Stack>
-
-        <Button
-          variant="contained"
-          startIcon={<EditIcon />}
-          onClick={() => {
-            router.push(`/supplier/vehicles/${vehicle.vehicleId}/edit`);
-          }}
-          disabled={vehicle.isReadOnly}
-          sx={{
-            borderRadius: 2,
-            px: 3,
-            fontWeight: 700,
-            textTransform: "none",
-            background: t => `linear-gradient(135deg, ${t.palette.primary.main}, ${t.palette.primary.dark})`,
-          }}
-        >
-          {vehicle.isReadOnly ? "Read-only" : "Edit vehicle"}
-        </Button>
-      </Stack>
-
-      {rejected && (
-        <Alert severity="error" variant="outlined" sx={{ mb: 3, borderRadius: 2 }}>
-          This vehicle was rejected by an admin. It is read-only and cannot be edited or made available.
-        </Alert>
-      )}
-
-      <Grid container spacing={3}>
-        {/* Left: image + status */}
-        <Grid size={{ xs: 12, md: 5 }}>
-          <Card
-            sx={{
-              borderRadius: 2,
-              border: "1px solid",
-              borderColor: "divider",
-              overflow: "hidden",
-            }}
-          >
-            <Box
-              sx={{
-                position: "relative",
-                width: "100%",
-                aspectRatio: "4 / 3",
-                bgcolor: alpha(theme.palette.primary.main, 0.05),
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              {vehicle.imageUrl ? (
-                <Image
-                  src={(toImageUrl(vehicle.imageUrl) as string) || vehicle.imageUrl}
-                  alt={`${vehicle.make} ${vehicle.model}`}
-                  fill
-                  sizes="(max-width: 900px) 100vw, 40vw"
-                  style={{ objectFit: "cover" }}
-                />
-              ) : (
-                <Avatar
-                  sx={{
-                    width: 96,
-                    height: 96,
-                    bgcolor: alpha(theme.palette.primary.main, 0.12),
-                    color: "primary.main",
-                  }}
-                >
-                  <CarIcon sx={{ fontSize: 48 }} />
-                </Avatar>
-              )}
-            </Box>
-            <Box sx={{ p: 2.5 }}>
-              <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", rowGap: 1 }}>
-                <StatusChip status={vehicle.status} />
-                <AvailabilityChip availability={vehicle.availabilityStatus} />
-              </Stack>
-              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1.5 }}>
-                Listed on {formattedDate} · {vehicle.bookingsCount} booking{vehicle.bookingsCount === 1 ? "" : "s"}
-              </Typography>
-            </Box>
-          </Card>
-        </Grid>
-
-        {/* Right: details */}
-        <Grid size={{ xs: 12, md: 7 }}>
-          <Card
-            sx={{
-              p: { xs: 2, md: 3 },
-              borderRadius: 2,
-              border: "1px solid",
-              borderColor: "divider",
-            }}
-          >
-            <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 700, letterSpacing: "0.08em" }}>
-              Vehicle information
-            </Typography>
-
-            <Grid container spacing={2.5} sx={{ mt: 0.5 }}>
-              <DetailRow icon={<PaidIcon />} label="Price per day" value={`$${vehicle.pricePerDay.toLocaleString()}`} />
-              <DetailRow icon={<SpeedIcon />} label="Transmission" value={vehicle.transmission || "—"} />
-              <DetailRow icon={<FuelIcon />} label="Fuel type" value={vehicle.fuelType || "—"} />
-              <DetailRow
-                icon={<EventSeatIcon />}
-                label="Seats"
-                value={vehicle.seats != null ? String(vehicle.seats) : "—"}
-              />
-              <DetailRow icon={<LocationIcon />} label="Location" value={vehicle.locationCity || "—"} />
-              <DetailRow icon={<CarIcon />} label="Color" value={vehicle.color || "—"} />
-            </Grid>
-
-            <Divider sx={{ my: 3 }} />
-
-            <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 700, letterSpacing: "0.08em" }}>
-              Description
-            </Typography>
-            <Typography
-              variant="body2"
-              sx={{ mt: 1, whiteSpace: "pre-wrap" }}
-              color={vehicle.description ? "text.primary" : "text.secondary"}
-            >
-              {vehicle.description || "No description provided."}
-            </Typography>
-          </Card>
-        </Grid>
-      </Grid>
-    </Box>
-  );
+interface PageProps {
+  readonly params: Promise<{ id: string }>;
 }
 
-// ── Small presentation helper, kept local since the details grid is the only
-// place using it. ──────────────────────────────────────────────────────────────
-function DetailRow({
-  icon,
-  label,
-  value,
-}: {
-  readonly icon: React.ReactNode;
-  readonly label: string;
-  readonly value: string;
-}) {
+interface ApiVehicleImageDto {
+  readonly imageId?: string;
+  readonly url?: string;
+  readonly isPrimary?: boolean;
+}
+
+interface ApiVehicleFeatureDto {
+  readonly id?: string;
+  readonly featureName?: string;
+  readonly featureDescription?: string;
+}
+
+interface ApiVehicleDto {
+  readonly vehicleId?: string;
+  readonly make?: string;
+  readonly model?: string;
+  readonly year?: number;
+  readonly color?: string;
+  readonly licensePlate?: string;
+  readonly transmission?: string;
+  readonly fuelType?: string;
+  readonly seats?: number;
+  readonly pricePerDay?: number;
+  readonly locationCity?: string;
+  readonly description?: string;
+  readonly status?: string;
+  readonly availabilityStatus?: string;
+  readonly images?: readonly ApiVehicleImageDto[];
+  readonly features?: readonly ApiVehicleFeatureDto[];
+  readonly supplier?: {
+    readonly id?: string;
+    readonly name?: string;
+  };
+  readonly averageRating?: number;
+  readonly reviewCount?: number;
+}
+
+interface ApiReviewDto {
+  readonly reviewId?: string;
+  readonly userName?: string;
+  readonly rating?: number;
+  readonly comment?: string;
+  readonly supplierReply?: string;
+  readonly repliedAt?: string;
+  readonly createdAt?: string;
+}
+
+interface ApiLocationsResponse {
+  readonly resultData?: readonly {
+    readonly _id?: string;
+    readonly name?: string;
+    readonly city?: string;
+  }[];
+}
+
+interface ApiPagedResponse<T> {
+  readonly data?: readonly T[];
+  readonly resultData?: readonly T[];
+}
+
+function asString(value: unknown, fallback = ""): string {
+  return typeof value === "string" ? value : fallback;
+}
+
+function asNumber(value: unknown, fallback = 0): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+function normalizeVehicle(vehicle: ApiVehicleDto): VehicleDetailsViewModel {
+  return {
+    vehicleId: asString(vehicle.vehicleId),
+    make: asString(vehicle.make),
+    model: asString(vehicle.model),
+    year: asNumber(vehicle.year),
+    color: asString(vehicle.color),
+    licensePlate: asString(vehicle.licensePlate),
+    transmission: asString(vehicle.transmission),
+    fuelType: asString(vehicle.fuelType),
+    seats: asNumber(vehicle.seats),
+    pricePerDay: asNumber(vehicle.pricePerDay),
+    locationCity: asString(vehicle.locationCity),
+    description: asString(vehicle.description),
+    status: asString(vehicle.status),
+    availabilityStatus: asString(vehicle.availabilityStatus),
+    images: (vehicle.images ?? [])
+      .map(image => ({
+        id: asString(image.imageId),
+        imageUrl: asString(image.url),
+        isPrimary: Boolean(image.isPrimary),
+      }))
+      .filter(image => image.imageUrl !== ""),
+    features: (vehicle.features ?? [])
+      .map(feature => ({
+        id: asString(feature.id),
+        featureName: asString(feature.featureName),
+        featureDescription: asString(feature.featureDescription),
+      }))
+      .filter(feature => feature.featureName !== ""),
+    supplierId: asString(vehicle.supplier?.id),
+    supplierName: asString(vehicle.supplier?.name),
+    averageRating: asNumber(vehicle.averageRating),
+    reviewCount: asNumber(vehicle.reviewCount),
+  };
+}
+
+function normalizeReviews(reviews: readonly ApiReviewDto[]): readonly VehicleReviewViewModel[] {
+  return reviews.map(review => ({
+    reviewId: asString(review.reviewId),
+    userName: asString(review.userName, "Customer"),
+    rating: asNumber(review.rating),
+    comment: asString(review.comment),
+    supplierReply: review.supplierReply ? asString(review.supplierReply) : undefined,
+    repliedAt: review.repliedAt ? asString(review.repliedAt) : undefined,
+    createdAt: asString(review.createdAt),
+  }));
+}
+
+function normalizeLocations(payload: ApiLocationsResponse): readonly BookingLocationOption[] {
+  return (payload.resultData ?? [])
+    .map(location => ({
+      id: asString(location._id),
+      label: asString(location.name),
+      city: asString(location.city),
+    }))
+    .filter(location => location.id !== "" && location.label !== "");
+}
+
+async function fetchVehicleDetails(vehicleId: string): Promise<VehicleDetailsViewModel | null> {
+  const response = await fetch(toApiUrl(`/api/vehicles/${vehicleId}`), { cache: "no-store" });
+  if (!response.ok) {
+    return null;
+  }
+  const payload = (await response.json()) as ApiVehicleDto;
+  return normalizeVehicle(payload);
+}
+
+async function fetchVehicleReviews(vehicleId: string): Promise<readonly VehicleReviewViewModel[]> {
+  const response = await fetch(toApiUrl(`/api/vehicles/${vehicleId}/reviews?page=1&pageSize=8&sortBy=date`), {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    return [];
+  }
+  const payload = (await response.json()) as ApiPagedResponse<ApiReviewDto>;
+  const reviews = payload.data ?? payload.resultData ?? [];
+  return normalizeReviews(reviews);
+}
+
+async function fetchLocations(): Promise<readonly BookingLocationOption[]> {
+  const response = await fetch(toApiUrl("/api/locations/1/50/en"), { cache: "no-store" });
+  if (!response.ok) {
+    return [];
+  }
+  const payload = (await response.json()) as ApiLocationsResponse;
+  return normalizeLocations(payload);
+}
+
+export default async function SupplierVehicleDetailsPage({ params }: PageProps) {
+  const { id } = await params;
+
+  const [session, pageData] = await Promise.all([
+    getServerSession(authOptions).catch(() => null),
+    (async () => {
+      try {
+        const [vehicle, reviews, locations] = await Promise.all([
+          fetchVehicleDetails(id),
+          fetchVehicleReviews(id),
+          fetchLocations(),
+        ]);
+        return { vehicle, reviews, locations };
+      } catch (error) {
+        logger.error("Supplier vehicle details page error", error);
+        return null;
+      }
+    })(),
+  ]);
+
+  if (!pageData) {
+    return (
+      <Box component="main" sx={{ minHeight: "60vh", display: "grid", placeItems: "center", px: 2 }}>
+        <Typography variant="h6" color="text.secondary" sx={{ textAlign: "center" }}>
+          We were unable to load this vehicle right now.
+        </Typography>
+      </Box>
+    );
+  }
+
+  const { vehicle, reviews, locations } = pageData;
+
+  if (!vehicle) {
+    notFound();
+  }
+
+  const isAdmin = session?.user.roles.includes("Admin") ?? false;
+  const isOwner = session?.user.id === vehicle.supplierId;
+  const canEdit = isAdmin || isOwner;
+
   return (
-    <Grid size={{ xs: 12, sm: 6 }}>
-      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-        <Avatar
-          sx={{
-            width: 36,
-            height: 36,
-            bgcolor: t => alpha(t.palette.primary.main, 0.1),
-            color: "primary.main",
-          }}
-        >
-          {icon}
-        </Avatar>
-        <Box sx={{ minWidth: 0 }}>
-          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-            {label}
+    <Box sx={{ pb: 4 }}>
+      <Container maxWidth="xl">
+        <Stack direction="row" sx={{ alignItems: "center", mb: 2, mt: 2 }}>
+          <Link href="/supplier/vehicles" style={{ textDecoration: "none" }}>
+            <IconButton
+              sx={{
+                bgcolor: "background.paper",
+                boxShadow: 1,
+                mr: 2,
+                "&:hover": { bgcolor: "background.paper", transform: "translateX(-3px)" },
+              }}
+            >
+              <ArrowBackIosNewIcon fontSize="small" />
+            </IconButton>
+          </Link>
+          <Typography variant="h5" sx={{ fontWeight: 700 }}>
+            Vehicle Details
           </Typography>
-          <Typography variant="body2" sx={{ fontWeight: 700 }} noWrap>
-            {value}
-          </Typography>
-        </Box>
-      </Stack>
-    </Grid>
+        </Stack>
+      </Container>
+      <VehicleDetailsClient vehicle={vehicle} reviews={reviews} locations={locations} canEdit={canEdit} />
+    </Box>
   );
 }
