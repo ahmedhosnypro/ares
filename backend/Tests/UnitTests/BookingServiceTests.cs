@@ -28,6 +28,10 @@ public class BookingServiceTests
         _contextMock = new Mock<IApplicationDbContext>();
         _userManagerMock = MockUserManager();
 
+        var emptyUserAddresses = new List<UserAddress>().AsQueryable();
+        var userAddressesDbSet = CreateMockDbSet(emptyUserAddresses);
+        _contextMock.Setup(x => x.UserAddresses).Returns(userAddressesDbSet.Object);
+
         _bookingService = new BookingService(
             _bookingRepositoryMock.Object,
             _vehicleRepositoryMock.Object,
@@ -507,6 +511,14 @@ public class BookingServiceTests
         var emptyPayments = new List<BookingPayment>().AsQueryable();
         var paymentsDbSet = CreateMockDbSet(emptyPayments);
         _contextMock.Setup(x => x.Payments).Returns(paymentsDbSet.Object);
+
+        var emptyInspections = new List<VehicleInspection>().AsQueryable();
+        var inspectionsDbSet = CreateMockDbSet(emptyInspections);
+        _contextMock.Setup(x => x.VehicleInspections).Returns(inspectionsDbSet.Object);
+
+        var emptyCancellations = new List<BookingCancellation>().AsQueryable();
+        var cancellationsDbSet = CreateMockDbSet(emptyCancellations);
+        _contextMock.Setup(x => x.BookingCancellations).Returns(cancellationsDbSet.Object);
 
         // Act
         var result = await _bookingService.GetBookingDetailsAsync(bookingId, userId);

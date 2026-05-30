@@ -135,6 +135,7 @@ public class BookingRepository : PaginatedRepository<Booking>, IBookingRepositor
             .Include(b => b.Driver)
                 .ThenInclude(d => d!.User)
             .Include(b => b.User)
+            .Include(b => b.AssignedInspector)
             .FirstOrDefaultAsync(b => b.Id == bookingId, cancellationToken);
     }
 

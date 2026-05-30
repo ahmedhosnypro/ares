@@ -11,4 +11,8 @@ public record VehicleWithSupplierDto(
     string Image,
     SupplierDto Supplier,
     string? PlateNumber = null,
-    decimal? DailyRate = null);
+    decimal? DailyRate = null,
+    string? Make = null,
+    string? Model = null,
+    int? Year = null,
+    string? AvailabilityStatus = null);

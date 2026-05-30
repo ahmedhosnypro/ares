@@ -23,6 +23,8 @@ public interface IApplicationDbContext
     IQueryable<TermsSection> TermsSections { get; }
     IQueryable<AboutSection> AboutSections { get; }
     IQueryable<Driver> Drivers { get; }
+    IQueryable<VehicleInspection> VehicleInspections { get; }
+    IQueryable<InspectionImage> InspectionImages { get; }
     void AddFavorite(Favorite favorite);
     void AddBookingCancellation(BookingCancellation cancellation);
     void AddUserAddress(UserAddress userAddress);

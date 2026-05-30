@@ -33,5 +33,35 @@ public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
 
         RuleFor(x => x.AcceptedPrivacy)
             .Equal(true).WithMessage("You must accept the privacy policy");
+
+        // ── New optional fields (introduced with role-based signup) ──────
+        // All three guarded with `When(...)` so legacy clients that never
+        // send these fields continue to register exactly as before.
+
+        // Phone — kept lightweight: 8-20 chars, digits / `+` / spaces /
+        // hyphens. The frontend uses libphonenumber-js for stricter
+        // formatting, but the backend stays format-agnostic so we don't
+        // reject a perfectly valid number from an exotic region.
+        RuleFor(x => x.Phone!)
+            .NotEmpty().WithMessage("Phone number is required")
+            .Matches(@"^[\d+\-\s()]{8,20}$").WithMessage("Phone number is not valid")
+            .When(x => x.Phone is not null);
+
+        // ConfirmPassword — when supplied, must equal Password exactly.
+        RuleFor(x => x.ConfirmPassword!)
+            .NotEmpty().WithMessage("Please confirm your password")
+            .Equal(x => x.Password).WithMessage("Passwords do not match")
+            .When(x => x.ConfirmPassword is not null);
+
+        // Role — only "customer" or "supplier" are accepted on this
+        // self-service endpoint. Admin/Inspector accounts are provisioned
+        // through the admin flow only, mirroring the Google sign-in gate
+        // in GoogleAuthService.
+        RuleFor(x => x.Role!)
+            .Must(role => role is not null
+                          && (role.Equals("customer", System.StringComparison.OrdinalIgnoreCase)
+                              || role.Equals("supplier", System.StringComparison.OrdinalIgnoreCase)))
+            .WithMessage("Role must be either 'customer' or 'supplier'")
+            .When(x => x.Role is not null);
     }
 }

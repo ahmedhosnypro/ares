@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
@@ -33,12 +33,14 @@ import {
   ErrorOutlined as ErrorIcon,
   Lock as LockIcon,
   Person as PersonIcon,
+  Phone as PhoneIcon,
   Visibility,
   VisibilityOff,
 } from "@mui/icons-material";
-import { signUpSchema, type SignUpFormData } from "@/lib/validation/schemas";
+import { signUpSchema, signUpFieldShape, type SignUpFormData, type SignUpRole } from "@/lib/validation/schemas";
 import { z } from "zod";
 import GoogleSignInButton from "../_components/GoogleSignInButton";
+import RoleSelector from "./RoleSelector";
 
 // ── password strength ──────────────────────────────────────────────────────────
 
@@ -65,16 +67,24 @@ function getPasswordStrength(password: string): PasswordStrength {
 }
 
 interface RegistrationFormProps {
+  readonly role: SignUpRole;
+  readonly setRole: (v: SignUpRole) => void;
   readonly firstName: string;
   readonly setFirstName: (v: string) => void;
   readonly lastName: string;
   readonly setLastName: (v: string) => void;
   readonly email: string;
   readonly setEmail: (v: string) => void;
+  readonly phone: string;
+  readonly setPhone: (v: string) => void;
   readonly password: string;
   readonly setPassword: (v: string) => void;
+  readonly confirmPassword: string;
+  readonly setConfirmPassword: (v: string) => void;
   readonly showPassword: boolean;
   readonly setShowPassword: (v: boolean) => void;
+  readonly showConfirmPassword: boolean;
+  readonly setShowConfirmPassword: (v: boolean) => void;
   readonly acceptedTerms: boolean;
   readonly setAcceptedTerms: (v: boolean) => void;
   readonly acceptedPrivacy: boolean;
@@ -90,16 +100,24 @@ interface RegistrationFormProps {
 }
 
 function RegistrationForm({
+  role,
+  setRole,
   firstName,
   setFirstName,
   lastName,
   setLastName,
   email,
   setEmail,
+  phone,
+  setPhone,
   password,
   setPassword,
+  confirmPassword,
+  setConfirmPassword,
   showPassword,
   setShowPassword,
+  showConfirmPassword,
+  setShowConfirmPassword,
   acceptedTerms,
   setAcceptedTerms,
   acceptedPrivacy,
@@ -122,6 +140,9 @@ function RegistrationForm({
       }}
       noValidate
     >
+      {/* Role picker — selectable cards, Customer pre-selected. */}
+      <RoleSelector value={role} onChange={setRole} disabled={isLoading} />
+
       {/* Name row */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, sm: 6 }}>
@@ -215,6 +236,37 @@ function RegistrationForm({
         sx={{ mb: 3 }}
       />
 
+      {/* Phone */}
+      <TextField
+        fullWidth
+        id="phone"
+        name="phone"
+        label="Phone Number"
+        type="tel"
+        autoComplete="tel"
+        required
+        value={phone}
+        onChange={e => {
+          setPhone(e.target.value);
+          if (touched.phone) validateField("phone", e.target.value);
+        }}
+        onBlur={() => {
+          handleBlur("phone");
+        }}
+        error={touched.phone && !!fieldErrors.phone}
+        helperText={touched.phone ? fieldErrors.phone : undefined}
+        slotProps={{
+          input: {
+            startAdornment: (
+              <InputAdornment position="start">
+                <PhoneIcon color="action" />
+              </InputAdornment>
+            ),
+          },
+        }}
+        sx={{ mb: 3 }}
+      />
+
       {/* Password */}
       <TextField
         fullWidth
@@ -273,6 +325,53 @@ function RegistrationForm({
           </Typography>
         </Box>
       )}
+
+      {/* Confirm Password */}
+      <TextField
+        fullWidth
+        id="confirmPassword"
+        name="confirmPassword"
+        label="Confirm Password"
+        type={showConfirmPassword ? "text" : "password"}
+        autoComplete="new-password"
+        required
+        value={confirmPassword}
+        onChange={e => {
+          setConfirmPassword(e.target.value);
+          // Always re-validate confirmPassword in real time — spec
+          // says "confirm password validation must work in real time
+          // while typing", regardless of the touched flag.
+          validateField("confirmPassword", e.target.value);
+        }}
+        onBlur={() => {
+          handleBlur("confirmPassword");
+        }}
+        error={!!fieldErrors.confirmPassword && (touched.confirmPassword || confirmPassword.length > 0)}
+        helperText={touched.confirmPassword || confirmPassword.length > 0 ? fieldErrors.confirmPassword : undefined}
+        slotProps={{
+          input: {
+            startAdornment: (
+              <InputAdornment position="start">
+                <LockIcon color="action" />
+              </InputAdornment>
+            ),
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label="toggle confirm password visibility"
+                  onClick={() => {
+                    setShowConfirmPassword(!showConfirmPassword);
+                  }}
+                  edge="end"
+                >
+                  {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          },
+        }}
+        sx={{ mb: 3 }}
+      />
 
       {/* Checkboxes */}
       <Box sx={{ mb: 3 }}>
@@ -440,21 +539,29 @@ function SuccessView({ firstName, email: _email, callbackUrl }: SuccessViewProps
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
-function getSignUpPayload(
-  firstName: string,
-  lastName: string,
-  email: string,
-  password: string,
-  acceptedTerms: boolean,
-  acceptedPrivacy: boolean
-): SignUpFormData {
+interface PayloadInputs {
+  readonly role: SignUpRole;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly email: string;
+  readonly phone: string;
+  readonly password: string;
+  readonly confirmPassword: string;
+  readonly acceptedTerms: boolean;
+  readonly acceptedPrivacy: boolean;
+}
+
+function getSignUpPayload(inputs: PayloadInputs): SignUpFormData {
   return {
-    firstName,
-    lastName,
-    email,
-    password,
-    acceptedTerms: acceptedTerms as true,
-    acceptedPrivacy: acceptedPrivacy as true,
+    role: inputs.role,
+    firstName: inputs.firstName,
+    lastName: inputs.lastName,
+    email: inputs.email,
+    phone: inputs.phone,
+    password: inputs.password,
+    confirmPassword: inputs.confirmPassword,
+    acceptedTerms: inputs.acceptedTerms as true,
+    acceptedPrivacy: inputs.acceptedPrivacy as true,
   };
 }
 
@@ -492,10 +599,23 @@ async function handleRegisterResponse(response: Response): Promise<void> {
 }
 
 async function performRegistration(payload: SignUpFormData): Promise<void> {
+  // The backend `RegisterRequest` has both the legacy fields and the new
+  // optional Phone / ConfirmPassword / Role. We forward all of them; the
+  // backend validator handles the cross-field rules.
   const response = await fetch(toApiUrl("/api/auth/register"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      firstName: payload.firstName,
+      lastName: payload.lastName,
+      email: payload.email,
+      phone: payload.phone,
+      password: payload.password,
+      confirmPassword: payload.confirmPassword,
+      role: payload.role,
+      acceptedTerms: payload.acceptedTerms,
+      acceptedPrivacy: payload.acceptedPrivacy,
+    }),
   });
 
   await handleRegisterResponse(response);
@@ -512,13 +632,17 @@ export default function SignUpForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl");
 
+  const [role, setRole] = useState<SignUpRole>("customer");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
@@ -528,7 +652,28 @@ export default function SignUpForm() {
   const passwordStrength = getPasswordStrength(password);
 
   const validateField = <K extends keyof SignUpFormData>(field: K, value: SignUpFormData[K]) => {
-    const result = signUpSchema.shape[field].safeParse(value);
+    // Special-case the confirmPassword field — the underlying schema
+    // only checks "is a non-empty string", so we layer the cross-field
+    // "must match password" check here for real-time feedback as the
+    // user types.
+    if (field === "confirmPassword") {
+      const stringValue = typeof value === "string" ? value : "";
+      if (stringValue.length === 0) {
+        setFieldErrors(prev => ({ ...prev, confirmPassword: "Please confirm your password" }));
+        return;
+      }
+      if (stringValue !== password) {
+        setFieldErrors(prev => ({ ...prev, confirmPassword: "Passwords do not match" }));
+        return;
+      }
+      setFieldErrors(prev => ({ ...prev, confirmPassword: undefined }));
+      return;
+    }
+
+    // All other fields delegate to the per-field shape so we never pay
+    // the price of evaluating the full cross-field refinement.
+    const fieldSchema = signUpFieldShape[field];
+    const result = fieldSchema.safeParse(value);
     setFieldErrors(prev => ({
       ...prev,
       [field]: result.success ? undefined : result.error.issues[0]?.message,
@@ -537,7 +682,17 @@ export default function SignUpForm() {
 
   const handleBlur = (field: keyof SignUpFormData) => {
     setTouched(prev => ({ ...prev, [field]: true }));
-    const values = getSignUpPayload(firstName, lastName, email, password, acceptedTerms, acceptedPrivacy);
+    const values = getSignUpPayload({
+      role,
+      firstName,
+      lastName,
+      email,
+      phone,
+      password,
+      confirmPassword,
+      acceptedTerms,
+      acceptedPrivacy,
+    });
     validateField(field, values[field]);
   };
 
@@ -546,10 +701,13 @@ export default function SignUpForm() {
     if (!validation.success) {
       setFieldErrors(validation.errors);
       setTouched({
+        role: true,
         firstName: true,
         lastName: true,
         email: true,
+        phone: true,
         password: true,
+        confirmPassword: true,
         acceptedTerms: true,
         acceptedPrivacy: true,
       });
@@ -573,20 +731,42 @@ export default function SignUpForm() {
 
   const handleRegister = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const payload = getSignUpPayload(firstName, lastName, email, password, acceptedTerms, acceptedPrivacy);
+    const payload = getSignUpPayload({
+      role,
+      firstName,
+      lastName,
+      email,
+      phone,
+      password,
+      confirmPassword,
+      acceptedTerms,
+      acceptedPrivacy,
+    });
     if (validateForm(payload)) {
       await executeRegistration(payload);
     }
   };
 
-  const canSubmit =
-    !isLoading &&
-    firstName.trim() !== "" &&
-    lastName.trim() !== "" &&
-    email.trim() !== "" &&
-    password.trim() !== "" &&
-    acceptedTerms &&
-    acceptedPrivacy;
+  // Whole-form validity (used to enable/disable the submit button). We
+  // run the cross-field zod schema so the "passwords match" check is
+  // honoured exactly as on submit — the submit button stays disabled
+  // until everything passes.
+  const isFormValid = useMemo(() => {
+    const payload = getSignUpPayload({
+      role,
+      firstName,
+      lastName,
+      email,
+      phone,
+      password,
+      confirmPassword,
+      acceptedTerms,
+      acceptedPrivacy,
+    });
+    return signUpSchema.safeParse(payload).success;
+  }, [role, firstName, lastName, email, phone, password, confirmPassword, acceptedTerms, acceptedPrivacy]);
+
+  const canSubmit = !isLoading && isFormValid;
 
   return (
     <Box sx={{ minHeight: "100vh", display: "flex", background: theme.palette.overlay.gradient }}>
@@ -629,16 +809,24 @@ export default function SignUpForm() {
                 )}
 
                 <RegistrationForm
+                  role={role}
+                  setRole={setRole}
                   firstName={firstName}
                   setFirstName={setFirstName}
                   lastName={lastName}
                   setLastName={setLastName}
                   email={email}
                   setEmail={setEmail}
+                  phone={phone}
+                  setPhone={setPhone}
                   password={password}
                   setPassword={setPassword}
+                  confirmPassword={confirmPassword}
+                  setConfirmPassword={setConfirmPassword}
                   showPassword={showPassword}
                   setShowPassword={setShowPassword}
+                  showConfirmPassword={showConfirmPassword}
+                  setShowConfirmPassword={setShowConfirmPassword}
                   acceptedTerms={acceptedTerms}
                   setAcceptedTerms={setAcceptedTerms}
                   acceptedPrivacy={acceptedPrivacy}

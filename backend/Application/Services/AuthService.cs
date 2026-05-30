@@ -55,14 +55,28 @@ public class AuthService : IAuthService
             throw new ConflictException("Email is already registered");
         }
 
-        // Create new user
+        // Resolve the requested role (defaults to Customer for legacy
+        // clients that don't send a Role field — keeps existing behaviour
+        // for backwards compatibility). Only Customer and Supplier are
+        // accepted on this self-service endpoint; the validator already
+        // rejects anything else and admin / inspector accounts are
+        // provisioned through the admin flow only.
+        var requestedRole = ResolveSelfServiceRole(request.Role);
+
+        // Create new user. Status is set to "Pending" so the user is
+        // gated through the /complete-profile flow on the frontend before
+        // they can do role-sensitive actions (Customer booking, Supplier
+        // listing). Phone is stored on PhoneNumber so the verification +
+        // driver-license flows that already read it work end-to-end.
         var user = new ApplicationUser
         {
             UserName = request.Email,
             Email = request.Email,
             FirstName = request.FirstName,
             LastName = request.LastName,
-            EmailConfirmed = false
+            PhoneNumber = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim(),
+            EmailConfirmed = false,
+            Status = "Pending"
         };
 
         var result = await _userManager.CreateAsync(user, request.Password);
@@ -78,8 +92,9 @@ public class AuthService : IAuthService
             throw new ValidationException(errorDict);
         }
 
-        // Assign default Customer role
-        await _userManager.AddToRoleAsync(user, "Customer");
+        // Assign requested role (server-resolved, never trusts the raw
+        // frontend value).
+        await _userManager.AddToRoleAsync(user, requestedRole);
 
         // Generate email confirmation token
         var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -220,7 +235,8 @@ public class AuthService : IAuthService
                 FirstName: user.FirstName ?? string.Empty,
                 LastName: user.LastName ?? string.Empty,
                 Roles: roles.ToList(),
-                EmailVerified: user.EmailConfirmed
+                EmailVerified: user.EmailConfirmed,
+                Status: user.Status
             )
         );
     }
@@ -405,7 +421,8 @@ public class AuthService : IAuthService
                 FirstName: user.FirstName ?? string.Empty,
                 LastName: user.LastName ?? string.Empty,
                 Roles: roles.ToList(),
-                EmailVerified: user.EmailConfirmed
+                EmailVerified: user.EmailConfirmed,
+                Status: user.Status
             )
         );
     }
@@ -527,8 +544,78 @@ public class AuthService : IAuthService
                 FirstName: user.FirstName ?? string.Empty,
                 LastName: user.LastName ?? string.Empty,
                 Roles: roles.ToList(),
-                EmailVerified: user.EmailConfirmed
+                EmailVerified: user.EmailConfirmed,
+                Status: user.Status
             )
         );
+    }
+
+    /// <inheritdoc />
+    public async Task CompleteProfileAsync(Guid userId, CompleteProfileRequest request, CancellationToken cancellationToken = default)
+    {
+        var user = await _userManager.FindByIdAsync(userId.ToString())
+            ?? throw new NotFoundException("User not found");
+
+        // Apply optional overrides (only if non-empty after trimming —
+        // don't accidentally wipe an existing name/phone).
+        if (!string.IsNullOrWhiteSpace(request.FirstName))
+        {
+            user.FirstName = request.FirstName.Trim();
+        }
+        if (!string.IsNullOrWhiteSpace(request.LastName))
+        {
+            user.LastName = request.LastName.Trim();
+        }
+        if (!string.IsNullOrWhiteSpace(request.Phone))
+        {
+            user.PhoneNumber = request.Phone.Trim();
+        }
+
+        // Flip status away from Pending. Already-Active users get a no-op
+        // so this stays idempotent.
+        if (string.Equals(user.Status, "Pending", StringComparison.OrdinalIgnoreCase))
+        {
+            user.Status = "Active";
+        }
+
+        user.UpdatedAt = DateTime.UtcNow;
+        var result = await _userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            _logger.LogWarning("Profile completion failed for user {UserId}: {Errors}", userId, errors);
+            throw new ValidationException(new Dictionary<string, string[]>
+            {
+                { "User", result.Errors.Select(e => e.Description).ToArray() }
+            });
+        }
+
+        _logger.LogInformation("Profile completed for user {UserId}", userId);
+    }
+
+    /// <summary>
+    /// Maps a raw role string from the registration payload to a canonical
+    /// ASP.NET Identity role name. Only <c>"customer"</c> and
+    /// <c>"supplier"</c> are accepted on this self-service endpoint —
+    /// Admin / Inspector accounts must be provisioned through the
+    /// administrative flow. The mapping is case-insensitive; any unknown
+    /// or null value resolves to <c>"Customer"</c>, which preserves the
+    /// historical default for clients that don't send the field.
+    /// </summary>
+    private static string ResolveSelfServiceRole(string? requested)
+    {
+        if (string.IsNullOrWhiteSpace(requested))
+        {
+            return "Customer";
+        }
+
+        if (requested.Equals("supplier", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Supplier";
+        }
+
+        // Any other value — including the explicit "customer" — falls
+        // through to the Customer default.
+        return "Customer";
     }
 }

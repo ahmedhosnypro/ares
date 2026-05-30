@@ -1,6 +1,7 @@
 using System.Globalization;
 using Backend.Application.DTOs.Earnings;
 using Backend.Application.Interfaces;
+using Backend.Domain.Entities;
 using Backend.Domain.Entities.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -33,6 +34,16 @@ public class SupplierEarningsService : ISupplierEarningsService
     /// <summary>How many vehicles the "top performing" leaderboard returns.</summary>
     public const int TopVehiclesLimit = 5;
 
+    /// <summary>
+    /// Payment status that indicates the booking's money was returned to
+    /// the customer. Stored as a string on <see cref="BookingPayment"/>
+    /// (see entity comment for the full enum). We treat any payment row
+    /// in this status as a disqualifier for earnings — a refunded booking
+    /// must not contribute to any total, chart point, or leaderboard
+    /// entry on this page.
+    /// </summary>
+    private const string RefundedPaymentStatus = "Refunded";
+
     private readonly IApplicationDbContext _context;
     private readonly ILogger<SupplierEarningsService> _logger;
 
@@ -59,14 +70,11 @@ public class SupplierEarningsService : ISupplierEarningsService
         var nextMonthStart = thisMonthStart.AddMonths(1);
         var lastMonthStart = thisMonthStart.AddMonths(-1);
 
-        // Base query: completed bookings on vehicles owned by this supplier.
-        // Reused as the starting point for all four aggregates below — keeps
-        // ownership + status filtering in one place.
-        var completedQuery = _context.Bookings
-            .AsNoTracking()
-            .Where(b => b.Vehicle != null
-                        && b.Vehicle.UserId == supplierId
-                        && b.Status == BookingStatus.Completed);
+        // Base query: completed *and not refunded* bookings on vehicles
+        // owned by this supplier. Reused as the starting point for all
+        // four aggregates below — keeps ownership + status + refund
+        // filtering in one place.
+        var completedQuery = EarningsEligibleBookings(supplierId);
 
         // ── Total lifetime earnings ──────────────────────────────────────
         // Null-coalesce in the selector so SUM never returns NULL.
@@ -112,15 +120,11 @@ public class SupplierEarningsService : ISupplierEarningsService
             "Building supplier earnings chart for {SupplierId} (year {Year})",
             supplierId, targetYear);
 
-        // Single aggregate query: bucket completed bookings by month and
-        // sum their TotalPrice. We do the grouping in SQL so we never pull
-        // individual booking rows back to the application.
-        var monthlySums = await _context.Bookings
-            .AsNoTracking()
-            .Where(b => b.Vehicle != null
-                        && b.Vehicle.UserId == supplierId
-                        && b.Status == BookingStatus.Completed
-                        && (b.ReturnDate ?? b.CreatedAt) >= yearStart
+        // Single aggregate query: bucket earnings-eligible bookings by
+        // month and sum their TotalPrice. We do the grouping in SQL so we
+        // never pull individual booking rows back to the application.
+        var monthlySums = await EarningsEligibleBookings(supplierId)
+            .Where(b => (b.ReturnDate ?? b.CreatedAt) >= yearStart
                         && (b.ReturnDate ?? b.CreatedAt) < yearEnd)
             .GroupBy(b => (b.ReturnDate ?? b.CreatedAt).Month)
             .Select(g => new
@@ -156,15 +160,11 @@ public class SupplierEarningsService : ISupplierEarningsService
     {
         _logger.LogInformation("Building supplier top vehicles for {SupplierId}", supplierId);
 
-        // Step 1: aggregate completed-booking earnings per vehicle in a
-        // single GroupBy query, ordered by revenue desc and capped at the
-        // top N. We keep ownership in the WHERE clause and don't pull any
-        // navigation properties here.
-        var aggregates = await _context.Bookings
-            .AsNoTracking()
-            .Where(b => b.Vehicle != null
-                        && b.Vehicle.UserId == supplierId
-                        && b.Status == BookingStatus.Completed)
+        // Step 1: aggregate earnings-eligible booking earnings per vehicle
+        // in a single GroupBy query, ordered by revenue desc and capped at
+        // the top N. Ownership + status + refund filters are all baked
+        // into EarningsEligibleBookings(), so this query stays simple.
+        var aggregates = await EarningsEligibleBookings(supplierId)
             .GroupBy(b => b.VehicleId)
             .Select(g => new
             {
@@ -222,5 +222,38 @@ public class SupplierEarningsService : ISupplierEarningsService
             .ToList();
 
         return results.AsReadOnly();
+    }
+
+    /// <summary>
+    /// Returns the base IQueryable of "earnings-eligible" bookings for
+    /// the given supplier:
+    /// <list type="bullet">
+    ///   <item><c>Vehicle.UserId == supplierId</c> (ownership scope).</item>
+    ///   <item><c>Status == Completed</c> (no pending / cancelled / in-flight bookings).</item>
+    ///   <item>No <see cref="BookingPayment"/> row in <see cref="RefundedPaymentStatus"/>
+    ///         for the booking (a refunded booking must not contribute to earnings).</item>
+    /// </list>
+    /// <para>
+    /// Centralising the filter here keeps the three aggregate methods
+    /// consistent — every figure on the earnings page (totals, monthly
+    /// chart, top vehicles) honours the same business rules without
+    /// duplication.
+    /// </para>
+    /// <para>
+    /// The <c>Any()</c> sub-query translates to a SQL <c>NOT EXISTS</c>
+    /// in EF Core, so it composes cleanly with downstream <c>SUM</c> /
+    /// <c>GROUP BY</c> operators and stays cheap even at scale.
+    /// </para>
+    /// </summary>
+    private IQueryable<Booking> EarningsEligibleBookings(Guid supplierId)
+    {
+        return _context.Bookings
+            .AsNoTracking()
+            .Where(b => b.Vehicle != null
+                        && b.Vehicle.UserId == supplierId
+                        && b.Status == BookingStatus.Completed
+                        && !_context.Payments.Any(p =>
+                            p.BookingId == b.Id
+                            && p.Status == RefundedPaymentStatus));
     }
 }

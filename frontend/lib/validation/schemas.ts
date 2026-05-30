@@ -40,18 +40,45 @@ export const signInSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-export const signUpSchema = z.object({
+/**
+ * Self-service account types accepted at signup. Admin / Inspector are
+ * intentionally excluded — they're provisioned through the admin flow.
+ * The backend re-validates this list in `RegisterRequestValidator` so a
+ * tampered client cannot escalate.
+ */
+export const signupRoleSchema = z.enum(["customer", "supplier"]);
+export type SignUpRole = z.infer<typeof signupRoleSchema>;
+
+/**
+ * Per-field base schema — exposed so `SignUpForm.tsx` can do real-time
+ * field-level validation via `signUpFieldShape.<field>.safeParse(value)`.
+ * The wrapped `signUpSchema` below adds the cross-field "passwords match"
+ * refinement, which can only run after both fields exist.
+ */
+export const signUpFieldShape = {
+  role: signupRoleSchema.default("customer"),
   firstName: z.string().min(1, "First name is required").max(100, "First name must not exceed 100 characters"),
   lastName: z.string().min(1, "Last name is required").max(100, "Last name must not exceed 100 characters"),
   email: emailSchema,
+  phone: phoneSchema,
   password: passwordSchema,
+  confirmPassword: z.string().min(1, "Please confirm your password"),
   acceptedTerms: z.literal(true, {
     error: "You must accept the Terms of Service",
   }),
   acceptedPrivacy: z.literal(true, {
     error: "You must accept the Privacy Policy",
   }),
-});
+} as const;
+
+export const signUpSchema = z
+  .object(signUpFieldShape)
+  // Cross-field check — keeps the new ConfirmPassword field in sync with
+  // Password. Error message is the exact copy the product spec asks for.
+  .refine(data => data.password === data.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "Passwords do not match",
+  });
 
 // ── profile ────────────────────────────────────────────────────────────────────
 

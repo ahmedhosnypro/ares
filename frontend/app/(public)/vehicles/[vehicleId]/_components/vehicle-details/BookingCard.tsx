@@ -10,6 +10,8 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { toApiUrl } from "@/utils/api-client";
 import { formatCurrency } from "@/utils/currency-helpers";
 import { logger } from "@/utils/logger";
+import { useVerificationStatus } from "@/hooks/useVerificationStatus";
+import VerificationRequiredCard from "./VerificationRequiredCard";
 import type { BookingLocationOption, VehicleDetailsViewModel } from "./types";
 
 interface BookingCardProps {
@@ -77,6 +79,14 @@ function getFallbackVehicle(vehicleId?: string, basePrice?: number): VehicleDeta
 export default function BookingCard({ vehicle, locationOptions, vehicleId, basePrice }: BookingCardProps) {
   const { data: session } = useSession();
   const router = useRouter();
+
+  // Identity-verification gate. Approved users see the booking form as
+  // usual; everyone else (NotSubmitted / Pending / Rejected) sees the
+  // warning card that routes to Profile → Verification. Guests are
+  // unaffected — they hit the auth gate at checkout already.
+  const verification = useVerificationStatus();
+  const isSignedIn = Boolean(session?.accessToken);
+  const showVerificationGate = isSignedIn && (verification.loading || !verification.isApproved);
 
   const resolvedVehicle: VehicleDetailsViewModel = useMemo(
     () => vehicle ?? getFallbackVehicle(vehicleId, basePrice),
@@ -237,6 +247,29 @@ export default function BookingCard({ vehicle, locationOptions, vehicleId, baseP
     pickupDate && returnDate
       ? Math.max(1, Math.ceil((returnDate.getTime() - pickupDate.getTime()) / (1000 * 60 * 60 * 24)))
       : 1;
+
+  // When a signed-in customer is not approved, we replace the booking
+  // form entirely with the verification warning card so there's no way to
+  // accidentally trigger a booking attempt that the backend would 403.
+  if (showVerificationGate) {
+    return (
+      <Stack spacing={2} sx={{ p: { xs: 2, md: 3 } }}>
+        <Stack spacing={0.5}>
+          <Typography variant="h6" sx={{ fontWeight: 800 }}>
+            Reserve this vehicle
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {formatCurrency(resolvedVehicle.pricePerDay)} / day
+          </Typography>
+        </Stack>
+        <VerificationRequiredCard
+          status={verification.status}
+          loading={verification.loading}
+          error={verification.error}
+        />
+      </Stack>
+    );
+  }
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>

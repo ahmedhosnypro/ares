@@ -7,6 +7,9 @@ export interface BookingCustomer {
   fullName: string;
   email?: string | null;
   phone?: string | null;
+  profileImage?: string | null;
+  isEmailVerified?: boolean;
+  verificationStatus?: string | null;
 }
 
 export interface BookingInspectionOverview {
@@ -16,6 +19,46 @@ export interface BookingInspectionOverview {
   assignedInspectorName?: string | null;
   preInspectionDate?: string | null;
   postInspectionDate?: string | null;
+}
+
+export interface BookingInspectionFull {
+  inspectionId: string;
+  inspectionType: string; // Pickup | Return
+  inspectorId: string;
+  inspectorName: string;
+  status: string;
+  inspectionDate: string;
+  submittedAt?: string | null;
+  isSubmitted: boolean;
+  odometerReading: number;
+  fuelLevel: number;
+  generalCondition?: string | null;
+  notes?: string | null;
+  imageUrls: string[];
+}
+
+export interface BookingPaymentDetails {
+  paymentId: string;
+  transactionId?: string | null;
+  method: string;
+  amount: number;
+  currency: string;
+  status: string;
+  authorizationCode?: string | null;
+  processedAt?: string | null;
+  failureReason?: string | null;
+  createdAt?: string | null;
+  refundAmount?: number | null;
+  refundStatus?: string | null;
+  refundProcessedAt?: string | null;
+  refundMethod?: string | null;
+}
+
+export interface BookingTimelineEvent {
+  type: string;
+  title: string;
+  description?: string | null;
+  occurredAt: string;
 }
 
 export interface Booking {
@@ -34,6 +77,8 @@ export interface Booking {
     name: string;
     fullName?: string;
     email?: string;
+    phone?: string | null;
+    companyName?: string | null;
   };
   car?: {
     id: string;
@@ -41,6 +86,18 @@ export interface Booking {
     image: string;
     plateNumber?: string;
     dailyRate?: number | null;
+    make?: string | null;
+    model?: string | null;
+    year?: number | null;
+    availabilityStatus?: string | null;
+    supplier?: {
+      id: string;
+      name?: string | null;
+      fullName?: string | null;
+      email?: string | null;
+      phone?: string | null;
+      companyName?: string | null;
+    };
   };
   driver?: {
     id: string;
@@ -59,6 +116,10 @@ export interface Booking {
   to: string;
   payLater?: boolean;
   inspection?: BookingInspectionOverview | null;
+  pickupInspection?: BookingInspectionFull | null;
+  returnInspection?: BookingInspectionFull | null;
+  paymentDetails?: BookingPaymentDetails | null;
+  timeline?: BookingTimelineEvent[] | null;
   createdAt?: string | null;
   updatedAt?: string | null;
   [key: string]: unknown;

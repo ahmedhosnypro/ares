@@ -95,6 +95,7 @@ public class LocationService : ILocationService
         var resultData = pagedResult.Data.Select(location => new
         {
             _id = location.Id.ToString(),
+            id = location.Id.ToString(),
             name = BuildDisplayText(location),
             latitude = location.Latitude,
             longitude = location.Longitude,
