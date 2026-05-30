@@ -56,13 +56,16 @@ public class BookingService : IBookingService
         Guid userId,
         CancellationToken cancellationToken = default)
     {
-        // Logic-level guard: admins are not permitted to create bookings
+        // Logic-level guard: admins are not permitted to have bookings.
+        // We check the effective customer (either request.CustomerUserId or the initiator).
+        var ownerUserId = request.CustomerUserId ?? userId;
+
         if (_userManager != null)
         {
-            var user = await _userManager.FindByIdAsync(userId.ToString());
-            if (user != null && await _userManager.IsInRoleAsync(user, "Admin"))
+            var targetCustomer = await _userManager.FindByIdAsync(ownerUserId.ToString());
+            if (targetCustomer != null && await _userManager.IsInRoleAsync(targetCustomer, "Admin"))
             {
-                throw new ForbiddenException("Administrators are not allowed to create bookings.");
+                throw new ForbiddenException("Administrators are not allowed to have bookings.");
             }
         }
 
@@ -121,6 +124,12 @@ public class BookingService : IBookingService
             throw new ConflictException("Vehicle is not available for booking");
         }
 
+        // Rule: Suppliers cannot book their own vehicles.
+        if (vehicle.UserId == ownerUserId)
+        {
+            throw new ForbiddenException("Suppliers are not allowed to book their own vehicles.");
+        }
+
         // Requirement 4.2: Calculate total price (days * pricePerDay) — always
         // server-side, never trust a client-provided total.
         var totalDays = (request.ReturnDate - request.PickupDate).Days;
@@ -132,7 +141,7 @@ public class BookingService : IBookingService
         // Determine which user the booking belongs to. For self-service the
         // caller is the customer; for admin-driven creation the request may
         // specify a target customer.
-        var ownerUserId = request.CustomerUserId ?? userId;
+        // (ownerUserId is already defined above)
 
         // Resolve pickup/dropoff label — prefer the explicit string, fall
         // back to the legacy Id. We will resolve it to a human-readable address if it's a GUID.

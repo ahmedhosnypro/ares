@@ -168,7 +168,7 @@ const ActionButtons = memo(function ActionButtons({
         <IconButton
           size="small"
           onClick={() => {
-            onNavigate(`/admin/vehicles/${vehicleId}/edit`);
+            onNavigate(`/admin/vehicles/${vehicleId}`);
           }}
           sx={{ borderRadius: 2 }}
         >
