@@ -76,13 +76,13 @@ export function useVerificationStatus(): VerificationStatusState {
       return;
     }
 
-    let cancelled = false;
+    const abortState = { cancelled: false };
     setState(prev => ({ ...prev, loading: true, error: null }));
 
     void (async () => {
       try {
         const record = await getMyVerification(accessToken);
-        if (cancelled) return;
+        if (abortState.cancelled) return;
 
         if (record === null) {
           setState({
@@ -104,7 +104,7 @@ export function useVerificationStatus(): VerificationStatusState {
           error: null,
         });
       } catch (err) {
-        if (cancelled) return;
+        if (abortState.cancelled) return;
         logger.error("Failed to load identity verification status", err);
         setState({
           loading: false,
@@ -117,7 +117,7 @@ export function useVerificationStatus(): VerificationStatusState {
     })();
 
     return () => {
-      cancelled = true;
+      abortState.cancelled = true;
     };
   }, [session?.accessToken, sessionStatus]);
 

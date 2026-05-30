@@ -94,10 +94,7 @@ export default function SupplierEarningsClient() {
   // common "how did I do this year vs last year" use case without
   // adding a full date-range picker.
   const currentYear = useMemo(() => new Date().getUTCFullYear(), []);
-  const yearOptions = useMemo(
-    () => [currentYear, currentYear - 1, currentYear - 2, currentYear - 3],
-    [currentYear]
-  );
+  const yearOptions = useMemo(() => [currentYear, currentYear - 1, currentYear - 2, currentYear - 3], [currentYear]);
   const [year, setYear] = useState<number>(currentYear);
 
   // ── Stats state ────────────────────────────────────────────────────────────
@@ -126,25 +123,25 @@ export default function SupplierEarningsClient() {
       return;
     }
 
-    let cancelled = false;
+    const abortState = { cancelled: false };
     setStatsLoading(true);
     setStatsError(null);
 
     void (async () => {
       try {
         const data = await getSupplierEarningsStats(accessToken);
-        if (!cancelled) setStats(data);
+        if (!abortState.cancelled) setStats(data);
       } catch (err) {
-        if (cancelled) return;
+        if (abortState.cancelled) return;
         logger.error("Failed to load supplier earnings stats", err);
         setStatsError("Could not load your earnings stats. Please try again shortly.");
       } finally {
-        if (!cancelled) setStatsLoading(false);
+        if (!abortState.cancelled) setStatsLoading(false);
       }
     })();
 
     return () => {
-      cancelled = true;
+      abortState.cancelled = true;
     };
   }, [accessToken, sessionStatus]);
 
@@ -157,25 +154,25 @@ export default function SupplierEarningsClient() {
       return;
     }
 
-    let cancelled = false;
+    const abortState = { cancelled: false };
     setTopLoading(true);
     setTopError(null);
 
     void (async () => {
       try {
         const data = await getSupplierTopVehicles(accessToken);
-        if (!cancelled) setTopVehicles(data);
+        if (!abortState.cancelled) setTopVehicles(data);
       } catch (err) {
-        if (cancelled) return;
+        if (abortState.cancelled) return;
         logger.error("Failed to load supplier top vehicles", err);
         setTopError("Could not load your top vehicles. Please try again shortly.");
       } finally {
-        if (!cancelled) setTopLoading(false);
+        if (!abortState.cancelled) setTopLoading(false);
       }
     })();
 
     return () => {
-      cancelled = true;
+      abortState.cancelled = true;
     };
   }, [accessToken, sessionStatus]);
 
@@ -188,25 +185,25 @@ export default function SupplierEarningsClient() {
       return;
     }
 
-    let cancelled = false;
+    const abortState = { cancelled: false };
     setChartLoading(true);
     setChartError(null);
 
     void (async () => {
       try {
         const data = await getSupplierEarningsChart(accessToken, year);
-        if (!cancelled) setChart(data);
+        if (!abortState.cancelled) setChart(data);
       } catch (err) {
-        if (cancelled) return;
+        if (abortState.cancelled) return;
         logger.error("Failed to load supplier earnings chart", err);
         setChartError("Could not load the monthly chart. Please try again shortly.");
       } finally {
-        if (!cancelled) setChartLoading(false);
+        if (!abortState.cancelled) setChartLoading(false);
       }
     })();
 
     return () => {
-      cancelled = true;
+      abortState.cancelled = true;
     };
   }, [accessToken, sessionStatus, year]);
 
@@ -248,10 +245,7 @@ export default function SupplierEarningsClient() {
   // ── Derived: does the chart contain any non-zero revenue? ──────────────────
   // Used to swap between the real BarChart and an empty-state hint, so
   // suppliers who haven't completed any bookings yet don't see a flat axis.
-  const hasChartData = useMemo(
-    () => Boolean(chart && chart.some(p => safeNum(p.revenue) > 0)),
-    [chart]
-  );
+  const hasChartData = useMemo(() => Boolean(chart && chart.some(p => safeNum(p.revenue) > 0)), [chart]);
 
   const handleYearChange = useCallback((next: number) => {
     setYear(next);
@@ -311,7 +305,7 @@ export default function SupplierEarningsClient() {
                   size="small"
                   value={year}
                   onChange={e => {
-                    handleYearChange(Number(e.target.value));
+                    handleYearChange(e.target.value);
                   }}
                   inputProps={{ "aria-label": "Year selector" }}
                   sx={{
@@ -386,7 +380,7 @@ export default function SupplierEarningsClient() {
                           background: theme.palette.background.paper,
                           boxShadow: theme.shadows[3],
                         }}
-                        formatter={(value: any) => [formatCurrency(Number(value)), "Revenue"]}
+                        formatter={(value: unknown) => [formatCurrency(Number(value)), "Revenue"]}
                       />
                       <Bar
                         dataKey="revenue"
@@ -545,8 +539,7 @@ function TopVehicleRow({ vehicle, rank }: { readonly vehicle: SupplierTopVehicle
           {name}
         </Typography>
         <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-          {formatCount(vehicle.completedBookingsCount)}{" "}
-          {vehicle.completedBookingsCount === 1 ? "booking" : "bookings"}
+          {formatCount(vehicle.completedBookingsCount)} {vehicle.completedBookingsCount === 1 ? "booking" : "bookings"}
         </Typography>
       </Box>
 

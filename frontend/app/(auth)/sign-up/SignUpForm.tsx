@@ -347,9 +347,7 @@ function RegistrationForm({
           handleBlur("confirmPassword");
         }}
         error={!!fieldErrors.confirmPassword && (touched.confirmPassword || confirmPassword.length > 0)}
-        helperText={
-          (touched.confirmPassword || confirmPassword.length > 0) ? fieldErrors.confirmPassword : undefined
-        }
+        helperText={touched.confirmPassword || confirmPassword.length > 0 ? fieldErrors.confirmPassword : undefined}
         slotProps={{
           input: {
             startAdornment: (

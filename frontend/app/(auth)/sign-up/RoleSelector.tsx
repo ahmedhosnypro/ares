@@ -108,10 +108,9 @@ export default function RoleSelector({ value, onChange, disabled = false }: Role
                 color: "text.primary",
                 font: "inherit",
                 outline: "none",
-                transition: theme.transitions.create(
-                  ["border-color", "background-color", "box-shadow", "transform"],
-                  { duration: theme.transitions.duration.shorter }
-                ),
+                transition: theme.transitions.create(["border-color", "background-color", "box-shadow", "transform"], {
+                  duration: theme.transitions.duration.shorter,
+                }),
                 boxShadow: selected ? `0 8px 20px -10px ${alpha(theme.palette.primary.main, 0.55)}` : "none",
                 opacity: disabled ? 0.6 : 1,
                 "&:hover": disabled

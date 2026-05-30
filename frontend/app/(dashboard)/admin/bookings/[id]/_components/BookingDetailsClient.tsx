@@ -639,108 +639,22 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
 
   const statusColorKey = getStatusConfig(booking.status);
   const carSupplier = booking.car?.supplier ?? booking.supplier ?? null;
-  const supplierDisplayName =
-    carSupplier?.companyName ?? carSupplier?.name ?? carSupplier?.fullName ?? "—";
+  const supplierDisplayName = carSupplier?.companyName ?? carSupplier?.name ?? carSupplier?.fullName ?? "—";
   const customerVerificationStatus = booking.customer?.verificationStatus;
   const currency = booking.paymentDetails?.currency ?? "USD";
 
   return (
     <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, maxWidth: 1240, mx: "auto" }}>
       {/* ── COMPACT HEADER ── */}
-      <Paper
-        elevation={0}
-        sx={{
-          p: { xs: 2, md: 2.5 },
-          mb: 3,
-          borderRadius: 3,
-          border: "1px solid",
-          borderColor: "divider",
-        }}
-      >
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          spacing={2}
-          sx={{
-            alignItems: { md: "center" },
-            justifyContent: "space-between",
-          }}
-        >
-          <Stack direction="row" spacing={2} sx={{ alignItems: "center", flex: 1, minWidth: 0 }}>
-            <Tooltip title="Back to bookings">
-              <IconButton
-                onClick={() => {
-                  router.push("/admin/bookings");
-                }}
-                sx={{ border: "1px solid", borderColor: "divider" }}
-              >
-                <BackIcon />
-              </IconButton>
-            </Tooltip>
-            <Box sx={{ minWidth: 0 }}>
-              <Stack direction="row" spacing={1.25} sx={{ alignItems: "center", flexWrap: "wrap" }}>
-                <Typography variant="h5" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
-                  Booking #{booking.bookingNumber ?? booking.id.split("-")[0]}
-                </Typography>
-                <Chip
-                  size="small"
-                  label={booking.status}
-                  color={statusColorKey}
-                  sx={{ fontWeight: 700, textTransform: "capitalize" }}
-                />
-              </Stack>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                Last updated {formatDateTime(booking.updatedAt ?? booking.createdAt ?? null)}
-              </Typography>
-            </Box>
-          </Stack>
-
-          <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
-            <Tooltip title="Refresh">
-              <span>
-                <IconButton
-                  onClick={() => {
-                    void loadBooking(false);
-                  }}
-                  disabled={refreshing}
-                  sx={{ border: "1px solid", borderColor: "divider" }}
-                >
-                  {refreshing ? <CircularProgress size={18} /> : <RefreshIcon />}
-                </IconButton>
-              </span>
-            </Tooltip>
-            <Button
-              variant="outlined"
-              startIcon={<EditIcon />}
-              onClick={() => {
-                router.push(`/admin/bookings/${booking.id}/edit`);
-              }}
-              sx={{ borderRadius: 2 }}
-            >
-              Edit
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<ChangeStatusIcon />}
-              onClick={() => {
-                setStatusModalOpen(true);
-              }}
-              sx={{ borderRadius: 2, fontWeight: 700 }}
-            >
-              Change Status
-            </Button>
-            <Button
-              variant="outlined"
-              color="error"
-              startIcon={<DeleteIcon />}
-              disabled={deleting}
-              onClick={handleDelete}
-              sx={{ borderRadius: 2 }}
-            >
-              Delete
-            </Button>
-          </Stack>
-        </Stack>
-      </Paper>
+      <BookingDetailsHeader
+        booking={booking}
+        statusColorKey={statusColorKey}
+        refreshing={refreshing}
+        deleting={deleting}
+        onLoadBooking={loadBooking}
+        onSetStatusModalOpen={setStatusModalOpen}
+        onDelete={handleDelete}
+      />
 
       {/* ── VERTICAL SECTIONS ── */}
       <Stack spacing={3}>
@@ -808,7 +722,7 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
                   fontSize: 24,
                 }}
               >
-                {booking.customer.fullName?.charAt(0)?.toUpperCase() ?? "?"}
+                {booking.customer.fullName.charAt(0).toUpperCase() || "?"}
               </Avatar>
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 1.5, flexWrap: "wrap" }}>
@@ -929,11 +843,7 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
               <InfoGrid columns={2}>
                 <InfoItem label="Supplier Name" value={carSupplier?.fullName ?? carSupplier?.name ?? "—"} />
                 <InfoItem label="Company Name" value={carSupplier?.companyName ?? supplierDisplayName} />
-                <InfoItem
-                  label="Email"
-                  value={carSupplier?.email ?? "—"}
-                  icon={<EmailIcon sx={{ fontSize: 16 }} />}
-                />
+                <InfoItem label="Email" value={carSupplier?.email ?? "—"} icon={<EmailIcon sx={{ fontSize: 16 }} />} />
                 <InfoItem
                   label="Phone Number"
                   value={carSupplier?.phone ?? "—"}
@@ -1119,5 +1029,123 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
         }}
       />
     </Box>
+  );
+}
+
+interface BookingDetailsHeaderProps {
+  readonly booking: Booking;
+  readonly statusColorKey: "primary" | "secondary" | "error" | "info" | "success" | "warning" | "default";
+  readonly refreshing: boolean;
+  readonly deleting: boolean;
+  readonly onLoadBooking: (showFullSpinner?: boolean) => Promise<void>;
+  readonly onSetStatusModalOpen: (open: boolean) => void;
+  readonly onDelete: () => void;
+}
+
+function BookingDetailsHeader({
+  booking,
+  statusColorKey,
+  refreshing,
+  deleting,
+  onLoadBooking,
+  onSetStatusModalOpen,
+  onDelete,
+}: BookingDetailsHeaderProps) {
+  const router = useRouter();
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        p: { xs: 2, md: 2.5 },
+        mb: 3,
+        borderRadius: 3,
+        border: "1px solid",
+        borderColor: "divider",
+      }}
+    >
+      <Stack
+        direction={{ xs: "column", md: "row" }}
+        spacing={2}
+        sx={{
+          alignItems: { md: "center" },
+          justifyContent: "space-between",
+        }}
+      >
+        <Stack direction="row" spacing={2} sx={{ alignItems: "center", flex: 1, minWidth: 0 }}>
+          <Tooltip title="Back to bookings">
+            <IconButton
+              onClick={() => {
+                router.push("/admin/bookings");
+              }}
+              sx={{ border: "1px solid", borderColor: "divider" }}
+            >
+              <BackIcon />
+            </IconButton>
+          </Tooltip>
+          <Box sx={{ minWidth: 0 }}>
+            <Stack direction="row" spacing={1.25} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+              <Typography variant="h5" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
+                Booking #{booking.bookingNumber ?? booking.id.split("-")[0]}
+              </Typography>
+              <Chip
+                size="small"
+                label={booking.status}
+                color={statusColorKey}
+                sx={{ fontWeight: 700, textTransform: "capitalize" }}
+              />
+            </Stack>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              Last updated {formatDateTime(booking.updatedAt ?? booking.createdAt ?? null)}
+            </Typography>
+          </Box>
+        </Stack>
+
+        <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
+          <Tooltip title="Refresh">
+            <span>
+              <IconButton
+                onClick={() => {
+                  void onLoadBooking(false);
+                }}
+                disabled={refreshing}
+                sx={{ border: "1px solid", borderColor: "divider" }}
+              >
+                {refreshing ? <CircularProgress size={18} /> : <RefreshIcon />}
+              </IconButton>
+            </span>
+          </Tooltip>
+          <Button
+            variant="outlined"
+            startIcon={<EditIcon />}
+            onClick={() => {
+              router.push(`/admin/bookings/${booking.id}/edit`);
+            }}
+            sx={{ borderRadius: 2 }}
+          >
+            Edit
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<ChangeStatusIcon />}
+            onClick={() => {
+              onSetStatusModalOpen(true);
+            }}
+            sx={{ borderRadius: 2, fontWeight: 700 }}
+          >
+            Change Status
+          </Button>
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={<DeleteIcon />}
+            disabled={deleting}
+            onClick={onDelete}
+            sx={{ borderRadius: 2 }}
+          >
+            Delete
+          </Button>
+        </Stack>
+      </Stack>
+    </Paper>
   );
 }

@@ -96,7 +96,7 @@ export default function VerificationRequiredCard({
     return null;
   }
 
-  const key = (status ?? "NotSubmitted") as Exclude<VerificationStatus, "Approved">;
+  const key = status ?? "NotSubmitted";
   const content = STATUS_CONTENT[key];
   const Icon = content.icon;
   const tone = content.tone;
@@ -126,10 +126,9 @@ export default function VerificationRequiredCard({
         border: "1px solid",
         borderColor: alpha(theme.palette[tone].main, 0.32),
         boxShadow: `0 6px 16px -8px ${alpha(theme.palette[tone].main, 0.45)}`,
-        transition: theme.transitions.create(
-          ["box-shadow", "transform", "border-color", "background-color"],
-          { duration: theme.transitions.duration.shorter }
-        ),
+        transition: theme.transitions.create(["box-shadow", "transform", "border-color", "background-color"], {
+          duration: theme.transitions.duration.shorter,
+        }),
         "&:hover": {
           borderColor: alpha(theme.palette[tone].main, 0.55),
           boxShadow: `0 10px 22px -8px ${alpha(theme.palette[tone].main, 0.55)}`,

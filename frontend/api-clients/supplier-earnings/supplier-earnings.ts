@@ -65,11 +65,9 @@ export async function getSupplierEarningsStats(accessToken: string): Promise<Sup
  * to the current UTC year if omitted). The backend always returns exactly
  * 12 points, in calendar order, with zero-revenue months filled in.
  */
-export async function getSupplierEarningsChart(
-  accessToken: string,
-  year?: number
-): Promise<MonthlyRevenuePoint[]> {
-  const path = typeof year === "number" ? `/api/supplier/earnings/chart?year=${year.toString()}` : "/api/supplier/earnings/chart";
+export async function getSupplierEarningsChart(accessToken: string, year?: number): Promise<MonthlyRevenuePoint[]> {
+  const path =
+    typeof year === "number" ? `/api/supplier/earnings/chart?year=${year.toString()}` : "/api/supplier/earnings/chart";
   return apiFetchJson<MonthlyRevenuePoint[]>(path, {
     method: "GET",
     accessToken,

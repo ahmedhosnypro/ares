@@ -68,15 +68,14 @@ export default function CompleteProfileClient() {
       return;
     }
     if (session?.user) {
-      setFirstName(session.user.firstName ?? "");
-      setLastName(session.user.lastName ?? "");
+      setFirstName(session.user.firstName || "");
+      setLastName(session.user.lastName || "");
     }
   }, [router, session, sessionStatus]);
 
-  const canSubmit =
-    !isSaving && firstName.trim().length > 0 && lastName.trim().length > 0 && phone.trim().length > 0;
+  const canSubmit = !isSaving && firstName.trim().length > 0 && lastName.trim().length > 0 && phone.trim().length > 0;
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     if (!canSubmit) return;
 
