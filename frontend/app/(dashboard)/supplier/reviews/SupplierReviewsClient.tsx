@@ -53,7 +53,7 @@ import {
   EditRounded as EditIcon,
   RateReviewRounded as ReviewIcon,
   ReportProblemRounded as ReportIcon,
-  VisibilityOutlined as ViewIcon,
+  LaunchOutlined as ViewIcon,
   DirectionsCarFilledTwoTone as CarIcon,
   StarRounded as StarIcon,
   EmojiEventsRounded as TopRatedIcon,

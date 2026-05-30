@@ -43,7 +43,7 @@ import {
   LocalOfferTwoTone as PriceIcon,
   CreditCardTwoTone as PaymentIcon,
   AddRounded as AddIcon,
-  VisibilityOutlined as ViewIcon,
+  LaunchOutlined as ViewIcon,
   EditOutlined as EditIcon,
   SyncAltOutlined as ChangeStatusIcon,
   DeleteOutlined as DeleteIcon,
@@ -663,7 +663,7 @@ export default function BookingsClient() {
         </MenuItem>
         <Divider />
         <MenuItem onClick={handleDeleteClick} sx={{ fontSize: 14, gap: 1.5, color: "error.main", fontWeight: 600 }}>
-          <DeleteIcon fontSize="small" />
+          <DeleteIcon fontSize="small" color="error" />
           Delete Booking
         </MenuItem>
       </Menu>

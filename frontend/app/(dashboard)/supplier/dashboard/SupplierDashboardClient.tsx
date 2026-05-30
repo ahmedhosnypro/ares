@@ -173,12 +173,29 @@ function formatCurrency(value: number): string {
 
 export default function SupplierDashboardClient() {
   const theme = useTheme();
-  const { data: session, status: sessionStatus } = useSession();
+  const { data: session, status: sessionStatus } = useSession({
+    required: true,
+  });
 
   // ── Live stats state ──────────────────────────────────────────────────────
   const [stats, setStats] = useState<SupplierDashboardStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
   const [statsError, setStatsError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    if (sessionStatus === "authenticated" && !session.user.roles.includes("Supplier")) {
+      window.location.href = "/";
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setMounted(true);
+    }, 100);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [sessionStatus, session?.user.roles]);
 
   useEffect(() => {
     if (sessionStatus === "loading") return;
@@ -186,7 +203,7 @@ export default function SupplierDashboardClient() {
     let cancelled = false;
 
     const initStats = async () => {
-      const accessToken = session?.accessToken;
+      const accessToken = session.accessToken;
       if (!accessToken) {
         setStatsLoading(false);
         setStatsError("You must be signed in to view dashboard stats.");
@@ -278,7 +295,7 @@ export default function SupplierDashboardClient() {
         {/* ── Analytics charts row ──────────────────────────────────────── */}
         <Grid container spacing={3} sx={{ mb: 3 }}>
           <Grid size={{ xs: 12, lg: 7 }}>
-            <motion.div variants={itemVariants} style={{ height: "100%" }}>
+            <motion.div variants={itemVariants} style={{ height: "100%", width: "100%" }}>
               <Card
                 elevation={0}
                 sx={theme => ({
@@ -301,46 +318,48 @@ export default function SupplierDashboardClient() {
                       <MoreVertIcon />
                     </IconButton>
                   </Box>
-                  <Box sx={{ width: "100%", height: 280 }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={DEMO_EARNINGS} margin={{ top: 10, right: 16, left: -8, bottom: 0 }}>
-                        <defs>
-                          <linearGradient id="supplierEarningsFill" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor={theme.palette.primary.main} stopOpacity={0.45} />
-                            <stop offset="100%" stopColor={theme.palette.primary.main} stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} vertical={false} />
-                        <XAxis
-                          dataKey="month"
-                          tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
-                          axisLine={false}
-                          tickLine={false}
-                        />
-                        <YAxis
-                          tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
-                          axisLine={false}
-                          tickLine={false}
-                          tickFormatter={(value: number) => `$${value.toLocaleString()}`}
-                        />
-                        <Tooltip
-                          formatter={(value: unknown) => [`$${(value as number).toLocaleString()}`, "Earnings"]}
-                          contentStyle={{
-                            borderRadius: 8,
-                            border: `1px solid ${theme.palette.divider}`,
-                            background: theme.palette.background.paper,
-                            boxShadow: theme.shadows[3],
-                          }}
-                        />
-                        <Area
-                          type="monotone"
-                          dataKey="earnings"
-                          stroke={theme.palette.primary.main}
-                          strokeWidth={2.5}
-                          fill="url(#supplierEarningsFill)"
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
+                  <Box sx={{ width: "100%", height: 280, minWidth: 0, position: "relative", overflow: "hidden" }}>
+                    {mounted && (
+                      <ResponsiveContainer width="100%" height={280} minWidth={0}>
+                        <AreaChart data={DEMO_EARNINGS} margin={{ top: 10, right: 16, left: -8, bottom: 0 }}>
+                          <defs>
+                            <linearGradient id="supplierEarningsFill" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor={theme.palette.primary.main} stopOpacity={0.45} />
+                              <stop offset="100%" stopColor={theme.palette.primary.main} stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} vertical={false} />
+                          <XAxis
+                            dataKey="month"
+                            tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
+                            axisLine={false}
+                            tickLine={false}
+                          />
+                          <YAxis
+                            tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
+                            axisLine={false}
+                            tickLine={false}
+                            tickFormatter={(value: number) => `$${value.toLocaleString()}`}
+                          />
+                          <Tooltip
+                            formatter={(value: unknown) => [`$${(value as number).toLocaleString()}`, "Earnings"]}
+                            contentStyle={{
+                              borderRadius: 8,
+                              border: `1px solid ${theme.palette.divider}`,
+                              background: theme.palette.background.paper,
+                              boxShadow: theme.shadows[3],
+                            }}
+                          />
+                          <Area
+                            type="monotone"
+                            dataKey="earnings"
+                            stroke={theme.palette.primary.main}
+                            strokeWidth={2.5}
+                            fill="url(#supplierEarningsFill)"
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    )}
                   </Box>
                 </CardContent>
               </Card>
@@ -348,7 +367,7 @@ export default function SupplierDashboardClient() {
           </Grid>
 
           <Grid size={{ xs: 12, lg: 5 }}>
-            <motion.div variants={itemVariants} style={{ height: "100%" }}>
+            <motion.div variants={itemVariants} style={{ height: "100%", width: "100%" }}>
               <Card
                 elevation={0}
                 sx={theme => ({
@@ -371,34 +390,41 @@ export default function SupplierDashboardClient() {
                       <MoreVertIcon />
                     </IconButton>
                   </Box>
-                  <Box sx={{ width: "100%", height: 280 }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={DEMO_BOOKINGS_BY_STATUS} margin={{ top: 10, right: 16, left: -8, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} vertical={false} />
-                        <XAxis
-                          dataKey="status"
-                          tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
-                          axisLine={false}
-                          tickLine={false}
-                        />
-                        <YAxis
-                          tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
-                          axisLine={false}
-                          tickLine={false}
-                          allowDecimals={false}
-                        />
-                        <Tooltip
-                          cursor={{ fill: alpha(theme.palette.primary.main, 0.06) }}
-                          contentStyle={{
-                            borderRadius: 8,
-                            border: `1px solid ${theme.palette.divider}`,
-                            background: theme.palette.background.paper,
-                            boxShadow: theme.shadows[3],
-                          }}
-                        />
-                        <Bar dataKey="count" fill={theme.palette.primary.main} radius={[8, 8, 0, 0]} maxBarSize={42} />
-                      </BarChart>
-                    </ResponsiveContainer>
+                  <Box sx={{ width: "100%", height: 280, minWidth: 0, position: "relative", overflow: "hidden" }}>
+                    {mounted && (
+                      <ResponsiveContainer width="100%" height={280} minWidth={0}>
+                        <BarChart data={DEMO_BOOKINGS_BY_STATUS} margin={{ top: 10, right: 16, left: -8, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} vertical={false} />
+                          <XAxis
+                            dataKey="status"
+                            tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
+                            axisLine={false}
+                            tickLine={false}
+                          />
+                          <YAxis
+                            tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
+                            axisLine={false}
+                            tickLine={false}
+                            allowDecimals={false}
+                          />
+                          <Tooltip
+                            cursor={{ fill: alpha(theme.palette.primary.main, 0.06) }}
+                            contentStyle={{
+                              borderRadius: 8,
+                              border: `1px solid ${theme.palette.divider}`,
+                              background: theme.palette.background.paper,
+                              boxShadow: theme.shadows[3],
+                            }}
+                          />
+                          <Bar
+                            dataKey="count"
+                            fill={theme.palette.primary.main}
+                            radius={[8, 8, 0, 0]}
+                            maxBarSize={42}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    )}
                   </Box>
                 </CardContent>
               </Card>

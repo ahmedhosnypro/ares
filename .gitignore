@@ -47,5 +47,5 @@ frontend/.eslintcache
 
 *.tmp
 
-# Local Storage
-# (Contents handled by backend/Api/wwwroot/.gitignore)
+
+.playwright-mcp/

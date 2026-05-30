@@ -18,7 +18,7 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 import HistoryIcon from "@mui/icons-material/History";
-import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import VisibilityOutlinedIcon from "@mui/icons-material/LaunchOutlined";
 import { getInspectionHistory, type InspectionSummary } from "@/api-clients/inspections/inspections";
 import { logger } from "@/utils/logger";
 import InspectionStatusBadge from "../_components/InspectionStatusBadge";

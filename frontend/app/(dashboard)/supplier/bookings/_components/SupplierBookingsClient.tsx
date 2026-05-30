@@ -35,7 +35,7 @@ import {
   MoreVertRounded as MoreVertIcon,
   LocalOfferTwoTone as PriceIcon,
   CreditCardTwoTone as PaymentIcon,
-  VisibilityOutlined as ViewIcon,
+  LaunchOutlined as ViewIcon,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";

@@ -20,11 +20,16 @@ export default function BookingOverview() {
   const [error, setError] = useState(false);
   const [stats, setStats] = useState<{ name: string; value: number; fill: string }[]>([]);
   const [total, setTotal] = useState(0);
+  const [mounted, setMounted] = useState(false);
   const isMounted = useRef(true);
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setMounted(true);
+    }, 100);
     isMounted.current = true;
     return () => {
+      clearTimeout(timer);
       isMounted.current = false;
     };
   }, []);
@@ -164,30 +169,34 @@ export default function BookingOverview() {
     return (
       <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, alignItems: "center", minHeight: 250 }}>
         {/* Donut Chart Container */}
-        <Box sx={{ position: "relative", width: { xs: "100%", md: "50%" }, height: 250 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={stats.filter(s => s.value > 0)}
-                cx="50%"
-                cy="50%"
-                innerRadius={70}
-                outerRadius={100}
-                paddingAngle={3}
-                dataKey="value"
-                animationDuration={1000}
-                animationBegin={0}
-              />
-              <Tooltip
-                formatter={(value?: unknown, name?: unknown) => [
-                  `${((value as number) || 0).toLocaleString()} ${typeof name === "string" ? name.toLowerCase() : ""}`,
-                  "",
-                ]}
-                separator=""
-                contentStyle={{ borderRadius: 8, border: "none", boxShadow: theme.shadows[3] }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+        <Box
+          sx={{ position: "relative", width: { xs: "100%", md: "50%" }, height: 250, minWidth: 0, overflow: "hidden" }}
+        >
+          {mounted && (
+            <ResponsiveContainer width="100%" height={250} minWidth={0}>
+              <PieChart>
+                <Pie
+                  data={stats.filter(s => s.value > 0)}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={70}
+                  outerRadius={100}
+                  paddingAngle={3}
+                  dataKey="value"
+                  animationDuration={1000}
+                  animationBegin={0}
+                />
+                <Tooltip
+                  formatter={(value?: unknown, name?: unknown) => [
+                    `${((value as number) || 0).toLocaleString()} ${typeof name === "string" ? name.toLowerCase() : ""}`,
+                    "",
+                  ]}
+                  separator=""
+                  contentStyle={{ borderRadius: 8, border: "none", boxShadow: theme.shadows[3] }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
           {/* Center Text */}
           <Box
             sx={{

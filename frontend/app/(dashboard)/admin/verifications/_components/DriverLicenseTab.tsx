@@ -52,7 +52,7 @@ import {
 } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CloseIcon from "@mui/icons-material/Close";
-import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import VisibilityOutlinedIcon from "@mui/icons-material/LaunchOutlined";
 import {
   type AdminDriverLicenseDto,
   approveDriverLicense,

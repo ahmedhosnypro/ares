@@ -32,7 +32,7 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 import SearchIcon from "@mui/icons-material/Search";
-import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import VisibilityOutlinedIcon from "@mui/icons-material/LaunchOutlined";
 import BlockIcon from "@mui/icons-material/Block";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import AddIcon from "@mui/icons-material/Add";

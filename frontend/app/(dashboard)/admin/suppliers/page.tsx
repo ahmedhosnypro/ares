@@ -38,7 +38,7 @@ import { Theme } from "@mui/material";
 
 import Link from "next/link";
 import SearchIcon from "@mui/icons-material/Search";
-import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import VisibilityOutlinedIcon from "@mui/icons-material/LaunchOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import BlockIcon from "@mui/icons-material/Block";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";

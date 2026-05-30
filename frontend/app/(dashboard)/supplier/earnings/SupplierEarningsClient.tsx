@@ -101,6 +101,16 @@ export default function SupplierEarningsClient() {
   const [stats, setStats] = useState<SupplierEarningsStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
   const [statsError, setStatsError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMounted(true);
+    }, 100);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, []);
 
   // ── Chart state ────────────────────────────────────────────────────────────
   const [chart, setChart] = useState<MonthlyRevenuePoint[] | null>(null);
@@ -355,42 +365,44 @@ export default function SupplierEarningsClient() {
                   </Typography>
                 </Box>
               ) : (
-                <Box sx={{ width: "100%", height: 280 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chart ?? []} margin={{ top: 10, right: 16, left: -8, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} vertical={false} />
-                      <XAxis
-                        dataKey="month"
-                        tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
-                        axisLine={false}
-                        tickLine={false}
-                      />
-                      <YAxis
-                        tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
-                        axisLine={false}
-                        tickLine={false}
-                        tickFormatter={(value: number) => formatCurrency(value)}
-                        width={68}
-                      />
-                      <Tooltip
-                        cursor={{ fill: alpha(theme.palette.primary.main, 0.06) }}
-                        contentStyle={{
-                          borderRadius: 8,
-                          border: `1px solid ${theme.palette.divider}`,
-                          background: theme.palette.background.paper,
-                          boxShadow: theme.shadows[3],
-                        }}
-                        formatter={(value: unknown) => [formatCurrency(Number(value)), "Revenue"]}
-                      />
-                      <Bar
-                        dataKey="revenue"
-                        name="Revenue"
-                        fill={theme.palette.primary.main}
-                        radius={[8, 8, 0, 0]}
-                        maxBarSize={42}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
+                <Box sx={{ width: "100%", height: 280, minWidth: 0, position: "relative", overflow: "hidden" }}>
+                  {mounted && (
+                    <ResponsiveContainer width="100%" height={280} minWidth={0}>
+                      <BarChart data={chart ?? []} margin={{ top: 10, right: 16, left: -8, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} vertical={false} />
+                        <XAxis
+                          dataKey="month"
+                          tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <YAxis
+                          tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
+                          axisLine={false}
+                          tickLine={false}
+                          tickFormatter={(value: number) => formatCurrency(value)}
+                          width={68}
+                        />
+                        <Tooltip
+                          cursor={{ fill: alpha(theme.palette.primary.main, 0.06) }}
+                          contentStyle={{
+                            borderRadius: 8,
+                            border: `1px solid ${theme.palette.divider}`,
+                            background: theme.palette.background.paper,
+                            boxShadow: theme.shadows[3],
+                          }}
+                          formatter={(value: unknown) => [formatCurrency(Number(value)), "Revenue"]}
+                        />
+                        <Bar
+                          dataKey="revenue"
+                          name="Revenue"
+                          fill={theme.palette.primary.main}
+                          radius={[8, 8, 0, 0]}
+                          maxBarSize={42}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
                 </Box>
               )}
             </CardContent>

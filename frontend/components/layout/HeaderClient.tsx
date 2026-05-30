@@ -340,7 +340,7 @@ export default function HeaderClient({ session }: HeaderClientProps) {
                     {isAdminOrSupplier && (
                       <MenuItem
                         component={Link}
-                        href="/admin"
+                        href={isAdmin ? "/admin" : "/supplier/dashboard"}
                         onClick={() => {
                           setUserMenuAnchor(null);
                         }}

@@ -283,7 +283,7 @@ export default function AdminCountriesPage() {
                               },
                             }}
                           >
-                            <DeleteIcon fontSize="small" />
+                            <DeleteIcon fontSize="small" color="error" />
                           </IconButton>
                         </Tooltip>
                       </TableCell>

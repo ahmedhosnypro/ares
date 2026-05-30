@@ -1,8 +1,26 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const response = NextResponse.next();
+
+  const token = await getToken({ req: request });
+  const path = request.nextUrl.pathname;
+
+  // Protect Admin routes
+  if (path.startsWith("/admin")) {
+    if (!token || !token.roles.includes("Admin")) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+  }
+
+  // Protect Supplier routes
+  if (path.startsWith("/supplier")) {
+    if (!token || !token.roles.includes("Supplier")) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+  }
 
   // Set theme cookie if not present and user has a preference in headers
   const themeCookie = request.cookies.get("theme-mode");

@@ -53,7 +53,7 @@ import {
   DirectionsCarFilledTwoTone as CarIcon,
   EditRounded as EditIcon,
   SearchRounded as SearchIcon,
-  VisibilityOutlined as ViewIcon,
+  LaunchOutlined as ViewIcon,
 } from "@mui/icons-material";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -753,7 +753,7 @@ function VehicleTableRow({
                 onDelete(v);
               }}
             >
-              <DeleteIcon fontSize="small" />
+              <DeleteIcon fontSize="small" color="error" />
             </IconButton>
           </Tooltip>
         </Stack>

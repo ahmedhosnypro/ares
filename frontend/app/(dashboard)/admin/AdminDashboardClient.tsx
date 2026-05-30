@@ -82,7 +82,9 @@ interface RawBooking {
 }
 
 export default function AdminDashboardClient() {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useSession({
+    required: true,
+  });
 
   const [summaryData, setSummaryData] = useState<SummaryItem[]>([]);
   const [recentBookings, setRecentBookings] = useState<BookingListItem[]>([]);
@@ -91,6 +93,11 @@ export default function AdminDashboardClient() {
   const { stats: vehicleStats } = useAdminVehicleStats(session?.accessToken);
 
   useEffect(() => {
+    if (status === "authenticated" && !session.user.roles.includes("Admin")) {
+      window.location.href = "/";
+      return;
+    }
+
     const fetchDashboardData = async () => {
       try {
         if (session?.accessToken) {

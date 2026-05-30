@@ -84,7 +84,7 @@ const SORT_OPTIONS: readonly { value: VehicleSortBy; label: string }[] = [
   { value: "priceHigh", label: "Price: High → Low" },
   { value: "priceLow", label: "Price: Low → High" },
 ];
-import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import VisibilityOutlinedIcon from "@mui/icons-material/LaunchOutlined";
 import { toImageUrl } from "@/utils/image-url";
 import { logger } from "@/utils/logger";
 
@@ -193,7 +193,7 @@ const ActionButtons = memo(function ActionButtons({
               "&.Mui-disabled": { opacity: 0.3 },
             }}
           >
-            <DeleteIcon fontSize="small" />
+            <DeleteIcon fontSize="small" color="error" />
           </IconButton>
         </span>
       </Tooltip>

@@ -141,7 +141,7 @@ const ActionButtons = memo(function ActionButtons({
             },
           }}
         >
-          <DeleteIcon sx={{ fontSize: "small" }} />
+          <DeleteIcon sx={{ fontSize: "small" }} color="error" />
         </IconButton>
       </Tooltip>
     </Stack>
