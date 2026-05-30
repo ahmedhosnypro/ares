@@ -4,24 +4,21 @@ import SupplierEarningsClient from "./SupplierEarningsClient";
 /**
  * Supplier Earnings dashboard — page entrypoint.
  *
- * The backend endpoints for the earnings module are implemented and
- * ownership-scoped:
+ * Wired to the live backend endpoints (all ownership-scoped to the
+ * authenticated supplier by `[Authorize(Roles = "Supplier")]` + the
+ * `Vehicle.UserId == supplierId` filter in `SupplierEarningsService`):
  *
- *   - GET /api/supplier/earnings/stats
- *   - GET /api/supplier/earnings/chart
- *   - GET /api/supplier/earnings/top-vehicles
+ *   - GET /api/supplier/earnings/stats         — total / this-month / last-month / completed count
+ *   - GET /api/supplier/earnings/chart?year=…  — 12 monthly data points
+ *   - GET /api/supplier/earnings/top-vehicles  — top 5 vehicles by lifetime earnings
  *
- * The UI rendered by `SupplierEarningsClient` is intentionally a
- * *structural placeholder* — stat-card slots, an empty chart frame, and
- * an empty top-vehicles list — with no API wiring yet. Real data
- * binding will be added in a follow-up iteration. See `./README.md`
- * for the planned analytics sections, payload shapes, business rules
- * and security model.
+ * All numbers are aggregated from <c>BookingStatus.Completed</c> bookings
+ * only — pending, in-flight and cancelled bookings are excluded.
  */
 
 export const metadata: Metadata = {
   title: "Earnings | ARES Supplier",
-  description: "Supplier Earnings dashboard — UI scaffolding (data binding pending).",
+  description: "Supplier Earnings dashboard — total earnings, monthly revenue, and top performing vehicles.",
 };
 
 export default function SupplierEarningsPage() {

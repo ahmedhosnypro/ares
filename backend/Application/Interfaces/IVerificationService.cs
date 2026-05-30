@@ -8,6 +8,15 @@ namespace Backend.Application.Interfaces
         Task<UserVerificationDto?> GetMyVerificationAsync(Guid userId, CancellationToken cancellationToken = default);
         Task<UserVerificationDto> SubmitVerificationAsync(Guid userId, SubmitVerificationRequest request, CancellationToken cancellationToken = default);
 
+        /// <summary>
+        /// Returns <c>true</c> iff the given user has an Identity verification
+        /// record whose <see cref="Verification.Status"/> is
+        /// <c>"Approved"</c>. Used to gate booking creation — the spec
+        /// requires that a customer cannot create a booking without an
+        /// approved identity verification.
+        /// </summary>
+        Task<bool> IsApprovedAsync(Guid userId, CancellationToken cancellationToken = default);
+
         // ── Admin operations ──────────────────────────────────────────────
         Task<PagedResult<AdminVerificationDto>> GetVerificationsForAdminAsync(
             int page,

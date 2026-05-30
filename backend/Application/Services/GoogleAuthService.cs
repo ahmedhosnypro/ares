@@ -160,7 +160,8 @@ public class GoogleAuthService : IGoogleAuthService
                 FirstName: user.FirstName ?? string.Empty,
                 LastName: user.LastName ?? string.Empty,
                 Roles: roles.ToList(),
-                EmailVerified: user.EmailConfirmed
+                EmailVerified: user.EmailConfirmed,
+                Status: user.Status
             )
         );
     }

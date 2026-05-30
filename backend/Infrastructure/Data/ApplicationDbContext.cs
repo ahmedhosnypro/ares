@@ -62,6 +62,8 @@ namespace Backend.Infrastructure.Data
         IQueryable<TermsSection> IApplicationDbContext.TermsSections => TermsSections;
         IQueryable<AboutSection> IApplicationDbContext.AboutSections => AboutSections;
         IQueryable<Driver> IApplicationDbContext.Drivers => Drivers;
+        IQueryable<VehicleInspection> IApplicationDbContext.VehicleInspections => VehicleInspections;
+        IQueryable<InspectionImage> IApplicationDbContext.InspectionImages => InspectionImages;
 
         public void AddFavorite(Favorite favorite)
         {

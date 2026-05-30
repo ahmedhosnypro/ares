@@ -129,7 +129,13 @@ export default function SignInForm() {
       } else if (res?.ok) {
         // Fetch session to determine roles
         const session = await getSession();
-        if (callbackUrl) {
+        // Pending users need to complete their profile first — applies
+        // to both Customer and Supplier (Admin / Inspector accounts are
+        // always provisioned by an admin and never enter Pending).
+        const isPending = (session?.user.status ?? "").toLowerCase() === "pending";
+        if (isPending) {
+          router.push("/complete-profile");
+        } else if (callbackUrl) {
           router.push(callbackUrl);
         } else if (session?.user.roles.includes("Admin")) {
           router.push("/admin");
