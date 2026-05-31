@@ -4,6 +4,7 @@
  */
 import { z } from "zod";
 import { isValidPhoneNumber } from "libphonenumber-js";
+import * as cardValidator from "card-validator";
 
 // ── primitives ─────────────────────────────────────────────────────────────────
 
@@ -132,6 +133,31 @@ export const changePasswordSchema = z
     path: ["confirmPassword"],
   });
 
+// ── payments ───────────────────────────────────────────────────────────────────
+
+export const paymentSchema = z.object({
+  cardNumber: z
+    .string()
+    .min(1, "Card number is required")
+    .refine(v => cardValidator.number(v).isValid, {
+      message: "Please enter a valid card number",
+    }),
+  cardHolder: z.string().min(1, "Cardholder name is required").max(100, "Name must not exceed 100 characters"),
+  expiryDate: z
+    .string()
+    .min(1, "Expiry date is required")
+    .regex(/^\d{2}\/\d{2}$/, "Expiry date must be in MM/YY format")
+    .refine(v => cardValidator.expirationDate(v).isValid, {
+      message: "Please enter a valid expiry date",
+    }),
+  cvv: z
+    .string()
+    .min(1, "CVV is required")
+    .refine(v => cardValidator.cvv(v).isValid, {
+      message: "Please enter a valid CVV",
+    }),
+});
+
 // ── inferred types ─────────────────────────────────────────────────────────────
 
 export type SignInFormData = z.infer<typeof signInSchema>;
@@ -139,3 +165,4 @@ export type SignUpFormData = z.infer<typeof signUpSchema>;
 export type PersonalInfoFormData = z.infer<typeof personalInfoSchema>;
 export type AddressFormData = z.infer<typeof addressSchema>;
 export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
+export type PaymentFormData = z.infer<typeof paymentSchema>;

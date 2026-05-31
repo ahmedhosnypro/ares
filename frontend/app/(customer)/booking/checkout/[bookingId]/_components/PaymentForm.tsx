@@ -1,12 +1,31 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { Alert, Box, Button, Grid, Paper, Stack, TextField, Typography, CircularProgress } from "@mui/material";
+import { useState, useRef } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as cardValidator from "card-validator";
+import {
+  Alert,
+  Box,
+  Button,
+  Grid,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+  CircularProgress,
+  InputAdornment,
+} from "@mui/material";
 import CreditCardIcon from "@mui/icons-material/CreditCard";
 import LockIcon from "@mui/icons-material/Lock";
+import PersonIcon from "@mui/icons-material/Person";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import SecurityIcon from "@mui/icons-material/Security";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
+import { paymentSchema, type PaymentFormData } from "@/lib/validation/schemas";
 
 interface PaymentFormProps {
   readonly bookingId: string;
@@ -20,55 +39,86 @@ interface PaymentResponse {
   readonly message: string;
 }
 
+// ── Formatters & Helpers ───────────────────────────────────────────────────────
+
+const getCardIconUrl = (type: string | null) => {
+  if (!type) return null;
+  const map: Record<string, string> = {
+    visa: "visa",
+    mastercard: "mastercard",
+    "american-express": "amex",
+    discover: "discover",
+    "diners-club": "diners",
+    jcb: "jcb",
+    unionpay: "unionpay",
+    maestro: "maestro",
+  };
+  const key = map[type] || type;
+  return `/img/cards/${key}.svg`;
+};
+
+const formatCardNumber = (value: string) => {
+  const v = value.replace(/\s+/g, "").replace(/\D/gi, "");
+  const parts = [];
+
+  for (let i = 0, len = v.length; i < len; i += 4) {
+    parts.push(v.substring(i, i + 4));
+  }
+
+  return parts.join(" ").substring(0, 19); // Max 16 digits + 3 spaces
+};
+
+const formatExpiryDate = (value: string) => {
+  const v = value.replace(/\s+/g, "").replace(/\D/gi, "");
+  if (v.length >= 2) {
+    return `${v.substring(0, 2)}/${v.substring(2, 4)}`.substring(0, 5);
+  }
+  return v;
+};
+
+const formatCVV = (value: string) => {
+  return value.replace(/\D/gi, "").substring(0, 4);
+};
+
+// ── Component ──────────────────────────────────────────────────────────────────
+
 export default function PaymentForm({ bookingId, amount, accessToken }: PaymentFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
-  const [formValues, setFormValues] = useState({
-    cardNumber: "",
-    expiryDate: "",
-    cvv: "",
-    cardHolder: "",
+  const [serverError, setServerError] = useState("");
+  const [cardType, setCardType] = useState<string | null>(null);
+
+  // Refs for auto-focus
+  const expiryRef = useRef<HTMLInputElement>(null);
+  const cvvRef = useRef<HTMLInputElement>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitted },
+  } = useForm<PaymentFormData>({
+    resolver: zodResolver(paymentSchema),
+    mode: "onChange",
+    defaultValues: {
+      cardNumber: "",
+      cardHolder: "",
+      expiryDate: "",
+      cvv: "",
+    },
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormValues(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError("");
-
-    // Validate Expiry Date
-    const expiryRegex = /^\d{2}\/\d{2}$/;
-    if (!expiryRegex.test(formValues.expiryDate)) {
-      setError("Please enter a valid expiry date in MM/YY format.");
-      return;
-    }
-
-    const [monthStr, yearStr] = formValues.expiryDate.split("/");
-    const month = parseInt(monthStr, 10);
-    const year = parseInt(yearStr, 10) + 2000;
-
-    if (month < 1 || month > 12) {
-      setError("Please enter a valid month (01-12).");
-      return;
-    }
-
-    const now = new Date();
-    const currentMonth = now.getMonth() + 1;
-    const currentYear = now.getFullYear();
-
-    if (year < currentYear || (year === currentYear && month < currentMonth)) {
-      setError("The card has expired. Please enter a valid expiry date.");
-      return;
-    }
-
+  const onSubmit = async (data: PaymentFormData) => {
+    setServerError("");
     setIsSubmitting(true);
 
     try {
-      // Simulate a small delay for payment processing
+      logger.info("Processing payment", {
+        bookingId,
+        cardHolder: data.cardHolder,
+        cardLast4: data.cardNumber.slice(-4),
+      });
+
       await new Promise(resolve => setTimeout(resolve, 1500));
 
       const response = await fetch(toApiUrl("/api/payments/create"), {
@@ -80,14 +130,14 @@ export default function PaymentForm({ bookingId, amount, accessToken }: PaymentF
         body: JSON.stringify({
           bookingId,
           amount,
-          paymentMethodId: "00000000-0000-0000-0000-000000000000", // Generic ID for new card
+          paymentMethodId: "00000000-0000-0000-0000-000000000000",
           paymentMethod: "credit_card",
         }),
       });
 
       if (!response.ok) {
-        const payload = (await response.json()) as { message?: string };
-        throw new Error(payload.message ?? "Payment processing failed.");
+        const payload = (await response.json().catch(() => ({}))) as { message?: string };
+        throw new Error(payload.message ?? "Payment processing failed. Please try again.");
       }
 
       const payload = (await response.json()) as PaymentResponse;
@@ -95,11 +145,11 @@ export default function PaymentForm({ bookingId, amount, accessToken }: PaymentF
       if (payload.status === "Captured" || payload.status === "Success") {
         router.push(`/bookings/confirmation/${bookingId}`);
       } else {
-        setError(payload.message || "Payment was not successful. Please try again.");
+        setServerError(payload.message || "Payment was not successful. Please verify your details.");
       }
     } catch (err) {
       logger.error("Payment submission error", err);
-      setError(err instanceof Error ? err.message : "An unexpected error occurred during payment.");
+      setServerError(err instanceof Error ? err.message : "An unexpected error occurred.");
     } finally {
       setIsSubmitting(false);
     }
@@ -119,62 +169,206 @@ export default function PaymentForm({ bookingId, amount, accessToken }: PaymentF
           Secure payment via simulated Credit or Debit card.
         </Typography>
 
-        {error && <Alert severity="error">{error}</Alert>}
+        {serverError && <Alert severity="error">{serverError}</Alert>}
 
         <Box
           component="form"
-          onSubmit={event => {
-            void handleSubmit(event);
+          onSubmit={e => {
+            void handleSubmit(onSubmit)(e);
           }}
+          noValidate
         >
           <Grid container spacing={2.5}>
+            {/* 1. Card Number */}
             <Grid size={12}>
-              <TextField
-                required
-                fullWidth
-                label="Card Number"
+              <Controller
                 name="cardNumber"
-                placeholder="0000 0000 0000 0000"
-                value={formValues.cardNumber}
-                onChange={handleInputChange}
-                disabled={isSubmitting}
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    label="Card Number"
+                    placeholder="•••• •••• •••• ••••"
+                    disabled={isSubmitting}
+                    error={
+                      !!errors.cardNumber && (isSubmitted || !cardValidator.number(field.value).isPotentiallyValid)
+                    }
+                    helperText={
+                      isSubmitted || !cardValidator.number(field.value).isPotentiallyValid
+                        ? errors.cardNumber?.message
+                        : ""
+                    }
+                    onChange={e => {
+                      const formatted = formatCardNumber(e.target.value);
+                      field.onChange(formatted);
+
+                      const validation = cardValidator.number(formatted);
+                      setCardType(validation.card?.type ?? null);
+
+                      if (validation.isPotentiallyValid && validation.isValid) {
+                        expiryRef.current?.focus();
+                      }
+                    }}
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            {cardType ? (
+                              <Box
+                                component="img"
+                                src={getCardIconUrl(cardType) || ""}
+                                alt={cardType}
+                                sx={{
+                                  height: 20,
+                                  width: "auto",
+                                  display: "block",
+                                  filter: errors.cardNumber ? "grayscale(1) opacity(0.5)" : "none",
+                                }}
+                                onError={e => {
+                                  (e.target as HTMLImageElement).style.display = "none";
+                                }}
+                              />
+                            ) : (
+                              <CreditCardIcon fontSize="small" color={errors.cardNumber ? "error" : "action"} />
+                            )}
+                          </InputAdornment>
+                        ),
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            {cardValidator.number(field.value).isValid && (
+                              <CheckCircleIcon fontSize="small" color="success" />
+                            )}
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                  />
+                )}
               />
             </Grid>
-            <Grid size={12}>
-              <TextField
-                required
-                fullWidth
-                label="Cardholder Name"
-                name="cardHolder"
-                placeholder="John Doe"
-                value={formValues.cardHolder}
-                onChange={handleInputChange}
-                disabled={isSubmitting}
-              />
-            </Grid>
+
+            {/* 2. Expiry Date */}
             <Grid size={6}>
-              <TextField
-                required
-                fullWidth
-                label="Expiry Date"
+              <Controller
                 name="expiryDate"
-                placeholder="MM/YY"
-                value={formValues.expiryDate}
-                onChange={handleInputChange}
-                disabled={isSubmitting}
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    inputRef={expiryRef}
+                    label="Expiry Date"
+                    placeholder="MM/YY"
+                    disabled={isSubmitting}
+                    error={
+                      !!errors.expiryDate &&
+                      (isSubmitted || !cardValidator.expirationDate(field.value).isPotentiallyValid)
+                    }
+                    helperText={
+                      isSubmitted || !cardValidator.expirationDate(field.value).isPotentiallyValid
+                        ? errors.expiryDate?.message
+                        : ""
+                    }
+                    onChange={e => {
+                      const formatted = formatExpiryDate(e.target.value);
+                      field.onChange(formatted);
+                      if (formatted.length === 5 && cardValidator.expirationDate(formatted).isValid) {
+                        cvvRef.current?.focus();
+                      }
+                    }}
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            {cardValidator.expirationDate(field.value).isValid ? (
+                              <CheckCircleIcon fontSize="small" color="success" />
+                            ) : (
+                              <CalendarMonthIcon fontSize="small" color={errors.expiryDate ? "error" : "action"} />
+                            )}
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                  />
+                )}
               />
             </Grid>
+
+            {/* 3. CVV */}
             <Grid size={6}>
-              <TextField
-                required
-                fullWidth
-                label="CVV"
+              <Controller
                 name="cvv"
-                type="password"
-                placeholder="***"
-                value={formValues.cvv}
-                onChange={handleInputChange}
-                disabled={isSubmitting}
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    inputRef={cvvRef}
+                    label="CVV"
+                    type="password"
+                    placeholder="***"
+                    disabled={isSubmitting}
+                    error={!!errors.cvv && (isSubmitted || !cardValidator.cvv(field.value).isPotentiallyValid)}
+                    helperText={
+                      isSubmitted || !cardValidator.cvv(field.value).isPotentiallyValid ? errors.cvv?.message : ""
+                    }
+                    onChange={e => {
+                      const formatted = formatCVV(e.target.value);
+                      field.onChange(formatted);
+                      const validation = cardValidator.cvv(formatted);
+                      if (validation.isPotentiallyValid && validation.isValid) {
+                        nameRef.current?.focus();
+                      }
+                    }}
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            {cardValidator.cvv(field.value).isValid ? (
+                              <CheckCircleIcon fontSize="small" color="success" />
+                            ) : (
+                              <SecurityIcon fontSize="small" color={errors.cvv ? "error" : "action"} />
+                            )}
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                  />
+                )}
+              />
+            </Grid>
+
+            {/* 4. Cardholder Name */}
+            <Grid size={12}>
+              <Controller
+                name="cardHolder"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    inputRef={nameRef}
+                    label="Cardholder Name"
+                    placeholder="John Doe"
+                    disabled={isSubmitting}
+                    error={!!errors.cardHolder}
+                    helperText={errors.cardHolder?.message}
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            {field.value.length >= 2 && !errors.cardHolder ? (
+                              <CheckCircleIcon fontSize="small" color="success" />
+                            ) : (
+                              <PersonIcon fontSize="small" color={errors.cardHolder ? "error" : "action"} />
+                            )}
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                  />
+                )}
               />
             </Grid>
           </Grid>
@@ -202,7 +396,7 @@ export default function PaymentForm({ bookingId, amount, accessToken }: PaymentF
                   </Typography>
                 </Stack>
               ) : (
-                "Complete Payment"
+                `Pay ${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount)}`
               )}
             </Button>
           </Box>

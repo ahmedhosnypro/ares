@@ -92,6 +92,13 @@ export default function NotificationsClient() {
       const parts = item.type.split(":");
       const tag = parts[0];
       const entityId = parts[1];
+
+      // Handle tags that redirect to profile (may not have entityId)
+      if (["IdentityVerified", "IdentityRejected", "LicenseVerified", "LicenseRejected"].includes(tag)) {
+        router.push("/account/profile");
+        return;
+      }
+
       if (entityId) {
         if (
           [
