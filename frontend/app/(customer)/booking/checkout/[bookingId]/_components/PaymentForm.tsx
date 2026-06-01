@@ -65,7 +65,9 @@ const formatCardNumber = (value: string) => {
     parts.push(v.substring(i, i + 4));
   }
 
-  return parts.join(" ").substring(0, 19); // Max 16 digits + 3 spaces
+  // Support up to 19 digits (common for some card types like UnionPay or Maestro)
+  // 19 digits + up to 4 spaces = 23 characters
+  return parts.join(" ").substring(0, 23);
 };
 
 const formatExpiryDate = (value: string) => {
@@ -163,7 +165,7 @@ export default function PaymentForm({ bookingId, amount, accessToken }: PaymentF
         borderRadius: 2,
         border: "1px solid",
         borderColor: "divider",
-        boxShadow: "shadow.card",
+        boxShadow: t => t.palette.shadow.card,
       }}
     >
       <Stack spacing={3}>
@@ -425,9 +427,9 @@ export default function PaymentForm({ bookingId, amount, accessToken }: PaymentF
                 fontWeight: 800,
                 fontSize: "1.1rem",
                 textTransform: "none",
-                boxShadow: "shadow.button",
+                boxShadow: t => t.palette.shadow.button,
                 "&:hover": {
-                  boxShadow: "shadow.buttonHover",
+                  boxShadow: t => t.palette.shadow.buttonHover,
                 },
               }}
             >

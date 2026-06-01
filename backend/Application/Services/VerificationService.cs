@@ -220,7 +220,7 @@ namespace Backend.Application.Services
                     verification.UserId,
                     "Identity Verified",
                     "Your identity verification has been approved. You can now use all platform features.",
-                    "IdentityVerified",
+                    SupplierNotificationTypes.IdentityVerified,
                     cancellationToken);
             }
             catch (Exception ex)
@@ -295,7 +295,7 @@ namespace Backend.Application.Services
                     verification.UserId,
                     "Identity Rejected",
                     $"Your identity verification was rejected. Reason: {trimmed}. Please resubmit with correct documents.",
-                    "IdentityRejected",
+                    SupplierNotificationTypes.IdentityRejected,
                     cancellationToken);
             }
             catch (Exception ex)

@@ -33,7 +33,8 @@ export default function ExpressCheckout({ enableApplePay, enableGooglePay }: Exp
               height: 56,
               borderRadius: 2,
               "&:hover": {
-                bgcolor: "grey.900",
+                bgcolor: "common.black",
+                opacity: 0.9,
               },
             }}
           >
@@ -54,7 +55,7 @@ export default function ExpressCheckout({ enableApplePay, enableGooglePay }: Exp
               height: 56,
               borderRadius: 2,
               "&:hover": {
-                bgcolor: "grey.50",
+                bgcolor: "action.hover",
                 borderColor: "divider",
               },
             }}

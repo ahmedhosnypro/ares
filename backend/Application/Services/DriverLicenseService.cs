@@ -256,7 +256,7 @@ namespace Backend.Application.Services
                     driver.UserId,
                     "Driver License Verified",
                     "Your driver license has been approved. You can now book vehicles on the platform.",
-                    "LicenseVerified",
+                    SupplierNotificationTypes.LicenseVerified,
                     cancellationToken);
             }
             catch (Exception ex)
@@ -334,7 +334,7 @@ namespace Backend.Application.Services
                     driver.UserId,
                     "Driver License Rejected",
                     $"Your driver license was rejected. Reason: {trimmed}. Please resubmit with a valid document.",
-                    "LicenseRejected",
+                    SupplierNotificationTypes.LicenseRejected,
                     cancellationToken);
             }
             catch (Exception ex)

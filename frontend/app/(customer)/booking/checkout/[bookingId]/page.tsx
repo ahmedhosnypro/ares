@@ -137,7 +137,7 @@ export default async function CheckoutPage({ params }: PageProps) {
                 position: "sticky",
                 top: 100,
                 overflow: "hidden",
-                boxShadow: "shadow.card",
+                boxShadow: t => t.palette.shadow.card,
               }}
             >
               {/* Vehicle Image Overlay */}
