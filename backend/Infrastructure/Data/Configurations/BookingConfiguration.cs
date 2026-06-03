@@ -50,6 +50,39 @@ namespace Backend.Infrastructure.Data.Configurations
 
             builder
                 .HasIndex(b => b.AssignedInspectorId);
+
+            // ─── Driver Module ───────────────────────────────────────────
+            builder
+                .HasOne(b => b.AssignedDriverProfile)
+                .WithMany()
+                .HasForeignKey(b => b.AssignedDriverProfileId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder
+                .HasIndex(b => b.AssignedDriverProfileId);
+
+            builder
+                .HasIndex(b => new { b.AssignedDriverProfileId, b.PickupDate, b.ReturnDate });
+
+            // ─── Double-booking prevention indexes ───────────────────────
+            // Fast overlap/availability lookups for a vehicle by status+window.
+            builder
+                .HasIndex(b => new { b.VehicleId, b.Status, b.PickupDate, b.ReturnDate })
+                .HasDatabaseName("IX_Bookings_Vehicle_Status_Window");
+
+            // Fast background sweep for expiring holds.
+            builder
+                .HasIndex(b => new { b.Status, b.HoldExpiresAt })
+                .HasDatabaseName("IX_Bookings_Status_HoldExpiresAt");
+
+            // Fast booking-recovery lookup (a user's in-flight checkout).
+            builder
+                .HasIndex(b => new { b.UserId, b.Status })
+                .HasDatabaseName("IX_Bookings_User_Status");
+
+            builder
+                .Property(b => b.RowVersion)
+                .IsRowVersion();
         }
     }
 }

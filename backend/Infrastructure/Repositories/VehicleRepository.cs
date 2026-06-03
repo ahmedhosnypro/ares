@@ -165,17 +165,33 @@ public class VehicleRepository : PaginatedRepository<Vehicle>, IVehicleRepositor
         };
     }
 
+    /// <summary>
+    /// Non-locking availability pre-check (used for vehicle search and as a
+    /// cheap early-out before the authoritative, race-safe reservation in
+    /// <see cref="IBookingRepository.ReserveVehicleAtomicAsync"/>).
+    ///
+    /// A vehicle is unavailable when an overlapping booking exists in a
+    /// reserving status (see <see cref="Backend.Domain.Entities.Enums.BookingStatusPolicy.ReservingStatuses"/>).
+    /// A <c>PaymentPending</c> booking whose hold has already expired is treated
+    /// as free (the vehicle is released the moment the hold lapses, even before
+    /// the background sweep flips it to <c>Expired</c>).
+    /// </summary>
     public async Task<bool> IsAvailableAsync(
         Guid vehicleId,
         DateTime startDate,
         DateTime endDate,
         CancellationToken cancellationToken = default)
     {
+        var nowUtc = DateTime.UtcNow;
+        var reserving = Backend.Domain.Entities.Enums.BookingStatusPolicy.ReservingStatuses;
+
         var hasOverlappingBooking = await _context.Bookings
             .AnyAsync(b =>
                 b.VehicleId == vehicleId &&
-                b.Status != Backend.Domain.Entities.Enums.BookingStatus.Cancelled &&
-                b.Status != Backend.Domain.Entities.Enums.BookingStatus.Completed &&
+                reserving.Contains(b.Status) &&
+                !(b.Status == Backend.Domain.Entities.Enums.BookingStatus.PaymentPending &&
+                  b.HoldExpiresAt != null &&
+                  b.HoldExpiresAt <= nowUtc) &&
                 b.PickupDate < endDate &&
                 b.ReturnDate > startDate,
                 cancellationToken);

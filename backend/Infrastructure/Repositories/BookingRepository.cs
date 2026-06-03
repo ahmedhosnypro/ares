@@ -1,3 +1,4 @@
+using Backend.Application.Exceptions;
 using Backend.Application.Interfaces;
 using Backend.Domain.Entities;
 using Backend.Infrastructure.Data;
@@ -13,6 +14,92 @@ public class BookingRepository : PaginatedRepository<Booking>, IBookingRepositor
 {
     public BookingRepository(ApplicationDbContext context) : base(context)
     {
+    }
+
+    /// <inheritdoc />
+    public async Task ReserveVehicleAtomicAsync(
+        Booking booking,
+        BookingStatus targetStatus,
+        DateTime? holdStartedAt,
+        DateTime? holdExpiresAt,
+        CancellationToken cancellationToken = default)
+    {
+        if (booking.PickupDate is null || booking.ReturnDate is null)
+        {
+            throw new BadRequestException("Booking is missing pickup/return dates.");
+        }
+
+        var pickup = booking.PickupDate.Value;
+        var ret = booking.ReturnDate.Value;
+
+        // Make sure the entity participates in this DbContext so the
+        // SaveChanges below persists the transition (and any other changes the
+        // caller has already staged on the shared context).
+        var entry = _context.Entry(booking);
+        if (entry.State == EntityState.Detached)
+        {
+            _context.Attach(booking);
+        }
+
+        // CreateExecutionStrategy() is required when issuing an explicit
+        // transaction so we cooperate with any configured retry strategy.
+        var strategy = _context.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
+        {
+            await using var tx = await _context.Database.BeginTransactionAsync(
+                System.Data.IsolationLevel.Serializable, cancellationToken);
+
+            var nowUtc = DateTime.UtcNow;
+
+            // Range-lock the overlapping-booking key range for this vehicle.
+            // UPDLOCK + HOLDLOCK forces a concurrent transaction to block here
+            // (rather than also reading "no overlap"), and HOLDLOCK takes the
+            // key-range / serializable lock that prevents phantom inserts. An
+            // expired PaymentPending hold is excluded so a lapsed hold never
+            // blocks a new reservation.
+            //
+            // The status literals MUST match
+            // BookingStatusPolicy.ReservingStatuses.
+            var conflicts = await _context.Database
+                .SqlQueryRaw<int>(
+                    @"SELECT COUNT(*) AS [Value]
+                      FROM [Bookings] WITH (UPDLOCK, HOLDLOCK)
+                      WHERE [VehicleId] = {0}
+                        AND [Id] <> {1}
+                        AND [Status] IN ('Pending','PaymentPending','Confirmed','Active','Approved','ReadyForDelivery','WaitingForDriver','NoDriverAvailable','InspectionFailed')
+                        AND NOT ([Status] = 'PaymentPending'
+                                 AND [HoldExpiresAt] IS NOT NULL
+                                 AND [HoldExpiresAt] <= {2})
+                        AND [PickupDate] < {3}
+                        AND [ReturnDate] > {4}",
+                    booking.VehicleId, booking.Id, nowUtc, ret, pickup)
+                .ToListAsync(cancellationToken);
+
+            if (conflicts.Count > 0 && conflicts[0] > 0)
+            {
+                await tx.RollbackAsync(cancellationToken);
+                throw new ConflictException(
+                    "This vehicle has just been reserved by another customer.");
+            }
+
+            booking.Status = targetStatus;
+            booking.HoldStartedAt = holdStartedAt;
+            booking.HoldExpiresAt = holdExpiresAt;
+            // UpdatedAt is stamped by AuditableEntityInterceptor.
+
+            try
+            {
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                await tx.RollbackAsync(cancellationToken);
+                throw new ConflictException(
+                    "This vehicle has just been reserved by another customer.");
+            }
+
+            await tx.CommitAsync(cancellationToken);
+        });
     }
 
     public async Task<IEnumerable<Booking>> GetUserBookingsAsync(
@@ -99,15 +186,15 @@ public class BookingRepository : PaginatedRepository<Booking>, IBookingRepositor
         Guid vehicleId,
         CancellationToken cancellationToken = default)
     {
-        var activeStatuses = new[] {
-            BookingStatus.Pending,
-            BookingStatus.Confirmed,
-            BookingStatus.Active
-        };
+        var nowUtc = DateTime.UtcNow;
+        var reserving = BookingStatusPolicy.ReservingStatuses;
         return await _dbSet
             .AnyAsync(b =>
                 b.VehicleId == vehicleId &&
-                activeStatuses.Contains(b.Status),
+                reserving.Contains(b.Status) &&
+                !(b.Status == BookingStatus.PaymentPending &&
+                  b.HoldExpiresAt != null &&
+                  b.HoldExpiresAt <= nowUtc),
                 cancellationToken);
     }
 
@@ -212,6 +299,19 @@ public class BookingRepository : PaginatedRepository<Booking>, IBookingRepositor
 
         return await query
             .OrderByDescending(b => b.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IEnumerable<Booking>> GetAssignmentsForDriverAsync(
+        Guid driverProfileId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .Include(b => b.Vehicle)
+            .Include(b => b.User)
+            .Where(b => b.AssignedDriverProfileId == driverProfileId)
+            .OrderBy(b => b.PickupDate)
             .ToListAsync(cancellationToken);
     }
 }

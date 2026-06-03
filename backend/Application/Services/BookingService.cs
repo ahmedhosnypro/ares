@@ -34,6 +34,9 @@ public class BookingService : IBookingService
     // changes. Production DI always provides a real implementation, so the
     // identity-verification gate below is enforced for real customers.
     private readonly IVerificationService? _verificationService;
+    private readonly IDriverRequestService? _driverRequestService;
+    private readonly IDriverPricingService? _driverPricingService;
+    private readonly IDriverProfileRepository? _driverProfileRepository;
 
     public BookingService(
         IBookingRepository bookingRepository,
@@ -41,7 +44,10 @@ public class BookingService : IBookingService
         IApplicationDbContext context,
         UserManager<ApplicationUser> userManager,
         INotificationService? notificationService = null,
-        IVerificationService? verificationService = null)
+        IVerificationService? verificationService = null,
+        IDriverRequestService? driverRequestService = null,
+        IDriverPricingService? driverPricingService = null,
+        IDriverProfileRepository? driverProfileRepository = null)
     {
         _bookingRepository = bookingRepository;
         _vehicleRepository = vehicleRepository;
@@ -49,6 +55,9 @@ public class BookingService : IBookingService
         _userManager = userManager;
         _notificationService = notificationService;
         _verificationService = verificationService;
+        _driverRequestService = driverRequestService;
+        _driverPricingService = driverPricingService;
+        _driverProfileRepository = driverProfileRepository;
     }
 
     public async Task<BookingResponse> CreateBookingAsync(
@@ -158,6 +167,26 @@ public class BookingService : IBookingService
             ? request.DropOffLocation!.Trim()
             : (request.DropOffLocationId != Guid.Empty ? await ResolveDisplayLocationAsync(request.DropOffLocationId.ToString(), cancellationToken) : null);
 
+        // Business rule 13 (mandatory driver): a customer who does NOT hold an
+        // approved driving license cannot self-drive — a driver is mandatory.
+        // We check the legacy customer driving-license record (Driver entity).
+        var hasApprovedLicense = await _context.Drivers.AnyAsync(
+            d => d.UserId == ownerUserId
+                 && (d.IsVerified || (d.VerificationStatus != null && d.VerificationStatus == "Verified")),
+            cancellationToken);
+
+        var effectiveNeedDriver = request.NeedDriver;
+        if (!hasApprovedLicense)
+        {
+            if (request.NeedDriver == false)
+            {
+                throw new BadRequestException(
+                    "A driver is required: you do not have an approved driving license, so you cannot self-drive.");
+            }
+            // NeedDriver null/true → force the driver workflow.
+            effectiveNeedDriver = true;
+        }
+
         // Requirement 4.10: Create booking with status "Pending". Payment is
         // a separate flow — booking creation does NOT require payment.
         var booking = new Booking
@@ -172,14 +201,31 @@ public class BookingService : IBookingService
             DropoffLocation = dropoffLabel,
             TotalDays = totalDays,
             TotalPrice = totalPrice,
-            Status = BookingStatus.Pending,
-            DriverId = request.DriverId,
-            RequiresDriver = request.DriverId.HasValue
+            // The driver-module assignment is NEVER set here. A driver is only
+            // attached through the request → accept → select workflow, which
+            // populates AssignedDriverProfileId (a driver_profiles FK). The
+            // legacy Booking.DriverId column is a FK to the customer-license
+            // Driver entity and must not be conflated with a DriverProfile.
+            Status = effectiveNeedDriver == true ? BookingStatus.WaitingForDriver : BookingStatus.Pending,
+            DriverId = request.DriverId, // legacy customer-license Driver FK only
+            RequiresDriver = effectiveNeedDriver == true
         };
+
+        if (_driverPricingService != null && booking.RequiresDriver)
+        {
+            booking.Vehicle = vehicle; // Attach for calculation
+            await _driverPricingService.CalculateBookingDriverFeesAsync(booking, totalDays, cancellationToken);
+            booking.Vehicle = null; // Detach before save
+        }
 
         // Requirement 4.1: Create booking and mark vehicle as unavailable for those dates
         await _bookingRepository.AddAsync(booking, cancellationToken);
         await _bookingRepository.SaveChangesAsync(cancellationToken);
+
+        if (effectiveNeedDriver == true && _driverRequestService != null)
+        {
+            await _driverRequestService.CheckAndEmitRequestAsync(booking.Id, cancellationToken);
+        }
 
         // Requirement 4.8: Create notification for the booking owner (customer).
         if (request.CustomerUserId.HasValue && request.CustomerUserId.Value != userId)
@@ -336,6 +382,27 @@ public class BookingService : IBookingService
         // Note: Vehicle availability is determined by checking active bookings
         // By setting status to "Cancelled", the vehicle becomes available automatically
         // when IsAvailableAsync checks for non-cancelled bookings
+
+        if (booking.AssignedDriverProfileId.HasValue && _driverProfileRepository != null)
+        {
+            var driverProfile = await _driverProfileRepository.GetByIdAsync(booking.AssignedDriverProfileId.Value, cancellationToken);
+            if (driverProfile != null)
+            {
+                driverProfile.LockedUntil = null;
+                driverProfile.Availability = DriverAvailability.Available;
+                await _driverProfileRepository.UpdateAsync(driverProfile, cancellationToken);
+                
+                if (_notificationService != null)
+                {
+                    await _notificationService.CreateNotificationAsync(
+                        driverProfile.UserId,
+                        "Booking Cancelled",
+                        $"The booking {booking.BookingNumber} you were assigned to has been cancelled.",
+                        $"BookingCancelled:{booking.Id}",
+                        cancellationToken);
+                }
+            }
+        }
 
         // Requirement 20.1: Create cancellation record
         var cancellation = new BookingCancellation
@@ -500,6 +567,17 @@ public class BookingService : IBookingService
         }
         booking.UpdatedAt = DateTime.UtcNow;
 
+        if ((parsedStatus == BookingStatus.Completed || parsedStatus == BookingStatus.Cancelled) && booking.AssignedDriverProfileId.HasValue && _driverProfileRepository != null)
+        {
+            var driverProfile = await _driverProfileRepository.GetByIdAsync(booking.AssignedDriverProfileId.Value, cancellationToken);
+            if (driverProfile != null)
+            {
+                driverProfile.LockedUntil = null;
+                driverProfile.Availability = DriverAvailability.Available;
+                await _driverProfileRepository.UpdateAsync(driverProfile, cancellationToken);
+            }
+        }
+
         await _bookingRepository.SaveChangesAsync(cancellationToken);
 
         // Fire-and-forget notification for the customer (best-effort).
@@ -555,6 +633,15 @@ public class BookingService : IBookingService
 
         var datesChanged = request.PickupDate.HasValue || request.ReturnDate.HasValue;
 
+        // Prevent bypass of 24-hour driver change/cancel rule via date modification
+        if (datesChanged && booking.AssignedDriverProfileId.HasValue && booking.PickupDate.HasValue)
+        {
+            if (DateTime.UtcNow > booking.PickupDate.Value.AddHours(-24))
+            {
+                throw new BadRequestException("Cannot modify booking dates within 24 hours of pickup when a driver is assigned.");
+            }
+        }
+
         // If dates changed AND moved off the originally booked window, verify
         // the new window doesn't collide with other active bookings.
         if (datesChanged && booking.Vehicle is not null)
@@ -570,6 +657,24 @@ public class BookingService : IBookingService
             if (newWindowOverlapsOthers)
             {
                 throw new ConflictException("Vehicle is not available for the selected dates");
+            }
+        }
+
+        if (datesChanged && booking.AssignedDriverProfileId.HasValue && _driverProfileRepository != null)
+        {
+            var driverOverlap = await _driverProfileRepository.HasOverlappingAssignmentAsync(
+                booking.AssignedDriverProfileId.Value, pickupDate.Value, returnDate.Value, booking.Id, cancellationToken);
+            if (driverOverlap)
+            {
+                throw new ConflictException("The assigned driver is not available for the new dates.");
+            }
+            
+            var driverProfile = await _driverProfileRepository.GetByIdAsync(booking.AssignedDriverProfileId.Value, cancellationToken);
+            if (driverProfile != null)
+            {
+                driverProfile.LockedUntil = returnDate;
+                booking.DriverLockedUntil = returnDate;
+                await _driverProfileRepository.UpdateAsync(driverProfile, cancellationToken);
             }
         }
 
@@ -1086,6 +1191,22 @@ public class BookingService : IBookingService
         // ── Activity timeline from real events ────────────────────────────
         var timeline = await BuildTimelineAsync(booking, inspections, latestPayment, cancellationToken);
 
+        Backend.Application.DTOs.Driver.PublicDriverDto? assignedDriverDto = null;
+        if (booking.AssignedDriverProfileId.HasValue && _driverProfileRepository != null)
+        {
+            var driverProfile = await _driverProfileRepository.GetByIdWithUserAsync(booking.AssignedDriverProfileId.Value, cancellationToken);
+            if (driverProfile != null && driverProfile.User != null)
+            {
+                assignedDriverDto = new Backend.Application.DTOs.Driver.PublicDriverDto
+                {
+                    DriverProfileId = driverProfile.Id,
+                    FirstName = driverProfile.User.FirstName,
+                    LastName = driverProfile.User.LastName,
+                    ProfilePictureUrl = driverProfile.User.ProfileImage
+                };
+            }
+        }
+
         return new BookingDetailsDto(
             Id: booking.Id,
             BookingNumber: booking.BookingNumber,
@@ -1109,7 +1230,12 @@ public class BookingService : IBookingService
             PickupInspection: pickupInspection,
             ReturnInspection: returnInspection,
             PaymentDetails: paymentDetails,
-            Timeline: timeline);
+            Timeline: timeline,
+            AssignedDriverProfile: assignedDriverDto,
+            VehicleFee: booking.VehicleFee,
+            DriverFee: booking.DriverFee,
+            GrandTotal: booking.GrandTotal,
+            RequiresDriver: booking.RequiresDriver);
     }
 
     /// <summary>

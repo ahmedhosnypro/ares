@@ -60,6 +60,11 @@ public class CreateBookingRequestValidator : AbstractValidator<CreateBookingRequ
             .MustAsync(VehicleIsAvailableAsync)
             .WithMessage("Vehicle is not available for the selected dates")
             .When(x => x.VehicleId != Guid.Empty && x.PickupDate < x.ReturnDate);
+
+        RuleFor(x => x)
+            .Must(x => !(x.NeedDriver == true && x.DriverId != null))
+            .WithMessage("Cannot specify both a specific DriverId and NeedDriver=true")
+            .WithName("NeedDriver");
     }
 
     private async Task<bool> EffectiveCustomerIsNotAdminAsync(CreateBookingRequest request, CancellationToken cancellationToken)

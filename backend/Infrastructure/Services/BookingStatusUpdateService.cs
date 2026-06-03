@@ -49,6 +49,7 @@ public class BookingStatusUpdateService : BackgroundService
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
         var now = DateTime.Now; // Using local time to match DB values in typical local dev
+        var nowUtc = DateTime.UtcNow; // Hold timestamps are stored in UTC
         _logger.LogDebug($"Checking for booking status updates at {now}");
 
         // 1. Confirmed -> Active (Pickup date reached)
@@ -95,10 +96,47 @@ public class BookingStatusUpdateService : BackgroundService
             _logger.LogInformation($"Booking {booking.Id} (Num: {booking.BookingNumber}) automatically Cancelled (was Pending after pickup date).");
         }
 
-        if (bookingsToActivate.Any() || bookingsToComplete.Any() || pendingToCancel.Any())
+        // 4. PaymentPending -> Expired (hold elapsed without confirmation).
+        //    The vehicle is released for other customers. Availability checks
+        //    already treat a lapsed hold as free (lazy expiry); this sweep makes
+        //    the released state explicit and durable.
+        var holdsToExpire = await context.Bookings
+            .Where(b => b.Status == BookingStatus.PaymentPending &&
+                        b.HoldExpiresAt.HasValue &&
+                        b.HoldExpiresAt.Value <= nowUtc)
+            .ToListAsync(cancellationToken);
+
+        foreach (var booking in holdsToExpire)
+        {
+            booking.Status = BookingStatus.Expired;
+            booking.UpdatedAt = nowUtc;
+            _logger.LogInformation($"Booking {booking.Id} (Num: {booking.BookingNumber}) hold expired (PaymentPending -> Expired); vehicle released.");
+        }
+
+        // 5. Abandoned Draft / DriverSelected -> Cancelled (no progress for 24h).
+        //    Keeps the funnel tidy and prevents stale drafts from being resumed
+        //    indefinitely. These never reserved the vehicle, so nothing to release.
+        var abandonCutoffUtc = nowUtc.AddHours(-24);
+        var abandonedDrafts = await context.Bookings
+            .Where(b => (b.Status == BookingStatus.Draft || b.Status == BookingStatus.DriverSelected) &&
+                        b.UpdatedAt <= abandonCutoffUtc)
+            .ToListAsync(cancellationToken);
+
+        foreach (var booking in abandonedDrafts)
+        {
+            booking.Status = BookingStatus.Cancelled;
+            booking.CancellationReason = "Automatic cancellation: checkout abandoned.";
+            booking.CancelledAt = nowUtc;
+            booking.UpdatedAt = nowUtc;
+            _logger.LogInformation($"Booking {booking.Id} (Num: {booking.BookingNumber}) auto-cancelled (abandoned {booking.Status} checkout).");
+        }
+
+        if (bookingsToActivate.Any() || bookingsToComplete.Any() || pendingToCancel.Any()
+            || holdsToExpire.Any() || abandonedDrafts.Any())
         {
             await context.SaveChangesAsync(cancellationToken);
-            _logger.LogInformation($"Saved {bookingsToActivate.Count + bookingsToComplete.Count + pendingToCancel.Count} status transitions.");
+            _logger.LogInformation(
+                $"Saved {bookingsToActivate.Count + bookingsToComplete.Count + pendingToCancel.Count + holdsToExpire.Count + abandonedDrafts.Count} status transitions.");
         }
     }
 }
