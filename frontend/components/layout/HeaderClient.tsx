@@ -98,7 +98,7 @@ export default function HeaderClient({ session }: HeaderClientProps) {
   };
 
   // Check if user has admin/supplier/driver/inspector roles
-  const roles = session?.user?.roles || [];
+  const roles = session?.user.roles || [];
   const isAdmin = roles.includes("Admin");
   const isSupplier = roles.includes("Supplier");
   const isDriver = roles.includes("Driver");
