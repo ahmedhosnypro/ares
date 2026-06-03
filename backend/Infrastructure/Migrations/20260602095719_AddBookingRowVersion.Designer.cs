@@ -4,6 +4,7 @@ using Backend.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260602095719_AddBookingRowVersion")]
+    partial class AddBookingRowVersion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -251,12 +254,6 @@ namespace Infrastructure.Migrations
                     b.Property<decimal?>("GrandTotal")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<DateTime?>("HoldExpiresAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("HoldStartedAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("InspectionStatus")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
@@ -320,16 +317,11 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("DriverId");
 
-                    b.HasIndex("Status", "HoldExpiresAt")
-                        .HasDatabaseName("IX_Bookings_Status_HoldExpiresAt");
+                    b.HasIndex("UserId");
 
-                    b.HasIndex("UserId", "Status")
-                        .HasDatabaseName("IX_Bookings_User_Status");
+                    b.HasIndex("VehicleId");
 
                     b.HasIndex("AssignedDriverProfileId", "PickupDate", "ReturnDate");
-
-                    b.HasIndex("VehicleId", "Status", "PickupDate", "ReturnDate")
-                        .HasDatabaseName("IX_Bookings_Vehicle_Status_Window");
 
                     b.ToTable("Bookings");
                 });
