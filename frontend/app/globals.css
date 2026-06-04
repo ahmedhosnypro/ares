@@ -15,4 +15,6 @@ html,
 body {
   /* Using currentColor-style strategy or allowing inline-styles to take precedence */
   min-height: 100vh;
+  overflow-x: hidden;
+  max-width: 100vw;
 }

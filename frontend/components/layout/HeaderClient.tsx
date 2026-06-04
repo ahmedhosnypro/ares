@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import type { Session } from "next-auth";
 import {
@@ -100,6 +101,13 @@ export default function HeaderClient({ session }: HeaderClientProps) {
   // Check if user has admin/supplier role
   const isAdminOrSupplier = session?.user.roles.some(role => role === "Admin" || role === "Supplier");
   const isAdmin = session?.user.roles.includes("Admin");
+
+  const pathname = usePathname();
+  const isDashboardRoute = pathname?.startsWith("/admin") || pathname?.startsWith("/supplier") || pathname?.startsWith("/inspector");
+
+  if (isDashboardRoute) {
+    return null;
+  }
 
   return (
     <>

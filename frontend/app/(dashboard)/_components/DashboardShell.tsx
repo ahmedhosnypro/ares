@@ -543,6 +543,8 @@ export default function DashboardShell({
         component="main"
         sx={{
           flexGrow: 1,
+          minWidth: 0,
+          overflowX: "hidden",
           width: { md: `calc(100% - ${drawerWidth.toString()}px)` },
           mt: `${APP_BAR_HEIGHT.toString()}px`,
           transition: theme =>
