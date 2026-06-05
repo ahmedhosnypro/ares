@@ -24,6 +24,7 @@ import {
 import { toImageUrl } from "@/utils/image-url";
 import { type BookingDetails } from "./types";
 import BookingReviewSection from "./BookingReviewSection";
+import CustomerDriverSelectionSection from "./CustomerDriverSelectionSection";
 
 interface BookingDetailsViewProps {
   readonly booking: BookingDetails;
@@ -82,6 +83,7 @@ function getStatusColor(status?: string): "success" | "warning" | "error" | "def
     case "completed":
       return "success";
     case "pending":
+    case "paymentpending":
     case "confirmed":
       return "warning";
     case "cancelled":
@@ -394,6 +396,17 @@ export default function BookingDetailsView({
                   </Grid>
                 </CardContent>
               </Paper>
+            ) : null}
+
+            {accessToken && (booking.withDriver || booking.requiresDriver || booking.driverFee != null) ? (
+              <CustomerDriverSelectionSection
+                bookingId={bookingRef}
+                accessToken={accessToken}
+                assignedDriverProfile={booking.assignedDriverProfile}
+                canChangeDriver={
+                  booking.status === "PaymentPending" || booking.status === "Confirmed" || booking.status === "Draft"
+                }
+              />
             ) : null}
 
             {accessToken ? (
