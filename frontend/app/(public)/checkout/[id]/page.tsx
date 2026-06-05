@@ -20,7 +20,6 @@ import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import LoginIcon from "@mui/icons-material/Login";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import { toApiUrl } from "@/utils/api-client";
 import { formatCurrency } from "@/utils/currency-helpers";
 import { logger } from "@/utils/logger";
 
@@ -33,16 +32,6 @@ interface BookingIntent {
   totalPrice: number;
   vehicleLabel: string;
   pricePerDay: number;
-}
-
-interface BookingApiSuccess {
-  readonly bookingId?: string;
-  readonly bookingNumber?: string;
-}
-
-interface BookingApiError {
-  readonly message?: string;
-  readonly validationErrors?: readonly { readonly message?: string }[];
 }
 
 function parseIntent(raw: string | null): BookingIntent | null {
@@ -199,7 +188,7 @@ function AuthGate({ vehicleId }: AuthGateProps) {
 export default function CheckoutGatePage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
 
   // Read intent once from sessionStorage (lazy init avoids setState-in-effect)
   const [intent] = useState<BookingIntent | null>(() => {
@@ -209,8 +198,7 @@ export default function CheckoutGatePage() {
     return parsed?.vehicleId === params.id ? parsed : null;
   });
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState("");
+  const [redirectError, setRedirectError] = useState("");
 
   // Redirect home if no valid intent
   useEffect(() => {
@@ -219,59 +207,19 @@ export default function CheckoutGatePage() {
     }
   }, [intent, router]);
 
-  // Once authenticated and intent is loaded, auto-submit the booking
+  // Once authenticated, continue into the staged checkout flow
+  // (Driver Selection → Payment). No booking is created here — the booking is
+  // created only after a successful payment. The saved intent is carried
+  // forward via sessionStorage.
   useEffect(() => {
-    if (status !== "authenticated" || !intent || isSubmitting) return;
-
-    const accessToken = session.accessToken;
-
-    const createBooking = async () => {
-      setIsSubmitting(true);
-      setSubmitError("");
-      try {
-        const response = await fetch(toApiUrl("/api/bookings/create"), {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({
-            vehicleId: intent.vehicleId,
-            pickupLocationId: intent.pickupLocationId,
-            dropOffLocationId: intent.dropOffLocationId,
-            pickupDate: intent.pickupDate,
-            returnDate: intent.returnDate,
-            driverId: null,
-            payLater: true,
-          }),
-        });
-
-        if (!response.ok) {
-          const payload = (await response.json().catch(() => null)) as BookingApiError | null;
-          setSubmitError(
-            payload?.validationErrors?.[0]?.message ?? payload?.message ?? "Booking request failed. Please try again."
-          );
-          setIsSubmitting(false);
-          return;
-        }
-
-        const payload = (await response.json()) as BookingApiSuccess;
-        sessionStorage.removeItem("bookingIntent");
-
-        if (payload.bookingId) {
-          router.replace(`/booking/checkout/${payload.bookingId}`);
-        } else {
-          router.replace("/bookings");
-        }
-      } catch (error) {
-        logger.error("Checkout gate booking failed", error);
-        setSubmitError("Unable to create booking right now. Please try again.");
-        setIsSubmitting(false);
-      }
-    };
-
-    void createBooking();
-  }, [status, session, intent, isSubmitting, router]);
+    if (status !== "authenticated" || !intent) return;
+    try {
+      router.replace(`/booking/driver-selection/${intent.vehicleId}`);
+    } catch (error) {
+      logger.error("Checkout gate redirect failed", error);
+      setRedirectError("Unable to continue to checkout. Please try again.");
+    }
+  }, [status, intent, router]);
 
   // Loading states
   if (status === "loading" || !intent) {
@@ -282,18 +230,18 @@ export default function CheckoutGatePage() {
     );
   }
 
-  // Authenticated: show spinner while booking is being created
+  // Authenticated: show spinner while routing into the staged checkout flow
   if (status === "authenticated") {
     return (
       <Box sx={{ minHeight: "60vh", display: "grid", placeItems: "center" }}>
         <Stack sx={{ alignItems: "center" }} spacing={2}>
           <CircularProgress />
           <Typography variant="body1" color="text.secondary">
-            {submitError ? "" : "Creating your booking…"}
+            {redirectError ? "" : "Taking you to driver selection…"}
           </Typography>
-          {submitError && (
+          {redirectError && (
             <Alert severity="error" sx={{ maxWidth: 480 }}>
-              {submitError}
+              {redirectError}
             </Alert>
           )}
         </Stack>

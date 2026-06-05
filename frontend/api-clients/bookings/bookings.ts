@@ -68,6 +68,8 @@ export interface Booking {
   customer?: BookingCustomer | null;
   totalDays?: number;
   status: string;
+  driverAssignmentStatus?: string;
+  inspectionStatus?: string;
   price?: number;
   dailyRate?: number | null;
   paymentStatus?: string;
