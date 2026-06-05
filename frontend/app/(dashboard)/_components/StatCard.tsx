@@ -25,14 +25,13 @@ export default function StatCard({ title, value, icon, trend }: StatCardProps) {
         borderColor: "divider",
         bgcolor: "background.paper",
         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-        boxShadow: theme.palette.mode === "light"
-          ? `0 4px 20px ${alpha(theme.palette.common.black, 0.02)}`
-          : "none",
+        boxShadow: theme.palette.mode === "light" ? `0 4px 20px ${alpha(theme.palette.common.black, 0.02)}` : "none",
         "&:hover": {
           transform: "translateY(-4px)",
-          boxShadow: theme.palette.mode === "light"
-            ? `0 12px 28px ${alpha(theme.palette.common.black, 0.06)}`
-            : `0 12px 28px ${alpha(theme.palette.common.black, 0.3)}`,
+          boxShadow:
+            theme.palette.mode === "light"
+              ? `0 12px 28px ${alpha(theme.palette.common.black, 0.06)}`
+              : `0 12px 28px ${alpha(theme.palette.common.black, 0.3)}`,
           borderColor: "primary.main",
         },
       }}
@@ -57,7 +56,7 @@ export default function StatCard({ title, value, icon, trend }: StatCardProps) {
             {icon}
           </Avatar>
         </Box>
-        
+
         <Typography variant="h4" sx={{ fontWeight: 800, mb: 1, letterSpacing: "-0.5px", color: "text.primary" }}>
           {value}
         </Typography>
