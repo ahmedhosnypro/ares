@@ -123,7 +123,9 @@ public class BookingService : IBookingService
             request.VehicleId,
             request.PickupDate,
             request.ReturnDate,
-            cancellationToken);
+            excludeUserId: ownerUserId,
+            excludeBookingId: null,
+            cancellationToken: cancellationToken);
 
         if (!isAvailable)
         {
@@ -684,10 +686,13 @@ public class BookingService : IBookingService
         // the new window doesn't collide with other active bookings.
         if (datesChanged && booking.Vehicle is not null)
         {
+            var nowUtc = DateTime.UtcNow;
+            var reserving = BookingStatusPolicy.ReservingStatuses;
             var newWindowOverlapsOthers = await _context.Bookings
                 .Where(b => b.Id != booking.Id
                             && b.VehicleId == booking.VehicleId
-                            && b.Status != BookingStatus.Cancelled)
+                            && reserving.Contains(b.Status)
+                            && !(b.Status == BookingStatus.PaymentPending && b.HoldExpiresAt != null && b.HoldExpiresAt <= nowUtc))
                 .AnyAsync(b =>
                     b.PickupDate.HasValue && b.ReturnDate.HasValue &&
                     pickupDate < b.ReturnDate && returnDate > b.PickupDate,
@@ -1028,6 +1033,57 @@ public class BookingService : IBookingService
             {
                 throw new ForbiddenException("You do not have permission to delete one or more of these bookings");
             }
+        }
+
+        if (_context is DbContext dbContext)
+        {
+            // 1. Delete inspections and their photos/images first (due to Restrict constraint on VehicleInspection)
+            var inspections = await dbContext.Set<VehicleInspection>()
+                .Where(i => bookingIds.Contains(i.BookingId))
+                .ToListAsync(cancellationToken);
+            var inspectionIds = inspections.Select(i => i.InspectionId).ToList();
+
+            if (inspectionIds.Any())
+            {
+                var photos = await dbContext.Set<InspectionPhoto>()
+                    .Where(p => inspectionIds.Contains(p.InspectionId))
+                    .ToListAsync(cancellationToken);
+                if (photos.Any())
+                {
+                    dbContext.Set<InspectionPhoto>().RemoveRange(photos);
+                }
+
+                var images = await dbContext.Set<InspectionImage>()
+                    .Where(img => inspectionIds.Contains(img.InspectionId))
+                    .ToListAsync(cancellationToken);
+                if (images.Any())
+                {
+                    dbContext.Set<InspectionImage>().RemoveRange(images);
+                }
+
+                dbContext.Set<VehicleInspection>().RemoveRange(inspections);
+            }
+
+            // 2. Delete reviews (due to Restrict constraint on Review)
+            var reviews = await dbContext.Set<Review>()
+                .Where(r => bookingIds.Contains(r.BookingId))
+                .ToListAsync(cancellationToken);
+            if (reviews.Any())
+            {
+                dbContext.Set<Review>().RemoveRange(reviews);
+            }
+
+            // 3. Delete payments (due to Restrict constraint on BookingPayment)
+            var payments = await dbContext.Set<BookingPayment>()
+                .Where(p => bookingIds.Contains(p.BookingId))
+                .ToListAsync(cancellationToken);
+            if (payments.Any())
+            {
+                dbContext.Set<BookingPayment>().RemoveRange(payments);
+            }
+
+            // 4. Save changes for the related items
+            await dbContext.SaveChangesAsync(cancellationToken);
         }
 
         foreach (var booking in bookings)

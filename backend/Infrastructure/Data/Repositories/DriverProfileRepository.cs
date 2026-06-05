@@ -114,10 +114,13 @@ namespace Backend.Infrastructure.Data.Repositories
                 BookingStatus.PaymentPending
             };
 
+            var nowUtc = DateTime.UtcNow;
+
             return await _context.Bookings.AnyAsync(b =>
                 b.AssignedDriverProfileId == driverProfileId
                 && (excludeBookingId == null || b.Id != excludeBookingId)
                 && blocking.Contains(b.Status)
+                && !(b.Status == BookingStatus.PaymentPending && b.HoldExpiresAt != null && b.HoldExpiresAt <= nowUtc)
                 && b.PickupDate.HasValue && b.ReturnDate.HasValue
                 // standard half-open interval overlap: existing.start < new.end && existing.end > new.start
                 && b.PickupDate.Value < ret
@@ -148,6 +151,8 @@ namespace Backend.Infrastructure.Data.Repositories
                 BookingStatus.PaymentPending
             };
 
+            var nowUtc = DateTime.UtcNow;
+
             return await _context.DriverProfiles
                 .Include(x => x.User)
                 .Where(x => x.Status == DriverProfileStatus.Verified
@@ -156,6 +161,7 @@ namespace Backend.Infrastructure.Data.Repositories
                             && !_context.Bookings.Any(b =>
                                 b.AssignedDriverProfileId == x.Id
                                 && blocking.Contains(b.Status)
+                                && !(b.Status == BookingStatus.PaymentPending && b.HoldExpiresAt != null && b.HoldExpiresAt <= nowUtc)
                                 && b.PickupDate.HasValue && b.ReturnDate.HasValue
                                 // half-open interval overlap
                                 && b.PickupDate.Value < ret

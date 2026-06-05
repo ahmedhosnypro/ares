@@ -104,7 +104,7 @@ public class BookingServiceTests
             PricePerDay = 50.00m
         };
 
-        _vehicleRepositoryMock.Setup(x => x.IsAvailableAsync(vehicleId, pickupDate, returnDate, It.IsAny<CancellationToken>()))
+        _vehicleRepositoryMock.Setup(x => x.IsAvailableAsync(vehicleId, pickupDate, returnDate, It.IsAny<CancellationToken>(), It.IsAny<Guid?>(), It.IsAny<Guid?>()))
             .ReturnsAsync(true);
 
         _vehicleRepositoryMock.Setup(x => x.GetByIdAsync(vehicleId, It.IsAny<CancellationToken>()))
@@ -127,7 +127,7 @@ public class BookingServiceTests
         Assert.Equal(100.00m, result.TotalPrice); // 2 days * $50
         Assert.Equal("Booking created successfully", result.Message);
 
-        _vehicleRepositoryMock.Verify(x => x.IsAvailableAsync(vehicleId, pickupDate, returnDate, It.IsAny<CancellationToken>()), Times.Once);
+        _vehicleRepositoryMock.Verify(x => x.IsAvailableAsync(vehicleId, pickupDate, returnDate, It.IsAny<CancellationToken>(), It.IsAny<Guid?>(), It.IsAny<Guid?>()), Times.Once);
         _vehicleRepositoryMock.Verify(x => x.GetByIdAsync(vehicleId, It.IsAny<CancellationToken>()), Times.Once);
         _bookingRepositoryMock.Verify(x => x.AddAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>()), Times.Once);
         _bookingRepositoryMock.Verify(x => x.ReserveVehicleAtomicAsync(It.IsAny<Booking>(), It.IsAny<BookingStatus>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -194,7 +194,7 @@ public class BookingServiceTests
 
         _vehicleRepositoryMock.Setup(x => x.GetByIdAsync(vehicleId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(vehicle);
-        _vehicleRepositoryMock.Setup(x => x.IsAvailableAsync(vehicleId, pickupDate, returnDate, It.IsAny<CancellationToken>()))
+        _vehicleRepositoryMock.Setup(x => x.IsAvailableAsync(vehicleId, pickupDate, returnDate, It.IsAny<CancellationToken>(), It.IsAny<Guid?>(), It.IsAny<Guid?>()))
             .ReturnsAsync(true);
 
         // Act & Assert
@@ -222,7 +222,7 @@ public class BookingServiceTests
             PayLater: false
         );
 
-        _vehicleRepositoryMock.Setup(x => x.IsAvailableAsync(vehicleId, pickupDate, returnDate, It.IsAny<CancellationToken>()))
+        _vehicleRepositoryMock.Setup(x => x.IsAvailableAsync(vehicleId, pickupDate, returnDate, It.IsAny<CancellationToken>(), It.IsAny<Guid?>(), It.IsAny<Guid?>()))
             .ReturnsAsync(false);
 
         // Act & Assert
@@ -230,7 +230,7 @@ public class BookingServiceTests
             () => _bookingService.CreateBookingAsync(request, userId));
 
         Assert.Equal("Vehicle is not available for the selected dates", exception.Message);
-        _vehicleRepositoryMock.Verify(x => x.IsAvailableAsync(vehicleId, pickupDate, returnDate, It.IsAny<CancellationToken>()), Times.Once);
+        _vehicleRepositoryMock.Verify(x => x.IsAvailableAsync(vehicleId, pickupDate, returnDate, It.IsAny<CancellationToken>(), It.IsAny<Guid?>(), It.IsAny<Guid?>()), Times.Once);
         _vehicleRepositoryMock.Verify(x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
         _bookingRepositoryMock.Verify(x => x.AddAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -254,7 +254,7 @@ public class BookingServiceTests
             PayLater: false
         );
 
-        _vehicleRepositoryMock.Setup(x => x.IsAvailableAsync(vehicleId, pickupDate, returnDate, It.IsAny<CancellationToken>()))
+        _vehicleRepositoryMock.Setup(x => x.IsAvailableAsync(vehicleId, pickupDate, returnDate, It.IsAny<CancellationToken>(), It.IsAny<Guid?>(), It.IsAny<Guid?>()))
             .ReturnsAsync(true);
 
         _vehicleRepositoryMock.Setup(x => x.GetByIdAsync(vehicleId, It.IsAny<CancellationToken>()))
@@ -265,7 +265,7 @@ public class BookingServiceTests
             () => _bookingService.CreateBookingAsync(request, userId));
 
         Assert.Equal($"Vehicle with ID {vehicleId} not found", exception.Message);
-        _vehicleRepositoryMock.Verify(x => x.IsAvailableAsync(vehicleId, pickupDate, returnDate, It.IsAny<CancellationToken>()), Times.Once);
+        _vehicleRepositoryMock.Verify(x => x.IsAvailableAsync(vehicleId, pickupDate, returnDate, It.IsAny<CancellationToken>(), It.IsAny<Guid?>(), It.IsAny<Guid?>()), Times.Once);
         _vehicleRepositoryMock.Verify(x => x.GetByIdAsync(vehicleId, It.IsAny<CancellationToken>()), Times.Once);
         _bookingRepositoryMock.Verify(x => x.AddAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -295,7 +295,7 @@ public class BookingServiceTests
 
         Assert.Contains("DateRange", exception.Errors.Keys);
         Assert.Equal("Pickup date must be before return date", exception.Errors["DateRange"].First());
-        _vehicleRepositoryMock.Verify(x => x.IsAvailableAsync(It.IsAny<Guid>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
+        _vehicleRepositoryMock.Verify(x => x.IsAvailableAsync(It.IsAny<Guid>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>(), It.IsAny<Guid?>(), It.IsAny<Guid?>()), Times.Never);
     }
 
     [Fact]
@@ -326,7 +326,7 @@ public class BookingServiceTests
             PricePerDay = 100.00m
         };
 
-        _vehicleRepositoryMock.Setup(x => x.IsAvailableAsync(vehicleId, pickupDate, returnDate, It.IsAny<CancellationToken>()))
+        _vehicleRepositoryMock.Setup(x => x.IsAvailableAsync(vehicleId, pickupDate, returnDate, It.IsAny<CancellationToken>(), It.IsAny<Guid?>(), It.IsAny<Guid?>()))
             .ReturnsAsync(true);
 
         _vehicleRepositoryMock.Setup(x => x.GetByIdAsync(vehicleId, It.IsAny<CancellationToken>()))
@@ -384,7 +384,7 @@ public class BookingServiceTests
             PricePerDay = pricePerDay
         };
 
-        _vehicleRepositoryMock.Setup(x => x.IsAvailableAsync(vehicleId, pickupDate, returnDate, It.IsAny<CancellationToken>()))
+        _vehicleRepositoryMock.Setup(x => x.IsAvailableAsync(vehicleId, pickupDate, returnDate, It.IsAny<CancellationToken>(), It.IsAny<Guid?>(), It.IsAny<Guid?>()))
             .ReturnsAsync(true);
 
         _vehicleRepositoryMock.Setup(x => x.GetByIdAsync(vehicleId, It.IsAny<CancellationToken>()))
@@ -433,7 +433,7 @@ public class BookingServiceTests
             PricePerDay = 50.00m
         };
 
-        _vehicleRepositoryMock.Setup(x => x.IsAvailableAsync(vehicleId, pickupDate, returnDate, It.IsAny<CancellationToken>()))
+        _vehicleRepositoryMock.Setup(x => x.IsAvailableAsync(vehicleId, pickupDate, returnDate, It.IsAny<CancellationToken>(), It.IsAny<Guid?>(), It.IsAny<Guid?>()))
             .ReturnsAsync(true);
 
         _vehicleRepositoryMock.Setup(x => x.GetByIdAsync(vehicleId, It.IsAny<CancellationToken>()))

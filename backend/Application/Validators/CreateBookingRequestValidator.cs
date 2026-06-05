@@ -79,9 +79,14 @@ public class CreateBookingRequestValidator : AbstractValidator<CreateBookingRequ
         => await _vehicleRepository.ExistsAsync(vehicleId, cancellationToken);
 
     private async Task<bool> VehicleIsAvailableAsync(CreateBookingRequest request, CancellationToken cancellationToken)
-        => await _vehicleRepository.IsAvailableAsync(
+    {
+        var ownerUserId = request.CustomerUserId ?? _userId;
+        return await _vehicleRepository.IsAvailableAsync(
             request.VehicleId,
             request.PickupDate,
             request.ReturnDate,
-            cancellationToken);
+            excludeUserId: ownerUserId,
+            excludeBookingId: null,
+            cancellationToken: cancellationToken);
+    }
 }

@@ -5,6 +5,8 @@ using Backend.Infrastructure.Data;
 using Backend.Domain.Entities.Enums;
 using Microsoft.EntityFrameworkCore;
 
+using Microsoft.Extensions.Logging;
+
 namespace Backend.Infrastructure.Repositories;
 
 /// <summary>
@@ -12,8 +14,11 @@ namespace Backend.Infrastructure.Repositories;
 /// </summary>
 public class BookingRepository : PaginatedRepository<Booking>, IBookingRepository
 {
-    public BookingRepository(ApplicationDbContext context) : base(context)
+    private readonly ILogger<BookingRepository>? _logger;
+
+    public BookingRepository(ApplicationDbContext context, ILogger<BookingRepository>? logger = null) : base(context)
     {
+        _logger = logger;
     }
 
     /// <inheritdoc />
@@ -49,17 +54,53 @@ public class BookingRepository : PaginatedRepository<Booking>, IBookingRepositor
                 b.VehicleId == booking.VehicleId &&
                 b.Id != booking.Id &&
                 reserving.Contains(b.Status) &&
+                !(b.UserId == booking.UserId && b.Status == BookingStatus.PaymentPending) &&
                 !(b.Status == BookingStatus.PaymentPending && b.HoldExpiresAt != null && b.HoldExpiresAt <= nowUtc) &&
                 b.PickupDate < ret &&
                 b.ReturnDate > pickup,
                 cancellationToken);
 
-            if (overlaps) throw new ConflictException("This vehicle has just been reserved by another customer.");
+            if (overlaps)
+            {
+                var conflictDetails = await _context.Bookings
+                    .Where(b => b.VehicleId == booking.VehicleId
+                        && b.Id != booking.Id
+                        && reserving.Contains(b.Status)
+                        && !(b.UserId == booking.UserId && b.Status == BookingStatus.PaymentPending)
+                        && !(b.Status == BookingStatus.PaymentPending && b.HoldExpiresAt != null && b.HoldExpiresAt <= nowUtc)
+                        && b.PickupDate < ret
+                        && b.ReturnDate > pickup)
+                    .Select(b => new { b.Id, b.Status, b.HoldExpiresAt, b.UserId })
+                    .ToListAsync(cancellationToken);
+
+                if (_logger != null)
+                {
+                    _logger.LogWarning(
+                        "ReserveVehicleAtomicAsync conflict detected (InMemory): VehicleId={VehicleId}, AttemptedBookingId={BookingId}, CustomerId={CustomerId}",
+                        booking.VehicleId, booking.Id, booking.UserId);
+                    
+                    foreach (var conflict in conflictDetails)
+                    {
+                        _logger.LogWarning(
+                            "ReserveVehicleAtomicAsync conflicting booking (InMemory): VehicleId={VehicleId}, ConflictingBookingId={BookingId}, ConflictingBookingStatus={BookingStatus}, ConflictingBookingHoldExpiration={HoldExpiration}, ConflictingCustomerId={CustomerId}",
+                            booking.VehicleId, conflict.Id, conflict.Status, conflict.HoldExpiresAt, conflict.UserId);
+                    }
+                }
+
+                throw new ConflictException("This vehicle has just been reserved by another customer.");
+            }
 
             booking.Status = targetStatus;
             booking.HoldStartedAt = holdStartedAt;
             booking.HoldExpiresAt = holdExpiresAt;
             await _context.SaveChangesAsync(cancellationToken);
+
+            if (_logger != null)
+            {
+                _logger.LogInformation(
+                    "ReserveVehicleAtomicAsync success (InMemory): VehicleId={VehicleId}, BookingId={BookingId}, Status={Status}, HoldExpiresAt={HoldExpiresAt}, CustomerId={CustomerId}",
+                    booking.VehicleId, booking.Id, targetStatus, holdExpiresAt, booking.UserId);
+            }
             return;
         }
 
@@ -72,6 +113,7 @@ public class BookingRepository : PaginatedRepository<Booking>, IBookingRepositor
                 System.Data.IsolationLevel.Serializable, cancellationToken);
 
             var nowUtc = DateTime.UtcNow;
+            var reserving = BookingStatusPolicy.ReservingStatuses;
 
             // Range-lock the overlapping-booking key range for this vehicle.
             // UPDLOCK + HOLDLOCK forces a concurrent transaction to block here
@@ -79,6 +121,8 @@ public class BookingRepository : PaginatedRepository<Booking>, IBookingRepositor
             // key-range / serializable lock that prevents phantom inserts. An
             // expired PaymentPending hold is excluded so a lapsed hold never
             // blocks a new reservation.
+            //
+            // Exclude current user's own PaymentPending holds.
             //
             // The status literals MUST match
             // BookingStatusPolicy.ReservingStatuses.
@@ -92,13 +136,39 @@ public class BookingRepository : PaginatedRepository<Booking>, IBookingRepositor
                         AND NOT ([Status] = 'PaymentPending'
                                  AND [HoldExpiresAt] IS NOT NULL
                                  AND [HoldExpiresAt] <= {2})
+                        AND NOT ([UserId] = {5} AND [Status] = 'PaymentPending')
                         AND [PickupDate] < {3}
                         AND [ReturnDate] > {4}",
-                    booking.VehicleId, booking.Id, nowUtc, ret, pickup)
+                    booking.VehicleId, booking.Id, nowUtc, ret, pickup, booking.UserId)
                 .ToListAsync(cancellationToken);
 
             if (conflicts.Count > 0 && conflicts[0] > 0)
             {
+                var conflictDetails = await _context.Bookings
+                    .Where(b => b.VehicleId == booking.VehicleId
+                        && b.Id != booking.Id
+                        && reserving.Contains(b.Status)
+                        && !(b.UserId == booking.UserId && b.Status == BookingStatus.PaymentPending)
+                        && !(b.Status == BookingStatus.PaymentPending && b.HoldExpiresAt != null && b.HoldExpiresAt <= nowUtc)
+                        && b.PickupDate < ret
+                        && b.ReturnDate > pickup)
+                    .Select(b => new { b.Id, b.Status, b.HoldExpiresAt, b.UserId })
+                    .ToListAsync(cancellationToken);
+
+                if (_logger != null)
+                {
+                    _logger.LogWarning(
+                        "ReserveVehicleAtomicAsync conflict detected: VehicleId={VehicleId}, AttemptedBookingId={BookingId}, CustomerId={CustomerId}",
+                        booking.VehicleId, booking.Id, booking.UserId);
+                    
+                    foreach (var conflict in conflictDetails)
+                    {
+                        _logger.LogWarning(
+                            "ReserveVehicleAtomicAsync conflicting booking: VehicleId={VehicleId}, ConflictingBookingId={BookingId}, ConflictingBookingStatus={BookingStatus}, ConflictingBookingHoldExpiration={HoldExpiration}, ConflictingCustomerId={CustomerId}",
+                            booking.VehicleId, conflict.Id, conflict.Status, conflict.HoldExpiresAt, conflict.UserId);
+                    }
+                }
+
                 await tx.RollbackAsync(cancellationToken);
                 throw new ConflictException(
                     "This vehicle has just been reserved by another customer.");
@@ -118,6 +188,13 @@ public class BookingRepository : PaginatedRepository<Booking>, IBookingRepositor
                 await tx.RollbackAsync(cancellationToken);
                 throw new ConflictException(
                     "This vehicle has just been reserved by another customer.");
+            }
+
+            if (_logger != null)
+            {
+                _logger.LogInformation(
+                    "ReserveVehicleAtomicAsync success: VehicleId={VehicleId}, BookingId={BookingId}, Status={Status}, HoldExpiresAt={HoldExpiresAt}, CustomerId={CustomerId}",
+                    booking.VehicleId, booking.Id, targetStatus, holdExpiresAt, booking.UserId);
             }
 
             await tx.CommitAsync(cancellationToken);

@@ -143,7 +143,12 @@ namespace Backend.Application.Services
             }
 
             var isAvailable = await _vehicleRepository.IsAvailableAsync(
-                request.VehicleId, request.PickupDate, request.ReturnDate, cancellationToken);
+                request.VehicleId,
+                request.PickupDate,
+                request.ReturnDate,
+                excludeUserId: userId,
+                excludeBookingId: null,
+                cancellationToken: cancellationToken);
             if (!isAvailable)
             {
                 throw new ConflictException("Vehicle is not available for the selected dates");

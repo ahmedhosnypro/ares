@@ -57,7 +57,7 @@ public class CheckoutServiceTests
             .Setup(x => x.IsApprovedAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _vehicleRepositoryMock
-            .Setup(x => x.IsAvailableAsync(vehicleId, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.IsAvailableAsync(vehicleId, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>(), It.IsAny<Guid?>(), It.IsAny<Guid?>()))
             .ReturnsAsync(true);
         _vehicleRepositoryMock
             .Setup(x => x.GetByIdAsync(vehicleId, It.IsAny<CancellationToken>()))
