@@ -52,7 +52,8 @@ const getStatusConfig = (status?: string) => {
     return { label: status ?? "Active", colorKey: "success" as const };
   if (s === "completed") return { label: status ?? "Completed", colorKey: "info" as const };
   if (s === "cancelled" || s === "returned") return { label: status ?? "Cancelled", colorKey: "error" as const };
-  return { label: status ?? "Pending", colorKey: "warning" as const };
+  if (s === "draft") return { label: status ?? "Draft", colorKey: "warning" as const };
+  return { label: status ?? "PaymentPending", colorKey: "warning" as const };
 };
 
 const formatCompactDate = (dateString?: string) => {
@@ -369,7 +370,8 @@ export default function SupplierBookingsClient() {
               sx={{ borderRadius: 2 }}
             >
               <MenuItem value="All">All Statuses</MenuItem>
-              <MenuItem value="Pending">Pending</MenuItem>
+              <MenuItem value="Draft">Draft</MenuItem>
+              <MenuItem value="PaymentPending">Payment Pending</MenuItem>
               <MenuItem value="Confirmed">Confirmed</MenuItem>
               <MenuItem value="Active">Active</MenuItem>
               <MenuItem value="Completed">Completed</MenuItem>
