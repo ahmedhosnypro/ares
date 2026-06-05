@@ -150,6 +150,11 @@ export const useBookings = (
   const [loading, setLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const refetch = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -200,8 +205,8 @@ export const useBookings = (
     return () => {
       clearTimeout(delayDebounceFn);
     };
-  }, [accessToken, user, page, size, searchKeyword, statusFilter, fromDate, toDate]);
-  return { bookings, loading, totalPages, totalCount };
+  }, [accessToken, user, page, size, searchKeyword, statusFilter, fromDate, toDate, refreshTrigger]);
+  return { bookings, loading, totalPages, totalCount, refetch };
 };
 
 export interface AdminBookingStats {
@@ -384,6 +389,11 @@ export const useAdminBookingStats = (
 ) => {
   const [stats, setStats] = useState<AdminBookingStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const refetch = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -404,7 +414,7 @@ export const useAdminBookingStats = (
     };
 
     void fetchStats();
-  }, [accessToken, user]);
+  }, [accessToken, user, refreshTrigger]);
 
-  return { stats, loading };
+  return { stats, loading, refetch };
 };
