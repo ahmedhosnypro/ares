@@ -2,7 +2,19 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { Box, Switch, Typography, CircularProgress, Chip, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from "@mui/material";
+import {
+  Box,
+  Switch,
+  Typography,
+  CircularProgress,
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
+} from "@mui/material";
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
 
@@ -63,14 +75,9 @@ export default function DriverAvailabilityToggle({
       <Typography variant="body2" sx={{ fontWeight: 600, color: "text.secondary" }}>
         Status:
       </Typography>
-      
+
       {isReserved ? (
-        <Chip 
-          label="Reserved" 
-          color="warning" 
-          size="small" 
-          sx={{ fontWeight: 700 }}
-        />
+        <Chip label="Reserved" color="warning" size="small" sx={{ fontWeight: 700 }} />
       ) : (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Switch
@@ -80,16 +87,21 @@ export default function DriverAvailabilityToggle({
             color="success"
             aria-label="Toggle availability"
           />
-          <Chip 
-            label={isAvailable ? "Available" : "Unavailable"} 
-            color={isAvailable ? "success" : "default"} 
-            size="small" 
+          <Chip
+            label={isAvailable ? "Available" : "Unavailable"}
+            color={isAvailable ? "success" : "default"}
+            size="small"
             sx={{ fontWeight: 700 }}
           />
         </Box>
       )}
 
-      <Dialog open={confirmDialog} onClose={() => { setConfirmDialog(false); }}>
+      <Dialog
+        open={confirmDialog}
+        onClose={() => {
+          setConfirmDialog(false);
+        }}
+      >
         <DialogTitle>Confirm Availability Change</DialogTitle>
         <DialogContent>
           <DialogContentText>
@@ -98,7 +110,14 @@ export default function DriverAvailabilityToggle({
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => { setConfirmDialog(false); }} color="inherit">Cancel</Button>
+          <Button
+            onClick={() => {
+              setConfirmDialog(false);
+            }}
+            color="inherit"
+          >
+            Cancel
+          </Button>
           <Button onClick={confirmToggle} variant="contained" color="primary" autoFocus>
             Confirm
           </Button>

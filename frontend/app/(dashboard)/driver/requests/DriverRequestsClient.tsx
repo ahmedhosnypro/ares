@@ -95,9 +95,7 @@ export default function DriverRequestsClient() {
       }
 
       // Optimistically update the UI
-      setRequests(prev =>
-        prev.map(req => (req.id === id ? { ...req, hasResponded: true } : req))
-      );
+      setRequests(prev => prev.map(req => (req.id === id ? { ...req, hasResponded: true } : req)));
     } catch (err) {
       logger.error("Accept request error", err);
       setError(err instanceof Error ? err.message : "Failed to accept request.");
@@ -199,9 +197,9 @@ export default function DriverRequestsClient() {
                       </Box>
                     </Stack>
                   </CardContent>
-                  
+
                   <Divider />
-                  
+
                   <CardActions sx={{ p: 2, bgcolor: "background.default" }}>
                     {request.hasResponded ? (
                       <Button

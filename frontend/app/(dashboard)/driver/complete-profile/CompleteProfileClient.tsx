@@ -91,13 +91,12 @@ export default function CompleteProfileClient() {
     setSelectedAreaIds(typeof value === "string" ? value.split(",") : value);
   };
 
-  const handleFileChange = (setter: React.Dispatch<React.SetStateAction<File | null>>) => (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    if (e.target.files && e.target.files[0]) {
-      setter(e.target.files[0]);
-    }
-  };
+  const handleFileChange =
+    (setter: React.Dispatch<React.SetStateAction<File | null>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files[0]) {
+        setter(e.target.files[0]);
+      }
+    };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,7 +123,7 @@ export default function CompleteProfileClient() {
       formData.append("Address", address);
       formData.append("EmergencyContactName", emergencyName);
       formData.append("EmergencyContactPhone", emergencyPhone);
-      
+
       selectedAreaIds.forEach(id => {
         formData.append("ServiceAreaIds", id);
       });
@@ -166,13 +165,7 @@ export default function CompleteProfileClient() {
       <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
         {label} *
       </Typography>
-      <input
-        type="file"
-        accept="image/*"
-        style={{ display: "none" }}
-        ref={ref}
-        onChange={handleFileChange(setter)}
-      />
+      <input type="file" accept="image/*" style={{ display: "none" }} ref={ref} onChange={handleFileChange(setter)} />
       {file ? (
         <Paper
           variant="outlined"
@@ -188,7 +181,13 @@ export default function CompleteProfileClient() {
           <Typography variant="body2" sx={{ color: "success.dark", fontWeight: 500 }} noWrap>
             {file.name}
           </Typography>
-          <IconButton size="small" onClick={() => { setter(null); }} color="success">
+          <IconButton
+            size="small"
+            onClick={() => {
+              setter(null);
+            }}
+            color="success"
+          >
             <CloseIcon fontSize="small" />
           </IconButton>
         </Paper>
@@ -249,21 +248,27 @@ export default function CompleteProfileClient() {
                   label="Address"
                   required
                   value={address}
-                  onChange={e => { setAddress(e.target.value); }}
+                  onChange={e => {
+                    setAddress(e.target.value);
+                  }}
                 />
                 <TextField
                   fullWidth
                   label="Emergency Contact Name"
                   required
                   value={emergencyName}
-                  onChange={e => { setEmergencyName(e.target.value); }}
+                  onChange={e => {
+                    setEmergencyName(e.target.value);
+                  }}
                 />
                 <TextField
                   fullWidth
                   label="Emergency Contact Phone"
                   required
                   value={emergencyPhone}
-                  onChange={e => { setEmergencyPhone(e.target.value); }}
+                  onChange={e => {
+                    setEmergencyPhone(e.target.value);
+                  }}
                 />
               </Stack>
 
@@ -309,7 +314,9 @@ export default function CompleteProfileClient() {
                   label="License Number"
                   required
                   value={licenseNumber}
-                  onChange={e => { setLicenseNumber(e.target.value); }}
+                  onChange={e => {
+                    setLicenseNumber(e.target.value);
+                  }}
                 />
                 <TextField
                   fullWidth
@@ -318,7 +325,9 @@ export default function CompleteProfileClient() {
                   required
                   slotProps={{ inputLabel: { shrink: true } }}
                   value={licenseExpiryDate}
-                  onChange={e => { setLicenseExpiryDate(e.target.value); }}
+                  onChange={e => {
+                    setLicenseExpiryDate(e.target.value);
+                  }}
                 />
                 <Box>
                   {renderFileUploader("Driver License Image", licenseImage, setLicenseImage, licenseInputRef)}

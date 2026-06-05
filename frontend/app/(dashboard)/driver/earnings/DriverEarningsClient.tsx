@@ -75,7 +75,7 @@ export default function DriverEarningsClient() {
     let monthly = 0;
     let completed = 0;
     const now = new Date();
-    
+
     // Recent earnings sorted by most recent return date
     const completedAssignments = assignments
       .filter(a => a.status === "Completed")
@@ -87,7 +87,7 @@ export default function DriverEarningsClient() {
       if (a.status === "Completed") {
         total += a.earnings;
         completed += a.earnings;
-        
+
         if (isSameMonth(new Date(a.returnDate), now)) {
           monthly += a.earnings;
         }
@@ -155,30 +155,34 @@ export default function DriverEarningsClient() {
       <Typography variant="h5" sx={{ fontWeight: 800, mb: 3 }}>
         Recent Earnings History
       </Typography>
-      
+
       {recentEarnings.length === 0 ? (
-        <Paper elevation={0} sx={{ p: 4, textAlign: "center", border: `1px dashed ${theme.palette.divider}`, borderRadius: 4 }}>
-          <Typography color="text.secondary">
-            You haven't completed any trips yet.
-          </Typography>
+        <Paper
+          elevation={0}
+          sx={{ p: 4, textAlign: "center", border: `1px dashed ${theme.palette.divider}`, borderRadius: 4 }}
+        >
+          <Typography color="text.secondary">You haven't completed any trips yet.</Typography>
         </Paper>
       ) : (
-        <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 3, border: `1px solid ${theme.palette.divider}` }}>
+        <TableContainer
+          component={Paper}
+          elevation={0}
+          sx={{ borderRadius: 3, border: `1px solid ${theme.palette.divider}` }}
+        >
           <Table sx={{ minWidth: 650 }} aria-label="earnings history table">
             <TableHead sx={{ bgcolor: "background.default" }}>
               <TableRow>
                 <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>Booking ID</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>Vehicle</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700 }}>Earnings</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 700 }}>
+                  Earnings
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {recentEarnings.map((row) => (
-                <TableRow
-                  key={row.bookingId}
-                  sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                >
+              {recentEarnings.map(row => (
+                <TableRow key={row.bookingId} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                   <TableCell component="th" scope="row">
                     {format(new Date(row.returnDate), "MMM dd, yyyy")}
                   </TableCell>

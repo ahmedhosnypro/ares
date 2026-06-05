@@ -135,7 +135,7 @@ export default function DriverProfileClient() {
           >
             {!resolvedPhoto && initials}
           </Avatar>
-          
+
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="h5" sx={{ fontWeight: 800, mb: 0.5 }}>
               {fullName}
@@ -144,7 +144,7 @@ export default function DriverProfileClient() {
               <Chip label={`Status: ${profile.status}`} color="primary" size="small" sx={{ fontWeight: 700 }} />
               <Chip label={`Availability: ${profile.availability}`} variant="outlined" size="small" />
             </Box>
-            
+
             <Stack spacing={1}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, color: "text.secondary" }}>
                 <EmailIcon fontSize="small" />
@@ -171,13 +171,23 @@ export default function DriverProfileClient() {
             </Typography>
             <Stack spacing={2}>
               <Box>
-                <Typography variant="caption" color="text.secondary" sx={{ textTransform: "uppercase", fontWeight: 700 }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ textTransform: "uppercase", fontWeight: 700 }}
+                >
                   License Number
                 </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 600 }}>{profile.licenseNumber || "N/A"}</Typography>
+                <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                  {profile.licenseNumber || "N/A"}
+                </Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary" sx={{ textTransform: "uppercase", fontWeight: 700 }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ textTransform: "uppercase", fontWeight: 700 }}
+                >
                   Expiry Date
                 </Typography>
                 <Typography variant="body1" sx={{ fontWeight: 600 }}>
@@ -193,16 +203,28 @@ export default function DriverProfileClient() {
             </Typography>
             <Stack spacing={2}>
               <Box>
-                <Typography variant="caption" color="text.secondary" sx={{ textTransform: "uppercase", fontWeight: 700 }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ textTransform: "uppercase", fontWeight: 700 }}
+                >
                   Contact Name
                 </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 600 }}>{profile.emergencyContactName || "N/A"}</Typography>
+                <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                  {profile.emergencyContactName || "N/A"}
+                </Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary" sx={{ textTransform: "uppercase", fontWeight: 700 }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ textTransform: "uppercase", fontWeight: 700 }}
+                >
                   Contact Phone
                 </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 600 }}>{profile.emergencyContactPhone || "N/A"}</Typography>
+                <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                  {profile.emergencyContactPhone || "N/A"}
+                </Typography>
               </Box>
             </Stack>
           </Grid>

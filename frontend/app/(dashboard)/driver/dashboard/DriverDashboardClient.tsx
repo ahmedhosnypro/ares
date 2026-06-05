@@ -2,15 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import {
-  Box,
-  CircularProgress,
-  Container,
-  Typography,
-  Alert,
-  Button,
-  Grid,
-} from "@mui/material";
+import { Box, CircularProgress, Container, Typography, Alert, Button, Grid } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import {
   Route as TripsIcon,
@@ -90,7 +82,16 @@ export default function DriverDashboardClient() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 4, flexWrap: "wrap", gap: 2 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          mb: 4,
+          flexWrap: "wrap",
+          gap: 2,
+        }}
+      >
         <Box>
           <Typography variant="h4" component="h1" sx={{ fontWeight: 800, color: "text.primary", mb: 1 }}>
             Driver Dashboard
@@ -99,13 +100,13 @@ export default function DriverDashboardClient() {
             Welcome back, {session?.user?.firstName}! Here is your overview.
           </Typography>
         </Box>
-        
+
         {summary && (
           <Box sx={{ bgcolor: "background.paper", p: 2, borderRadius: 3, boxShadow: theme.palette.shadow.card }}>
-            <DriverAvailabilityToggle 
-              initialAvailability={summary.availability} 
-              onAvailabilityChange={(newAvail) => {
-                setSummary(prev => prev ? { ...prev, availability: newAvail as any } : null);
+            <DriverAvailabilityToggle
+              initialAvailability={summary.availability}
+              onAvailabilityChange={newAvail => {
+                setSummary(prev => (prev ? { ...prev, availability: newAvail as any } : null));
               }}
             />
           </Box>
@@ -113,12 +114,17 @@ export default function DriverDashboardClient() {
       </Box>
 
       {summary?.activeRequestsCount ? (
-        <Alert severity="info" sx={{ mb: 4, borderRadius: 2 }} action={
-          <Button color="inherit" size="small" component={Link} href="/driver/requests">
-            View Requests
-          </Button>
-        }>
-          You have <strong>{summary.activeRequestsCount}</strong> new ride request{summary.activeRequestsCount > 1 ? 's' : ''} available in your area!
+        <Alert
+          severity="info"
+          sx={{ mb: 4, borderRadius: 2 }}
+          action={
+            <Button color="inherit" size="small" component={Link} href="/driver/requests">
+              View Requests
+            </Button>
+          }
+        >
+          You have <strong>{summary.activeRequestsCount}</strong> new ride request
+          {summary.activeRequestsCount > 1 ? "s" : ""} available in your area!
         </Alert>
       ) : null}
 
@@ -126,7 +132,7 @@ export default function DriverDashboardClient() {
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="Total Earnings"
-            value={`$${summary?.totalEarnings.toFixed(2) ?? '0.00'}`}
+            value={`$${summary?.totalEarnings.toFixed(2) ?? "0.00"}`}
             icon={<EarningsIcon />}
             trend={{ value: 0, label: "All time" }}
           />
@@ -134,7 +140,7 @@ export default function DriverDashboardClient() {
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="Completed Trips"
-            value={summary?.completedTrips.toString() ?? '0'}
+            value={summary?.completedTrips.toString() ?? "0"}
             icon={<TripsIcon />}
             trend={{ value: 0, label: "Total trips completed" }}
           />
@@ -142,7 +148,7 @@ export default function DriverDashboardClient() {
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="Active/Upcoming"
-            value={( (summary?.activeTrips || 0) + (summary?.upcomingTrips || 0) ).toString()}
+            value={((summary?.activeTrips || 0) + (summary?.upcomingTrips || 0)).toString()}
             icon={<ActiveTripsIcon />}
             trend={{ value: 0, label: "Trips in progress or upcoming" }}
           />
@@ -150,13 +156,13 @@ export default function DriverDashboardClient() {
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="Average Rating"
-            value={summary?.averageRating ? summary.averageRating.toFixed(1) : 'No ratings'}
+            value={summary?.averageRating ? summary.averageRating.toFixed(1) : "No ratings"}
             icon={<StarIcon sx={{ color: "warning.main" }} />}
             trend={{ value: 0, label: "Based on customer reviews" }}
           />
         </Grid>
       </Grid>
-      
+
       {/* Recent Activity or Upcoming Trips can be added here if needed */}
     </Container>
   );

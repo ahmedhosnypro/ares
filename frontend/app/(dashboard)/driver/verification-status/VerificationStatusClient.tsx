@@ -3,16 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Container,
-  Paper,
-  Typography,
-  Alert,
-  AlertTitle,
-} from "@mui/material";
+import { Box, Button, CircularProgress, Container, Paper, Typography, Alert, AlertTitle } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import {
   HourglassEmpty as PendingIcon,
@@ -103,15 +94,9 @@ export default function VerificationStatusClient() {
         }}
       >
         <Box sx={{ mb: 3 }}>
-          {isPending && (
-            <PendingIcon sx={{ fontSize: 64, color: "warning.main", mb: 2 }} />
-          )}
-          {(isRejected || isSuspended) && (
-            <RejectedIcon sx={{ fontSize: 64, color: "error.main", mb: 2 }} />
-          )}
-          {profileStatus?.status === "Verified" && (
-            <ApprovedIcon sx={{ fontSize: 64, color: "success.main", mb: 2 }} />
-          )}
+          {isPending && <PendingIcon sx={{ fontSize: 64, color: "warning.main", mb: 2 }} />}
+          {(isRejected || isSuspended) && <RejectedIcon sx={{ fontSize: 64, color: "error.main", mb: 2 }} />}
+          {profileStatus?.status === "Verified" && <ApprovedIcon sx={{ fontSize: 64, color: "success.main", mb: 2 }} />}
 
           <Typography variant="h4" gutterBottom sx={{ fontWeight: 800 }}>
             {isPending && "Verification Pending"}
@@ -125,10 +110,8 @@ export default function VerificationStatusClient() {
               "Your driver profile is currently under review by our admin team. We will notify you once it has been approved."}
             {isRejected &&
               "Unfortunately, your driver application was not approved. Please review the reason below and update your documents."}
-            {isSuspended &&
-              "Your driver account has been suspended. Please contact support for more information."}
-            {profileStatus?.status === "Verified" &&
-              "Your profile is approved. Redirecting to your dashboard..."}
+            {isSuspended && "Your driver account has been suspended. Please contact support for more information."}
+            {profileStatus?.status === "Verified" && "Your profile is approved. Redirecting to your dashboard..."}
           </Typography>
 
           {isRejected && profileStatus?.rejectionReason && (
@@ -141,7 +124,9 @@ export default function VerificationStatusClient() {
           {isPending && (
             <Button
               variant="outlined"
-              onClick={() => { window.location.reload(); }}
+              onClick={() => {
+                window.location.reload();
+              }}
               sx={{ borderRadius: 2, px: 4 }}
             >
               Refresh Status
@@ -151,7 +136,9 @@ export default function VerificationStatusClient() {
           {isRejected && (
             <Button
               variant="contained"
-              onClick={() => { router.push("/driver/complete-profile"); }}
+              onClick={() => {
+                router.push("/driver/complete-profile");
+              }}
               sx={{ borderRadius: 2, px: 4, py: 1.5, fontWeight: 700 }}
             >
               Update Profile

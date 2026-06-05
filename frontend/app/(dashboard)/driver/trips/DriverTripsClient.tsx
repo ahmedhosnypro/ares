@@ -19,11 +19,7 @@ import {
   Grid,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import {
-  LocationOn as LocationIcon,
-  Event as EventIcon,
-  Person as PersonIcon,
-} from "@mui/icons-material";
+import { LocationOn as LocationIcon, Event as EventIcon, Person as PersonIcon } from "@mui/icons-material";
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
 import { format } from "date-fns";
@@ -76,9 +72,15 @@ export default function DriverTripsClient() {
     void fetchAssignments();
   }, [session]);
 
-  const assignedTrips = useMemo(() => assignments.filter(a => ["Confirmed", "Approved", "ReadyForDelivery"].includes(a.status)), [assignments]);
+  const assignedTrips = useMemo(
+    () => assignments.filter(a => ["Confirmed", "Approved", "ReadyForDelivery"].includes(a.status)),
+    [assignments]
+  );
   const activeTrips = useMemo(() => assignments.filter(a => ["Active"].includes(a.status)), [assignments]);
-  const completedTrips = useMemo(() => assignments.filter(a => ["Completed", "Cancelled"].includes(a.status)), [assignments]);
+  const completedTrips = useMemo(
+    () => assignments.filter(a => ["Completed", "Cancelled"].includes(a.status)),
+    [assignments]
+  );
 
   const currentTrips = tabIndex === 0 ? assignedTrips : tabIndex === 1 ? activeTrips : completedTrips;
 
@@ -106,7 +108,13 @@ export default function DriverTripsClient() {
       )}
 
       <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 4 }}>
-        <Tabs value={tabIndex} onChange={(_, nv) => { setTabIndex(nv); }} aria-label="driver trips tabs">
+        <Tabs
+          value={tabIndex}
+          onChange={(_, nv) => {
+            setTabIndex(nv);
+          }}
+          aria-label="driver trips tabs"
+        >
           <Tab label={`Upcoming (${assignedTrips.length})`} />
           <Tab label={`Active (${activeTrips.length})`} />
           <Tab label={`Completed (${completedTrips.length})`} />
@@ -145,7 +153,9 @@ export default function DriverTripsClient() {
                       <Chip
                         label={trip.status}
                         size="small"
-                        color={trip.status === "Active" ? "primary" : trip.status === "Completed" ? "success" : "default"}
+                        color={
+                          trip.status === "Active" ? "primary" : trip.status === "Completed" ? "success" : "default"
+                        }
                         sx={{ fontWeight: 700 }}
                       />
                     </Box>
@@ -158,11 +168,15 @@ export default function DriverTripsClient() {
                       <Box sx={{ display: "flex", gap: 1.5, alignItems: "flex-start" }}>
                         <PersonIcon color="action" fontSize="small" sx={{ mt: 0.25 }} />
                         <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>{trip.customerName}</Typography>
-                          <Typography variant="caption" color="text.secondary">{trip.customerPhone}</Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {trip.customerName}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {trip.customerPhone}
+                          </Typography>
                         </Box>
                       </Box>
-                      
+
                       <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
                         <EventIcon color="action" fontSize="small" />
                         <Typography variant="body2" color="text.secondary">
@@ -173,7 +187,8 @@ export default function DriverTripsClient() {
                       <Box sx={{ display: "flex", gap: 1.5, alignItems: "flex-start" }}>
                         <LocationIcon color="action" fontSize="small" sx={{ mt: 0.25 }} />
                         <Typography variant="body2" color="text.secondary">
-                          Pickup: {trip.pickupLocation || "N/A"}<br/>
+                          Pickup: {trip.pickupLocation || "N/A"}
+                          <br />
                           Dropoff: {trip.dropoffLocation || "N/A"}
                         </Typography>
                       </Box>
@@ -190,7 +205,7 @@ export default function DriverTripsClient() {
                       </Typography>
                     </Box>
                   </CardContent>
-                  
+
                   {["Confirmed", "Approved"].includes(trip.status) && (
                     <Box sx={{ p: 2, bgcolor: "background.default", borderTop: `1px solid ${theme.palette.divider}` }}>
                       <Button
@@ -198,14 +213,19 @@ export default function DriverTripsClient() {
                         variant="outlined"
                         color="error"
                         onClick={async () => {
-                          if (!confirm("Are you sure you want to cancel this trip? This action cannot be undone and is only allowed at least 24h before pickup.")) return;
+                          if (
+                            !confirm(
+                              "Are you sure you want to cancel this trip? This action cannot be undone and is only allowed at least 24h before pickup."
+                            )
+                          )
+                            return;
                           try {
                             const res = await fetch(toApiUrl(`/api/driver/assignments/${trip.bookingId}/cancel`), {
                               method: "POST",
-                              headers: { Authorization: `Bearer ${session?.accessToken}` }
+                              headers: { Authorization: `Bearer ${session?.accessToken}` },
                             });
                             if (!res.ok) {
-                              const err = await res.json().catch(()=>({}));
+                              const err = await res.json().catch(() => ({}));
                               throw new Error(err.message || "Failed to cancel");
                             }
                             fetchAssignments();
