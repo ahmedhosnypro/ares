@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import type { Session } from "next-auth";
 import {
   AppBar,
@@ -43,7 +43,10 @@ interface HeaderClientProps {
   readonly session: Session | null;
 }
 
-export default function HeaderClient({ session }: HeaderClientProps) {
+export default function HeaderClient({ session: initialSession }: HeaderClientProps) {
+  const { data: clientSession, status } = useSession();
+  const session = status === "loading" ? initialSession : clientSession;
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currencyAnchor, setCurrencyAnchor] = useState<null | HTMLElement>(null);
   const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
