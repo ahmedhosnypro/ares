@@ -4,6 +4,8 @@ import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import AssessmentIcon from "@mui/icons-material/Assessment";
+import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
+import FactCheckIcon from "@mui/icons-material/FactCheck";
 import { QuickAction } from "./mockData";
 import Link from "next/link";
 
@@ -12,6 +14,8 @@ const IconMap = {
   Shield: VerifiedUserIcon,
   Store: StorefrontIcon,
   FileText: AssessmentIcon,
+  AssignmentInd: AssignmentIndIcon,
+  FactCheck: FactCheckIcon,
 };
 
 export default function QuickActions({ actions }: { actions: QuickAction[] }) {

@@ -75,10 +75,10 @@ export const mockCityVehicleData: Record<string, VehicleStatusData[]> = {
 };
 
 export const mockQuickActions: QuickAction[] = [
-  { label: "Add Vehicle", icon: "Car", path: "/admin/vehicles/create", color: "primary" },
+  { label: "Assign Inspector", icon: "AssignmentInd", path: "/admin/bookings", color: "primary" },
   { label: "Review Verifications", icon: "Shield", path: "/admin/verifications", color: "warning" },
-  { label: "Manage Suppliers", icon: "Store", path: "/admin/suppliers", color: "info" },
-  { label: "View Reports", icon: "FileText", path: "/admin/reports", color: "success" },
+  { label: "Review Inspections", icon: "FactCheck", path: "/admin/inspections", color: "info" },
+  { label: "Add Vehicle", icon: "Car", path: "/admin/vehicles/create", color: "success" },
 ];
 
 export const mockTopVehicles: TopVehicle[] = [

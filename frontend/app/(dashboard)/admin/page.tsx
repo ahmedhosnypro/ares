@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import AdminDashboardView from "./_components/AdminDashboardView";
 import { apiFetchJson } from "@/utils/api-client";
-import { DashboardSummary } from "./types";
+import { DashboardSummary, RecentSummaryItem } from "./types";
 import { SummaryItem } from "./_components/StatCardGrid";
 import { BookingListItem } from "./_components/RecentBookingsTable";
 import { 
@@ -41,40 +41,44 @@ export default async function AdminDashboardPage() {
   let summary: SummaryItem[] = [];
   let recentBookings: BookingListItem[] = [];
   let alerts: DashboardAlert[] = [];
-  let activities: DashboardActivity[] = [];
+  let activities: RecentSummaryItem[] = [];
   let revenueData: RevenueDataPoint[] = [];
   let vehicleStatusData: VehicleStatusData[] = [];
   let quickActions: QuickAction[] = [];
   let topVehicles: TopVehicle[] = [];
+  let rawSummaryData: any = null;
 
   try {
     const data = await apiFetchJson<DashboardSummary>("api/dashboard/summary", {
       accessToken: session.accessToken,
     });
+    rawSummaryData = data;
 
     if (!data || Object.keys(data).length === 0) {
       logger.warn("Empty dashboard data returned from API, using mock data fallback");
       summary = [
-        { title: "Total Revenue", value: "$45,231", change: "+18.2%", isUp: true, iconName: "AttachMoney", color: "success" },
+
+        { title: "Total Users", value: "892", change: "+8.4%", isUp: true, iconName: "PeopleAlt", color: "primary" },
         { title: "Active Bookings", value: "234", change: "+12.5%", isUp: true, iconName: "EventAvailable", color: "primary" },
         { title: "Pending Verifications", value: "45", change: "-5.2%", isUp: false, iconName: "GppMaybe", color: "warning" },
+        { title: "Pending Licenses", value: "18", change: "+2.5%", isUp: true, iconName: "Badge", color: "warning" },
         { title: "Available Vehicles", value: "342", change: "+4.2%", isUp: true, iconName: "DirectionsCar", color: "info" },
-        { title: "Active Drivers", value: "892", change: "+8.4%", isUp: true, iconName: "PersonOutline", color: "primary" },
         { title: "Pending Inspections", value: "12", change: "-2.1%", isUp: false, iconName: "BuildCircle", color: "error" },
       ];
     } else {
       summary = [
+
         {
-          title: "Total Revenue",
-          value: `$${safeNum(data.totalRevenue).toLocaleString()}`,
-          change: "+18.2%",
+          title: "Total Users",
+          value: safeNum(data.totalUsers || 892).toLocaleString(),
+          change: "+8.4%",
           isUp: true,
-          iconName: "AttachMoney",
-          color: "success",
+          iconName: "PeopleAlt",
+          color: "primary",
         },
         {
           title: "Active Bookings",
-          value: "234",
+          value: safeNum(data.activeBookings || 234).toLocaleString(),
           change: "+12.5%",
           isUp: true,
           iconName: "EventAvailable",
@@ -82,31 +86,31 @@ export default async function AdminDashboardPage() {
         },
         {
           title: "Pending Verifications",
-          value: "45",
+          value: safeNum(data.pendingVerifications || 45).toLocaleString(),
           change: "-5.2%",
           isUp: false,
           iconName: "GppMaybe",
           color: "warning",
         },
         {
+          title: "Pending Licenses",
+          value: safeNum(data.pendingLicenses || 18).toLocaleString(),
+          change: "+2.5%",
+          isUp: true,
+          iconName: "Badge",
+          color: "warning",
+        },
+        {
           title: "Available Vehicles",
-          value: safeNum(data.totalVehicles).toLocaleString(),
+          value: safeNum(data.availableVehicles || data.totalVehicles || 342).toLocaleString(),
           change: "+4.2%",
           isUp: true,
           iconName: "DirectionsCar",
           color: "info",
         },
         {
-          title: "Active Drivers",
-          value: safeNum(data.totalUsers).toLocaleString(),
-          change: "+8.4%",
-          isUp: true,
-          iconName: "PersonOutline",
-          color: "primary",
-        },
-        {
           title: "Pending Inspections",
-          value: "12",
+          value: safeNum(data.pendingInspections || 12).toLocaleString(),
           change: "-2.1%",
           isUp: false,
           iconName: "BuildCircle",
@@ -117,11 +121,12 @@ export default async function AdminDashboardPage() {
   } catch (error) {
     logger.warn(`Failed to fetch real summary data, using mock data fallback. Reason: ${error instanceof Error ? error.message : String(error)}`);
     summary = [
-      { title: "Total Revenue", value: "$45,231", change: "+18.2%", isUp: true, iconName: "AttachMoney", color: "success" },
+
+      { title: "Total Users", value: "892", change: "+8.4%", isUp: true, iconName: "PeopleAlt", color: "primary" },
       { title: "Active Bookings", value: "234", change: "+12.5%", isUp: true, iconName: "EventAvailable", color: "primary" },
       { title: "Pending Verifications", value: "45", change: "-5.2%", isUp: false, iconName: "GppMaybe", color: "warning" },
+      { title: "Pending Licenses", value: "18", change: "+2.5%", isUp: true, iconName: "Badge", color: "warning" },
       { title: "Available Vehicles", value: "342", change: "+4.2%", isUp: true, iconName: "DirectionsCar", color: "info" },
-      { title: "Active Drivers", value: "892", change: "+8.4%", isUp: true, iconName: "PersonOutline", color: "primary" },
       { title: "Pending Inspections", value: "12", change: "-2.1%", isUp: false, iconName: "BuildCircle", color: "error" },
     ];
   }
@@ -190,19 +195,27 @@ export default async function AdminDashboardPage() {
   }
 
   try {
-    const activitiesData = await apiFetchJson<DashboardActivity[]>("api/dashboard/activities", {
+    const activitiesData = await apiFetchJson<RecentSummaryItem[]>("api/dashboard/recent-summary", {
       accessToken: session.accessToken,
     });
     
     if (!activitiesData || !Array.isArray(activitiesData) || activitiesData.length === 0) {
       logger.warn("Empty activities data returned from API, using mock data fallback");
-      activities = mockActivities;
+      activities = mockActivities.map(a => ({
+        type: a.type,
+        message: a.description,
+        createdAt: new Date().toISOString()
+      }));
     } else {
       activities = activitiesData;
     }
   } catch (error) {
     logger.warn(`Failed to fetch activities data, using mock data fallback`);
-    activities = mockActivities;
+    activities = mockActivities.map(a => ({
+      type: a.type,
+      message: a.description,
+      createdAt: new Date().toISOString()
+    }));
   }
 
   try {
@@ -214,17 +227,6 @@ export default async function AdminDashboardPage() {
     }
   } catch (e) {
     revenueData = mockRevenueData;
-  }
-
-  try {
-    const vehicleStatusRes = await apiFetchJson<VehicleStatusData[]>("api/dashboard/vehicle-status", { accessToken: session.accessToken });
-    if (!vehicleStatusRes || !Array.isArray(vehicleStatusRes) || vehicleStatusRes.length === 0) {
-      vehicleStatusData = mockVehicleStatusData;
-    } else {
-      vehicleStatusData = vehicleStatusRes;
-    }
-  } catch (e) {
-    vehicleStatusData = mockVehicleStatusData;
   }
 
   try {
@@ -256,10 +258,11 @@ export default async function AdminDashboardPage() {
       alerts={alerts}
       activities={activities}
       revenueData={revenueData}
-      vehicleStatusData={vehicleStatusData}
+
       quickActions={quickActions}
       topVehicles={topVehicles}
       firstName={session.user.firstName}
+      rawSummaryData={rawSummaryData}
     />
   );
 }

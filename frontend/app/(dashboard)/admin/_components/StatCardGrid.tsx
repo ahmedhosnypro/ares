@@ -8,6 +8,7 @@ import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import GppMaybeIcon from "@mui/icons-material/GppMaybe";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import BuildCircleIcon from "@mui/icons-material/BuildCircle";
+import BadgeIcon from "@mui/icons-material/Badge";
 
 export interface SummaryItem {
   title: string;
@@ -15,7 +16,7 @@ export interface SummaryItem {
   change: string;
   isUp: boolean;
   color: "primary" | "success" | "warning" | "error" | "info" | "secondary";
-  iconName: "Storefront" | "DirectionsCar" | "AttachMoney" | "PeopleAlt" | "EventAvailable" | "GppMaybe" | "PersonOutline" | "BuildCircle";
+  iconName: "Storefront" | "DirectionsCar" | "AttachMoney" | "PeopleAlt" | "EventAvailable" | "GppMaybe" | "PersonOutline" | "BuildCircle" | "Badge";
 }
 
 const IconMap = {
@@ -27,6 +28,7 @@ const IconMap = {
   GppMaybe: GppMaybeIcon,
   PersonOutline: PersonOutlinedIcon,
   BuildCircle: BuildCircleIcon,
+  Badge: BadgeIcon,
 };
 
 export default function StatCardGrid({ items }: { items: SummaryItem[] }) {

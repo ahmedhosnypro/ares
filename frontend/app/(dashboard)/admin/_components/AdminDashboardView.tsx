@@ -2,10 +2,9 @@
 
 import React from "react";
 import { Box, Typography, Grid, Stack } from "@mui/material";
-import { DashboardSummary } from "../types";
+import { DashboardSummary, RecentSummaryItem } from "../types";
 import StatCardGrid, { SummaryItem } from "./StatCardGrid";
 import RevenueChart from "./RevenueChart";
-import VehicleStatusChart from "./VehicleStatusChart";
 import QuickActions from "./QuickActions";
 import TopVehicles from "./TopVehicles";
 import RecentBookingsTable, { BookingListItem } from "./RecentBookingsTable";
@@ -13,7 +12,6 @@ import AlertsCenter from "./AlertsCenter";
 import LiveActivity from "./LiveActivity";
 import {
   RevenueDataPoint,
-  VehicleStatusData,
   QuickAction,
   TopVehicle,
   DashboardAlert,
@@ -24,12 +22,12 @@ export interface AdminDashboardViewProps {
   summary: SummaryItem[];
   recentBookings: BookingListItem[];
   alerts: DashboardAlert[];
-  activities: DashboardActivity[];
+  activities: RecentSummaryItem[];
   revenueData: RevenueDataPoint[];
-  vehicleStatusData: VehicleStatusData[];
-  quickActions: QuickAction[];
   topVehicles: TopVehicle[];
+  quickActions: QuickAction[];
   firstName?: string;
+  rawSummaryData?: any;
 }
 
 export default function AdminDashboardView({
@@ -38,11 +36,16 @@ export default function AdminDashboardView({
   alerts,
   activities,
   revenueData,
-  vehicleStatusData,
   quickActions,
   topVehicles,
-  firstName
+  firstName,
+  rawSummaryData
 }: AdminDashboardViewProps) {
+  
+  // Log the raw data from the API to the browser console for debugging
+  console.log("🔥 Raw Dashboard API Data from Backend:", rawSummaryData);
+  console.log("🔥 Mapped Summary Cards Data:", summary);
+
   return (
     <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: "background.default", fontFamily: "inherit", minHeight: "100vh" }}>
 
@@ -50,11 +53,8 @@ export default function AdminDashboardView({
       <StatCardGrid items={summary} />
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, lg: 8, sm: 7 }}>
+        <Grid size={{ xs: 12 }}>
           <RevenueChart data={revenueData} />
-        </Grid>
-        <Grid size={{ xs: 12, lg: 4, sm: 5 }}>
-          <VehicleStatusChart data={vehicleStatusData} />
         </Grid>
       </Grid>
 
