@@ -138,7 +138,7 @@ export default function GalleryEditor() {
               onClick={() => {
                 handleRemove(activeIndex);
               }}
-              sx={{ bgcolor: "error.main", color: "white", "&:hover": { bgcolor: "error.dark" } }}
+              sx={{ bgcolor: "error.main", color: "common.white", "&:hover": { bgcolor: "error.dark" } }}
             >
               <DeleteRoundedIcon />
             </IconButton>
@@ -185,7 +185,7 @@ export default function GalleryEditor() {
                     display: "flex",
                   }}
                 >
-                  <StarRoundedIcon sx={{ fontSize: 12, color: "white" }} />
+                  <StarRoundedIcon sx={{ fontSize: 12, color: "common.white" }} />
                 </Box>
               ) : null}
             </ButtonBase>

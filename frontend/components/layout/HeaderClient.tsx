@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import type { Session } from "next-auth";
 import {
@@ -115,6 +116,14 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
     if (isInspector) return "/inspector";
     return "/";
   };
+
+  const pathname = usePathname();
+  const isDashboardRoute =
+    pathname.startsWith("/admin") || pathname.startsWith("/supplier") || pathname.startsWith("/inspector");
+
+  if (isDashboardRoute) {
+    return null;
+  }
 
   return (
     <>

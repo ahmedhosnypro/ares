@@ -6,12 +6,6 @@ export interface DashboardSummary {
   totalBookings: number;
   pendingBookings: number;
   totalRevenue: number;
-  activeVehicles?: number;
-  activeBookings?: number;
-  pendingVerifications?: number;
-  availableVehicles?: number;
-  pendingInspections?: number;
-  pendingLicenses?: number;
 }
 
 export interface RecentBooking {
@@ -32,9 +26,10 @@ export interface UpcomingBooking {
   status: string;
 }
 
-export interface RecentSummaryItem {
-  type: string;
-  message: string;
-  createdAt: string;
-  icon?: string;
+export interface ActivityItem {
+  id: string;
+  action: string;
+  user: string;
+  timestamp: string;
+  type: "booking" | "user" | "vehicle" | "payment";
 }

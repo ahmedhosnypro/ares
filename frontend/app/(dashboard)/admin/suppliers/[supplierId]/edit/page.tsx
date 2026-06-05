@@ -32,11 +32,11 @@ function SectionLabel({ children }: { readonly children: React.ReactNode }) {
           width: 28,
           height: 28,
           borderRadius: 2,
-          bgcolor: `${theme.palette.primary.main}14`,
+          bgcolor: alpha(theme.palette.primary.main, 0.08),
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          border: `1px solid ${theme.palette.primary.main}28`,
+          border: `1px solid ${alpha(theme.palette.primary.main, 0.16)}`,
         }}
       >
         <Box
@@ -45,7 +45,7 @@ function SectionLabel({ children }: { readonly children: React.ReactNode }) {
             height: 8,
             borderRadius: "50%",
             background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
-            boxShadow: `0 0 6px ${theme.palette.primary.main}88`,
+            boxShadow: `0 0 6px ${alpha(theme.palette.primary.main, 0.53)}`,
           }}
         />
       </Box>
@@ -163,7 +163,7 @@ export default function EditSupplierPage() {
           <CircularProgress
             size={52}
             thickness={2.5}
-            sx={{ color: `${theme.palette.primary.main}33`, position: "absolute" }}
+            sx={{ color: alpha(theme.palette.primary.main, 0.2), position: "absolute" }}
             variant="determinate"
             value={100}
           />
@@ -235,7 +235,7 @@ export default function EditSupplierPage() {
                 width: 5,
                 height: 30,
                 borderRadius: 99,
-                background: `linear-gradient(180deg, ${theme.palette.primary.main}, ${theme.palette.primary.main}44)`,
+                background: `linear-gradient(180deg, ${theme.palette.primary.main}, ${alpha(theme.palette.primary.main, 0.27)})`,
                 flexShrink: 0,
               }}
             />
@@ -296,7 +296,7 @@ export default function EditSupplierPage() {
             width: 140,
             height: 140,
             borderRadius: "50%",
-            background: `${theme.palette.primary.main}14`,
+            background: alpha(theme.palette.primary.main, 0.08),
             filter: "blur(40px)",
             pointerEvents: "none",
           },
@@ -310,7 +310,7 @@ export default function EditSupplierPage() {
               fontWeight: 800,
               fontSize: "1.05rem",
               background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-              boxShadow: `0 6px 20px ${theme.palette.primary.main}44`,
+              boxShadow: `0 6px 20px ${alpha(theme.palette.primary.main, 0.27)}`,
               letterSpacing: "0.04em",
             }}
           >
@@ -373,7 +373,7 @@ export default function EditSupplierPage() {
             content: '""',
             display: "block",
             height: 3,
-            background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.main}33, transparent)`,
+            background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${alpha(theme.palette.primary.main, 0.2)}, transparent)`,
           },
         }}
       >
@@ -515,11 +515,11 @@ export default function EditSupplierPage() {
               background: saving
                 ? undefined
                 : `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-              boxShadow: saving ? "none" : `0 4px 16px ${theme.palette.primary.main}44`,
+              boxShadow: saving ? "none" : `0 4px 16px ${alpha(theme.palette.primary.main, 0.27)}`,
               transition: "box-shadow 0.25s, transform 0.15s, filter 0.2s",
               "&:hover": {
                 transform: "translateY(-1px)",
-                boxShadow: `0 8px 24px ${theme.palette.primary.main}55`,
+                boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.35)}`,
                 filter: "brightness(1.06)",
               },
               "&:active": { transform: "translateY(0)" },

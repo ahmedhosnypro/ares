@@ -246,7 +246,7 @@ export default function SupplierDetailsPage() {
             fontWeight: 800,
             fontSize: "1.2rem",
             bgcolor: theme.palette.primary.main,
-            boxShadow: `0 4px 14px ${theme.palette.primary.main}44`,
+            boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.27)}`,
           }}
         >
           {initials}
@@ -417,11 +417,11 @@ export default function SupplierDetailsPage() {
               fontWeight: 700,
               textTransform: "none",
               letterSpacing: "0.01em",
-              boxShadow: `0 4px 14px ${theme.palette.primary.main}44`,
+              boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.27)}`,
               transition: "box-shadow 0.2s, transform 0.15s",
               "&:hover": {
                 transform: "translateY(-1px)",
-                boxShadow: `0 6px 20px ${theme.palette.primary.main}55`,
+                boxShadow: `0 6px 20px ${alpha(theme.palette.primary.main, 0.33)}`,
               },
               "&:active": { transform: "translateY(0)" },
             }}
