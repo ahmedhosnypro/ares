@@ -27,7 +27,14 @@ const mockRecentBookings = [
     amount: "$450",
   },
   { id: "BKG-002", customer: "Sara Mahmoud", car: "BMW X5", date: "Oct 23, 2026", status: "Completed", amount: "$320" },
-  { id: "BKG-003", customer: "Omar Hassan", car: "Audi A6", date: "Oct 22, 2026", status: "Pending", amount: "$280" },
+  {
+    id: "BKG-003",
+    customer: "Omar Hassan",
+    car: "Audi A6",
+    date: "Oct 22, 2026",
+    status: "PaymentPending",
+    amount: "$280",
+  },
   {
     id: "BKG-004",
     customer: "Nour Youssef",
@@ -53,6 +60,7 @@ const getStatusColor = (status: string): "primary" | "success" | "warning" | "er
     case "Completed":
       return "success";
     case "Pending":
+    case "PaymentPending":
       return "warning";
     case "Cancelled":
       return "error";

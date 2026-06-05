@@ -19,6 +19,7 @@ public class AuthMappingProfile : Profile
             .ForMember(dest => dest.FirstName, opt => opt.MapFrom(src => src.FirstName))
             .ForMember(dest => dest.LastName, opt => opt.MapFrom(src => src.LastName))
             .ForMember(dest => dest.EmailVerified, opt => opt.MapFrom(src => src.EmailConfirmed))
+            .ForMember(dest => dest.Phone, opt => opt.MapFrom(src => src.PhoneNumber))
             .ForMember(dest => dest.Roles, opt => opt.Ignore()); // Roles are handled separately in the service
     }
 }

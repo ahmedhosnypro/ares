@@ -122,7 +122,7 @@ public class InspectionService : IInspectionService
 
         // Mirror onto booking.
         booking.AssignedInspectorId = inspector.UserId;
-        booking.InspectionStatus = BookingInspectionStatus.Pending;
+        booking.InspectionStatus = InspectionStatus.Pending;
         booking.UpdatedAt = DateTime.UtcNow;
         await _bookingRepository.UpdateAsync(booking, cancellationToken);
 
@@ -278,11 +278,8 @@ public class InspectionService : IInspectionService
         if (booking != null)
         {
             booking.InspectionStatus = request.Approve
-                ? BookingInspectionStatus.Approved
-                : BookingInspectionStatus.Rejected;
-            booking.Status = request.Approve
-                ? BookingStatus.ReadyForDelivery
-                : BookingStatus.InspectionFailed;
+                ? InspectionStatus.Approved
+                : InspectionStatus.Rejected;
             booking.UpdatedAt = DateTime.UtcNow;
             await _bookingRepository.UpdateAsync(booking, cancellationToken);
         }

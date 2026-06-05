@@ -58,4 +58,13 @@ public interface ISupplierNotificationService
     Task<int> MarkAllAsReadAsync(
         Guid supplierId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes a single notification owned by the supplier.
+    /// Returns true if found and deleted, false otherwise.
+    /// </summary>
+    Task<bool> DeleteNotificationAsync(
+        Guid supplierId,
+        Guid notificationId,
+        CancellationToken cancellationToken = default);
 }

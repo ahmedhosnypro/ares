@@ -1,9 +1,27 @@
 import { $ } from "bun";
 import prompts from "prompts";
+import * as os from "node:os";
+import * as path from "node:path";
+
+// Auto-inject .dotnet/tools path for Windows users if not present
+if (process.platform === "win32") {
+  const dotnetToolsPath = path.join(os.homedir(), ".dotnet", "tools");
+  const currentPath = process.env.PATH || process.env.Path || "";
+  if (!currentPath.includes(dotnetToolsPath)) {
+    const delimiter = ";";
+    if (process.env.PATH !== undefined) {
+      process.env.PATH = `${dotnetToolsPath}${delimiter}${currentPath}`;
+    }
+    if (process.env.Path !== undefined) {
+      process.env.Path = `${dotnetToolsPath}${delimiter}${currentPath}`;
+    }
+  }
+}
 
 export async function commandExists(command: string): Promise<boolean> {
   try {
-    const result = await $`which ${command}`.quiet();
+    const checkCommand = process.platform === "win32" ? "where.exe" : "which";
+    const result = await $`${checkCommand} ${command}`.quiet();
     return result.exitCode === 0;
   } catch {
     return false;

@@ -18,7 +18,7 @@ interface BookingFiltersProps {
   readonly onFilterChange: (statuses: readonly string[], keyword: string, sortBy: string, sortOrder: string) => void;
 }
 
-const ALL_STATUSES = ["Pending", "Confirmed", "Active", "Completed", "Cancelled"] as const;
+const ALL_STATUSES = ["Draft", "PaymentPending", "Confirmed", "Active", "Completed", "Cancelled"] as const;
 
 const SORT_OPTIONS = [
   { value: "date_desc", label: "Date: Newest First", sortBy: "date", sortOrder: "desc" },

@@ -238,9 +238,11 @@ export default function AdminDashboardClient() {
       case "Completed":
         return "success";
       case "Pending":
+      case "PaymentPending":
         return "warning";
       case "Cancelled":
         return "error";
+      case "Draft":
       default:
         return "default";
     }

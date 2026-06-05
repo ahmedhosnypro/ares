@@ -1,4 +1,4 @@
-﻿using Backend.Domain.Entities;
+using Backend.Domain.Entities;
 using Backend.Domain.Entities.Enums;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -126,7 +126,9 @@ public static class DbInitializer
         RoleManager<IdentityRole<Guid>> roleManager,
         ILogger logger)
     {
-        foreach (var role in new[] { "Customer", "Admin", "Supplier", "Inspector" })
+        // "Driver" added with Phase 1 of the Driver Module. Append-only so
+        // historical role IDs are preserved.
+        foreach (var role in new[] { "Customer", "Admin", "Supplier", "Inspector", "Driver" })
         {
             if (await roleManager.RoleExistsAsync(role))
             {
@@ -268,6 +270,7 @@ public static class DbInitializer
         await TermsSeeder.SeedAsync(context);
         await AboutSeeder.SeedAsync(context);
         await SeedActivityDataAsync(context, userManager, logger);
+        await SeedDriverModuleAsync(context, userManager, logger);
 
         logger.LogInformation("Demo seed data created successfully.");
     }
@@ -837,6 +840,190 @@ public static class DbInitializer
         }
 
         logger.LogInformation("Activity seed data created successfully (verification).");
+    }
+
+    private static async Task SeedDriverModuleAsync(
+        ApplicationDbContext context,
+        UserManager<ApplicationUser> userManager,
+        ILogger logger)
+    {
+        logger.LogInformation("Seeding Driver Module data...");
+
+        // 1. Predefined Service Areas
+        var cairoServiceArea = await EnsureServiceAreaAsync(context, Guid.Parse("c0000000-c000-c000-c000-c00000000000"), "Cairo", "Cairo Governorate");
+        var gizaServiceArea = await EnsureServiceAreaAsync(context, Guid.Parse("a0000000-0000-0000-0000-000000000002"), "Giza", "Giza Governorate");
+        var alexServiceArea = await EnsureServiceAreaAsync(context, Guid.Parse("a0000000-a000-a000-a000-a00000000000"), "Alexandria", "Alexandria Governorate");
+        var sharmServiceArea = await EnsureServiceAreaAsync(context, Guid.Parse("b0000000-0000-0000-0000-000000000003"), "Sharm El Sheikh", "South Sinai Governorate");
+        var hurghadaServiceArea = await EnsureServiceAreaAsync(context, Guid.Parse("b0000000-0000-0000-0000-000000000004"), "Hurghada", "Red Sea Governorate");
+
+        // 2. Global Driver Daily Rate Setting
+        if (!await context.SystemSettings.AnyAsync(s => s.Key == "driver.daily_rate"))
+        {
+            await context.SystemSettings.AddAsync(new SystemSetting
+            {
+                Id = Guid.NewGuid(),
+                Key = "driver.daily_rate",
+                Value = "25.00"
+            });
+        }
+        await context.SaveChangesAsync();
+
+        // 3. Demo Driver Users & Profiles
+        // Driver 1: Ahmed (Cairo & Giza)
+        var driver1User = await EnsureUserAsync(
+            userManager,
+            Guid.Parse("d1111111-1111-1111-1111-111111111111"),
+            "ahmed.driver@ares.local",
+            "Ahmed",
+            "Driver",
+            FormatValidPhone("+201011111111"),
+            null,
+            "Driver");
+
+        await EnsureDriverProfileAsync(
+            context,
+            Guid.Parse("f1111111-1111-1111-1111-111111111111"),
+            driver1User.Id,
+            "DL-EGY-111111",
+            DriverProfileStatus.Verified,
+            DriverAvailability.Available,
+            "15 Tahrir Square, Cairo",
+            "Sayed Driver",
+            FormatValidPhone("+201009999991"),
+            new[] { cairoServiceArea.Id, gizaServiceArea.Id });
+
+        // Driver 2: Mostafa (Alexandria)
+        var driver2User = await EnsureUserAsync(
+            userManager,
+            Guid.Parse("d2222222-2222-2222-2222-222222222222"),
+            "mostafa.driver@ares.local",
+            "Mostafa",
+            "Driver",
+            FormatValidPhone("+201022222222"),
+            null,
+            "Driver");
+
+        await EnsureDriverProfileAsync(
+            context,
+            Guid.Parse("f2222222-2222-2222-2222-222222222222"),
+            driver2User.Id,
+            "DL-EGY-222222",
+            DriverProfileStatus.Verified,
+            DriverAvailability.Available,
+            "20 Corniche Road, Alexandria",
+            "Sayed Driver",
+            FormatValidPhone("+201009999992"),
+            new[] { alexServiceArea.Id });
+
+        // Driver 3: Sayed (Hurghada)
+        var driver3User = await EnsureUserAsync(
+            userManager,
+            Guid.Parse("d3333333-3333-3333-3333-333333333333"),
+            "sayed.driver@ares.local",
+            "Sayed",
+            "Driver",
+            FormatValidPhone("+201033333333"),
+            null,
+            "Driver");
+
+        await EnsureDriverProfileAsync(
+            context,
+            Guid.Parse("f3333333-3333-3333-3333-333333333333"),
+            driver3User.Id,
+            "DL-EGY-333333",
+            DriverProfileStatus.PendingVerification,
+            DriverAvailability.Unavailable,
+            "Hurghada Marina, Hurghada",
+            "Ahmed Driver",
+            FormatValidPhone("+201009999993"),
+            new[] { hurghadaServiceArea.Id });
+
+        await context.SaveChangesAsync();
+        logger.LogInformation("Driver Module data seeded successfully.");
+    }
+
+    private static async Task<ServiceArea> EnsureServiceAreaAsync(
+        ApplicationDbContext context,
+        Guid id,
+        string name,
+        string governorate)
+    {
+        var existing = await context.ServiceAreas.FirstOrDefaultAsync(sa => sa.Id == id || sa.Name == name);
+        if (existing != null)
+        {
+            existing.Name = name;
+            existing.Governorate = governorate;
+            existing.IsActive = true;
+            return existing;
+        }
+
+        var sa = new ServiceArea
+        {
+            Id = id,
+            Name = name,
+            Governorate = governorate,
+            IsActive = true
+        };
+        await context.ServiceAreas.AddAsync(sa);
+        return sa;
+    }
+
+    private static async Task EnsureDriverProfileAsync(
+        ApplicationDbContext context,
+        Guid id,
+        Guid userId,
+        string licenseNumber,
+        DriverProfileStatus status,
+        DriverAvailability availability,
+        string address,
+        string emergencyContactName,
+        string emergencyContactPhone,
+        Guid[] serviceAreaIds)
+    {
+        var existing = await context.DriverProfiles.FirstOrDefaultAsync(dp => dp.Id == id || dp.UserId == userId);
+        if (existing != null)
+        {
+            existing.UserId = userId;
+            existing.LicenseNumber = licenseNumber;
+            existing.LicenseExpiryDate = DateTime.UtcNow.AddYears(5);
+            existing.Status = status;
+            existing.Availability = availability;
+            existing.Address = address;
+            existing.EmergencyContactName = emergencyContactName;
+            existing.EmergencyContactPhone = emergencyContactPhone;
+            existing.IsActive = true;
+        }
+        else
+        {
+            existing = new DriverProfile
+            {
+                Id = id,
+                UserId = userId,
+                LicenseNumber = licenseNumber,
+                LicenseExpiryDate = DateTime.UtcNow.AddYears(5),
+                Status = status,
+                Availability = availability,
+                Address = address,
+                EmergencyContactName = emergencyContactName,
+                EmergencyContactPhone = emergencyContactPhone,
+                IsActive = true
+            };
+            await context.DriverProfiles.AddAsync(existing);
+        }
+
+        // Sync work areas
+        foreach (var serviceAreaId in serviceAreaIds)
+        {
+            var hasWorkArea = await context.DriverWorkAreas.AnyAsync(w => w.DriverProfileId == existing.Id && w.ServiceAreaId == serviceAreaId);
+            if (!hasWorkArea)
+            {
+                await context.DriverWorkAreas.AddAsync(new DriverWorkArea
+                {
+                    DriverProfileId = existing.Id,
+                    ServiceAreaId = serviceAreaId
+                });
+            }
+        }
     }
 }
 

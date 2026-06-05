@@ -123,3 +123,18 @@ export const seedNotifications = async (token: string): Promise<SeedNotification
 
   return (await res.json()) as SeedNotificationsResponse;
 };
+
+export const deleteNotification = async (id: string, token: string): Promise<{ success: boolean }> => {
+  const res = await fetch(toApiUrl(`/api/notifications/${id}`), {
+    method: "DELETE",
+    headers: jsonHeaders(token),
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    logger.error("Delete Notification Error", errorText);
+    throw new Error(`Failed to delete notification: ${String(res.status)}`);
+  }
+
+  return { success: true };
+};

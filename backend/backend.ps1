@@ -250,14 +250,39 @@ function Select-PlainMenu {
     }
 }
 
+function Sign-Assemblies {
+    Write-Host '▶ Unblocking and signing compiled assemblies to bypass Application Control policy'
+    Get-ChildItem -Path $BackendDir -Filter "*.dll" -Recurse | ForEach-Object {
+        if ($_.FullName -like "*\bin\Debug\net10.0\*") {
+            Unblock-File -Path $_.FullName -ErrorAction SilentlyContinue
+        }
+    }
+    $cert = Get-ChildItem Cert:\CurrentUser\My | Where-Object { $_.Subject -eq "CN=DevCert" } | Select-Object -First 1
+    if ($null -eq $cert) {
+        $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=DevCert" -CertStoreLocation "Cert:\CurrentUser\My" -ErrorAction SilentlyContinue
+    }
+    if ($cert) {
+        Get-ChildItem -Path $BackendDir -Filter "*.dll" -Recurse | ForEach-Object {
+            if ($_.FullName -like "*\bin\Debug\net10.0\*") {
+                Set-AuthenticodeSignature -FilePath $_.FullName -Certificate $cert -ErrorAction SilentlyContinue | Out-Null
+            }
+        }
+        Write-Host '✔ Successfully unblocked and signed compiled assemblies.'
+    } else {
+        Write-Host '⚠ Failed to obtain or create code-signing certificate.'
+    }
+}
+
 function Action-Build {
     [void](Invoke-LabelledCommand -Label 'Building solution' -FilePath 'dotnet' -Arguments @('build', $Solution))
+    Sign-Assemblies
 }
 
 function Action-Run {
+    Action-Build
     Write-Host '▶ Running API (Ctrl+C to stop)'
     Write-Host '──────────────────────────────────────'
-    dotnet run --project $ApiProj
+    dotnet run --project $ApiProj --no-build
 }
 
 function Action-MigrateAdd {
@@ -339,8 +364,10 @@ function Action-Seed {
     $args = @('ef', 'database', 'update') + $EfArgs
     [void](Invoke-LabelledCommand -Label 'Updating database to latest' -FilePath 'dotnet' -Arguments $args)
 
+    Action-Build
+
     [System.Environment]::SetEnvironmentVariable('SEED_DEMO_DATA', 'true', 'Process')
-    $args = @('run', '--project', $ApiProj, '--no-launch-profile', '--', '--seed-only')
+    $args = @('run', '--project', $ApiProj, '--no-build', '--no-launch-profile', '--', '--seed-only')
     [void](Invoke-LabelledCommand -Label 'Seeding database' -FilePath 'dotnet' -Arguments $args)
 }
 

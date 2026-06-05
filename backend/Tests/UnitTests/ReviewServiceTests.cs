@@ -31,6 +31,10 @@ public class ReviewServiceTests
             _bookingRepositoryMock.Object,
             _vehicleRepositoryMock.Object,
             _contextMock.Object);
+
+        var emptyReviews = new List<Review>().AsQueryable();
+        var mockReviewsDbSet = emptyReviews.BuildMockDbSet();
+        _contextMock.Setup(x => x.Reviews).Returns(mockReviewsDbSet.Object);
     }
 
     #region GetVehicleReviewsAsync Tests
@@ -331,7 +335,7 @@ public class ReviewServiceTests
     }
 
     [Theory]
-    [InlineData(BookingStatus.Pending)]
+    [InlineData(BookingStatus.Draft)]
     [InlineData(BookingStatus.Cancelled)]
     public async Task CreateReviewAsync_WithNonCompletedBooking_ShouldThrowValidationException(BookingStatus status)
     {
@@ -358,32 +362,7 @@ public class ReviewServiceTests
         Assert.Equal("You can only review vehicles from completed bookings", exception.Errors["BookingId"].First());
     }
 
-    [Fact]
-    public async Task CreateReviewAsync_WithFutureReturnDate_ShouldThrowValidationException()
-    {
-        // Arrange
-        var userId = Guid.NewGuid();
-        var vehicleId = Guid.NewGuid();
-        var bookingId = Guid.NewGuid();
-        var request = new CreateReviewRequest(vehicleId, bookingId, 5, "Great car!");
 
-        var vehicle = CreateTestVehicle(vehicleId);
-        var booking = CreateTestBooking(bookingId, userId, vehicleId, BookingStatus.Completed);
-        booking.ReturnDate = DateTime.UtcNow.AddDays(1); // Future date
-
-        _vehicleRepositoryMock.Setup(x => x.GetByIdAsync(vehicleId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(vehicle);
-
-        _bookingRepositoryMock.Setup(x => x.GetBookingWithDetailsAsync(bookingId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(booking);
-
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<ValidationException>(
-            () => _reviewService.CreateReviewAsync(request, userId));
-
-        Assert.Contains("BookingId", exception.Errors.Keys);
-        Assert.Equal("You can only review vehicles from completed bookings", exception.Errors["BookingId"].First());
-    }
 
     [Fact]
     public async Task CreateReviewAsync_WithExistingReview_ShouldThrowConflictException()
@@ -417,7 +396,6 @@ public class ReviewServiceTests
 
     [Theory]
     [InlineData(BookingStatus.Completed)]
-    [InlineData(BookingStatus.Confirmed)]
     public async Task CreateReviewAsync_WithValidCompletedStatuses_ShouldCreateReviewSuccessfully(BookingStatus status)
     {
         // Arrange

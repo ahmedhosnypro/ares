@@ -450,6 +450,79 @@ public class NotificationServiceTests
 
     #endregion
 
+    #region DeleteNotificationForUserAsync Tests
+
+    [Fact]
+    public async Task DeleteNotificationForUserAsync_WithValidIdAndOwner_ShouldDeleteAndReturnTrue()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var notificationId = Guid.NewGuid();
+        var notification = new Notification { Id = notificationId, UserId = userId, Title = "Test Title" };
+
+        _notificationRepositoryMock.Setup(x => x.GetByIdAsync(notificationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(notification);
+
+        _notificationRepositoryMock.Setup(x => x.DeleteAsync(notification, It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _notificationRepositoryMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        // Act
+        var result = await _notificationService.DeleteNotificationForUserAsync(notificationId, userId);
+
+        // Assert
+        Assert.True(result);
+        _notificationRepositoryMock.Verify(x => x.GetByIdAsync(notificationId, It.IsAny<CancellationToken>()), Times.Once);
+        _notificationRepositoryMock.Verify(x => x.DeleteAsync(notification, It.IsAny<CancellationToken>()), Times.Once);
+        _notificationRepositoryMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteNotificationForUserAsync_WithNonExistentId_ShouldReturnFalse()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var notificationId = Guid.NewGuid();
+
+        _notificationRepositoryMock.Setup(x => x.GetByIdAsync(notificationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Notification?)null);
+
+        // Act
+        var result = await _notificationService.DeleteNotificationForUserAsync(notificationId, userId);
+
+        // Assert
+        Assert.False(result);
+        _notificationRepositoryMock.Verify(x => x.GetByIdAsync(notificationId, It.IsAny<CancellationToken>()), Times.Once);
+        _notificationRepositoryMock.Verify(x => x.DeleteAsync(It.IsAny<Notification>(), It.IsAny<CancellationToken>()), Times.Never);
+        _notificationRepositoryMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task DeleteNotificationForUserAsync_WithWrongUserId_ShouldReturnFalse()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var wrongUserId = Guid.NewGuid();
+        var notificationId = Guid.NewGuid();
+        var notification = new Notification { Id = notificationId, UserId = userId, Title = "Test Title" };
+
+        _notificationRepositoryMock.Setup(x => x.GetByIdAsync(notificationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(notification);
+
+        // Act
+        var result = await _notificationService.DeleteNotificationForUserAsync(notificationId, wrongUserId);
+
+        // Assert
+        Assert.False(result);
+        _notificationRepositoryMock.Verify(x => x.GetByIdAsync(notificationId, It.IsAny<CancellationToken>()), Times.Once);
+        _notificationRepositoryMock.Verify(x => x.DeleteAsync(It.IsAny<Notification>(), It.IsAny<CancellationToken>()), Times.Never);
+        _notificationRepositoryMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private List<Notification> CreateTestNotifications(Guid userId, int count)

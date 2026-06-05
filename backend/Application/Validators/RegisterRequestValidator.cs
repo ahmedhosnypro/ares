@@ -53,15 +53,18 @@ public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
             .Equal(x => x.Password).WithMessage("Passwords do not match")
             .When(x => x.ConfirmPassword is not null);
 
-        // Role — only "customer" or "supplier" are accepted on this
-        // self-service endpoint. Admin/Inspector accounts are provisioned
-        // through the admin flow only, mirroring the Google sign-in gate
-        // in GoogleAuthService.
+        // Role — only "customer", "supplier", or "driver" are accepted on
+        // this self-service endpoint. Admin/Inspector accounts are
+        // provisioned through the admin flow only, mirroring the Google
+        // sign-in gate in GoogleAuthService. "driver" was added with the
+        // Driver Module (Phase 1) and is the entry point for a driver to
+        // create their account before completing their professional profile.
         RuleFor(x => x.Role!)
             .Must(role => role is not null
                           && (role.Equals("customer", System.StringComparison.OrdinalIgnoreCase)
-                              || role.Equals("supplier", System.StringComparison.OrdinalIgnoreCase)))
-            .WithMessage("Role must be either 'customer' or 'supplier'")
+                              || role.Equals("supplier", System.StringComparison.OrdinalIgnoreCase)
+                              || role.Equals("driver", System.StringComparison.OrdinalIgnoreCase)))
+            .WithMessage("Role must be one of: 'customer', 'supplier', 'driver'")
             .When(x => x.Role is not null);
     }
 }

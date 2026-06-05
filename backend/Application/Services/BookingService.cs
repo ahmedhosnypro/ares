@@ -34,6 +34,9 @@ public class BookingService : IBookingService
     // changes. Production DI always provides a real implementation, so the
     // identity-verification gate below is enforced for real customers.
     private readonly IVerificationService? _verificationService;
+    private readonly IDriverRequestService? _driverRequestService;
+    private readonly IDriverPricingService? _driverPricingService;
+    private readonly IDriverProfileRepository? _driverProfileRepository;
 
     public BookingService(
         IBookingRepository bookingRepository,
@@ -41,7 +44,10 @@ public class BookingService : IBookingService
         IApplicationDbContext context,
         UserManager<ApplicationUser> userManager,
         INotificationService? notificationService = null,
-        IVerificationService? verificationService = null)
+        IVerificationService? verificationService = null,
+        IDriverRequestService? driverRequestService = null,
+        IDriverPricingService? driverPricingService = null,
+        IDriverProfileRepository? driverProfileRepository = null)
     {
         _bookingRepository = bookingRepository;
         _vehicleRepository = vehicleRepository;
@@ -49,6 +55,9 @@ public class BookingService : IBookingService
         _userManager = userManager;
         _notificationService = notificationService;
         _verificationService = verificationService;
+        _driverRequestService = driverRequestService;
+        _driverPricingService = driverPricingService;
+        _driverProfileRepository = driverProfileRepository;
     }
 
     public async Task<BookingResponse> CreateBookingAsync(
@@ -103,13 +112,20 @@ public class BookingService : IBookingService
             throw new ValidationException("DateRange", "Pickup date must be before return date");
         }
 
-        // Requirement 4.3: Check vehicle availability for date range
+        // Requirement 4.3: Check vehicle availability for date range.
+        // NOTE: This is an OPTIMISTIC pre-check only — it fails fast with a
+        // clean message before we do the heavier work below. It is NOT the
+        // race-condition guard. The authoritative, race-safe reservation is
+        // performed under a pessimistic lock by ReserveVehicleAtomicAsync at
+        // persistence time (see the "Race-safe persistence" block below).
         // (ordering preserved to keep existing unit-test expectations stable).
         var isAvailable = await _vehicleRepository.IsAvailableAsync(
             request.VehicleId,
             request.PickupDate,
             request.ReturnDate,
-            cancellationToken);
+            excludeUserId: ownerUserId,
+            excludeBookingId: null,
+            cancellationToken: cancellationToken);
 
         if (!isAvailable)
         {
@@ -158,6 +174,26 @@ public class BookingService : IBookingService
             ? request.DropOffLocation!.Trim()
             : (request.DropOffLocationId != Guid.Empty ? await ResolveDisplayLocationAsync(request.DropOffLocationId.ToString(), cancellationToken) : null);
 
+        // Business rule 13 (mandatory driver): a customer who does NOT hold an
+        // approved driving license cannot self-drive — a driver is mandatory.
+        // We check the legacy customer driving-license record (Driver entity).
+        var hasApprovedLicense = await _context.Drivers.AnyAsync(
+            d => d.UserId == ownerUserId
+                 && (d.IsVerified || (d.VerificationStatus != null && d.VerificationStatus == "Verified")),
+            cancellationToken);
+
+        var effectiveNeedDriver = request.NeedDriver;
+        if (!hasApprovedLicense)
+        {
+            if (request.NeedDriver == false)
+            {
+                throw new BadRequestException(
+                    "A driver is required: you do not have an approved driving license, so you cannot self-drive.");
+            }
+            // NeedDriver null/true → force the driver workflow.
+            effectiveNeedDriver = true;
+        }
+
         // Requirement 4.10: Create booking with status "Pending". Payment is
         // a separate flow — booking creation does NOT require payment.
         var booking = new Booking
@@ -172,14 +208,64 @@ public class BookingService : IBookingService
             DropoffLocation = dropoffLabel,
             TotalDays = totalDays,
             TotalPrice = totalPrice,
-            Status = BookingStatus.Pending,
-            DriverId = request.DriverId,
-            RequiresDriver = request.DriverId.HasValue
+            // The driver-module assignment is NEVER set here. A driver is only
+            // attached through the request → accept → select workflow, which
+            // populates AssignedDriverProfileId (a driver_profiles FK). The
+            // legacy Booking.DriverId column is a FK to the customer-license
+            // Driver entity and must not be conflated with a DriverProfile.
+            Status = BookingStatus.Confirmed,
+            DriverId = request.DriverId, // legacy customer-license Driver FK only
+            RequiresDriver = effectiveNeedDriver == true
         };
 
-        // Requirement 4.1: Create booking and mark vehicle as unavailable for those dates
+        if (_driverPricingService != null && booking.RequiresDriver)
+        {
+            booking.Vehicle = vehicle; // Attach for calculation
+            await _driverPricingService.CalculateBookingDriverFeesAsync(booking, totalDays, cancellationToken);
+            booking.Vehicle = null; // Detach before save
+        }
+
+        // ── Race-safe persistence (P0: double-booking fix) ───────────────
+        // Previously this method inserted the booking with a bare
+        // AddAsync + SaveChangesAsync. Between the optimistic IsAvailableAsync
+        // pre-check above and that insert there was a TOCTOU window: two
+        // concurrent admin/direct creations for the same vehicle + overlapping
+        // window could BOTH observe "available" and BOTH insert, double-booking
+        // the vehicle.
+        //
+        // The fix routes persistence through the SAME pessimistic-locking
+        // mechanism CheckoutService uses — IBookingRepository.ReserveVehicleAtomicAsync.
+        // That method:
+        //   1. Opens an explicit transaction
+        //      (IApplicationDbContext.Database.BeginTransactionAsync,
+        //       IsolationLevel.Serializable, via the EF execution strategy).
+        //   2. Acquires a range lock on this VehicleId's overlapping bookings
+        //      using the raw SQL pessimistic lock WITH (UPDLOCK, HOLDLOCK).
+        //   3. Re-checks availability UNDER THE LOCK (phantom-insert safe).
+        //   4. Inserts/commits the staged booking atomically.
+        //   5. Commits — or rolls back and throws ConflictException (HTTP 409)
+        //      for the loser of a concurrent race.
+        //
+        // AddAsync only STAGES the entity on the shared DbContext (no save);
+        // ReserveVehicleAtomicAsync performs the single SaveChanges inside the
+        // locked transaction. A direct booking has no payment hold, so the
+        // hold timestamps are null. The target status is the one already
+        // computed above (Pending, or WaitingForDriver when a driver is
+        // required) — both are reserving statuses, so they participate in the
+        // overlap check.
+        var targetStatus = booking.Status;
         await _bookingRepository.AddAsync(booking, cancellationToken);
-        await _bookingRepository.SaveChangesAsync(cancellationToken);
+        await _bookingRepository.ReserveVehicleAtomicAsync(
+            booking,
+            targetStatus,
+            holdStartedAt: null,
+            holdExpiresAt: null,
+            cancellationToken);
+
+        if (effectiveNeedDriver == true && _driverRequestService != null)
+        {
+            await _driverRequestService.CheckAndEmitRequestAsync(booking.Id, cancellationToken);
+        }
 
         // Requirement 4.8: Create notification for the booking owner (customer).
         if (request.CustomerUserId.HasValue && request.CustomerUserId.Value != userId)
@@ -199,7 +285,7 @@ public class BookingService : IBookingService
         return new BookingResponse(
             booking.Id,
             bookingNumber,
-            "Pending",
+            booking.Status.ToString(),
             totalPrice,
             "Booking created successfully"
         );
@@ -337,6 +423,27 @@ public class BookingService : IBookingService
         // By setting status to "Cancelled", the vehicle becomes available automatically
         // when IsAvailableAsync checks for non-cancelled bookings
 
+        if (booking.AssignedDriverProfileId.HasValue && _driverProfileRepository != null)
+        {
+            var driverProfile = await _driverProfileRepository.GetByIdAsync(booking.AssignedDriverProfileId.Value, cancellationToken);
+            if (driverProfile != null)
+            {
+                driverProfile.LockedUntil = null;
+                driverProfile.Availability = DriverAvailability.Available;
+                await _driverProfileRepository.UpdateAsync(driverProfile, cancellationToken);
+                
+                if (_notificationService != null)
+                {
+                    await _notificationService.CreateNotificationAsync(
+                        driverProfile.UserId,
+                        "Booking Cancelled",
+                        $"The booking {booking.BookingNumber} you were assigned to has been cancelled.",
+                        $"BookingCancelled:{booking.Id}",
+                        cancellationToken);
+                }
+            }
+        }
+
         // Requirement 20.1: Create cancellation record
         var cancellation = new BookingCancellation
         {
@@ -437,7 +544,7 @@ public class BookingService : IBookingService
         // - Pending  = bookings awaiting confirmation
         // - Completed = ALL completed bookings (lifetime), not today only
         var activeBookings = await query.CountAsync(b => b.Status == BookingStatus.Active, cancellationToken);
-        var pendingBookings = await query.CountAsync(b => b.Status == BookingStatus.Pending, cancellationToken);
+        var pendingBookings = await query.CountAsync(b => b.Status == BookingStatus.Confirmed, cancellationToken);
         var totalCompletedBookings = await query.CountAsync(b => b.Status == BookingStatus.Completed, cancellationToken);
 
         return new AdminBookingStatsDto(activeBookings, pendingBookings, totalCompletedBookings);
@@ -500,6 +607,17 @@ public class BookingService : IBookingService
         }
         booking.UpdatedAt = DateTime.UtcNow;
 
+        if ((parsedStatus == BookingStatus.Completed || parsedStatus == BookingStatus.Cancelled) && booking.AssignedDriverProfileId.HasValue && _driverProfileRepository != null)
+        {
+            var driverProfile = await _driverProfileRepository.GetByIdAsync(booking.AssignedDriverProfileId.Value, cancellationToken);
+            if (driverProfile != null)
+            {
+                driverProfile.LockedUntil = null;
+                driverProfile.Availability = DriverAvailability.Available;
+                await _driverProfileRepository.UpdateAsync(driverProfile, cancellationToken);
+            }
+        }
+
         await _bookingRepository.SaveChangesAsync(cancellationToken);
 
         // Fire-and-forget notification for the customer (best-effort).
@@ -555,14 +673,26 @@ public class BookingService : IBookingService
 
         var datesChanged = request.PickupDate.HasValue || request.ReturnDate.HasValue;
 
+        // Prevent bypass of 24-hour driver change/cancel rule via date modification
+        if (datesChanged && booking.AssignedDriverProfileId.HasValue && booking.PickupDate.HasValue)
+        {
+            if (DateTime.UtcNow > booking.PickupDate.Value.AddHours(-24))
+            {
+                throw new BadRequestException("Cannot modify booking dates within 24 hours of pickup when a driver is assigned.");
+            }
+        }
+
         // If dates changed AND moved off the originally booked window, verify
         // the new window doesn't collide with other active bookings.
         if (datesChanged && booking.Vehicle is not null)
         {
+            var nowUtc = DateTime.UtcNow;
+            var reserving = BookingStatusPolicy.ReservingStatuses;
             var newWindowOverlapsOthers = await _context.Bookings
                 .Where(b => b.Id != booking.Id
                             && b.VehicleId == booking.VehicleId
-                            && b.Status != BookingStatus.Cancelled)
+                            && reserving.Contains(b.Status)
+                            && !(b.Status == BookingStatus.PaymentPending && b.HoldExpiresAt != null && b.HoldExpiresAt <= nowUtc))
                 .AnyAsync(b =>
                     b.PickupDate.HasValue && b.ReturnDate.HasValue &&
                     pickupDate < b.ReturnDate && returnDate > b.PickupDate,
@@ -570,6 +700,24 @@ public class BookingService : IBookingService
             if (newWindowOverlapsOthers)
             {
                 throw new ConflictException("Vehicle is not available for the selected dates");
+            }
+        }
+
+        if (datesChanged && booking.AssignedDriverProfileId.HasValue && _driverProfileRepository != null)
+        {
+            var driverOverlap = await _driverProfileRepository.HasOverlappingAssignmentAsync(
+                booking.AssignedDriverProfileId.Value, pickupDate.Value, returnDate.Value, booking.Id, cancellationToken);
+            if (driverOverlap)
+            {
+                throw new ConflictException("The assigned driver is not available for the new dates.");
+            }
+            
+            var driverProfile = await _driverProfileRepository.GetByIdAsync(booking.AssignedDriverProfileId.Value, cancellationToken);
+            if (driverProfile != null)
+            {
+                driverProfile.LockedUntil = returnDate;
+                booking.DriverLockedUntil = returnDate;
+                await _driverProfileRepository.UpdateAsync(driverProfile, cancellationToken);
             }
         }
 
@@ -628,7 +776,7 @@ public class BookingService : IBookingService
 
         // Whitelist the operationally supported statuses — keeps the legacy
         // inspection-workflow statuses out of the simple change-status flow.
-        var allowed = parsed is BookingStatus.Pending
+        var allowed = parsed is BookingStatus.Confirmed
                               or BookingStatus.Active
                               or BookingStatus.Completed
                               or BookingStatus.Cancelled;
@@ -887,6 +1035,57 @@ public class BookingService : IBookingService
             }
         }
 
+        if (_context is DbContext dbContext)
+        {
+            // 1. Delete inspections and their photos/images first (due to Restrict constraint on VehicleInspection)
+            var inspections = await dbContext.Set<VehicleInspection>()
+                .Where(i => bookingIds.Contains(i.BookingId))
+                .ToListAsync(cancellationToken);
+            var inspectionIds = inspections.Select(i => i.InspectionId).ToList();
+
+            if (inspectionIds.Any())
+            {
+                var photos = await dbContext.Set<InspectionPhoto>()
+                    .Where(p => inspectionIds.Contains(p.InspectionId))
+                    .ToListAsync(cancellationToken);
+                if (photos.Any())
+                {
+                    dbContext.Set<InspectionPhoto>().RemoveRange(photos);
+                }
+
+                var images = await dbContext.Set<InspectionImage>()
+                    .Where(img => inspectionIds.Contains(img.InspectionId))
+                    .ToListAsync(cancellationToken);
+                if (images.Any())
+                {
+                    dbContext.Set<InspectionImage>().RemoveRange(images);
+                }
+
+                dbContext.Set<VehicleInspection>().RemoveRange(inspections);
+            }
+
+            // 2. Delete reviews (due to Restrict constraint on Review)
+            var reviews = await dbContext.Set<Review>()
+                .Where(r => bookingIds.Contains(r.BookingId))
+                .ToListAsync(cancellationToken);
+            if (reviews.Any())
+            {
+                dbContext.Set<Review>().RemoveRange(reviews);
+            }
+
+            // 3. Delete payments (due to Restrict constraint on BookingPayment)
+            var payments = await dbContext.Set<BookingPayment>()
+                .Where(p => bookingIds.Contains(p.BookingId))
+                .ToListAsync(cancellationToken);
+            if (payments.Any())
+            {
+                dbContext.Set<BookingPayment>().RemoveRange(payments);
+            }
+
+            // 4. Save changes for the related items
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
         foreach (var booking in bookings)
         {
             await _bookingRepository.DeleteAsync(booking, cancellationToken);
@@ -1086,6 +1285,22 @@ public class BookingService : IBookingService
         // ── Activity timeline from real events ────────────────────────────
         var timeline = await BuildTimelineAsync(booking, inspections, latestPayment, cancellationToken);
 
+        Backend.Application.DTOs.Driver.PublicDriverDto? assignedDriverDto = null;
+        if (booking.AssignedDriverProfileId.HasValue && _driverProfileRepository != null)
+        {
+            var driverProfile = await _driverProfileRepository.GetByIdWithUserAsync(booking.AssignedDriverProfileId.Value, cancellationToken);
+            if (driverProfile != null && driverProfile.User != null)
+            {
+                assignedDriverDto = new Backend.Application.DTOs.Driver.PublicDriverDto
+                {
+                    DriverProfileId = driverProfile.Id,
+                    FirstName = driverProfile.User.FirstName,
+                    LastName = driverProfile.User.LastName,
+                    ProfilePictureUrl = driverProfile.User.ProfileImage
+                };
+            }
+        }
+
         return new BookingDetailsDto(
             Id: booking.Id,
             BookingNumber: booking.BookingNumber,
@@ -1109,7 +1324,12 @@ public class BookingService : IBookingService
             PickupInspection: pickupInspection,
             ReturnInspection: returnInspection,
             PaymentDetails: paymentDetails,
-            Timeline: timeline);
+            Timeline: timeline,
+            AssignedDriverProfile: assignedDriverDto,
+            VehicleFee: booking.VehicleFee,
+            DriverFee: booking.DriverFee,
+            GrandTotal: booking.GrandTotal,
+            RequiresDriver: booking.RequiresDriver);
     }
 
     /// <summary>
@@ -1265,7 +1485,7 @@ public class BookingService : IBookingService
         // If neither an inspector nor a non-default mirror status is set,
         // suppress the section to keep the payload lean.
         if (booking.AssignedInspectorId is null &&
-            booking.InspectionStatus == BookingInspectionStatus.NotRequired)
+            booking.InspectionStatus == InspectionStatus.NotRequired)
         {
             return Task.FromResult<BookingInspectionOverviewDto?>(null);
         }

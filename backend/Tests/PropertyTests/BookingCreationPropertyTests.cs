@@ -256,7 +256,7 @@ public class BookingCreationPropertyTests : IDisposable
 
             var booking = _bookingRepository.GetByIdAsync(response.BookingId).GetAwaiter().GetResult();
 
-            return response != null && response.Status == BookingStatus.Pending.ToString() && booking != null && booking.Status == BookingStatus.Pending;
+            return response != null && response.Status == BookingStatus.Confirmed.ToString() && booking != null && booking.Status == BookingStatus.Confirmed;
         }
         catch { return false; }
     }

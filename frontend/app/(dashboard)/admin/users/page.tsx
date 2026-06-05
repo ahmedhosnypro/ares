@@ -27,8 +27,17 @@ import {
   useTheme,
   useMediaQuery,
   alpha,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Snackbar,
+  Alert,
+  Divider,
   type Theme,
   type SelectChangeEvent,
+  type AlertColor,
 } from "@mui/material";
 
 import Link from "next/link";
@@ -38,7 +47,10 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import BlockIcon from "@mui/icons-material/Block";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import PeopleIcon from "@mui/icons-material/People";
-import { toggleUserStatus, getUsers, type User } from "@/api-clients/users/users";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import { toggleUserStatus, deleteUser, getUsers, type User } from "@/api-clients/users/users";
+import { ApiError } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
 import VehicleStats from "@/app/(dashboard)/_components/VehicleStats";
 
@@ -46,10 +58,11 @@ interface UserMobileCardProps {
   readonly u: User;
   readonly theme: Theme;
   readonly fetchUsers: () => void;
+  readonly onRequestDelete: (u: User) => void;
 }
 
 // ── MOBILE USER CARD ────────────────────
-function UserMobileCard({ u, theme, fetchUsers }: UserMobileCardProps) {
+function UserMobileCard({ u, theme, fetchUsers, onRequestDelete }: UserMobileCardProps) {
   const status = (u.status || "").toLowerCase();
   const isActive = status === "active";
 
@@ -148,6 +161,18 @@ function UserMobileCard({ u, theme, fetchUsers }: UserMobileCardProps) {
             {isActive ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
           </IconButton>
         </Tooltip>
+
+        <Tooltip title="Delete User">
+          <IconButton
+            size="small"
+            onClick={() => {
+              onRequestDelete(u);
+            }}
+            sx={{ color: "error.main" }}
+          >
+            <DeleteOutlineIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       </Stack>
     </Paper>
   );
@@ -165,6 +190,15 @@ export default function UsersPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [roleFilter, setRoleFilter] = useState("all");
   const [page, setPage] = useState(1);
+
+  // Delete flow state
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [toast, setToast] = useState<{ open: boolean; message: string; severity: AlertColor }>({
+    open: false,
+    message: "",
+    severity: "success",
+  });
 
   const PAGE_SIZE = 10;
 
@@ -193,6 +227,56 @@ export default function UsersPage() {
   useEffect(() => {
     void fetchUsers();
   }, [fetchUsers]);
+
+  // Delete handlers
+  const requestDelete = useCallback((u: User) => {
+    setDeleteTarget(u);
+  }, []);
+
+  const closeDeleteDialog = useCallback(() => {
+    // Don't allow closing while a delete request is in flight.
+    setDeleting(current => {
+      if (!current) setDeleteTarget(null);
+      return current;
+    });
+  }, []);
+
+  const closeToast = useCallback(() => {
+    setToast(prev => ({ ...prev, open: false }));
+  }, []);
+
+  const confirmDelete = useCallback(async () => {
+    if (!deleteTarget) return;
+
+    setDeleting(true);
+    try {
+      await deleteUser(deleteTarget.id);
+      setToast({
+        open: true,
+        message: deleteTarget.firstName + " " + deleteTarget.lastName + " was permanently deleted.",
+        severity: "success",
+      });
+      setDeleteTarget(null);
+      await fetchUsers();
+    } catch (err) {
+      logger.error("Failed to delete user", err);
+
+      // The backend returns a 409 with an explanatory message when the user
+      // has critical records. Surface that exact reason to the admin.
+      let message = "Failed to delete user. Please try again.";
+      if (err instanceof ApiError) {
+        try {
+          const parsed = JSON.parse(err.body) as { message?: string };
+          if (parsed.message) message = parsed.message;
+        } catch {
+          if (err.body) message = err.body;
+        }
+      }
+      setToast({ open: true, message, severity: "error" });
+    } finally {
+      setDeleting(false);
+    }
+  }, [deleteTarget, fetchUsers]);
 
   // ── FILTER ────────────────────────────
   const filtered = useMemo(() => {
@@ -262,6 +346,7 @@ export default function UsersPage() {
                 fetchUsers={() => {
                   void fetchUsers();
                 }}
+                onRequestDelete={requestDelete}
               />
             ))
           ) : (
@@ -409,6 +494,18 @@ export default function UsersPage() {
                               sx={{ color: isActive ? "error.main" : "success.main" }}
                             >
                               {isActive ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
+                            </IconButton>
+                          </Tooltip>
+
+                          <Tooltip title="Delete User">
+                            <IconButton
+                              size="small"
+                              onClick={() => {
+                                requestDelete(u);
+                              }}
+                              sx={{ color: "error.main" }}
+                            >
+                              <DeleteOutlineIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
                         </Stack>
@@ -571,6 +668,103 @@ export default function UsersPage() {
 
       {/* TABLE / MOBILE CARDS */}
       {renderContent()}
+
+      {/* Delete confirmation modal */}
+      <Dialog
+        open={deleteTarget !== null}
+        onClose={closeDeleteDialog}
+        maxWidth="xs"
+        fullWidth
+        aria-labelledby="delete-user-dialog-title"
+      >
+        <DialogTitle
+          id="delete-user-dialog-title"
+          sx={{ display: "flex", alignItems: "center", gap: 1, fontWeight: 700 }}
+        >
+          <WarningAmberIcon color="error" />
+          Delete User
+        </DialogTitle>
+
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            You are about to permanently delete the following account:
+          </Typography>
+
+          {deleteTarget && (
+            <Box
+              sx={{
+                p: 2,
+                borderRadius: 2,
+                border: "1px solid",
+                borderColor: "divider",
+                bgcolor: t => alpha(t.palette.text.primary, 0.02),
+              }}
+            >
+              <Stack spacing={1}>
+                <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Name
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, textAlign: "right" }}>
+                    {deleteTarget.firstName} {deleteTarget.lastName}
+                  </Typography>
+                </Box>
+                <Divider flexItem />
+                <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Email
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, textAlign: "right", wordBreak: "break-all" }}>
+                    {deleteTarget.email}
+                  </Typography>
+                </Box>
+                <Divider flexItem />
+                <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Role
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, textAlign: "right", textTransform: "capitalize" }}>
+                    {deleteTarget.roles.join(", ") || "—"}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Box>
+          )}
+
+          <Alert severity="warning" icon={<WarningAmberIcon />} sx={{ mt: 2 }}>
+            This action permanently deletes the user and cannot be undone.
+          </Alert>
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={closeDeleteDialog} disabled={deleting} color="inherit">
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              void confirmDelete();
+            }}
+            disabled={deleting}
+            variant="contained"
+            color="error"
+            startIcon={deleting ? <CircularProgress size={16} color="inherit" /> : <DeleteOutlineIcon />}
+          >
+            {deleting ? "Deleting..." : "Delete Permanently"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Success / error toast */}
+      <Snackbar
+        open={toast.open}
+        autoHideDuration={6000}
+        onClose={closeToast}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert onClose={closeToast} severity={toast.severity} variant="filled" sx={{ width: "100%" }}>
+          {toast.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

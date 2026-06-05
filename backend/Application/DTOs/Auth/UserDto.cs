@@ -14,5 +14,6 @@ public record UserDto(
     string LastName,
     List<string> Roles,
     bool EmailVerified,
-    string? Status = null
+    string? Status = null,
+    string? Phone = null
 );
