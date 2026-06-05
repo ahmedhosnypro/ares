@@ -14,19 +14,24 @@ import {
   alpha,
   useTheme,
   Tooltip,
+  Alert,
+  Snackbar,
 } from "@mui/material";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import {
   getNotifications,
   markNotificationAsRead,
+  deleteNotification,
   type NotificationItem,
 } from "@/api-clients/notfications/notfications";
 import { logger } from "@/utils/logger";
+import DeleteNotificationDialog from "@/components/notifications/DeleteNotificationDialog";
 
 const POLL_INTERVAL_MS = 60_000;
 const PREVIEW_LIMIT = 6;
@@ -68,33 +73,56 @@ export default function NotificationsBell({
   const [markingAll, setMarkingAll] = useState(false);
   const [error, setError] = useState(false);
 
-  const fetchData = useCallback(async () => {
-    if (!token) return;
-    try {
-      setLoading(true);
-      setError(false);
-      const data = await getNotifications(token);
-      const list: NotificationItem[] = Array.isArray(data) ? data : data.notifications;
-      list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      setItems(list);
-    } catch (err) {
-      logger.error("NotificationsBell: fetch failed", err);
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
+  // Deletion and toast state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingNotification, setDeletingNotification] = useState<NotificationItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [toast, setToast] = useState<{ open: boolean; message: string; severity: "success" | "error" }>({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
+  const fetchData = useCallback(
+    async (background = false) => {
+      if (!token) return;
+      try {
+        if (!background) setLoading(true);
+        setError(false);
+        const data = await getNotifications(token);
+        const list: NotificationItem[] = Array.isArray(data) ? data : data.notifications;
+        list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setItems(list);
+      } catch (err) {
+        logger.error("NotificationsBell: fetch failed", err);
+        if (!background) setError(true);
+      } finally {
+        if (!background) setLoading(false);
+      }
+    },
+    [token]
+  );
 
   useEffect(() => {
     if (!token) return;
     void fetchData();
     const id = window.setInterval(() => {
-      void fetchData();
+      void fetchData(true);
     }, POLL_INTERVAL_MS);
     return () => {
       window.clearInterval(id);
     };
   }, [token, fetchData]);
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      void fetchData(true);
+    };
+    window.addEventListener("notifications-updated", handleUpdate);
+    return () => {
+      window.removeEventListener("notifications-updated", handleUpdate);
+    };
+  }, [fetchData]);
 
   const open = Boolean(anchorEl);
   const unreadCount = items.filter(n => !n.isRead).length;
@@ -113,6 +141,7 @@ export default function NotificationsBell({
     setItems(prev => prev.map(n => (n.id === item.id ? { ...n, isRead: true } : n)));
     try {
       await markNotificationAsRead(item.id, token);
+      window.dispatchEvent(new CustomEvent("notifications-updated"));
     } catch (err) {
       logger.error("NotificationsBell: mark-as-read failed; reverting", err);
       setItems(prev => prev.map(n => (n.id === item.id ? { ...n, isRead: false } : n)));
@@ -127,11 +156,57 @@ export default function NotificationsBell({
     setItems(prev => prev.map(n => ({ ...n, isRead: true })));
     try {
       await Promise.all(unread.map(n => markNotificationAsRead(n.id, token)));
+      window.dispatchEvent(new CustomEvent("notifications-updated"));
     } catch (err) {
       logger.error("NotificationsBell: mark-all failed; refetching", err);
       await fetchData();
     } finally {
       setMarkingAll(false);
+    }
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent, item: NotificationItem) => {
+    e.stopPropagation();
+    setDeletingNotification(item);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!token || !deletingNotification) return;
+    setDeleting(true);
+    try {
+      await deleteNotification(deletingNotification.id, token);
+
+      // Update local state immediately
+      setItems(prev => prev.filter(n => n.id !== deletingNotification.id));
+      setToast({
+        open: true,
+        message: "Notification deleted successfully.",
+        severity: "success",
+      });
+      window.dispatchEvent(new CustomEvent("notifications-updated"));
+      setDeleteDialogOpen(false);
+    } catch (err) {
+      logger.error("Failed to delete notification", err);
+      // Graceful handling of 404 (already deleted)
+      if (err instanceof Error && err.message.includes("404")) {
+        setItems(prev => prev.filter(n => n.id !== deletingNotification.id));
+        setToast({
+          open: true,
+          message: "Notification deleted successfully.",
+          severity: "success",
+        });
+        window.dispatchEvent(new CustomEvent("notifications-updated"));
+        setDeleteDialogOpen(false);
+      } else {
+        setToast({
+          open: true,
+          message: "Failed to delete notification. Please try again.",
+          severity: "error",
+        });
+      }
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -317,21 +392,37 @@ export default function NotificationsBell({
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
+                          flexGrow: 1,
                         }}
                       >
                         {n.title || "Notification"}
                       </Typography>
-                      {!n.isRead && (
-                        <Box
-                          sx={{
-                            width: 8,
-                            height: 8,
-                            borderRadius: "50%",
-                            bgcolor: "primary.main",
-                            flexShrink: 0,
+                      <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", flexShrink: 0 }}>
+                        {!n.isRead && (
+                          <Box
+                            sx={{
+                              width: 8,
+                              height: 8,
+                              borderRadius: "50%",
+                              bgcolor: "primary.main",
+                            }}
+                          />
+                        )}
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={e => {
+                            handleDeleteClick(e, n);
                           }}
-                        />
-                      )}
+                          sx={{
+                            p: 0.25,
+                            opacity: 0.6,
+                            "&:hover": { opacity: 1, bgcolor: "action.hover" },
+                          }}
+                        >
+                          <DeleteOutlineIcon sx={{ fontSize: "0.95rem" }} />
+                        </IconButton>
+                      </Stack>
                     </Box>
                     {n.message && (
                       <Typography
@@ -383,6 +474,37 @@ export default function NotificationsBell({
           </Button>
         </Box>
       </Popover>
+
+      <DeleteNotificationDialog
+        open={deleteDialogOpen}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+        }}
+        onConfirm={() => {
+          void handleDeleteConfirm();
+        }}
+        notificationTitle={deletingNotification?.title ?? ""}
+        loading={deleting}
+      />
+
+      <Snackbar
+        open={toast.open}
+        autoHideDuration={6000}
+        onClose={() => {
+          setToast(prev => ({ ...prev, open: false }));
+        }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert
+          onClose={() => {
+            setToast(prev => ({ ...prev, open: false }));
+          }}
+          severity={toast.severity}
+          sx={{ width: "100%" }}
+        >
+          {toast.message}
+        </Alert>
+      </Snackbar>
     </>
   );
 }

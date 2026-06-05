@@ -29,7 +29,7 @@ import { getAdminBookingDetails, updateBooking, type Booking } from "@/api-clien
 import { logger } from "@/utils/logger";
 import { toImageUrl } from "@/utils/image-url";
 
-const OPERATIONAL_STATUSES = ["Pending", "Active", "Completed", "Cancelled"] as const;
+const OPERATIONAL_STATUSES = ["PaymentPending", "Confirmed", "Active", "Completed", "Cancelled"] as const;
 
 const formatCurrency = (n?: number | null) => {
   if (n == null || isNaN(n)) return "$0.00";
@@ -67,7 +67,7 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
     returnDate: "",
     pickupLocation: "",
     dropOffLocation: "",
-    status: "Pending",
+    status: "PaymentPending",
   });
 
   // ── Load booking ────────────────────────────────────────────────────

@@ -57,6 +57,22 @@ public class PaymentService : IPaymentService
             throw new ValidationException("Status", "This booking cannot be paid");
         }
 
+        // ── Mandatory-driver payment gate (business rule 13) ─────────────────
+        // A booking that requires a driver (e.g. the customer has no approved
+        // driving license and therefore cannot self-drive) MUST have a driver
+        // assigned before payment can be completed. This is the authoritative,
+        // server-side enforcement of "payment cannot be completed until a
+        // driver is assigned" — it holds even if the client skips or bypasses
+        // the driver-selection UI. Driver assignment is recorded on
+        // Booking.AssignedDriverProfileId via the request → accept → select
+        // workflow (see DriverAssignmentService.SelectDriverAsync).
+        if (booking.RequiresDriver && !booking.AssignedDriverProfileId.HasValue)
+        {
+            throw new BadRequestException(
+                "A driver must be assigned to this booking before payment can be completed. " +
+                "Please complete driver selection first.");
+        }
+
         // Generate unique transaction ID
         var transactionId = Guid.NewGuid();
 

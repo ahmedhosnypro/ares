@@ -347,33 +347,7 @@ public class AuthController : ControllerBase
         return Ok(response);
     }
 
-    /// <summary>
-    /// Mark the authenticated user's profile as complete and flip their
-    /// account status from <c>"Pending"</c> to <c>"Active"</c>.
-    /// </summary>
-    /// <remarks>
-    /// Called from the frontend <c>/complete-profile</c> page once the
-    /// newly-registered user confirms their details. The endpoint is
-    /// idempotent — already-Active users get a no-op.
-    /// </remarks>
-    [Authorize]
-    [HttpPost("complete-profile")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> CompleteProfile(
-        [FromBody] CompleteProfileRequest request,
-        CancellationToken cancellationToken)
-    {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var userId))
-        {
-            return Unauthorized(new { Message = "User not authenticated" });
-        }
 
-        await _authService.CompleteProfileAsync(userId, request, cancellationToken);
-        return Ok(new { Message = "Profile completed" });
-    }
 
     [HttpGet("demo-roles")]
     [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]

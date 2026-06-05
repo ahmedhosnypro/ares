@@ -49,6 +49,14 @@ public class GlobalExceptionHandlerMiddleware
                 _logger.LogWarning(exception, "Validation error occurred");
                 break;
 
+            case BadRequestException badRequestException:
+                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+                response = new ErrorResponse(
+                    (int)HttpStatusCode.BadRequest,
+                    badRequestException.Message);
+                _logger.LogWarning(exception, "Bad request");
+                break;
+
             case NotFoundException notFoundException:
                 context.Response.StatusCode = (int)HttpStatusCode.NotFound;
                 response = new ErrorResponse(

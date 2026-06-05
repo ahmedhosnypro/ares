@@ -105,3 +105,29 @@ export async function toggleUserStatus(userId: string): Promise<UserResponse> {
     accessToken: session?.accessToken ?? undefined,
   });
 }
+
+/**
+ * Response returned by the hard-delete endpoint.
+ */
+export interface DeleteUserResponse {
+  success: boolean;
+  message: string;
+  userId: string;
+  deletedRelatedRecords?: Record<string, number>;
+}
+
+/**
+ * Permanently delete a user (Admin only).
+ *
+ * Succeeds only when the user has no critical business records. When the
+ * backend blocks the deletion it returns a 409 with an explanatory message,
+ * which surfaces here as an `ApiError` whose body contains that message.
+ */
+export async function deleteUser(userId: string): Promise<DeleteUserResponse> {
+  const session = await getSession();
+
+  return apiFetchJson<DeleteUserResponse>(`/api/admin/users/${userId}`, {
+    method: "DELETE",
+    accessToken: session?.accessToken ?? undefined,
+  });
+}

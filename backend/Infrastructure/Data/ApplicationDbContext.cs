@@ -26,6 +26,16 @@ namespace Backend.Infrastructure.Data
         public DbSet<Vehicle> Vehicles { get; set; }
         public DbSet<VehicleImage> VehicleImages { get; set; }
         public DbSet<Driver> Drivers { get; set; }
+        // ── Driver Module (Phase 1+) ──────────────────────────────────────
+        // DriverProfile is the new entity used by the Driver Module. It is
+        // separate from the legacy <see cref="Driver"/> entity above, which
+        // continues to store the customer's *driving license* submission.
+        public DbSet<DriverProfile> DriverProfiles { get; set; }
+        public DbSet<DriverWorkArea> DriverWorkAreas { get; set; }
+        public DbSet<ServiceArea> ServiceAreas { get; set; }
+        public DbSet<DriverRequest> DriverRequests { get; set; }
+        public DbSet<DriverRequestResponse> DriverRequestResponses { get; set; }
+        public DbSet<DriverReview> DriverReviews { get; set; }
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<BookingPayment> Payments { get; set; }
         public DbSet<Inspector> Inspectors { get; set; }
@@ -62,6 +72,12 @@ namespace Backend.Infrastructure.Data
         IQueryable<TermsSection> IApplicationDbContext.TermsSections => TermsSections;
         IQueryable<AboutSection> IApplicationDbContext.AboutSections => AboutSections;
         IQueryable<Driver> IApplicationDbContext.Drivers => Drivers;
+        IQueryable<DriverProfile> IApplicationDbContext.DriverProfiles => DriverProfiles;
+        IQueryable<DriverWorkArea> IApplicationDbContext.DriverWorkAreas => DriverWorkAreas;
+        IQueryable<ServiceArea> IApplicationDbContext.ServiceAreas => ServiceAreas;
+        IQueryable<DriverRequest> IApplicationDbContext.DriverRequests => DriverRequests;
+        IQueryable<DriverRequestResponse> IApplicationDbContext.DriverRequestResponses => DriverRequestResponses;
+        IQueryable<DriverReview> IApplicationDbContext.DriverReviews => DriverReviews;
         IQueryable<VehicleInspection> IApplicationDbContext.VehicleInspections => VehicleInspections;
         IQueryable<InspectionImage> IApplicationDbContext.InspectionImages => InspectionImages;
 
@@ -90,6 +106,15 @@ namespace Backend.Infrastructure.Data
             Drivers.Add(driver);
         }
 
+        // Driver Module — additive helper for creating a brand-new driver
+        // profile during registration (Phase 1). Keeps the AuthService
+        // free of direct DbSet access, matching the existing AddDriver /
+        // AddVerification / AddUserAddress pattern.
+        public void AddDriverProfile(DriverProfile driverProfile)
+        {
+            DriverProfiles.Add(driverProfile);
+        }
+
         public void AddVehicleImage(VehicleImage image)
         {
             VehicleImages.Add(image);
@@ -108,6 +133,11 @@ namespace Backend.Infrastructure.Data
         public void AddVehicleFeatures(IEnumerable<VehicleFeature> features)
         {
             VehicleFeatures.AddRange(features);
+        }
+
+        public void AddSystemSetting(SystemSetting setting)
+        {
+            SystemSettings.Add(setting);
         }
 
         protected override void OnModelCreating(ModelBuilder builder)

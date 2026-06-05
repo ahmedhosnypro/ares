@@ -111,9 +111,21 @@ public class ReviewService : IReviewService
             throw new ValidationException("BookingId", "The booking does not match the vehicle being reviewed");
         }
 
+        // Business rule: only a strictly Completed booking may be reviewed.
         if (!IsBookingCompleted(booking))
         {
             throw new ValidationException("BookingId", "You can only review vehicles from completed bookings");
+        }
+
+        // Business rule (P1): the review must be submitted within 14 days of
+        // the booking's completion date. Once the window has passed the review
+        // endpoint is closed for that booking.
+        var reviewDeadline = GetCompletionDate(booking) + ReviewWindow;
+        if (DateTime.UtcNow > reviewDeadline)
+        {
+            throw new ValidationException(
+                "ReviewWindow",
+                "The review period has expired. Reviews must be submitted within 14 days of the booking's completion.");
         }
 
         var existingReview = await _context.Reviews
@@ -182,23 +194,37 @@ public class ReviewService : IReviewService
             "Review created successfully");
     }
 
-    private bool IsBookingCompleted(Booking booking)
-    {
-        var completedStatuses = new[] { Backend.Domain.Entities.Enums.BookingStatus.Completed, Backend.Domain.Entities.Enums.BookingStatus.Confirmed };
-        var isStatusCompleted = completedStatuses.Contains(booking.Status);
+    /// <summary>
+    /// Maximum window, measured from the booking's completion date, in which a
+    /// customer may submit a review. After it elapses the review endpoint is
+    /// closed. Business rule (P1).
+    /// </summary>
+    private static readonly TimeSpan ReviewWindow = TimeSpan.FromDays(14);
 
-        if (!isStatusCompleted)
-        {
-            return false;
-        }
+    /// <summary>
+    /// A booking is reviewable ONLY when it has strictly reached the terminal
+    /// <see cref="Backend.Domain.Entities.Enums.BookingStatus.Completed"/>
+    /// state.
+    ///
+    /// P1 FIX: we no longer treat a merely <c>Confirmed</c> booking whose
+    /// <c>ReturnDate</c> has elapsed as "completed". That shortcut let a
+    /// customer review a rental that had never been operationally completed
+    /// (return handover / inspection), which violated the review business
+    /// rule. Completion is now driven solely by the authoritative status.
+    /// </summary>
+    private static bool IsBookingCompleted(Booking booking)
+        => booking.Status == Backend.Domain.Entities.Enums.BookingStatus.Completed;
 
-        if (booking.ReturnDate.HasValue && booking.ReturnDate.Value > DateTime.UtcNow)
-        {
-            return false;
-        }
-
-        return true;
-    }
+    /// <summary>
+    /// Resolves the date a booking was completed, used as the anchor for the
+    /// <see cref="ReviewWindow"/>. There is no dedicated <c>CompletedAt</c>
+    /// column on <see cref="Booking"/>, so we anchor on the contractual
+    /// <c>ReturnDate</c> (the scheduled end of the rental). If that is somehow
+    /// unset we fall back to <c>UpdatedAt</c>, which is stamped when the
+    /// booking transitions into the Completed status.
+    /// </summary>
+    private static DateTime GetCompletionDate(Booking booking)
+        => booking.ReturnDate ?? booking.UpdatedAt;
 
     /// <summary>
     /// 24-hour edit window. Reviews become read-only after this time.

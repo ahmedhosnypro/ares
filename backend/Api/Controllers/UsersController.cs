@@ -1,6 +1,7 @@
 using Backend.Application.DTOs.Common;
 using Backend.Application.DTOs.UserManagement;
 using Backend.Application.DTOs.UserProfile;
+using Backend.Application.Interfaces;
 using Backend.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -241,13 +242,16 @@ public class UsersController : ControllerBase
 public class AdminUsersController : ControllerBase
 {
     private readonly IUserManagementService _userManagementService;
+    private readonly IUserDeletionService _userDeletionService;
     private readonly ILogger<AdminUsersController> _logger;
 
     public AdminUsersController(
         IUserManagementService userManagementService,
+        IUserDeletionService userDeletionService,
         ILogger<AdminUsersController> logger)
     {
         _userManagementService = userManagementService;
+        _userDeletionService = userDeletionService;
         _logger = logger;
     }
 
@@ -410,5 +414,37 @@ public class AdminUsersController : ControllerBase
         _logger.LogInformation("Successfully toggled status for user {UserId} to {NewStatus}", id, newStatus);
 
         return Ok(new { Message = $"User status changed to {newStatus}", Status = newStatus });
+    }
+
+    /// <summary>
+    /// Permanently delete a user (Admin only).
+    ///
+    /// Performs a true hard delete, but ONLY when the user holds no critical
+    /// business records. If the user has bookings, payments, reviews, driver
+    /// assignments, owned vehicles, or inspections, the request is rejected
+    /// with a 409 Conflict explaining why. Non-critical child records
+    /// (profiles, addresses, verifications, favorites, payment methods,
+    /// notifications, refresh tokens) are removed alongside the user.
+    /// </summary>
+    /// <param name="id">User ID to delete</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Deletion result</returns>
+    [HttpDelete("{id}")]
+    [ProducesResponseType(typeof(DeleteUserResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<DeleteUserResponse>> DeleteUser(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Admin requested deletion of user {UserId}", id);
+
+        var response = await _userDeletionService.DeleteUserAsync(id, cancellationToken);
+
+        _logger.LogInformation("Successfully deleted user {UserId}", id);
+
+        return Ok(response);
     }
 }

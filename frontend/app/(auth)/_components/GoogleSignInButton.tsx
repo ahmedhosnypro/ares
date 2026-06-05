@@ -102,6 +102,14 @@ interface GoogleSignInButtonProps {
    * prompt. Use on the sign-in page where the account must already exist.
    */
   readonly requireRole?: boolean;
+  /**
+   * Pre-selected role for the picker dialog. The sign-up page already has a
+   * role selector, so it passes the chosen role here to keep the two in sync
+   * (otherwise the dialog would default to "Customer" and silently override a
+   * Driver/Supplier choice — the cause of "Google sign-up always lands as
+   * Customer").
+   */
+  readonly initialRole?: GoogleRole;
 }
 
 /**
@@ -119,6 +127,7 @@ export default function GoogleSignInButton({
   onError,
   disabled = false,
   requireRole = true,
+  initialRole = "Customer",
 }: GoogleSignInButtonProps) {
   const theme = useTheme();
   const router = useRouter();
@@ -127,11 +136,17 @@ export default function GoogleSignInButton({
 
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<GoogleRole>("Customer");
+  const [selectedRole, setSelectedRole] = useState<GoogleRole>(initialRole);
   // Two separate loading states: `isPrompting` covers the Google popup,
   // `isExchanging` covers the round-trip to our backend through NextAuth.
   const [isPrompting, setIsPrompting] = useState(false);
   const [isExchanging, setIsExchanging] = useState(false);
+
+  // Keep the picker in sync when the parent's role selector changes so the
+  // role the user picked on the page is the one Google sign-up uses.
+  useEffect(() => {
+    setSelectedRole(initialRole);
+  }, [initialRole]);
 
   // Capture the role chosen in the dialog so the GIS callback (which
   // doesn't take user-defined args) can see it without a stale closure.

@@ -7,9 +7,7 @@ import ProfileHeader from "./_components/ProfileHeader";
 import PersonalInfoForm from "./_components/PersonalInfoForm";
 import AddressForm from "./_components/AddressForm";
 import PreferencesSection from "./_components/PreferencesSection";
-import VerificationStatus from "./_components/VerificationStatus";
-import IdentityVerificationCard from "./_components/IdentityVerificationCard";
-import DriverLicenseCard from "./_components/DriverLicenseCard";
+import VerificationSection from "./_components/VerificationSection";
 import ChangePasswordForm from "./_components/ChangePasswordForm";
 import ProfileCard from "./_components/ProfileCard";
 import { Alert, Box, Button, CardContent, Container, Grid, Typography } from "@mui/material";
@@ -169,24 +167,13 @@ export default async function ProfilePage() {
               </ProfileCard>
 
               {!isAdmin && (
-                <>
-                  <ProfileCard>
-                    <VerificationStatus
-                      emailVerified={verificationStatus.email}
-                      phoneVerified={verificationStatus.phone}
-                      licenseVerified={verificationStatus.driverLicense}
-                      kycStatus={verificationStatus.kyc}
-                    />
-                  </ProfileCard>
-
-                  <ProfileCard>
-                    <IdentityVerificationCard accessToken={session.accessToken} />
-                  </ProfileCard>
-
-                  <ProfileCard>
-                    <DriverLicenseCard accessToken={session.accessToken} />
-                  </ProfileCard>
-                </>
+                <VerificationSection
+                  accessToken={session.accessToken}
+                  initialEmailVerified={verificationStatus.email}
+                  initialPhoneVerified={verificationStatus.phone}
+                  initialLicenseVerified={verificationStatus.driverLicense}
+                  initialKycStatus={verificationStatus.kyc}
+                />
               )}
 
               <ProfileCard>

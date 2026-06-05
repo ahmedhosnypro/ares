@@ -3,6 +3,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { Box, Button, CardContent, Container, Typography } from "@mui/material";
 import Link from "next/link";
 import BookingsList from "./_componets/BookingsList";
+import { ResumeBookingBanner } from "@/app/(customer)/booking/_components/ResumeBookingBanner";
 
 export default async function MyBookingsPage() {
   const session = await getServerSession(authOptions);
@@ -65,6 +66,8 @@ export default async function MyBookingsPage() {
             Track, manage, and review all your car rental reservations in one place.
           </Typography>
         </Box>
+
+        <ResumeBookingBanner />
 
         <BookingsList userId={session.user.id} accessToken={session.accessToken} />
       </Container>

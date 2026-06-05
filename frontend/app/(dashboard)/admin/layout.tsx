@@ -14,6 +14,7 @@ import {
   Place as LocationsIcon,
   VerifiedUser as VerifiedUserIcon,
   ManageSearch as InspectorsIcon,
+  AirlineSeatReclineNormal as DriversIcon,
 } from "@mui/icons-material";
 import DashboardShell, { type DashboardMenuItem } from "../_components/DashboardShell";
 
@@ -24,6 +25,7 @@ const menuItems: DashboardMenuItem[] = [
   { text: "Suppliers", icon: <SupplierIcon />, path: "/admin/suppliers" },
   { text: "Users", icon: <UsersIcon />, path: "/admin/users" },
   { text: "Inspectors", icon: <InspectorsIcon />, path: "/admin/inspectors" },
+  { text: "Drivers", icon: <DriversIcon />, path: "/admin/drivers" },
   { text: "Verifications", icon: <VerifiedUserIcon />, path: "/admin/verifications" },
   { text: "Locations", icon: <LocationsIcon />, path: "/admin/locations" },
   { text: "Countries", icon: <CountriesIcon />, path: "/admin/countries" },

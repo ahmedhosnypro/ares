@@ -152,4 +152,21 @@ public class SupplierNotificationService : ISupplierNotificationService
     {
         return await _notificationRepository.MarkAllAsReadAsync(supplierId, cancellationToken);
     }
+
+    /// <inheritdoc />
+    public async Task<bool> DeleteNotificationAsync(
+        Guid supplierId,
+        Guid notificationId,
+        CancellationToken cancellationToken = default)
+    {
+        var notification = await _notificationRepository.GetByIdAsync(notificationId, cancellationToken);
+        if (notification == null || notification.UserId != supplierId)
+        {
+            return false;
+        }
+
+        await _notificationRepository.DeleteAsync(notification, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
+        return true;
+    }
 }

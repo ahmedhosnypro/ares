@@ -72,7 +72,8 @@ export default function BookingsList({ userId, accessToken }: Readonly<{ userId:
   const [page, setPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [activeStatuses, setActiveStatuses] = useState<readonly string[]>([
-    "Pending",
+    "Draft",
+    "PaymentPending",
     "Confirmed",
     "Active",
     "Completed",

@@ -25,21 +25,6 @@ interface PricingApiResponse {
   readonly totalPrice?: number;
 }
 
-interface BookingApiSuccess {
-  readonly bookingId?: string;
-  readonly bookingNumber?: string;
-}
-
-interface ValidationError {
-  readonly field?: string;
-  readonly message?: string;
-}
-
-interface BookingApiError {
-  readonly message?: string;
-  readonly validationErrors?: readonly ValidationError[];
-}
-
 interface FormErrors {
   pickupLocationId?: string;
   dropoffLocationId?: string;
@@ -115,10 +100,7 @@ export default function BookingCard({ vehicle, locationOptions, vehicleId, baseP
   const [returnDate, setReturnDate] = useState<Date | null>(null);
   const [totalPrice, setTotalPrice] = useState(resolvedVehicle.pricePerDay);
   const [isPricingLoading, setIsPricingLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
-  const [submitError, setSubmitError] = useState("");
-  const [submitSuccess, setSubmitSuccess] = useState("");
 
   const validate = useCallback((): FormErrors => {
     const nextErrors: FormErrors = {};
@@ -180,67 +162,22 @@ export default function BookingCard({ vehicle, locationOptions, vehicleId, baseP
   }, [pickupDate, returnDate, resolvedVehicle.pricePerDay, resolvedVehicle.vehicleId, validate]);
 
   const handleSubmit = async () => {
-    setSubmitError("");
-    setSubmitSuccess("");
-
     const validationErrors = validate();
     setErrors(validationErrors);
     if (Object.keys(validationErrors).length > 0) return;
 
-    // Guest flow: save intent and redirect to checkout auth gate
-    if (!session?.accessToken) {
-      const intent = {
-        vehicleId: resolvedVehicle.vehicleId,
-        pickupLocationId,
-        dropOffLocationId: dropoffLocationId,
-        pickupDate: pickupDate ? formatDateForApi(pickupDate) : "",
-        returnDate: returnDate ? formatDateForApi(returnDate) : "",
-        totalPrice,
-        vehicleLabel: `${resolvedVehicle.make} ${resolvedVehicle.model}`,
-        pricePerDay: resolvedVehicle.pricePerDay,
-      };
-      sessionStorage.setItem("bookingIntent", JSON.stringify(intent));
-      router.push(`/checkout/${resolvedVehicle.vehicleId}`);
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const response = await fetch(toApiUrl("/api/bookings/create"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.accessToken}`,
-        },
-        body: JSON.stringify({
-          vehicleId: resolvedVehicle.vehicleId,
-          pickupLocationId,
-          dropOffLocationId: dropoffLocationId,
-          pickupDate: pickupDate ? formatDateForApi(pickupDate) : "",
-          returnDate: returnDate ? formatDateForApi(returnDate) : "",
-          driverId: null,
-          payLater: true,
-        }),
-      });
-
-      if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as BookingApiError | null;
-        setSubmitError(payload?.validationErrors?.[0]?.message ?? payload?.message ?? "Booking request failed.");
-        return;
-      }
-
-      const payload = (await response.json()) as BookingApiSuccess;
-      if (payload.bookingId) {
-        router.push(`/booking/checkout/${payload.bookingId}`);
-      } else {
-        setSubmitSuccess(payload.bookingNumber ? `Booking created: ${payload.bookingNumber}` : "Booking created.");
-      }
-    } catch (error) {
-      logger.error("Booking submit failed", error);
-      setSubmitError("Unable to create booking right now.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    const intent = {
+      vehicleId: resolvedVehicle.vehicleId,
+      pickupLocationId,
+      dropOffLocationId: dropoffLocationId,
+      pickupDate: pickupDate ? formatDateForApi(pickupDate) : "",
+      returnDate: returnDate ? formatDateForApi(returnDate) : "",
+      totalPrice,
+      vehicleLabel: `${resolvedVehicle.make} ${resolvedVehicle.model}`,
+      pricePerDay: resolvedVehicle.pricePerDay,
+    };
+    sessionStorage.setItem("bookingIntent", JSON.stringify(intent));
+    router.push(`/booking/driver-selection/${resolvedVehicle.vehicleId}`);
   };
 
   const days =
@@ -374,18 +311,15 @@ export default function BookingCard({ vehicle, locationOptions, vehicleId, baseP
           </Stack>
         </Box>
 
-        {submitError && <Alert severity="error">{submitError}</Alert>}
-        {submitSuccess && <Alert severity="success">{submitSuccess}</Alert>}
-
         <Button
           variant="contained"
           size="large"
           onClick={() => {
             void handleSubmit();
           }}
-          disabled={isSubmitting || resolvedLocations.length === 0 || resolvedVehicle.vehicleId === ""}
+          disabled={resolvedLocations.length === 0 || resolvedVehicle.vehicleId === ""}
         >
-          {isSubmitting ? "Creating booking..." : "Reserve now"}
+          Reserve now
         </Button>
 
         {!session?.accessToken && (

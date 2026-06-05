@@ -2,6 +2,7 @@ using Backend.Application.DTOs.Auth;
 using Backend.Application.Exceptions;
 using Backend.Application.Interfaces;
 using Backend.Domain.Entities;
+using Backend.Domain.Entities.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -76,7 +77,7 @@ public class AuthService : IAuthService
             LastName = request.LastName,
             PhoneNumber = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim(),
             EmailConfirmed = false,
-            Status = "Pending"
+            Status = "Active"
         };
 
         var result = await _userManager.CreateAsync(user, request.Password);
@@ -95,6 +96,49 @@ public class AuthService : IAuthService
         // Assign requested role (server-resolved, never trusts the raw
         // frontend value).
         await _userManager.AddToRoleAsync(user, requestedRole);
+
+        // ── Driver Module (Phase 1) ────────────────────────────────────
+        // When the new user registers as a Driver, immediately create an
+        // empty DriverProfile row tied to the user. Status defaults to
+        // Incomplete so the profile-completion gate (Phase 2) blocks all
+        // driver features until the user submits license, IDs, address,
+        // emergency contact, and work areas.
+        //
+        // Wrapped in a try so a transient failure here never blocks user
+        // creation — Phase 2 can self-heal by inserting the row on first
+        // call if it is somehow missing.
+        if (string.Equals(requestedRole, "Driver", StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                var profile = new DriverProfile
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = user.Id,
+                    Status = DriverProfileStatus.Incomplete,
+                    Availability = DriverAvailability.Unavailable,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                _context.AddDriverProfile(profile);
+                await _context.SaveChangesAsync(cancellationToken);
+
+                _logger.LogInformation(
+                    "Empty driver profile created for user {UserId} on registration",
+                    user.Id);
+            }
+            catch (Exception ex)
+            {
+                // Best-effort: do not block the registration on this — the
+                // profile-completion endpoint upserts the row if missing.
+                _logger.LogWarning(
+                    ex,
+                    "Failed to create initial driver profile for user {UserId}; will be created on first profile-completion call",
+                    user.Id);
+            }
+        }
 
         // Generate email confirmation token
         var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -236,7 +280,8 @@ public class AuthService : IAuthService
                 LastName: user.LastName ?? string.Empty,
                 Roles: roles.ToList(),
                 EmailVerified: user.EmailConfirmed,
-                Status: user.Status
+                Status: user.Status,
+                Phone: user.PhoneNumber
             )
         );
     }
@@ -422,7 +467,8 @@ public class AuthService : IAuthService
                 LastName: user.LastName ?? string.Empty,
                 Roles: roles.ToList(),
                 EmailVerified: user.EmailConfirmed,
-                Status: user.Status
+                Status: user.Status,
+                Phone: user.PhoneNumber
             )
         );
     }
@@ -502,7 +548,7 @@ public class AuthService : IAuthService
             return new List<string>();
         }
 
-        return new List<string> { "Customer", "Supplier", "Admin" };
+        return new List<string> { "Customer", "Supplier", "Admin", "Driver", "Inspector" };
     }
 
     public async Task<LoginResponse> DemoLoginAsync(string role, CancellationToken cancellationToken = default)
@@ -545,58 +591,18 @@ public class AuthService : IAuthService
                 LastName: user.LastName ?? string.Empty,
                 Roles: roles.ToList(),
                 EmailVerified: user.EmailConfirmed,
-                Status: user.Status
+                Status: user.Status,
+                Phone: user.PhoneNumber
             )
         );
     }
 
-    /// <inheritdoc />
-    public async Task CompleteProfileAsync(Guid userId, CompleteProfileRequest request, CancellationToken cancellationToken = default)
-    {
-        var user = await _userManager.FindByIdAsync(userId.ToString())
-            ?? throw new NotFoundException("User not found");
 
-        // Apply optional overrides (only if non-empty after trimming —
-        // don't accidentally wipe an existing name/phone).
-        if (!string.IsNullOrWhiteSpace(request.FirstName))
-        {
-            user.FirstName = request.FirstName.Trim();
-        }
-        if (!string.IsNullOrWhiteSpace(request.LastName))
-        {
-            user.LastName = request.LastName.Trim();
-        }
-        if (!string.IsNullOrWhiteSpace(request.Phone))
-        {
-            user.PhoneNumber = request.Phone.Trim();
-        }
-
-        // Flip status away from Pending. Already-Active users get a no-op
-        // so this stays idempotent.
-        if (string.Equals(user.Status, "Pending", StringComparison.OrdinalIgnoreCase))
-        {
-            user.Status = "Active";
-        }
-
-        user.UpdatedAt = DateTime.UtcNow;
-        var result = await _userManager.UpdateAsync(user);
-        if (!result.Succeeded)
-        {
-            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-            _logger.LogWarning("Profile completion failed for user {UserId}: {Errors}", userId, errors);
-            throw new ValidationException(new Dictionary<string, string[]>
-            {
-                { "User", result.Errors.Select(e => e.Description).ToArray() }
-            });
-        }
-
-        _logger.LogInformation("Profile completed for user {UserId}", userId);
-    }
 
     /// <summary>
     /// Maps a raw role string from the registration payload to a canonical
-    /// ASP.NET Identity role name. Only <c>"customer"</c> and
-    /// <c>"supplier"</c> are accepted on this self-service endpoint —
+    /// ASP.NET Identity role name. Only <c>"customer"</c>, <c>"supplier"</c>,
+    /// and <c>"driver"</c> are accepted on this self-service endpoint —
     /// Admin / Inspector accounts must be provisioned through the
     /// administrative flow. The mapping is case-insensitive; any unknown
     /// or null value resolves to <c>"Customer"</c>, which preserves the
@@ -612,6 +618,14 @@ public class AuthService : IAuthService
         if (requested.Equals("supplier", StringComparison.OrdinalIgnoreCase))
         {
             return "Supplier";
+        }
+
+        // Driver Module (Phase 1) — drivers self-register and then must
+        // complete their professional profile before unlocking the
+        // driver-facing features.
+        if (requested.Equals("driver", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Driver";
         }
 
         // Any other value — including the explicit "customer" — falls

@@ -4,7 +4,11 @@ namespace Backend.Domain.Entities.Enums
     {
         Customer,
         Supplier,
-        Admin
+        Admin,
+        // Appended at the end so any rows previously persisted by ordinal
+        // keep their meaning. The Driver role is added with the Driver
+        // Module and is a self-service role on /api/auth/register.
+        Driver
     }
 
     public enum VerificationStatus

@@ -27,4 +27,5 @@ public record CreateBookingRequest(
     bool PayLater,
     string? PickupLocation = null,
     string? DropOffLocation = null,
-    Guid? CustomerUserId = null);
+    Guid? CustomerUserId = null,
+    bool? NeedDriver = null);

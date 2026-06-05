@@ -23,7 +23,7 @@ import { logger } from "@/utils/logger";
  * accepts. Anything else (Confirmed / inspection-workflow values) is
  * intentionally NOT exposed to the operator here.
  */
-const OPERATIONAL_STATUSES = ["Pending", "Active", "Completed", "Cancelled"] as const;
+const OPERATIONAL_STATUSES = ["PaymentPending", "Confirmed", "Active", "Completed", "Cancelled"] as const;
 type OperationalStatus = (typeof OPERATIONAL_STATUSES)[number];
 
 interface ChangeStatusModalProps {

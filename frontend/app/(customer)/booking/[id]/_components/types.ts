@@ -37,4 +37,10 @@ export interface BookingDetails {
   readonly status?: string;
   readonly payLater?: boolean;
   readonly inspection?: BookingInspectionOverview;
+  readonly driverFee?: number;
+  readonly vehicleFee?: number;
+  readonly grandTotal?: number;
+  readonly withDriver?: boolean;
+  readonly requiresDriver?: boolean;
+  readonly assignedDriverProfile?: any;
 }

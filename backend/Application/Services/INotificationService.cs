@@ -54,4 +54,9 @@ public interface INotificationService
         string message,
         string? type,
         CancellationToken cancellationToken = default);
+
+    Task<bool> DeleteNotificationForUserAsync(
+        Guid notificationId,
+        Guid userId,
+        CancellationToken cancellationToken = default);
 }

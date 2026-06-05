@@ -215,11 +215,11 @@ public class PaymentPropertyTests : IDisposable
             ClearTestData();
 
             // Create test user and booking with "Pending" status
-            var (userId, bookingId) = CreateTestUserAndBooking(amount, BookingStatus.Pending);
+            var (userId, bookingId) = CreateTestUserAndBooking(amount, BookingStatus.PaymentPending);
 
             // Verify booking is initially in "Pending" status
             var initialBooking = _bookingRepository.GetByIdAsync(bookingId).Result;
-            if (initialBooking?.Status != BookingStatus.Pending)
+            if (initialBooking?.Status != BookingStatus.PaymentPending)
             {
                 // Debug: Initial booking status is not Pending
                 return false;
@@ -392,7 +392,7 @@ public class PaymentPropertyTests : IDisposable
             var user2Id = CreateTestUser();
 
             // Create booking for user1
-            var (_, bookingId) = CreateTestUserAndBooking(amount, BookingStatus.Pending, user1Id);
+            var (_, bookingId) = CreateTestUserAndBooking(amount, BookingStatus.PaymentPending, user1Id);
 
             // Try to pay for user1's booking with user2
             var paymentRequest = new PaymentRequest(
@@ -449,7 +449,7 @@ public class PaymentPropertyTests : IDisposable
 
             for (int i = 0; i < paymentCount; i++)
             {
-                var (_, bookingId) = CreateTestUserAndBooking(100 + i, BookingStatus.Pending, userId);
+                var (_, bookingId) = CreateTestUserAndBooking(100 + i, BookingStatus.PaymentPending, userId);
                 var payment = new BookingPayment
                 {
                     PaymentId = Guid.NewGuid(),

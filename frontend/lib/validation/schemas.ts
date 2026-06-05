@@ -47,7 +47,7 @@ export const signInSchema = z.object({
  * The backend re-validates this list in `RegisterRequestValidator` so a
  * tampered client cannot escalate.
  */
-export const signupRoleSchema = z.enum(["customer", "supplier"]);
+export const signupRoleSchema = z.enum(["customer", "supplier", "driver"]);
 export type SignUpRole = z.infer<typeof signupRoleSchema>;
 
 /**
