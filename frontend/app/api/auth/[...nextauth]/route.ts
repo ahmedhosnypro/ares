@@ -21,6 +21,7 @@ type AuthResponse = {
     /** ApplicationUser.Status — surfaced so the frontend can route a
      *  freshly-registered "Pending" user to /complete-profile. */
     status?: string | null;
+    phone?: string | null;
   };
   token?: string;
   refreshToken?: string;
@@ -149,6 +150,7 @@ export const authOptions: NextAuthOptions = {
               refreshToken: data.refreshToken || "",
               expiresAt: data.expiresAt || "",
               status: data.user.status ?? null,
+              phone: data.user.phone ?? null,
             };
           }
 
@@ -176,6 +178,7 @@ export const authOptions: NextAuthOptions = {
         token.refreshToken = user.refreshToken;
         token.accessTokenExpires = new Date(user.expiresAt).getTime();
         token.status = user.status ?? null;
+        token.phone = user.phone ?? null;
         return token;
       }
 
@@ -206,6 +209,7 @@ export const authOptions: NextAuthOptions = {
       session.user.lastName = token.lastName;
       session.user.roles = token.roles;
       session.user.status = token.status ?? null;
+      session.user.phone = token.phone ?? null;
       session.accessToken = token.accessToken;
       session.refreshToken = token.refreshToken;
       session.accessTokenExpires = token.accessTokenExpires;

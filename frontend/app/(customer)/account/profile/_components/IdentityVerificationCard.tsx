@@ -14,6 +14,13 @@ import IdentityVerificationModal from "./IdentityVerificationModal";
 
 interface IdentityVerificationCardProps {
   readonly accessToken: string;
+  readonly externalState?: LoadState;
+  readonly externalVerification?: UserVerificationDto | null;
+  readonly externalLoadError?: string;
+  readonly externalModalOpen?: boolean;
+  readonly onOpenModal?: () => void;
+  readonly onCloseModal?: () => void;
+  readonly onSubmitted?: (next: UserVerificationDto) => void;
 }
 
 type LoadState = "loading" | "ready" | "error";
@@ -33,41 +40,83 @@ function formatSubmittedAt(value: string): string {
   return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 }
 
-export default function IdentityVerificationCard({ accessToken }: IdentityVerificationCardProps) {
-  const [state, setState] = useState<LoadState>("loading");
-  const [verification, setVerification] = useState<UserVerificationDto | null>(null);
-  const [loadError, setLoadError] = useState<string>("");
-  const [modalOpen, setModalOpen] = useState(false);
+export default function IdentityVerificationCard({
+  accessToken,
+  externalState,
+  externalVerification,
+  externalLoadError,
+  externalModalOpen,
+  onOpenModal,
+  onCloseModal,
+  onSubmitted,
+}: IdentityVerificationCardProps) {
+  const [internalState, setInternalState] = useState<LoadState>("loading");
+  const [internalVerification, setInternalVerification] = useState<UserVerificationDto | null>(null);
+  const [internalLoadError, setInternalLoadError] = useState<string>("");
+  const [internalModalOpen, setInternalModalOpen] = useState(false);
+
+  const isControlled = externalState !== undefined;
+
+  const state = isControlled ? externalState : internalState;
+  const verification = isControlled ? externalVerification : internalVerification;
+  const loadError = isControlled ? (externalLoadError ?? "") : internalLoadError;
+  const modalOpen = isControlled ? (externalModalOpen ?? false) : internalModalOpen;
 
   const load = useCallback(async () => {
-    setState("loading");
-    setLoadError("");
+    if (isControlled) return;
+    setInternalState("loading");
+    setInternalLoadError("");
     try {
       const data = await getMyVerification(accessToken);
-      setVerification(data);
-      setState("ready");
+      setInternalVerification(data);
+      setInternalState("ready");
     } catch (error) {
       logger.error("Failed to load verification status", error);
-      setLoadError("Unable to load verification status.");
-      setState("error");
+      setInternalLoadError("Unable to load verification status.");
+      setInternalState("error");
     }
-  }, [accessToken]);
+  }, [accessToken, isControlled]);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    if (!isControlled) {
+      void load();
+    }
+  }, [load, isControlled]);
 
-  const handleSubmitted = useCallback((next: UserVerificationDto) => {
-    setVerification(next);
-    setModalOpen(false);
-  }, []);
+  const handleSubmitted = useCallback(
+    (next: UserVerificationDto) => {
+      if (isControlled) {
+        onSubmitted?.(next);
+      } else {
+        setInternalVerification(next);
+        setInternalModalOpen(false);
+      }
+    },
+    [isControlled, onSubmitted]
+  );
+
+  const handleOpenModal = useCallback(() => {
+    if (isControlled) {
+      onOpenModal?.();
+    } else {
+      setInternalModalOpen(true);
+    }
+  }, [isControlled, onOpenModal]);
+
+  const handleCloseModal = useCallback(() => {
+    if (isControlled) {
+      onCloseModal?.();
+    } else {
+      setInternalModalOpen(false);
+    }
+  }, [isControlled, onCloseModal]);
 
   const status = (verification?.status ?? "NotVerified").toLowerCase();
   const canSubmit = status === "notverified" || status === "rejected";
 
   return (
     <Box sx={{ p: 3 }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+      <Box sx={{ display: "flex", alignItems: "center", justifycontent: "space-between", mb: 1 }}>
         <Typography variant="subtitle1" color="text.primary" sx={{ fontWeight: 700 }}>
           Identity Verification
         </Typography>
@@ -212,9 +261,7 @@ export default function IdentityVerificationCard({ accessToken }: IdentityVerifi
               color="primary"
               size="medium"
               startIcon={<UploadFileRoundedIcon />}
-              onClick={() => {
-                setModalOpen(true);
-              }}
+              onClick={handleOpenModal}
               sx={{ fontWeight: 700, alignSelf: "flex-start" }}
             >
               {status === "rejected" ? "Resubmit Documents" : "Verify Identity"}
@@ -226,9 +273,7 @@ export default function IdentityVerificationCard({ accessToken }: IdentityVerifi
       <IdentityVerificationModal
         open={modalOpen}
         accessToken={accessToken}
-        onClose={() => {
-          setModalOpen(false);
-        }}
+        onClose={handleCloseModal}
         onSubmitted={handleSubmitted}
       />
     </Box>

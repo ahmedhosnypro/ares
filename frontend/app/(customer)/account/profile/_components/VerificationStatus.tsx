@@ -9,7 +9,10 @@ interface VerificationStatusProps {
   readonly emailVerified: boolean;
   readonly phoneVerified: boolean;
   readonly licenseVerified: boolean;
+  readonly licensePending?: boolean;
   readonly kycStatus?: string;
+  readonly onVerifyIdentity?: () => void;
+  readonly onUploadLicense?: () => void;
 }
 
 interface VerificationItemProps {
@@ -19,9 +22,10 @@ interface VerificationItemProps {
   readonly actionText: string;
   readonly icon: React.ReactNode;
   readonly isLast: boolean;
+  readonly onClick?: () => void;
 }
 
-function VerificationItem({ label, isVerified, isPending, actionText, icon, isLast }: VerificationItemProps) {
+function VerificationItem({ label, isVerified, isPending, actionText, icon, isLast, onClick }: VerificationItemProps) {
   return (
     <>
       <ListItem
@@ -41,7 +45,8 @@ function VerificationItem({ label, isVerified, isPending, actionText, icon, isLa
               size="small"
               color="warning"
               variant="outlined"
-              clickable
+              clickable={!!onClick}
+              onClick={onClick}
               sx={{ fontWeight: 700, fontSize: "0.7rem" }}
             />
           ) : (
@@ -97,8 +102,19 @@ export default function VerificationStatus({
   emailVerified,
   phoneVerified,
   licenseVerified,
+  licensePending = false,
   kycStatus,
+  onVerifyIdentity,
+  onUploadLicense,
 }: VerificationStatusProps) {
+  const isKycVerified =
+    kycStatus?.toLowerCase() === "approved" ||
+    kycStatus?.toLowerCase() === "basic" ||
+    kycStatus?.toLowerCase() === "standard" ||
+    kycStatus?.toLowerCase() === "enhanced";
+
+  const isKycPending = kycStatus?.toLowerCase() === "pending";
+
   const items = [
     {
       label: "Email Address",
@@ -116,17 +132,19 @@ export default function VerificationStatus({
     },
     {
       label: "Identity Verification",
-      isVerified: kycStatus?.toLowerCase() === "approved",
-      isPending: kycStatus?.toLowerCase() === "pending",
+      isVerified: isKycVerified,
+      isPending: isKycPending,
       actionText: "Verify",
       icon: <BadgeRoundedIcon sx={{ fontSize: 15 }} />,
+      onClick: onVerifyIdentity,
     },
     {
       label: "Driver's License",
       isVerified: licenseVerified,
-      isPending: false,
+      isPending: licensePending,
       actionText: "Upload",
       icon: <BadgeRoundedIcon sx={{ fontSize: 15 }} />,
+      onClick: onUploadLicense,
     },
   ];
 
@@ -142,9 +160,11 @@ export default function VerificationStatus({
             key={item.label}
             label={item.label}
             isVerified={item.isVerified}
+            isPending={item.isPending}
             actionText={item.actionText}
             icon={item.icon}
             isLast={index === items.length - 1}
+            onClick={item.onClick}
           />
         ))}
       </List>

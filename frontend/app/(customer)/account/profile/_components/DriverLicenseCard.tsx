@@ -18,6 +18,13 @@ import DriverLicenseModal from "./DriverLicenseModal";
 
 interface DriverLicenseCardProps {
   readonly accessToken: string;
+  readonly externalState?: LoadState;
+  readonly externalLicense?: DriverLicenseDto | null;
+  readonly externalLoadError?: string;
+  readonly externalModalOpen?: boolean;
+  readonly onOpenModal?: () => void;
+  readonly onCloseModal?: () => void;
+  readonly onSubmitted?: (next: DriverLicenseDto) => void;
 }
 
 type LoadState = "loading" | "ready" | "error";
@@ -35,34 +42,76 @@ function deriveState(license: DriverLicenseDto | null): DriverLicenseVerificatio
   return license.isVerified ? "Verified" : "Pending";
 }
 
-export default function DriverLicenseCard({ accessToken }: DriverLicenseCardProps) {
-  const [state, setState] = useState<LoadState>("loading");
-  const [license, setLicense] = useState<DriverLicenseDto | null>(null);
-  const [loadError, setLoadError] = useState<string>("");
-  const [modalOpen, setModalOpen] = useState(false);
+export default function DriverLicenseCard({
+  accessToken,
+  externalState,
+  externalLicense,
+  externalLoadError,
+  externalModalOpen,
+  onOpenModal,
+  onCloseModal,
+  onSubmitted,
+}: DriverLicenseCardProps) {
+  const [internalState, setInternalState] = useState<LoadState>("loading");
+  const [internalLicense, setInternalLicense] = useState<DriverLicenseDto | null>(null);
+  const [internalLoadError, setInternalLoadError] = useState<string>("");
+  const [internalModalOpen, setInternalModalOpen] = useState(false);
+
+  const isControlled = externalState !== undefined;
+
+  const state = isControlled ? externalState : internalState;
+  const license = isControlled ? (externalLicense ?? null) : internalLicense;
+  const loadError = isControlled ? (externalLoadError ?? "") : internalLoadError;
+  const modalOpen = isControlled ? (externalModalOpen ?? false) : internalModalOpen;
 
   const load = useCallback(async () => {
-    setState("loading");
-    setLoadError("");
+    if (isControlled) return;
+    setInternalState("loading");
+    setInternalLoadError("");
     try {
       const data = await getMyDriverLicense(accessToken);
-      setLicense(data);
-      setState("ready");
+      setInternalLicense(data);
+      setInternalState("ready");
     } catch (error) {
       logger.error("Failed to load driver license status", error);
-      setLoadError("Unable to load driver license status.");
-      setState("error");
+      setInternalLoadError("Unable to load driver license status.");
+      setInternalState("error");
     }
-  }, [accessToken]);
+  }, [accessToken, isControlled]);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    if (!isControlled) {
+      void load();
+    }
+  }, [load, isControlled]);
 
-  const handleSubmitted = useCallback((next: DriverLicenseDto) => {
-    setLicense(next);
-    setModalOpen(false);
-  }, []);
+  const handleSubmitted = useCallback(
+    (next: DriverLicenseDto) => {
+      if (isControlled) {
+        onSubmitted?.(next);
+      } else {
+        setInternalLicense(next);
+        setInternalModalOpen(false);
+      }
+    },
+    [isControlled, onSubmitted]
+  );
+
+  const handleOpenModal = useCallback(() => {
+    if (isControlled) {
+      onOpenModal?.();
+    } else {
+      setInternalModalOpen(true);
+    }
+  }, [isControlled, onOpenModal]);
+
+  const handleCloseModal = useCallback(() => {
+    if (isControlled) {
+      onCloseModal?.();
+    } else {
+      setInternalModalOpen(false);
+    }
+  }, [isControlled, onCloseModal]);
 
   const verificationState = useMemo(() => deriveState(license), [license]);
 
@@ -214,9 +263,7 @@ export default function DriverLicenseCard({ accessToken }: DriverLicenseCardProp
             color="primary"
             size="medium"
             startIcon={<UploadFileRoundedIcon />}
-            onClick={() => {
-              setModalOpen(true);
-            }}
+            onClick={handleOpenModal}
             sx={{ fontWeight: 700, alignSelf: "flex-start" }}
           >
             {buttonLabel}
@@ -228,9 +275,7 @@ export default function DriverLicenseCard({ accessToken }: DriverLicenseCardProp
         open={modalOpen}
         accessToken={accessToken}
         currentLicense={license}
-        onClose={() => {
-          setModalOpen(false);
-        }}
+        onClose={handleCloseModal}
         onSubmitted={handleSubmitted}
       />
     </Box>
