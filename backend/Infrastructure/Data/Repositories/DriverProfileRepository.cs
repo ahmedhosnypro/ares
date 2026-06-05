@@ -110,9 +110,8 @@ namespace Backend.Infrastructure.Data.Repositories
             var blocking = new[]
             {
                 BookingStatus.Confirmed,
-                BookingStatus.Approved,
                 BookingStatus.Active,
-                BookingStatus.ReadyForDelivery
+                BookingStatus.PaymentPending
             };
 
             return await _context.Bookings.AnyAsync(b =>
@@ -145,9 +144,8 @@ namespace Backend.Infrastructure.Data.Repositories
             var blocking = new[]
             {
                 BookingStatus.Confirmed,
-                BookingStatus.Approved,
                 BookingStatus.Active,
-                BookingStatus.ReadyForDelivery
+                BookingStatus.PaymentPending
             };
 
             return await _context.DriverProfiles

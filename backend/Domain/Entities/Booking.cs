@@ -43,7 +43,7 @@ namespace Backend.Domain.Entities
         [Column(TypeName = "decimal(18,2)")]
         public decimal? TotalPrice { get; set; }
 
-        public BookingStatus Status { get; set; } = BookingStatus.Pending;
+        public BookingStatus Status { get; set; } = BookingStatus.Draft;
 
         public DateTime? CancelledAt { get; set; }
 
@@ -61,9 +61,10 @@ namespace Backend.Domain.Entities
 
         // Inspection status mirror — kept on the booking for fast filtering
         // and to avoid a join on every listing.
-        public BookingInspectionStatus InspectionStatus { get; set; } = BookingInspectionStatus.NotRequired;
+        public InspectionStatus InspectionStatus { get; set; } = InspectionStatus.NotRequired;
 
         // ─── Driver Module ───────────────────────────────────────────────
+        public DriverAssignmentStatus DriverAssignmentStatus { get; set; } = DriverAssignmentStatus.NotRequired;
         public Guid? AssignedDriverProfileId { get; set; }
 
         [ForeignKey(nameof(AssignedDriverProfileId))]

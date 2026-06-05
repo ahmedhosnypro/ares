@@ -7,6 +7,7 @@ using Backend.Application.Services;
 using Backend.Application.Validators;
 using Backend.Application.Interfaces;
 using Backend.Infrastructure.Repositories;
+using Backend.Infrastructure.Data.Repositories;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -110,10 +111,12 @@ try
     builder.Services.AddScoped<ILocationService, LocationService>();
     builder.Services.AddScoped<IVehicleService, VehicleService>();
     builder.Services.AddScoped<IBookingService, BookingService>();
+    builder.Services.AddScoped<ICheckoutService, CheckoutService>();
     builder.Services.AddScoped<IUserProfileService, UserProfileService>();
     builder.Services.AddScoped<IVerificationService, VerificationService>();
     builder.Services.AddScoped<IDriverLicenseService, DriverLicenseService>();
     builder.Services.AddScoped<IUserManagementService, UserManagementService>();
+    builder.Services.AddScoped<IUserDeletionService, Backend.Infrastructure.Services.UserDeletionService>();
     builder.Services.AddScoped<ISupplierService, SupplierService>();
     builder.Services.AddScoped<IPaymentService, PaymentService>();
     builder.Services.AddScoped<IReviewService, ReviewService>();
@@ -129,6 +132,24 @@ try
     // ─── Inspector / Inspection workflow ──────────────────────────────────
     builder.Services.AddScoped<IInspectorManagementService, InspectorManagementService>();
     builder.Services.AddScoped<IInspectionService, InspectionService>();
+
+    // ─── Driver Module ──────────────────────────────────────────────────
+    builder.Services.AddScoped<IDriverProfileRepository, DriverProfileRepository>();
+    builder.Services.AddScoped<IDriverRequestRepository, DriverRequestRepository>();
+    builder.Services.AddScoped<IDriverReviewRepository, DriverReviewRepository>();
+    builder.Services.AddScoped<IServiceAreaRepository, ServiceAreaRepository>();
+
+    builder.Services.AddScoped<IDriverProfileService, DriverProfileService>();
+    builder.Services.AddScoped<IDriverRequestService, DriverRequestService>();
+    builder.Services.AddScoped<IDriverAssignmentService, DriverAssignmentService>();
+    builder.Services.AddScoped<IDriverReviewService, DriverReviewService>();
+    builder.Services.AddScoped<IDriverDashboardService, DriverDashboardService>();
+    builder.Services.AddScoped<IAdminDriverService, AdminDriverService>();
+    builder.Services.AddScoped<IServiceAreaService, ServiceAreaService>();
+    builder.Services.AddScoped<IDriverNotificationService, DriverNotificationService>();
+    builder.Services.AddScoped<IDriverPricingService, DriverPricingService>();
+
+    builder.Services.AddHostedService<Backend.Application.Services.Background.DriverRequestExpirationHostedService>();
     builder.Services.AddScoped<Backend.Application.Services.ISettingsService, Backend.Infrastructure.Services.SettingsService>();
     builder.Services.AddScoped<Backend.Application.Services.ITermsService, Backend.Application.Services.TermsService>();
     builder.Services.AddScoped<Backend.Application.Services.IAboutService, Backend.Application.Services.AboutService>();

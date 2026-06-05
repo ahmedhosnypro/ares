@@ -24,19 +24,9 @@ namespace Backend.Domain.Entities.Enums
         /// </summary>
         public static readonly BookingStatus[] ReservingStatuses =
         {
-            BookingStatus.Pending,           // legacy admin-created booking
             BookingStatus.PaymentPending,    // active hold (while not expired)
             BookingStatus.Confirmed,         // paid & confirmed
-            BookingStatus.Active,            // rental in progress
-            BookingStatus.Approved,          // admin-approved, awaiting inspection
-            BookingStatus.ReadyForDelivery,  // inspected, ready to hand over
-            // The driver-workflow / inspection states below were already
-            // treated as "occupied" by the previous availability rule (which
-            // blocked everything except Cancelled/Completed). They are kept
-            // here so this change introduces no behavioural regression.
-            BookingStatus.WaitingForDriver,
-            BookingStatus.NoDriverAvailable,
-            BookingStatus.InspectionFailed
+            BookingStatus.Active             // rental in progress
         };
 
         /// <summary>
@@ -46,7 +36,6 @@ namespace Backend.Domain.Entities.Enums
         public static readonly BookingStatus[] ResumableStatuses =
         {
             BookingStatus.Draft,
-            BookingStatus.DriverSelected,
             BookingStatus.PaymentPending
         };
     }

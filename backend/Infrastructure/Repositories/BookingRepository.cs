@@ -41,6 +41,28 @@ public class BookingRepository : PaginatedRepository<Booking>, IBookingRepositor
             _context.Attach(booking);
         }
 
+        if (_context.Database.ProviderName == "Microsoft.EntityFrameworkCore.InMemory")
+        {
+            var nowUtc = DateTime.UtcNow;
+            var reserving = BookingStatusPolicy.ReservingStatuses;
+            var overlaps = await _context.Bookings.AnyAsync(b =>
+                b.VehicleId == booking.VehicleId &&
+                b.Id != booking.Id &&
+                reserving.Contains(b.Status) &&
+                !(b.Status == BookingStatus.PaymentPending && b.HoldExpiresAt != null && b.HoldExpiresAt <= nowUtc) &&
+                b.PickupDate < ret &&
+                b.ReturnDate > pickup,
+                cancellationToken);
+
+            if (overlaps) throw new ConflictException("This vehicle has just been reserved by another customer.");
+
+            booking.Status = targetStatus;
+            booking.HoldStartedAt = holdStartedAt;
+            booking.HoldExpiresAt = holdExpiresAt;
+            await _context.SaveChangesAsync(cancellationToken);
+            return;
+        }
+
         // CreateExecutionStrategy() is required when issuing an explicit
         // transaction so we cooperate with any configured retry strategy.
         var strategy = _context.Database.CreateExecutionStrategy();

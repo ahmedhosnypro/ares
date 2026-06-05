@@ -46,7 +46,14 @@ namespace Backend.Infrastructure.Data.Configurations
                 .Property(b => b.InspectionStatus)
                 .HasConversion<string>()
                 .HasMaxLength(20)
-                .HasDefaultValue(Backend.Domain.Entities.Enums.BookingInspectionStatus.NotRequired);
+                .HasDefaultValue(Backend.Domain.Entities.Enums.InspectionStatus.NotRequired);
+
+            // ─── Driver Module ───────────────────────────────────────────
+            builder
+                .Property(b => b.DriverAssignmentStatus)
+                .HasConversion<string>()
+                .HasMaxLength(20)
+                .HasDefaultValue(Backend.Domain.Entities.Enums.DriverAssignmentStatus.NotRequired);
 
             builder
                 .HasIndex(b => b.AssignedInspectorId);
