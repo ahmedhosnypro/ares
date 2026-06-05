@@ -168,4 +168,20 @@ public class NotificationService : INotificationService
             // (booking creation, vehicle submission, …) never rolls back.
         }
     }
+
+    public async Task<bool> DeleteNotificationForUserAsync(
+        Guid notificationId,
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var notification = await _notificationRepository.GetByIdAsync(notificationId, cancellationToken);
+        if (notification == null || notification.UserId != userId)
+        {
+            return false;
+        }
+
+        await _notificationRepository.DeleteAsync(notification, cancellationToken);
+        await _notificationRepository.SaveChangesAsync(cancellationToken);
+        return true;
+    }
 }

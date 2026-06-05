@@ -40,5 +40,9 @@ namespace Backend.Domain.Entities
 
         public string? FailureReason { get; set; }
 
+        [MaxLength(100)]
+        public string? PaymobOrderId { get; set; }
+
+        public long? PaymobTransactionId { get; set; }
     }
 }

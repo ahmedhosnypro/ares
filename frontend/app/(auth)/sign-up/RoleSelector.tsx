@@ -5,6 +5,7 @@ import { useTheme } from "@mui/material/styles";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import StorefrontRoundedIcon from "@mui/icons-material/StorefrontRounded";
+import DirectionsCarRoundedIcon from "@mui/icons-material/DirectionsCarRounded";
 import type { SignUpRole } from "@/lib/validation/schemas";
 
 interface RoleSelectorProps {
@@ -32,6 +33,12 @@ const OPTIONS: readonly RoleOption[] = [
     title: "Supplier",
     description: "List and manage your fleet of rental vehicles.",
     icon: StorefrontRoundedIcon,
+  },
+  {
+    value: "driver",
+    title: "Driver",
+    description: "Offer your driving services to customers.",
+    icon: DirectionsCarRoundedIcon,
   },
 ];
 
@@ -77,7 +84,7 @@ export default function RoleSelector({ value, onChange, disabled = false }: Role
         aria-label="Account type"
         sx={{
           display: "grid",
-          gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+          gridTemplateColumns: { xs: "1fr", sm: "repeat(auto-fit, minmax(240px, 1fr))" },
           gap: 1.5,
         }}
       >

@@ -11,6 +11,7 @@ declare module "next-auth" {
       roles: string[];
       /** ApplicationUser.Status — "Pending" | "Active" | "Blocked" | null. */
       status?: string | null;
+      phone?: string | null;
     } & DefaultSession["user"];
     accessToken: string;
     refreshToken: string;
@@ -28,6 +29,7 @@ declare module "next-auth" {
     expiresAt: string;
     /** ApplicationUser.Status — "Pending" | "Active" | "Blocked" | null. */
     status?: string | null;
+    phone?: string | null;
   }
 }
 
@@ -44,5 +46,6 @@ declare module "next-auth/jwt" {
     error?: string;
     /** ApplicationUser.Status — "Pending" | "Active" | "Blocked" | null. */
     status?: string | null;
+    phone?: string | null;
   }
 }

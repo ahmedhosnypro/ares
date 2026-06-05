@@ -34,6 +34,7 @@ import {
   InputLabel,
   Divider,
   Alert,
+  Snackbar,
 } from "@mui/material";
 import {
   SearchRounded as SearchIcon,
@@ -72,7 +73,8 @@ const getStatusConfig = (status?: string) => {
     return { label: status ?? "Active", colorKey: "success" as const };
   if (s === "completed") return { label: status ?? "Completed", colorKey: "info" as const };
   if (s === "cancelled" || s === "returned") return { label: status ?? "Cancelled", colorKey: "error" as const };
-  return { label: status ?? "Pending", colorKey: "warning" as const };
+  if (s === "draft") return { label: status ?? "Draft", colorKey: "warning" as const };
+  return { label: status ?? "PaymentPending", colorKey: "warning" as const };
 };
 
 const formatCompactDate = (dateString: string) => {
@@ -111,6 +113,17 @@ export default function BookingsClient() {
   const [openDelete, setOpenDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Toast notifications
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "info" | "warning" | "error";
+  }>({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
   // Actions menu
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [activeBooking, setActiveBooking] = useState<Booking | null>(null);
@@ -130,7 +143,7 @@ export default function BookingsClient() {
     [session?.user]
   );
 
-  const { bookings, loading, totalPages, totalCount } = useBookings(
+  const { bookings, loading, totalPages, totalCount, refetch } = useBookings(
     session?.accessToken,
     user,
     page,
@@ -141,7 +154,7 @@ export default function BookingsClient() {
     toDate ? new Date(toDate).toISOString() : null
   );
 
-  const { stats, loading: statsLoading } = useAdminBookingStats(session?.accessToken, user);
+  const { stats, loading: statsLoading, refetch: refetchStats } = useAdminBookingStats(session?.accessToken, user);
 
   const bookingItems = useMemo(
     () => [
@@ -213,17 +226,34 @@ export default function BookingsClient() {
 
   const confirmDelete = () => {
     void (async () => {
-      if (!deleteId || !session?.accessToken) return;
+      if (!deleteId || !session?.accessToken || isDeleting) return;
       setIsDeleting(true);
       try {
         await deleteBookingsApi(session.accessToken, [deleteId]);
         setOpenDelete(false);
         setDeleteId(null);
-        // Refresh by toggling page state (forces re-fetch via dependency)
-        router.refresh();
-        window.location.reload();
+
+        // If we are deleting the only item on a page > 0, decrement page state
+        if (bookings.length === 1 && page > 0) {
+          setPage(page - 1);
+        }
+
+        // Refetch updated bookings list & stats
+        refetch();
+        refetchStats();
+
+        setSnackbar({
+          open: true,
+          message: "Booking deleted successfully.",
+          severity: "success",
+        });
       } catch (error) {
         logger.error("Error deleting booking", error);
+        setSnackbar({
+          open: true,
+          message: error instanceof Error ? error.message : "Failed to delete booking.",
+          severity: "error",
+        });
       } finally {
         setIsDeleting(false);
       }
@@ -511,7 +541,9 @@ export default function BookingsClient() {
               sx={{ borderRadius: 2 }}
             >
               <MenuItem value="All">All Statuses</MenuItem>
-              <MenuItem value="Pending">Pending</MenuItem>
+              <MenuItem value="Draft">Draft</MenuItem>
+              <MenuItem value="PaymentPending">Payment Pending</MenuItem>
+              <MenuItem value="Confirmed">Confirmed</MenuItem>
               <MenuItem value="Active">Active</MenuItem>
               <MenuItem value="Completed">Completed</MenuItem>
               <MenuItem value="Cancelled">Cancelled</MenuItem>
@@ -684,6 +716,26 @@ export default function BookingsClient() {
           }
         }}
       />
+
+      {/* ── TOAST NOTIFICATIONS ── */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={5000}
+        onClose={() => {
+          setSnackbar(prev => ({ ...prev, open: false }));
+        }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert
+          onClose={() => {
+            setSnackbar(prev => ({ ...prev, open: false }));
+          }}
+          severity={snackbar.severity}
+          sx={{ width: "100%", borderRadius: 2 }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

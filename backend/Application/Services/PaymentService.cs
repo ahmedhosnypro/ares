@@ -1,30 +1,40 @@
+using System.Security.Cryptography;
+using System.Text;
 using Backend.Application.DTOs.Payment;
 using Backend.Application.DTOs.Common;
 using Backend.Application.Exceptions;
 using Backend.Application.Interfaces;
+using Backend.Application.Settings;
 using Backend.Domain.Entities;
+using Backend.Domain.Entities.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Backend.Application.Services;
 
-/// <summary>
-/// Service implementation for payment-related operations
-/// Validates: Requirements 7.10, 7.11, 7.12, 7.13, 7.14
-/// </summary>
 public class PaymentService : IPaymentService
 {
     private readonly IPaymentRepository _paymentRepository;
     private readonly IBookingRepository _bookingRepository;
     private readonly IApplicationDbContext _context;
+    private readonly IPaymobClient _paymob;
+    private readonly IRefundCalculator _refundCalculator;
+    private readonly PaymobSettings _paymobSettings;
 
     public PaymentService(
         IPaymentRepository paymentRepository,
         IBookingRepository bookingRepository,
-        IApplicationDbContext context)
+        IApplicationDbContext context,
+        IPaymobClient paymob,
+        IRefundCalculator refundCalculator,
+        IOptions<PaymobSettings> paymobSettings)
     {
         _paymentRepository = paymentRepository;
         _bookingRepository = bookingRepository;
         _context = context;
+        _paymob = paymob;
+        _refundCalculator = refundCalculator;
+        _paymobSettings = paymobSettings.Value;
     }
 
     public async Task<PaymentResponse> ProcessPaymentAsync(
@@ -55,6 +65,22 @@ public class PaymentService : IPaymentService
         if (booking.Status == Backend.Domain.Entities.Enums.BookingStatus.Cancelled || booking.Status == Backend.Domain.Entities.Enums.BookingStatus.Completed)
         {
             throw new ValidationException("Status", "This booking cannot be paid");
+        }
+
+        // ── Mandatory-driver payment gate (business rule 13) ─────────────────
+        // A booking that requires a driver (e.g. the customer has no approved
+        // driving license and therefore cannot self-drive) MUST have a driver
+        // assigned before payment can be completed. This is the authoritative,
+        // server-side enforcement of "payment cannot be completed until a
+        // driver is assigned" — it holds even if the client skips or bypasses
+        // the driver-selection UI. Driver assignment is recorded on
+        // Booking.AssignedDriverProfileId via the request → accept → select
+        // workflow (see DriverAssignmentService.SelectDriverAsync).
+        if (booking.RequiresDriver && !booking.AssignedDriverProfileId.HasValue)
+        {
+            throw new BadRequestException(
+                "A driver must be assigned to this booking before payment can be completed. " +
+                "Please complete driver selection first.");
         }
 
         // Generate unique transaction ID
@@ -359,5 +385,174 @@ Thank you for your business!
 </body>
 </html>";
         return System.Text.Encoding.UTF8.GetBytes(html);
+    }
+
+    // ── Task 3: Initiate Paymob payment ─────────────────────────────────
+
+    public async Task<PaymobInitiateResponse> InitiatePaymentAsync(Guid bookingId, Guid userId, CancellationToken ct = default)
+    {
+        var booking = await _bookingRepository.GetByIdAsync(bookingId, ct)
+            ?? throw new NotFoundException($"Booking {bookingId} not found");
+
+        if (booking.UserId != userId)
+            throw new ForbiddenException("You do not have permission to pay for this booking");
+
+        if (booking.Status == BookingStatus.Cancelled || booking.Status == BookingStatus.Completed || booking.Status == BookingStatus.Active)
+            throw new ValidationException("Status", "This booking cannot be paid");
+
+        var amount = booking.TotalPrice ?? 0m;
+        var amountCents = (long)(amount * 100);
+
+        var authToken = await _paymob.GetAuthTokenAsync(ct);
+        var orderId = await _paymob.CreateOrderAsync(authToken, amountCents, "EGP", bookingId.ToString(), ct);
+
+        // Load user for billing data
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId, ct);
+        var billing = new PaymobBillingData(
+            FirstName: user?.FirstName ?? "Customer",
+            LastName: user?.LastName ?? "Customer",
+            Email: user?.Email ?? "customer@email.com",
+            PhoneNumber: user?.PhoneNumber ?? "+20000000000"
+        );
+
+        var paymentKey = await _paymob.RequestPaymentKeyAsync(authToken, orderId, amountCents, "EGP", _paymobSettings.IntegrationId, billing, ct);
+
+        var payment = new BookingPayment
+        {
+            PaymentId = Guid.NewGuid(),
+            BookingId = bookingId,
+            TransactionId = Guid.NewGuid(),
+            PaymentMethod = "card",
+            Amount = amount,
+            Currency = "EGP",
+            Status = "Pending",
+            PaymobOrderId = orderId,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _paymentRepository.AddAsync(payment, ct);
+        await _context.SaveChangesAsync(ct);
+
+        var iframeUrl = $"{_paymobSettings.BaseUrl}/api/acceptance/iframes/{_paymobSettings.IframeId}?payment_token={paymentKey}";
+        return new PaymobInitiateResponse(iframeUrl, payment.TransactionId, orderId);
+    }
+
+    // ── Task 4: Process Paymob callback/webhook ──────────────────────────
+
+    public async Task<(bool Success, Guid BookingId)> ProcessPaymobCallbackAsync(IReadOnlyDictionary<string, string> queryParams, CancellationToken ct = default)
+    {
+        if (!queryParams.TryGetValue("hmac", out var receivedHmac) || !VerifyHmac(_paymobSettings.HmacSecret, queryParams, receivedHmac))
+            return (false, Guid.Empty);
+
+        var success = queryParams.TryGetValue("success", out var s) && s.Equals("true", StringComparison.OrdinalIgnoreCase);
+        queryParams.TryGetValue("order", out var orderId);
+        queryParams.TryGetValue("id", out var txIdStr);
+
+        if (string.IsNullOrEmpty(orderId))
+            return (false, Guid.Empty);
+
+        var payment = await _context.Payments
+            .Include(p => p.Booking)
+            .FirstOrDefaultAsync(p => p.PaymobOrderId == orderId, ct);
+
+        if (payment == null)
+            return (false, Guid.Empty);
+
+        payment.Status = success ? "Captured" : "Failed";
+        payment.ProcessedAt = DateTime.UtcNow;
+
+        if (long.TryParse(txIdStr, out var paymobTxId))
+            payment.PaymobTransactionId = paymobTxId;
+
+        if (!success && queryParams.TryGetValue("txn_response_code", out var reason))
+            payment.FailureReason = reason;
+
+        if (success && payment.Booking != null)
+            payment.Booking.Status = BookingStatus.Confirmed;
+
+        await _context.SaveChangesAsync(ct);
+        return (success, payment.BookingId);
+    }
+
+    private static readonly string[] HmacFields =
+    [
+        "amount_cents", "created_at", "currency", "error_occured", "has_parent_transaction",
+        "id", "integration_id", "is_3d_secure", "is_auth", "is_capture", "is_refunded",
+        "is_standalone_payment", "is_voided", "order", "owner", "pending",
+        "source_data_pan", "source_data_sub_type", "source_data_type", "success"
+    ];
+
+    private static bool VerifyHmac(string secret, IReadOnlyDictionary<string, string> data, string received)
+    {
+        // Paymob uses dot-separated keys in the query string but underscore-joined for HMAC
+        var concatenated = string.Concat(HmacFields.Select(f =>
+        {
+            var key = f.Replace("_", ".") == f ? f : f; // keep as-is; Paymob sends them underscore-joined
+            return data.TryGetValue(f, out var v) ? v : string.Empty;
+        }));
+
+        var keyBytes = Encoding.UTF8.GetBytes(secret);
+        var msgBytes = Encoding.UTF8.GetBytes(concatenated);
+        var hash = HMACSHA512.HashData(keyBytes, msgBytes);
+        var computed = Convert.ToHexString(hash).ToLowerInvariant();
+        return computed == received.ToLowerInvariant();
+    }
+
+    // ── Task 5: Refund preview + refund ─────────────────────────────────
+
+    public async Task<RefundResult> GetRefundPreviewAsync(Guid bookingId, CancellationToken ct = default)
+    {
+        var booking = await _bookingRepository.GetByIdAsync(bookingId, ct)
+            ?? throw new NotFoundException($"Booking {bookingId} not found");
+
+        var payment = await _context.Payments
+            .FirstOrDefaultAsync(p => p.BookingId == bookingId && p.Status == "Captured", ct)
+            ?? throw new NotFoundException("No captured payment found for this booking");
+
+        return _refundCalculator.Calculate(booking.Status, booking.PickupDate ?? DateTime.UtcNow.AddDays(1), payment.Amount);
+    }
+
+    public async Task<RefundResponse> RefundAsync(Guid bookingId, Guid requestedBy, bool isAdmin, decimal? adminOverrideAmount = null, CancellationToken ct = default)
+    {
+        var booking = await _bookingRepository.GetByIdAsync(bookingId, ct)
+            ?? throw new NotFoundException($"Booking {bookingId} not found");
+
+        if (!isAdmin && booking.UserId != requestedBy)
+            throw new ForbiddenException("You do not have permission to cancel this booking");
+
+        var payment = await _context.Payments
+            .FirstOrDefaultAsync(p => p.BookingId == bookingId && p.Status == "Captured", ct)
+            ?? throw new NotFoundException("No captured payment found for this booking");
+
+        var result = _refundCalculator.Calculate(booking.Status, booking.PickupDate ?? DateTime.UtcNow.AddDays(1), payment.Amount);
+        var refundAmount = isAdmin && adminOverrideAmount.HasValue ? adminOverrideAmount.Value : result.RefundAmount;
+
+        if (refundAmount > 0 && payment.PaymobTransactionId.HasValue)
+        {
+            var authToken = await _paymob.GetAuthTokenAsync(ct);
+            await _paymob.RefundAsync(authToken, payment.PaymobTransactionId.Value, (long)(refundAmount * 100), ct);
+        }
+
+        _context.AddBookingCancellation(new BookingCancellation
+        {
+            BookingId = bookingId,
+            CancelledBy = requestedBy,
+            PolicyType = result.PolicyType,
+            RefundPercentage = result.RefundPercentage,
+            OriginalAmount = payment.Amount,
+            CancellationFee = payment.Amount - refundAmount,
+            Currency = payment.Currency,
+            RefundStatus = refundAmount > 0 ? RefundStatus.Processing : RefundStatus.Completed,
+            RefundTransactionId = refundAmount > 0 ? Guid.NewGuid() : null,
+            RefundProcessedAt = refundAmount > 0 ? DateTime.UtcNow : null,
+            RefundMethod = refundAmount > 0 ? payment.PaymentMethod : null
+        });
+
+        payment.Status = "Refunded";
+        booking.Status = BookingStatus.Cancelled;
+        booking.CancelledAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync(ct);
+        return new RefundResponse(true, refundAmount, result.RefundPercentage, $"Booking cancelled. Refund of {refundAmount:C} ({result.RefundPercentage}%) initiated.");
     }
 }

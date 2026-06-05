@@ -1,5 +1,6 @@
 using Backend.Application.DTOs.Payment;
 using Backend.Application.DTOs.Common;
+using Backend.Application.Interfaces;
 
 namespace Backend.Application.Services;
 
@@ -43,4 +44,12 @@ public interface IPaymentService
         Guid transactionId,
         string format,
         CancellationToken cancellationToken = default);
+
+    Task<PaymobInitiateResponse> InitiatePaymentAsync(Guid bookingId, Guid userId, CancellationToken ct = default);
+
+    Task<(bool Success, Guid BookingId)> ProcessPaymobCallbackAsync(IReadOnlyDictionary<string, string> queryParams, CancellationToken ct = default);
+
+    Task<RefundResult> GetRefundPreviewAsync(Guid bookingId, CancellationToken ct = default);
+
+    Task<RefundResponse> RefundAsync(Guid bookingId, Guid requestedBy, bool isAdmin, decimal? adminOverrideAmount = null, CancellationToken ct = default);
 }

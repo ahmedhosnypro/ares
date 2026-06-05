@@ -17,6 +17,11 @@ import {
   Skeleton,
   useTheme,
   alpha,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
 } from "@mui/material";
 import {
   ArrowBackRounded as BackIcon,
@@ -59,7 +64,164 @@ import {
 } from "@/api-clients/bookings/bookings";
 import { toImageUrl } from "@/utils/image-url";
 import { logger } from "@/utils/logger";
+import { toApiUrl } from "@/utils/api-client";
 import ChangeStatusModal from "../../_components/ChangeStatusModal";
+
+/* ────────────────────────────────────────────────────────────────────────
+ *  RefundSection Component
+ * ──────────────────────────────────────────────────────────────────────── */
+
+interface RefundSectionProps {
+  readonly bookingId: string;
+  readonly paymentAmount: number;
+  readonly accessToken: string;
+  readonly onRefunded: () => void;
+}
+
+function RefundSection({ bookingId, paymentAmount, accessToken, onRefunded }: RefundSectionProps) {
+  const [open, setOpen] = useState(false);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [refundPercentage, setRefundPercentage] = useState(0);
+  const [refundAmount, setRefundAmount] = useState(0);
+  const [policyType, setPolicyType] = useState("");
+  const [customAmount, setCustomAmount] = useState("");
+  const [processing, setProcessing] = useState(false);
+
+  const handleOpen = async () => {
+    setOpen(true);
+    setPreviewError(null);
+    setLoadingPreview(true);
+    try {
+      const res = await fetch(toApiUrl(`/api/bookings/${bookingId}/cancel-preview`), {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) throw new Error("Could not load refund preview");
+      const data = (await res.json()) as { refundPercentage: number; refundAmount: number; policyType: string };
+      setRefundPercentage(data.refundPercentage);
+      setRefundAmount(data.refundAmount);
+      setPolicyType(data.policyType);
+      setCustomAmount(data.refundAmount.toFixed(2));
+    } catch (err) {
+      logger.error("Refund preview error", err);
+      setPreviewError("Could not load refund preview");
+    } finally {
+      setLoadingPreview(false);
+    }
+  };
+
+  const handleConfirm = async () => {
+    setProcessing(true);
+    try {
+      const amount = parseFloat(customAmount);
+      const res = await fetch(toApiUrl(`/api/payments/${bookingId}/refund`), {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ amount: amount > 0 ? amount : null }),
+      });
+      if (!res.ok) throw new Error("Refund failed");
+      setOpen(false);
+      onRefunded();
+    } catch (err) {
+      logger.error("Refund error", err);
+      setPreviewError("Refund failed. Please try again.");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  return (
+    <>
+      <Button variant="contained" color="primary" onClick={() => void handleOpen()} fullWidth>
+        Process Refund
+      </Button>
+      <Dialog
+        open={open}
+        onClose={() => {
+          setOpen(false);
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 800 }}>Process Refund</DialogTitle>
+        <DialogContent>
+          {loadingPreview && (
+            <Stack sx={{ alignItems: "center", py: 3 }} spacing={1}>
+              <CircularProgress size={28} />
+              <Typography variant="body2" color="text.secondary">
+                Loading refund calculator…
+              </Typography>
+            </Stack>
+          )}
+          {previewError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {previewError}
+            </Alert>
+          )}
+          {!loadingPreview && !previewError && (
+            <Stack spacing={2}>
+              <Stack direction="row" sx={{ justifyContent: "space-between" }}>
+                <Typography variant="body2" color="text.secondary">
+                  Policy
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700, textTransform: "capitalize" }}>
+                  {policyType}
+                </Typography>
+              </Stack>
+              <Stack direction="row" sx={{ justifyContent: "space-between" }}>
+                <Typography variant="body2" color="text.secondary">
+                  Algorithm Percentage
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                  {refundPercentage}%
+                </Typography>
+              </Stack>
+              <Stack direction="row" sx={{ justifyContent: "space-between" }}>
+                <Typography variant="body2" color="text.secondary">
+                  Suggested Refund
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                  ${refundAmount.toFixed(2)}
+                </Typography>
+              </Stack>
+              <Divider />
+              <TextField
+                label="Refund Amount"
+                type="number"
+                value={customAmount}
+                onChange={e => {
+                  setCustomAmount(e.target.value);
+                }}
+                fullWidth
+                helperText={`Max: $${paymentAmount.toFixed(2)}`}
+                slotProps={{ htmlInput: { min: 0, max: paymentAmount, step: 0.01 } }}
+              />
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button
+            onClick={() => {
+              setOpen(false);
+            }}
+            disabled={processing}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => void handleConfirm()}
+            disabled={processing || loadingPreview || !!previewError}
+            startIcon={processing ? <CircularProgress size={14} color="inherit" /> : null}
+          >
+            {processing ? "Processing…" : "Confirm Refund"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  );
+}
 
 /* ────────────────────────────────────────────────────────────────────────
  *  Formatters
@@ -872,6 +1034,17 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
         >
           {booking.paymentDetails ? (
             <Stack spacing={2.5}>
+              {/* Refund button — only when payment is Captured */}
+              {booking.paymentDetails.status.toLowerCase() === "captured" && (
+                <RefundSection
+                  bookingId={bookingId}
+                  paymentAmount={booking.paymentDetails.amount}
+                  accessToken={session?.accessToken ?? ""}
+                  onRefunded={() => {
+                    void loadBooking(false);
+                  }}
+                />
+              )}
               <InfoGrid columns={3}>
                 <InfoItem
                   label="Payment Status"

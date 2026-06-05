@@ -1,6 +1,7 @@
 using Backend.Application.DTOs.Payment;
 using Backend.Application.DTOs.Common;
 using Backend.Application.Services;
+using Backend.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -215,4 +216,53 @@ public class PaymentCreationController : ControllerBase
             new { transactionId = result.TransactionId },
             result);
     }
+
+    [HttpPost("initiate")]
+    public async Task<ActionResult<PaymobInitiateResponse>> InitiatePayment([FromBody] InitiatePaymentRequest request, CancellationToken ct)
+    {
+        var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value ?? User.FindFirst("userId")?.Value!);
+        var result = await _paymentService.InitiatePaymentAsync(request.BookingId, userId, ct);
+        return Ok(result);
+    }
+
+    [AllowAnonymous]
+    [HttpGet("callback")]
+    public async Task<IActionResult> PaymobCallback([FromQuery] Dictionary<string, string> queryParams, CancellationToken ct)
+    {
+        var (success, bookingId) = await _paymentService.ProcessPaymobCallbackAsync(queryParams, ct);
+        if (success && bookingId != Guid.Empty)
+            return Redirect($"http://localhost:3000/bookings/confirmation/{bookingId}");
+        return Redirect($"http://localhost:3000/booking/checkout/{bookingId}?payment_failed=1");
+    }
+
+    [AllowAnonymous]
+    [HttpPost("webhook")]
+    public async Task<IActionResult> PaymobWebhook(CancellationToken ct)
+    {
+        using var reader = new System.IO.StreamReader(Request.Body);
+        var body = await reader.ReadToEndAsync(ct);
+        Dictionary<string, string> parsed;
+        try
+        {
+            parsed = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(body)
+                     ?? new Dictionary<string, string>();
+        }
+        catch
+        {
+            return Ok(); // always 200 so Paymob doesn't retry on bad payload
+        }
+        await _paymentService.ProcessPaymobCallbackAsync(parsed, ct);
+        return Ok();
+    }
+
+    [Authorize(Roles = "Admin")]
+    [HttpPost("{bookingId}/refund")]
+    public async Task<ActionResult<RefundResponse>> AdminRefund(Guid bookingId, [FromBody] AdminRefundRequest request, CancellationToken ct)
+    {
+        var adminId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value!);
+        var result = await _paymentService.RefundAsync(bookingId, adminId, isAdmin: true, adminOverrideAmount: request.Amount, ct);
+        return Ok(result);
+    }
 }
+
+public record AdminRefundRequest(decimal? Amount);

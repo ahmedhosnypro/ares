@@ -633,4 +633,29 @@ public class AdminBookingsController : ControllerBase
 
         return Ok(items);
     }
+
+    [HttpGet("{id}/cancel-preview")]
+    public async Task<ActionResult<Backend.Application.Interfaces.RefundResult>> GetCancelPreview(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _bookingService.GetRefundPreviewAsync(id, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("{id}/cancel")]
+    public async Task<IActionResult> CancelBooking(Guid id, CancellationToken cancellationToken)
+    {
+        var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value!);
+        var success = await _bookingService.CancelBookingAsync(id, userId, cancellationToken);
+        if (!success) return BadRequest(new { message = "Cancellation failed" });
+        // Return refund preview for UI feedback
+        try
+        {
+            var preview = await _bookingService.GetRefundPreviewAsync(id, cancellationToken);
+            return Ok(new { success = true, refundAmount = preview.RefundAmount, refundPercentage = preview.RefundPercentage, message = "Booking cancelled." });
+        }
+        catch
+        {
+            return Ok(new { success = true, refundAmount = 0, refundPercentage = 0, message = "Booking cancelled." });
+        }
+    }
 }

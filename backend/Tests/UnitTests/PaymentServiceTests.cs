@@ -3,8 +3,10 @@ using Backend.Application.DTOs.Common;
 using Backend.Application.Exceptions;
 using Backend.Application.Interfaces;
 using Backend.Application.Services;
+using Backend.Application.Settings;
 using Backend.Domain.Entities;
 using Backend.Domain.Entities.Enums;
+using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
 
@@ -15,6 +17,8 @@ public class PaymentServiceTests
     private readonly Mock<IPaymentRepository> _paymentRepositoryMock;
     private readonly Mock<IBookingRepository> _bookingRepositoryMock;
     private readonly Mock<IApplicationDbContext> _contextMock;
+    private readonly Mock<IPaymobClient> _paymobMock;
+    private readonly Mock<IRefundCalculator> _refundCalculatorMock;
     private readonly PaymentService _paymentService;
 
     public PaymentServiceTests()
@@ -22,11 +26,16 @@ public class PaymentServiceTests
         _paymentRepositoryMock = new Mock<IPaymentRepository>();
         _bookingRepositoryMock = new Mock<IBookingRepository>();
         _contextMock = new Mock<IApplicationDbContext>();
+        _paymobMock = new Mock<IPaymobClient>();
+        _refundCalculatorMock = new Mock<IRefundCalculator>();
 
         _paymentService = new PaymentService(
             _paymentRepositoryMock.Object,
             _bookingRepositoryMock.Object,
-            _contextMock.Object);
+            _contextMock.Object,
+            _paymobMock.Object,
+            _refundCalculatorMock.Object,
+            Options.Create(new PaymobSettings()));
     }
 
     #region ProcessPaymentAsync Tests
@@ -50,7 +59,7 @@ public class PaymentServiceTests
         {
             Id = bookingId,
             UserId = userId,
-            Status = BookingStatus.Pending,
+            Status = BookingStatus.PaymentPending,
             TotalPrice = 150.00m
         };
 
@@ -169,7 +178,7 @@ public class PaymentServiceTests
         {
             Id = bookingId,
             UserId = differentUserId, // Different user ID
-            Status = BookingStatus.Pending
+            Status = BookingStatus.PaymentPending
         };
 
         _bookingRepositoryMock.Setup(x => x.GetByIdAsync(bookingId, It.IsAny<CancellationToken>()))
@@ -238,7 +247,7 @@ public class PaymentServiceTests
         {
             Id = bookingId,
             UserId = userId,
-            Status = BookingStatus.Pending
+            Status = BookingStatus.PaymentPending
         };
 
         _bookingRepositoryMock.Setup(x => x.GetByIdAsync(bookingId, It.IsAny<CancellationToken>()))
@@ -282,7 +291,7 @@ public class PaymentServiceTests
         {
             Id = bookingId,
             UserId = userId,
-            Status = BookingStatus.Pending
+            Status = BookingStatus.PaymentPending
         };
 
         _bookingRepositoryMock.Setup(x => x.GetByIdAsync(bookingId, It.IsAny<CancellationToken>()))
@@ -305,6 +314,86 @@ public class PaymentServiceTests
         Assert.NotEqual(result1.TransactionId, result2.TransactionId);
         Assert.NotEqual(Guid.Empty, result1.TransactionId);
         Assert.NotEqual(Guid.Empty, result2.TransactionId);
+    }
+
+    [Fact]
+    public async Task ProcessPaymentAsync_WhenDriverRequiredButNotAssigned_ShouldThrowBadRequestException()
+    {
+        // Arrange — booking requires a driver (e.g. unlicensed customer) but
+        // none has been assigned yet. Payment must be blocked.
+        var userId = Guid.NewGuid();
+        var bookingId = Guid.NewGuid();
+
+        var request = new PaymentRequest(
+            BookingId: bookingId,
+            Amount: 150.00m,
+            PaymentMethodId: Guid.NewGuid(),
+            PaymentMethod: "credit_card"
+        );
+
+        var booking = new Booking
+        {
+            Id = bookingId,
+            UserId = userId,
+            Status = BookingStatus.PaymentPending,
+            RequiresDriver = true,
+            AssignedDriverProfileId = null,
+            TotalPrice = 150.00m
+        };
+
+        _bookingRepositoryMock.Setup(x => x.GetByIdAsync(bookingId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(booking);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<BadRequestException>(
+            () => _paymentService.ProcessPaymentAsync(request, userId));
+
+        // No payment row created, no booking status change persisted.
+        _paymentRepositoryMock.Verify(x => x.AddAsync(It.IsAny<BookingPayment>(), It.IsAny<CancellationToken>()), Times.Never);
+        _contextMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ProcessPaymentAsync_WhenDriverRequiredAndAssigned_ShouldProcessSuccessfully()
+    {
+        // Arrange — booking requires a driver AND one is assigned. Payment is
+        // allowed (the gate only blocks the unassigned case).
+        var userId = Guid.NewGuid();
+        var bookingId = Guid.NewGuid();
+
+        var request = new PaymentRequest(
+            BookingId: bookingId,
+            Amount: 150.00m,
+            PaymentMethodId: Guid.NewGuid(),
+            PaymentMethod: "credit_card"
+        );
+
+        var booking = new Booking
+        {
+            Id = bookingId,
+            UserId = userId,
+            Status = BookingStatus.Confirmed,
+            RequiresDriver = true,
+            AssignedDriverProfileId = Guid.NewGuid(),
+            TotalPrice = 150.00m
+        };
+
+        _bookingRepositoryMock.Setup(x => x.GetByIdAsync(bookingId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(booking);
+        _bookingRepositoryMock.Setup(x => x.UpdateAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        _paymentRepositoryMock.Setup(x => x.AddAsync(It.IsAny<BookingPayment>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(It.IsAny<BookingPayment>());
+        _contextMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        // Act
+        var result = await _paymentService.ProcessPaymentAsync(request, userId);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("Captured", result.Status);
+        _paymentRepositoryMock.Verify(x => x.AddAsync(It.IsAny<BookingPayment>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion

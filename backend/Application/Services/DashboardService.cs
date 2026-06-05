@@ -41,7 +41,7 @@ public class DashboardService : IDashboardService
                 .ToListAsync(cancellationToken);
 
             totalBookings = supplierBookings.Count;
-            pendingBookings = supplierBookings.Count(b => b.Status == BookingStatus.Pending);
+            pendingBookings = supplierBookings.Count(b => b.Status == BookingStatus.Confirmed);
             totalRevenue = supplierBookings
                 .Where(b => b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Completed)
                 .Sum(b => b.TotalPrice ?? 0);
@@ -58,7 +58,7 @@ public class DashboardService : IDashboardService
 
             var allBookings = await _context.Bookings.ToListAsync(cancellationToken);
             totalBookings = allBookings.Count;
-            pendingBookings = allBookings.Count(b => b.Status == BookingStatus.Pending);
+            pendingBookings = allBookings.Count(b => b.Status == BookingStatus.Confirmed);
             totalRevenue = allBookings
                 .Where(b => b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Completed)
                 .Sum(b => b.TotalPrice ?? 0);

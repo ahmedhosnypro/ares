@@ -43,7 +43,9 @@ public interface IVehicleRepository : IPaginatedRepository<Vehicle>
         Guid vehicleId,
         DateTime startDate,
         DateTime endDate,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        Guid? excludeUserId = null,
+        Guid? excludeBookingId = null);
 
     /// <summary>
     /// Gets all images for a specific vehicle

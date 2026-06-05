@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Badge, IconButton, Tooltip } from "@mui/material";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
@@ -20,8 +20,16 @@ function readIntent(): BookingIntent | null {
 }
 
 export default function CheckoutIndicator() {
-  // Read intent fresh on every render to detect changes
-  const intent = useMemo(() => readIntent(), []);
+  // sessionStorage is browser-only. Reading it during render makes the server
+  // (no sessionStorage → null → renders nothing) disagree with the client
+  // (intent present → renders an <a> IconButton), which throws a hydration
+  // mismatch. Start as null so the first client render matches the server,
+  // then read sessionStorage after mount (post-hydration) and re-render.
+  const [intent, setIntent] = useState<BookingIntent | null>(null);
+
+  useEffect(() => {
+    setIntent(readIntent());
+  }, []);
 
   if (!intent) return null;
 

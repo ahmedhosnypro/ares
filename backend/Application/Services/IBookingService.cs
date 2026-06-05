@@ -155,4 +155,6 @@ public interface IBookingService
         Guid userId,
         bool isAdmin,
         CancellationToken cancellationToken = default);
+
+    Task<Backend.Application.Interfaces.RefundResult> GetRefundPreviewAsync(Guid bookingId, CancellationToken ct = default);
 }

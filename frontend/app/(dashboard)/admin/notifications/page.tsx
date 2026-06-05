@@ -14,17 +14,21 @@ import {
   Alert,
   Tooltip,
   Button,
+  Snackbar,
 } from "@mui/material";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import { useSession } from "next-auth/react";
 import {
   getNotifications,
   markNotificationAsRead,
   markAllNotificationsAsRead,
+  deleteNotification,
 } from "@/api-clients/notfications/notfications";
 import { logger } from "@/utils/logger";
+import DeleteNotificationDialog from "@/components/notifications/DeleteNotificationDialog";
 
 // Type definition based on your Schema
 type Notification = {
@@ -48,36 +52,59 @@ export default function NotificationsPage() {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [markingAll, setMarkingAll] = useState(false);
 
+  // Deletion and toast state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingNotification, setDeletingNotification] = useState<Notification | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [toast, setToast] = useState<{ open: boolean; message: string; severity: "success" | "error" }>({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
   const token = session?.accessToken;
 
-  const fetchData = useCallback(async () => {
-    if (!token) return;
+  const fetchData = useCallback(
+    async (background = false) => {
+      if (!token) return;
 
-    try {
-      setLoading(true);
-      const data = (await getNotifications(token)) as Notification[] | NotificationResponse;
-      // Handles both direct array response or nested object response
-      let notificationData: Notification[] = [];
-      if (Array.isArray(data)) {
-        notificationData = data;
-      } else if (data.notifications) {
-        notificationData = data.notifications;
+      try {
+        if (!background) setLoading(true);
+        const data = (await getNotifications(token)) as Notification[] | NotificationResponse;
+        // Handles both direct array response or nested object response
+        let notificationData: Notification[] = [];
+        if (Array.isArray(data)) {
+          notificationData = data;
+        } else if (data.notifications) {
+          notificationData = data.notifications;
+        }
+        setNotifications(notificationData);
+        setError(null);
+      } catch (err) {
+        if (!background) setError("Failed to load notifications. Please try again later.");
+        logger.error("Fetch Error", err);
+      } finally {
+        if (!background) setLoading(false);
       }
-      setNotifications(notificationData);
-      setError(null);
-    } catch (err) {
-      setError("Failed to load notifications. Please try again later.");
-      logger.error("Fetch Error", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
+    },
+    [token]
+  );
 
   useEffect(() => {
     if (status === "authenticated") {
       void fetchData();
     }
   }, [status, fetchData]);
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      void fetchData(true);
+    };
+    window.addEventListener("notifications-updated", handleUpdate);
+    return () => {
+      window.removeEventListener("notifications-updated", handleUpdate);
+    };
+  }, [fetchData]);
 
   const handleMarkRead = async (id: string) => {
     if (!token || processingId) return;
@@ -88,6 +115,7 @@ export default function NotificationsPage() {
 
       // Update local state immediately for a snappy feel
       setNotifications(prev => prev.map(n => (n.id === id ? { ...n, isRead: true } : n)));
+      window.dispatchEvent(new CustomEvent("notifications-updated"));
     } catch (err) {
       logger.error("Update failed", err);
     } finally {
@@ -105,11 +133,57 @@ export default function NotificationsPage() {
     setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
     try {
       await markAllNotificationsAsRead(token);
+      window.dispatchEvent(new CustomEvent("notifications-updated"));
     } catch (err) {
       logger.error("Mark all as read failed; refetching", err);
       await fetchData();
     } finally {
       setMarkingAll(false);
+    }
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent, item: Notification) => {
+    e.stopPropagation();
+    setDeletingNotification(item);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!token || !deletingNotification) return;
+    setDeleting(true);
+    try {
+      await deleteNotification(deletingNotification.id, token);
+
+      // Update local state immediately
+      setNotifications(prev => prev.filter(n => n.id !== deletingNotification.id));
+      setToast({
+        open: true,
+        message: "Notification deleted successfully.",
+        severity: "success",
+      });
+      window.dispatchEvent(new CustomEvent("notifications-updated"));
+      setDeleteDialogOpen(false);
+    } catch (err) {
+      logger.error("Failed to delete notification", err);
+      // Graceful handling of 404 (already deleted)
+      if (err instanceof Error && err.message.includes("404")) {
+        setNotifications(prev => prev.filter(n => n.id !== deletingNotification.id));
+        setToast({
+          open: true,
+          message: "Notification deleted successfully.",
+          severity: "success",
+        });
+        window.dispatchEvent(new CustomEvent("notifications-updated"));
+        setDeleteDialogOpen(false);
+      } else {
+        setToast({
+          open: true,
+          message: "Failed to delete notification. Please try again.",
+          severity: "error",
+        });
+      }
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -191,13 +265,14 @@ export default function NotificationsPage() {
               </Box>
 
               {/* Actions */}
-              <Box>
+              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 {!n.isRead ? (
                   <Tooltip title="Mark as Read">
                     <IconButton
                       size="small"
                       color="primary"
-                      onClick={() => {
+                      onClick={e => {
+                        e.stopPropagation();
                         void handleMarkRead(n.id);
                       }}
                       disabled={processingId === n.id}
@@ -210,7 +285,18 @@ export default function NotificationsPage() {
                     Read
                   </Typography>
                 )}
-              </Box>
+                <Tooltip title="Delete">
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={e => {
+                      handleDeleteClick(e, n);
+                    }}
+                  >
+                    <DeleteOutlineIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Stack>
             </Stack>
             {index < notifications.length - 1 && <Divider />}
           </React.Fragment>
@@ -283,6 +369,37 @@ export default function NotificationsPage() {
       <Card elevation={0} sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
         {renderContent()}
       </Card>
+
+      <DeleteNotificationDialog
+        open={deleteDialogOpen}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+        }}
+        onConfirm={() => {
+          void handleDeleteConfirm();
+        }}
+        notificationTitle={deletingNotification?.title ?? ""}
+        loading={deleting}
+      />
+
+      <Snackbar
+        open={toast.open}
+        autoHideDuration={6000}
+        onClose={() => {
+          setToast(prev => ({ ...prev, open: false }));
+        }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert
+          onClose={() => {
+            setToast(prev => ({ ...prev, open: false }));
+          }}
+          severity={toast.severity}
+          sx={{ width: "100%" }}
+        >
+          {toast.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 }

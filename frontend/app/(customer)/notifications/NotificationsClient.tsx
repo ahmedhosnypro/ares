@@ -13,18 +13,22 @@ import {
   Stack,
   Tooltip,
   Typography,
+  Snackbar,
 } from "@mui/material";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
   getNotifications,
   markAllNotificationsAsRead,
   markNotificationAsRead,
+  deleteNotification,
   type NotificationItem,
 } from "@/api-clients/notfications/notfications";
 import { logger } from "@/utils/logger";
+import DeleteNotificationDialog from "@/components/notifications/DeleteNotificationDialog";
 
 export default function NotificationsClient() {
   const { data: session, status } = useSession();
@@ -37,22 +41,35 @@ export default function NotificationsClient() {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [markingAll, setMarkingAll] = useState(false);
 
-  const fetchData = useCallback(async () => {
-    if (!token) return;
-    try {
-      setLoading(true);
-      const data = await getNotifications(token);
-      const list: NotificationItem[] = Array.isArray(data) ? data : data.notifications;
-      list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      setNotifications(list);
-      setError(null);
-    } catch (err) {
-      logger.error("Notifications fetch error", err);
-      setError("Failed to load notifications. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
+  // Deletion and toast state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingNotification, setDeletingNotification] = useState<NotificationItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [toast, setToast] = useState<{ open: boolean; message: string; severity: "success" | "error" }>({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
+  const fetchData = useCallback(
+    async (background = false) => {
+      if (!token) return;
+      try {
+        if (!background) setLoading(true);
+        const data = await getNotifications(token);
+        const list: NotificationItem[] = Array.isArray(data) ? data : data.notifications;
+        list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setNotifications(list);
+        setError(null);
+      } catch (err) {
+        logger.error("Notifications fetch error", err);
+        if (!background) setError("Failed to load notifications. Please try again later.");
+      } finally {
+        if (!background) setLoading(false);
+      }
+    },
+    [token]
+  );
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -60,12 +77,23 @@ export default function NotificationsClient() {
     }
   }, [status, fetchData]);
 
+  useEffect(() => {
+    const handleUpdate = () => {
+      void fetchData(true);
+    };
+    window.addEventListener("notifications-updated", handleUpdate);
+    return () => {
+      window.removeEventListener("notifications-updated", handleUpdate);
+    };
+  }, [fetchData]);
+
   const handleMarkRead = async (id: string) => {
     if (!token || processingId) return;
     try {
       setProcessingId(id);
       await markNotificationAsRead(id, token);
       setNotifications(prev => prev.map(n => (n.id === id ? { ...n, isRead: true } : n)));
+      window.dispatchEvent(new CustomEvent("notifications-updated"));
     } catch (err) {
       logger.error("Mark as read failed", err);
     } finally {
@@ -80,6 +108,7 @@ export default function NotificationsClient() {
         setProcessingId(item.id);
         await markNotificationAsRead(item.id, token);
         setNotifications(prev => prev.map(n => (n.id === item.id ? { ...n, isRead: true } : n)));
+        window.dispatchEvent(new CustomEvent("notifications-updated"));
       } catch (err) {
         logger.error("Mark as read failed", err);
       } finally {
@@ -126,11 +155,57 @@ export default function NotificationsClient() {
       setMarkingAll(true);
       await markAllNotificationsAsRead(token);
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      window.dispatchEvent(new CustomEvent("notifications-updated"));
     } catch (err) {
       logger.error("Mark all as read failed", err);
       setError("Failed to mark all as read.");
     } finally {
       setMarkingAll(false);
+    }
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent, item: NotificationItem) => {
+    e.stopPropagation();
+    setDeletingNotification(item);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!token || !deletingNotification) return;
+    setDeleting(true);
+    try {
+      await deleteNotification(deletingNotification.id, token);
+
+      // Update local state immediately
+      setNotifications(prev => prev.filter(n => n.id !== deletingNotification.id));
+      setToast({
+        open: true,
+        message: "Notification deleted successfully.",
+        severity: "success",
+      });
+      window.dispatchEvent(new CustomEvent("notifications-updated"));
+      setDeleteDialogOpen(false);
+    } catch (err) {
+      logger.error("Failed to delete notification", err);
+      // Graceful handling of 404 (already deleted)
+      if (err instanceof Error && err.message.includes("404")) {
+        setNotifications(prev => prev.filter(n => n.id !== deletingNotification.id));
+        setToast({
+          open: true,
+          message: "Notification deleted successfully.",
+          severity: "success",
+        });
+        window.dispatchEvent(new CustomEvent("notifications-updated"));
+        setDeleteDialogOpen(false);
+      } else {
+        setToast({
+          open: true,
+          message: "Failed to delete notification. Please try again.",
+          severity: "error",
+        });
+      }
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -220,7 +295,7 @@ export default function NotificationsClient() {
                 </Typography>
               </Box>
 
-              <Box>
+              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 {!n.isRead ? (
                   <Tooltip title="Mark as read">
                     <span>
@@ -242,7 +317,18 @@ export default function NotificationsClient() {
                     Read
                   </Typography>
                 )}
-              </Box>
+                <Tooltip title="Delete">
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={e => {
+                      handleDeleteClick(e, n);
+                    }}
+                  >
+                    <DeleteOutlineIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Stack>
             </Stack>
             {index < notifications.length - 1 && <Divider />}
           </React.Fragment>
@@ -296,6 +382,37 @@ export default function NotificationsClient() {
       <Card elevation={0} sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
         {renderContent()}
       </Card>
+
+      <DeleteNotificationDialog
+        open={deleteDialogOpen}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+        }}
+        onConfirm={() => {
+          void handleDeleteConfirm();
+        }}
+        notificationTitle={deletingNotification?.title ?? ""}
+        loading={deleting}
+      />
+
+      <Snackbar
+        open={toast.open}
+        autoHideDuration={6000}
+        onClose={() => {
+          setToast(prev => ({ ...prev, open: false }));
+        }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert
+          onClose={() => {
+            setToast(prev => ({ ...prev, open: false }));
+          }}
+          severity={toast.severity}
+          sx={{ width: "100%" }}
+        >
+          {toast.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 }

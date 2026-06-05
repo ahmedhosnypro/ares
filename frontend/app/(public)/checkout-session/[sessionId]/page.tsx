@@ -1,7 +1,69 @@
-export default function CheckoutSessionPage() {
+import { redirect } from "next/navigation";
+import { Box, Container, Paper, Stack, Typography, Button } from "@mui/material";
+import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlineOutlined";
+
+interface PageProps {
+  readonly searchParams: Promise<Record<string, string | undefined>>;
+}
+
+export default async function CheckoutSessionPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+
+  const success = params["success"] === "true";
+  const merchantOrderId = params["merchant_order_id"] ?? params["order"] ?? null;
+
+  // On success, redirect immediately to confirmation
+  if (success && merchantOrderId) {
+    redirect(`/bookings/confirmation/${merchantOrderId}`);
+  }
+
+  // On failure, show error UI
   return (
-    <main>
-      <h1>Checkout Session</h1>
-    </main>
+    <Box
+      component="main"
+      sx={{ minHeight: "100vh", bgcolor: "background.default", display: "flex", alignItems: "center", py: 8 }}
+    >
+      <Container maxWidth="sm">
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 3, md: 6 },
+            borderRadius: 4,
+            border: "1px solid",
+            borderColor: "divider",
+            textAlign: "center",
+          }}
+        >
+          <Stack spacing={3} sx={{ alignItems: "center" }}>
+            {success ? (
+              <CheckCircleOutlinedIcon sx={{ fontSize: 72, color: "success.main" }} />
+            ) : (
+              <ErrorOutlineIcon sx={{ fontSize: 72, color: "error.main" }} />
+            )}
+            <Typography variant="h4" sx={{ fontWeight: 800 }}>
+              {success ? "Payment Successful" : "Payment Failed"}
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              {success
+                ? "Your payment was processed successfully."
+                : "Your payment could not be processed. Please try again."}
+            </Typography>
+            {!success && merchantOrderId && (
+              <Button
+                variant="contained"
+                href={`/booking/checkout/${merchantOrderId}`}
+                sx={{ borderRadius: 999, px: 4, fontWeight: 700 }}
+              >
+                Try Again
+              </Button>
+            )}
+            <Button variant="outlined" href="/bookings" sx={{ borderRadius: 999, px: 4, fontWeight: 700 }}>
+              My Bookings
+            </Button>
+          </Stack>
+        </Paper>
+      </Container>
+    </Box>
   );
 }

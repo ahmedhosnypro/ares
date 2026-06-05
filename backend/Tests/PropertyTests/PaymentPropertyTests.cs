@@ -3,6 +3,7 @@ using Backend.Application.DTOs.Common;
 using Backend.Application.Exceptions;
 using Backend.Application.Interfaces;
 using Backend.Application.Services;
+using Backend.Application.Settings;
 using Backend.Domain.Entities;
 using Backend.Domain.Entities.Enums;
 using Backend.Infrastructure.Data;
@@ -10,14 +11,12 @@ using Backend.Infrastructure.Repositories;
 using FsCheck;
 using FsCheck.Xunit;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Moq;
 using Xunit;
 
 namespace Backend.Tests.PropertyTests;
 
-/// <summary>
-/// Property-based tests for payment functionality using FsCheck.
-/// Each property validates universal correctness guarantees for payment operations across all valid inputs.
-/// </summary>
 public class PaymentPropertyTests : IDisposable
 {
     private readonly ApplicationDbContext _context;
@@ -28,7 +27,6 @@ public class PaymentPropertyTests : IDisposable
 
     public PaymentPropertyTests()
     {
-        // Setup in-memory database for testing
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
@@ -37,9 +35,14 @@ public class PaymentPropertyTests : IDisposable
         _paymentRepository = new PaymentRepository(_context);
         _bookingRepository = new BookingRepository(_context);
         _vehicleRepository = new VehicleRepository(_context);
-        _paymentService = new PaymentService(_paymentRepository, _bookingRepository, _context);
+        _paymentService = new PaymentService(
+            _paymentRepository,
+            _bookingRepository,
+            _context,
+            new Mock<IPaymobClient>().Object,
+            new RefundCalculator(),
+            Options.Create(new PaymobSettings()));
 
-        // Ensure database is created
         _context.Database.EnsureCreated();
     }
 
@@ -215,11 +218,11 @@ public class PaymentPropertyTests : IDisposable
             ClearTestData();
 
             // Create test user and booking with "Pending" status
-            var (userId, bookingId) = CreateTestUserAndBooking(amount, BookingStatus.Pending);
+            var (userId, bookingId) = CreateTestUserAndBooking(amount, BookingStatus.PaymentPending);
 
             // Verify booking is initially in "Pending" status
             var initialBooking = _bookingRepository.GetByIdAsync(bookingId).Result;
-            if (initialBooking?.Status != BookingStatus.Pending)
+            if (initialBooking?.Status != BookingStatus.PaymentPending)
             {
                 // Debug: Initial booking status is not Pending
                 return false;
@@ -392,7 +395,7 @@ public class PaymentPropertyTests : IDisposable
             var user2Id = CreateTestUser();
 
             // Create booking for user1
-            var (_, bookingId) = CreateTestUserAndBooking(amount, BookingStatus.Pending, user1Id);
+            var (_, bookingId) = CreateTestUserAndBooking(amount, BookingStatus.PaymentPending, user1Id);
 
             // Try to pay for user1's booking with user2
             var paymentRequest = new PaymentRequest(
@@ -449,7 +452,7 @@ public class PaymentPropertyTests : IDisposable
 
             for (int i = 0; i < paymentCount; i++)
             {
-                var (_, bookingId) = CreateTestUserAndBooking(100 + i, BookingStatus.Pending, userId);
+                var (_, bookingId) = CreateTestUserAndBooking(100 + i, BookingStatus.PaymentPending, userId);
                 var payment = new BookingPayment
                 {
                     PaymentId = Guid.NewGuid(),

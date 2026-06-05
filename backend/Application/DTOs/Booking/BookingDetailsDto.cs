@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using Backend.Application.DTOs.Driver;
 
 namespace Backend.Application.DTOs.Booking;
 
@@ -105,4 +105,9 @@ public record BookingDetailsDto(
     BookingInspectionFullDto? PickupInspection = null,
     BookingInspectionFullDto? ReturnInspection = null,
     BookingPaymentDetailsDto? PaymentDetails = null,
-    IReadOnlyList<BookingTimelineEventDto>? Timeline = null);
+    IReadOnlyList<BookingTimelineEventDto>? Timeline = null,
+    PublicDriverDto? AssignedDriverProfile = null,
+    decimal? VehicleFee = null,
+    decimal? DriverFee = null,
+    decimal? GrandTotal = null,
+    bool RequiresDriver = false);

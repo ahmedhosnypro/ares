@@ -3,6 +3,8 @@ using Backend.Domain.Entities;
 using Backend.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
+using Microsoft.Extensions.Logging;
+
 namespace Backend.Infrastructure.Repositories;
 
 /// <summary>
@@ -10,8 +12,11 @@ namespace Backend.Infrastructure.Repositories;
 /// </summary>
 public class VehicleRepository : PaginatedRepository<Vehicle>, IVehicleRepository
 {
-    public VehicleRepository(ApplicationDbContext context) : base(context)
+    private readonly ILogger<VehicleRepository>? _logger;
+
+    public VehicleRepository(ApplicationDbContext context, ILogger<VehicleRepository>? logger = null) : base(context)
     {
+        _logger = logger;
     }
 
     public async Task<IEnumerable<Vehicle>> SearchAvailableVehiclesAsync(
@@ -165,20 +170,57 @@ public class VehicleRepository : PaginatedRepository<Vehicle>, IVehicleRepositor
         };
     }
 
+    /// <summary>
+    /// Non-locking availability pre-check (used for vehicle search and as a
+    /// cheap early-out before the authoritative, race-safe reservation in
+    /// <see cref="IBookingRepository.ReserveVehicleAtomicAsync"/>).
+    ///
+    /// A vehicle is unavailable when an overlapping booking exists in a
+    /// reserving status (see <see cref="Backend.Domain.Entities.Enums.BookingStatusPolicy.ReservingStatuses"/>).
+    /// A <c>PaymentPending</c> booking whose hold has already expired is treated
+    /// as free (the vehicle is released the moment the hold lapses, even before
+    /// the background sweep flips it to <c>Expired</c>).
+    /// </summary>
     public async Task<bool> IsAvailableAsync(
         Guid vehicleId,
         DateTime startDate,
         DateTime endDate,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        Guid? excludeUserId = null,
+        Guid? excludeBookingId = null)
     {
-        var hasOverlappingBooking = await _context.Bookings
-            .AnyAsync(b =>
+        var nowUtc = DateTime.UtcNow;
+        var reserving = Backend.Domain.Entities.Enums.BookingStatusPolicy.ReservingStatuses;
+
+        var conflicts = await _context.Bookings
+            .Where(b =>
                 b.VehicleId == vehicleId &&
-                b.Status != Backend.Domain.Entities.Enums.BookingStatus.Cancelled &&
-                b.Status != Backend.Domain.Entities.Enums.BookingStatus.Completed &&
+                b.Id != excludeBookingId &&
+                !(excludeUserId.HasValue && b.UserId == excludeUserId.Value && b.Status == Backend.Domain.Entities.Enums.BookingStatus.PaymentPending) &&
+                reserving.Contains(b.Status) &&
+                !(b.Status == Backend.Domain.Entities.Enums.BookingStatus.PaymentPending &&
+                  b.HoldExpiresAt != null &&
+                  b.HoldExpiresAt <= nowUtc) &&
                 b.PickupDate < endDate &&
-                b.ReturnDate > startDate,
-                cancellationToken);
+                b.ReturnDate > startDate)
+            .Select(b => new { b.Id, b.Status, b.HoldExpiresAt, b.UserId })
+            .ToListAsync(cancellationToken);
+
+        var hasOverlappingBooking = conflicts.Any();
+
+        if (_logger != null)
+        {
+            _logger.LogInformation(
+                "Vehicle availability check: VehicleId={VehicleId}, StartDate={StartDate}, EndDate={EndDate}, Decision={Available}, ExcludeUserId={ExcludeUserId}, ExcludeBookingId={ExcludeBookingId}",
+                vehicleId, startDate, endDate, !hasOverlappingBooking, excludeUserId, excludeBookingId);
+            
+            foreach (var conflict in conflicts)
+            {
+                _logger.LogWarning(
+                    "Vehicle availability conflict: VehicleId={VehicleId}, ConflictingBookingId={BookingId}, ConflictingBookingStatus={BookingStatus}, ConflictingBookingHoldExpiration={HoldExpiration}, ConflictingCustomerId={CustomerId}",
+                    vehicleId, conflict.Id, conflict.Status, conflict.HoldExpiresAt, conflict.UserId);
+            }
+        }
 
         return !hasOverlappingBooking;
     }

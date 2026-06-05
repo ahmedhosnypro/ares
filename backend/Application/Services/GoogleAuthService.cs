@@ -1,7 +1,9 @@
 using System.Security.Cryptography;
 using Backend.Application.DTOs.Auth;
 using Backend.Application.Exceptions;
+using Backend.Application.Interfaces;
 using Backend.Domain.Entities;
+using Backend.Domain.Entities.Enums;
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -38,17 +40,20 @@ public class GoogleAuthService : IGoogleAuthService
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IConfiguration _configuration;
+    private readonly IApplicationDbContext _context;
     private readonly ILogger<GoogleAuthService> _logger;
 
     public GoogleAuthService(
         UserManager<ApplicationUser> userManager,
         IJwtTokenService jwtTokenService,
         IConfiguration configuration,
+        IApplicationDbContext context,
         ILogger<GoogleAuthService> logger)
     {
         _userManager = userManager;
         _jwtTokenService = jwtTokenService;
         _configuration = configuration;
+        _context = context;
         _logger = logger;
     }
 
@@ -132,6 +137,14 @@ public class GoogleAuthService : IGoogleAuthService
 
         // Issue tokens using the same JwtTokenService the email/password flow uses.
         var roles = await _userManager.GetRolesAsync(user);
+
+        // Self-heal: any Driver (including accounts created before the Google
+        // flow seeded profiles) must own a DriverProfile so onboarding works.
+        if (roles.Contains("Driver"))
+        {
+            await EnsureDriverProfileAsync(user.Id);
+        }
+
         var stayConnected = request.StayConnected ?? false;
         var jwt = _jwtTokenService.GenerateToken(user, roles, stayConnected);
         var expiresAt = _jwtTokenService.GetTokenExpiration(stayConnected);
@@ -161,7 +174,8 @@ public class GoogleAuthService : IGoogleAuthService
                 LastName: user.LastName ?? string.Empty,
                 Roles: roles.ToList(),
                 EmailVerified: user.EmailConfirmed,
-                Status: user.Status
+                Status: user.Status,
+                Phone: user.PhoneNumber
             )
         );
     }
@@ -233,6 +247,7 @@ public class GoogleAuthService : IGoogleAuthService
             EmailVerifiedAt = DateTime.UtcNow,
             GoogleId = payload.Subject,
             AuthProvider = "Google",
+            Status = "Active"
         };
 
         var randomPassword = GenerateSecureRandomPassword();
@@ -259,8 +274,47 @@ public class GoogleAuthService : IGoogleAuthService
             });
         }
 
+        // Driver Module (Phase 1): a Google-registered Driver needs the same
+        // empty DriverProfile the email/password flow creates, otherwise the
+        // profile-completion gate can never load and the driver is stuck.
+        if (string.Equals(role, "Driver", StringComparison.OrdinalIgnoreCase))
+        {
+            await EnsureDriverProfileAsync(user.Id);
+        }
+
         _logger.LogInformation("Created new Google-authenticated user {UserId} with role {Role}", user.Id, role);
         return user;
+    }
+
+    /// <summary>
+    /// Idempotently ensures the given user has a DriverProfile row. Safe to
+    /// call on every Google sign-in for a Driver — it self-heals accounts that
+    /// were created before this step existed. Best-effort: never blocks login.
+    /// </summary>
+    private async Task EnsureDriverProfileAsync(Guid userId)
+    {
+        try
+        {
+            var exists = await _context.DriverProfiles.AnyAsync(p => p.UserId == userId);
+            if (exists) return;
+
+            _context.AddDriverProfile(new DriverProfile
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Status = DriverProfileStatus.Incomplete,
+                Availability = DriverAvailability.Unavailable,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            });
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Ensured DriverProfile for Google driver {UserId}", userId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not ensure DriverProfile for user {UserId}", userId);
+        }
     }
 
     private static string ExtractFirstNameFromFullName(string? fullName)

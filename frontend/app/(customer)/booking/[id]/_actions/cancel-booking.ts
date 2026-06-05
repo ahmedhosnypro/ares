@@ -17,29 +17,19 @@ export async function cancelBookingAction(id: string, formData: FormData) {
     redirect("/sign-in");
   }
 
-  const response = await fetch(toApiUrl(`/api/cancel-booking/${bookingId}`), {
+  const response = await fetch(toApiUrl(`/api/bookings/${bookingId}/cancel`), {
     method: "POST",
     cache: "no-store",
-    headers: {
-      Authorization: `Bearer ${activeSession.accessToken}`,
-    },
+    headers: { Authorization: `Bearer ${activeSession.accessToken}` },
   });
 
   if (response.ok) {
     redirect(`/booking/${bookingId}?notice=cancelled`);
   }
 
-  if (response.status === 400) {
-    redirect(`/booking/${bookingId}?error=not-eligible`);
-  }
-
-  if (response.status === 401 || response.status === 403) {
-    redirect(`/booking/${bookingId}?error=forbidden`);
-  }
-
-  if (response.status === 404) {
-    redirect(`/booking/${bookingId}?error=not-found`);
-  }
+  if (response.status === 400) redirect(`/booking/${bookingId}?error=not-eligible`);
+  if (response.status === 401 || response.status === 403) redirect(`/booking/${bookingId}?error=forbidden`);
+  if (response.status === 404) redirect(`/booking/${bookingId}?error=not-found`);
 
   redirect(`/booking/${bookingId}?error=cancel-failed`);
 }

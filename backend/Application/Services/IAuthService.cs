@@ -14,12 +14,4 @@ public interface IAuthService
     Task<List<string>> GetDemoRolesAsync(CancellationToken cancellationToken = default);
     Task<LoginResponse> DemoLoginAsync(string role, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Marks the user's profile as complete by flipping
-    /// <c>ApplicationUser.Status</c> from <c>"Pending"</c> to
-    /// <c>"Active"</c>. Optionally updates name and phone fields from the
-    /// payload before saving. Safe to call multiple times — already-active
-    /// users get a no-op.
-    /// </summary>
-    Task CompleteProfileAsync(Guid userId, CompleteProfileRequest request, CancellationToken cancellationToken = default);
 }

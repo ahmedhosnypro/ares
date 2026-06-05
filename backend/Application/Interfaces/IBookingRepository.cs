@@ -1,4 +1,5 @@
 using Backend.Domain.Entities;
+using Backend.Domain.Entities.Enums;
 
 namespace Backend.Application.Interfaces;
 
@@ -7,6 +8,32 @@ namespace Backend.Application.Interfaces;
 /// </summary>
 public interface IBookingRepository : IPaginatedRepository<Booking>
 {
+    /// <summary>
+    /// Atomically transitions <paramref name="booking"/> into a reserving
+    /// status (typically <c>PaymentPending</c> or <c>Confirmed</c>) while
+    /// guaranteeing no other booking holds the same vehicle for an overlapping
+    /// window.
+    ///
+    /// On SQL Server this runs inside a SERIALIZABLE transaction and re-checks
+    /// for overlapping reservations using <c>WITH (UPDLOCK, HOLDLOCK)</c> range
+    /// locks, so two concurrent requests are serialised: the first wins, the
+    /// second receives a <see cref="Backend.Application.Exceptions.ConflictException"/>
+    /// (surfaced as HTTP 409). Any other pending changes already staged on the
+    /// shared DbContext (e.g. a payment row, a driver-profile lock) are
+    /// committed in the same transaction.
+    /// </summary>
+    /// <param name="booking">The tracked booking to transition.</param>
+    /// <param name="targetStatus">The reserving status to move into.</param>
+    /// <param name="holdStartedAt">Hold start (UTC) or null to clear.</param>
+    /// <param name="holdExpiresAt">Hold expiry (UTC) or null to clear.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task ReserveVehicleAtomicAsync(
+        Booking booking,
+        BookingStatus targetStatus,
+        DateTime? holdStartedAt,
+        DateTime? holdExpiresAt,
+        CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Gets bookings for a specific user with optional filters
     /// </summary>
@@ -76,5 +103,14 @@ public interface IBookingRepository : IPaginatedRepository<Booking>
         DateTime? fromDate = null,
         DateTime? toDate = null,
         string? keyword = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// All bookings currently assigned to the given driver profile, including
+    /// customer and vehicle navigation for display in the driver's
+    /// assignments list. Ordered by pickup date.
+    /// </summary>
+    Task<IEnumerable<Booking>> GetAssignmentsForDriverAsync(
+        Guid driverProfileId,
         CancellationToken cancellationToken = default);
 }

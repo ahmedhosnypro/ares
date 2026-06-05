@@ -222,7 +222,7 @@ export default function SupplierBookingDetailsClient({ bookingId }: { readonly b
             <Stack direction="row" spacing={1} sx={{ alignItems: "center", mt: 0.5 }}>
               <Chip
                 size="small"
-                label={booking.status ?? "Pending"}
+                label={booking.status ?? "Draft"}
                 color={statusColorKey}
                 sx={{ fontWeight: 700, textTransform: "capitalize" }}
               />

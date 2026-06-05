@@ -855,6 +855,7 @@ export default function SignUpForm() {
                 </Box>
                 <GoogleSignInButton
                   disabled={isLoading}
+                  initialRole={role === "driver" ? "Driver" : role === "supplier" ? "Supplier" : "Customer"}
                   onError={message => {
                     setServerError(message);
                   }}

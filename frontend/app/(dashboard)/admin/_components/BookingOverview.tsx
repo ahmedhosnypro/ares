@@ -11,7 +11,7 @@ interface RawBooking {
   status?: string;
 }
 
-const EXPECTED_STATUSES = ["Pending", "Confirmed", "Active", "Completed", "Cancelled"];
+const EXPECTED_STATUSES = ["Draft", "PaymentPending", "Confirmed", "Active", "Completed", "Cancelled"];
 
 export default function BookingOverview() {
   const theme = useTheme();
@@ -73,7 +73,8 @@ export default function BookingOverview() {
         const bookingsList = data.resultData || data.data || data.items || [];
 
         const counts: Record<string, number> = {
-          Pending: 0,
+          Draft: 0,
+          PaymentPending: 0,
           Confirmed: 0,
           Active: 0,
           Completed: 0,
@@ -92,7 +93,8 @@ export default function BookingOverview() {
 
         // Map status to colors using theme
         const statusColorMap: Record<string, string> = {
-          Pending: theme.palette.status.pending.main,
+          Draft: theme.palette.text.secondary,
+          PaymentPending: theme.palette.status.pending.main,
           Confirmed: theme.palette.status.confirmed.main,
           Active: theme.palette.status.active.main,
           Completed: theme.palette.status.completed.main,
