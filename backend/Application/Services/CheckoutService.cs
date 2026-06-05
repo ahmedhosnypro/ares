@@ -382,213 +382,249 @@ namespace Backend.Application.Services
         public async Task<CheckoutStateDto> SelectDriverAsync(
             Guid bookingId, SelectCheckoutDriverRequest request, Guid userId, CancellationToken cancellationToken = default)
         {
-            var booking = await LoadOwnedResumableAsync(bookingId, userId, cancellationToken);
-            if (booking.Status == BookingStatus.PaymentPending)
+            var userLock = _userLocks.GetOrAdd(userId, _ => new SemaphoreSlim(1, 1));
+            await userLock.WaitAsync(cancellationToken);
+            try
             {
-                throw new ConflictException("The vehicle is already held for payment. Cancel the hold to change the driver.");
+                var booking = await LoadOwnedResumableAsync(bookingId, userId, cancellationToken);
+                if (booking.Status == BookingStatus.PaymentPending)
+                {
+                    throw new ConflictException("The vehicle is already held for payment. Cancel the hold to change the driver.");
+                }
+
+                var totalDays = booking.TotalDays ?? CalculateDays(booking.PickupDate!.Value, booking.ReturnDate!.Value);
+                var vehicleFee = booking.VehicleFee
+                    ?? ((booking.Vehicle?.PricePerDay ?? (await _vehicleRepository.GetByIdAsync(booking.VehicleId, cancellationToken))?.PricePerDay ?? 0) * totalDays);
+
+                var hasApprovedLicense = await HasApprovedLicenseAsync(userId, cancellationToken);
+                var effectiveNeedDriver = request.NeedDriver;
+                if (!hasApprovedLicense)
+                {
+                    if (!request.NeedDriver)
+                    {
+                        throw new BadRequestException(
+                            "A driver is required: you do not have an approved driving license, so you cannot self-drive.");
+                    }
+                    effectiveNeedDriver = true;
+                }
+
+                DriverProfile? driverProfile = null;
+                decimal driverFee = 0m;
+                if (effectiveNeedDriver)
+                {
+                    if (!request.DriverProfileId.HasValue)
+                    {
+                        throw new BadRequestException("Please select a driver before continuing.");
+                    }
+
+                    driverProfile = await _driverProfileRepository.GetByIdWithUserAsync(request.DriverProfileId.Value, cancellationToken)
+                        ?? throw new NotFoundException("Selected driver was not found.");
+                    if (driverProfile.Status != DriverProfileStatus.Verified
+                        || !driverProfile.IsActive
+                        || driverProfile.Availability != DriverAvailability.Available)
+                    {
+                        throw new BadRequestException("The selected driver is no longer available. Please choose another driver.");
+                    }
+
+                    var overlaps = await _driverProfileRepository.HasOverlappingAssignmentAsync(
+                        driverProfile.Id, booking.PickupDate!.Value, booking.ReturnDate!.Value, booking.Id, cancellationToken);
+                    if (overlaps)
+                    {
+                        throw new BadRequestException("The selected driver is already booked for an overlapping period. Please choose another driver.");
+                    }
+
+                    var dailyRate = await _driverPricingService.GetDailyRateAsync(cancellationToken);
+                    driverFee = dailyRate * totalDays;
+                }
+
+                booking.RequiresDriver = effectiveNeedDriver;
+                booking.AssignedDriverProfileId = effectiveNeedDriver ? driverProfile!.Id : (Guid?)null;
+                booking.DriverFee = effectiveNeedDriver ? driverFee : (decimal?)null;
+                booking.GrandTotal = vehicleFee + (effectiveNeedDriver ? driverFee : 0m);
+                booking.TotalPrice = booking.GrandTotal;
+                booking.Status = BookingStatus.Draft; // still does NOT reserve the vehicle
+                await _bookingRepository.SaveChangesAsync(cancellationToken);
+
+                return await BuildStateAsync(booking, cancellationToken);
             }
-
-            var totalDays = booking.TotalDays ?? CalculateDays(booking.PickupDate!.Value, booking.ReturnDate!.Value);
-            var vehicleFee = booking.VehicleFee
-                ?? ((booking.Vehicle?.PricePerDay ?? (await _vehicleRepository.GetByIdAsync(booking.VehicleId, cancellationToken))?.PricePerDay ?? 0) * totalDays);
-
-            var hasApprovedLicense = await HasApprovedLicenseAsync(userId, cancellationToken);
-            var effectiveNeedDriver = request.NeedDriver;
-            if (!hasApprovedLicense)
+            finally
             {
-                if (!request.NeedDriver)
-                {
-                    throw new BadRequestException(
-                        "A driver is required: you do not have an approved driving license, so you cannot self-drive.");
-                }
-                effectiveNeedDriver = true;
+                userLock.Release();
             }
-
-            DriverProfile? driverProfile = null;
-            decimal driverFee = 0m;
-            if (effectiveNeedDriver)
-            {
-                if (!request.DriverProfileId.HasValue)
-                {
-                    throw new BadRequestException("Please select a driver before continuing.");
-                }
-
-                driverProfile = await _driverProfileRepository.GetByIdWithUserAsync(request.DriverProfileId.Value, cancellationToken)
-                    ?? throw new NotFoundException("Selected driver was not found.");
-                if (driverProfile.Status != DriverProfileStatus.Verified
-                    || !driverProfile.IsActive
-                    || driverProfile.Availability != DriverAvailability.Available)
-                {
-                    throw new BadRequestException("The selected driver is no longer available. Please choose another driver.");
-                }
-
-                var overlaps = await _driverProfileRepository.HasOverlappingAssignmentAsync(
-                    driverProfile.Id, booking.PickupDate!.Value, booking.ReturnDate!.Value, booking.Id, cancellationToken);
-                if (overlaps)
-                {
-                    throw new BadRequestException("The selected driver is already booked for an overlapping period. Please choose another driver.");
-                }
-
-                var dailyRate = await _driverPricingService.GetDailyRateAsync(cancellationToken);
-                driverFee = dailyRate * totalDays;
-            }
-
-            booking.RequiresDriver = effectiveNeedDriver;
-            booking.AssignedDriverProfileId = effectiveNeedDriver ? driverProfile!.Id : (Guid?)null;
-            booking.DriverFee = effectiveNeedDriver ? driverFee : (decimal?)null;
-            booking.GrandTotal = vehicleFee + (effectiveNeedDriver ? driverFee : 0m);
-            booking.TotalPrice = booking.GrandTotal;
-            booking.Status = BookingStatus.Draft; // still does NOT reserve the vehicle
-            await _bookingRepository.SaveChangesAsync(cancellationToken);
-
-            return await BuildStateAsync(booking, cancellationToken);
         }
 
         public async Task<CheckoutStateDto> BeginPaymentAsync(
             Guid bookingId, Guid userId, CancellationToken cancellationToken = default)
         {
-            var booking = await LoadOwnedResumableAsync(bookingId, userId, cancellationToken);
-
-            var nowUtc = DateTime.UtcNow;
-            // Idempotent refresh: an unexpired hold just returns its current state.
-            if (booking.Status == BookingStatus.PaymentPending
-                && booking.HoldExpiresAt.HasValue && booking.HoldExpiresAt.Value > nowUtc)
+            var userLock = _userLocks.GetOrAdd(userId, _ => new SemaphoreSlim(1, 1));
+            await userLock.WaitAsync(cancellationToken);
+            try
             {
+                var booking = await LoadOwnedResumableAsync(bookingId, userId, cancellationToken);
+
+                var nowUtc = DateTime.UtcNow;
+                // Idempotent refresh: an unexpired hold just returns its current state.
+                if (booking.Status == BookingStatus.PaymentPending
+                    && booking.HoldExpiresAt.HasValue && booking.HoldExpiresAt.Value > nowUtc)
+                {
+                    return await BuildStateAsync(booking, cancellationToken);
+                }
+
+                // Identity-verification gate (same rule as express checkout) — applied
+                // before we reserve the vehicle.
+                if (!await _verificationService.IsApprovedAsync(userId, cancellationToken))
+                {
+                    throw new ForbiddenException(BookingService.IdentityVerificationRequiredMessage);
+                }
+
+                var vehicle = booking.Vehicle ?? await _vehicleRepository.GetByIdAsync(booking.VehicleId, cancellationToken);
+                if (vehicle == null || !vehicle.IsActive)
+                {
+                    throw new ConflictException("Vehicle is not available for booking");
+                }
+
+                // Re-validate the chosen driver (it may have become unavailable).
+                if (booking.RequiresDriver)
+                {
+                    if (!booking.AssignedDriverProfileId.HasValue)
+                    {
+                        throw new BadRequestException("Please select a driver before continuing to payment.");
+                    }
+                    var dp = await _driverProfileRepository.GetByIdWithUserAsync(booking.AssignedDriverProfileId.Value, cancellationToken);
+                    if (dp == null || dp.Status != DriverProfileStatus.Verified || !dp.IsActive
+                        || (dp.Availability != DriverAvailability.Available && dp.Availability != DriverAvailability.Reserved))
+                    {
+                        throw new BadRequestException("The selected driver is no longer available. Please choose another driver.");
+                    }
+                }
+
+                // Atomically reserve the vehicle for the hold window. Two customers
+                // reaching this point for the same vehicle/window are serialised —
+                // the loser gets a ConflictException (409).
+                await _bookingRepository.ReserveVehicleAtomicAsync(
+                    booking, BookingStatus.PaymentPending, nowUtc, nowUtc.AddMinutes(HoldMinutes), cancellationToken);
+
                 return await BuildStateAsync(booking, cancellationToken);
             }
-
-            // Identity-verification gate (same rule as express checkout) — applied
-            // before we reserve the vehicle.
-            if (!await _verificationService.IsApprovedAsync(userId, cancellationToken))
+            finally
             {
-                throw new ForbiddenException(BookingService.IdentityVerificationRequiredMessage);
+                userLock.Release();
             }
-
-            var vehicle = booking.Vehicle ?? await _vehicleRepository.GetByIdAsync(booking.VehicleId, cancellationToken);
-            if (vehicle == null || !vehicle.IsActive)
-            {
-                throw new ConflictException("Vehicle is not available for booking");
-            }
-
-            // Re-validate the chosen driver (it may have become unavailable).
-            if (booking.RequiresDriver)
-            {
-                if (!booking.AssignedDriverProfileId.HasValue)
-                {
-                    throw new BadRequestException("Please select a driver before continuing to payment.");
-                }
-                var dp = await _driverProfileRepository.GetByIdWithUserAsync(booking.AssignedDriverProfileId.Value, cancellationToken);
-                if (dp == null || dp.Status != DriverProfileStatus.Verified || !dp.IsActive
-                    || (dp.Availability != DriverAvailability.Available && dp.Availability != DriverAvailability.Reserved))
-                {
-                    throw new BadRequestException("The selected driver is no longer available. Please choose another driver.");
-                }
-            }
-
-            // Atomically reserve the vehicle for the hold window. Two customers
-            // reaching this point for the same vehicle/window are serialised —
-            // the loser gets a ConflictException (409).
-            await _bookingRepository.ReserveVehicleAtomicAsync(
-                booking, BookingStatus.PaymentPending, nowUtc, nowUtc.AddMinutes(HoldMinutes), cancellationToken);
-
-            return await BuildStateAsync(booking, cancellationToken);
         }
 
         public async Task<BookingResponse> ConfirmAsync(
             Guid bookingId, ConfirmCheckoutRequest request, Guid userId, CancellationToken cancellationToken = default)
         {
-            var booking = await LoadOwnedAsync(bookingId, userId, cancellationToken);
-
-            // Idempotent: already confirmed.
-            if (booking.Status == BookingStatus.Confirmed)
+            var userLock = _userLocks.GetOrAdd(userId, _ => new SemaphoreSlim(1, 1));
+            await userLock.WaitAsync(cancellationToken);
+            try
             {
+                var booking = await LoadOwnedAsync(bookingId, userId, cancellationToken);
+
+                // Idempotent: already confirmed.
+                if (booking.Status == BookingStatus.Confirmed)
+                {
+                    return new BookingResponse(
+                        booking.Id, booking.BookingNumber!, BookingStatus.Confirmed.ToString(),
+                        booking.GrandTotal ?? booking.TotalPrice ?? 0m, "Booking already confirmed.");
+                }
+
+                if (booking.Status != BookingStatus.PaymentPending)
+                {
+                    throw new ConflictException("Start the payment step before confirming the booking.");
+                }
+
+                var nowUtc = DateTime.UtcNow;
+                if (!booking.HoldExpiresAt.HasValue || booking.HoldExpiresAt.Value <= nowUtc)
+                {
+                    throw new ConflictException(
+                        "Your reservation hold has expired. Please start again — the vehicle may have been taken by another customer.");
+                }
+
+                var paymentSuccessful = await SimulatePaymentAsync(cancellationToken);
+                if (!paymentSuccessful)
+                {
+                    throw new BadRequestException("Payment processing failed. Please try again.");
+                }
+
+                var grandTotal = booking.GrandTotal ?? booking.TotalPrice ?? 0m;
+
+                // Stage the payment row…
+                var payment = new BookingPayment
+                {
+                    PaymentId = Guid.NewGuid(),
+                    BookingId = booking.Id,
+                    TransactionId = Guid.NewGuid(),
+                    PaymentMethod = string.IsNullOrWhiteSpace(request.PaymentMethod) ? "credit_card" : request.PaymentMethod,
+                    Amount = grandTotal,
+                    Currency = "USD",
+                    Status = "Captured",
+                    AuthorizationCode = GenerateAuthorizationCode(),
+                    ProcessedAt = nowUtc,
+                    CreatedAt = nowUtc
+                };
+                await _paymentRepository.AddAsync(payment, cancellationToken);
+
+                // …and the driver lock.
+                DriverProfile? driverProfile = null;
+                if (booking.RequiresDriver && booking.AssignedDriverProfileId.HasValue)
+                {
+                    driverProfile = await _driverProfileRepository.GetByIdWithUserAsync(booking.AssignedDriverProfileId.Value, cancellationToken);
+                    if (driverProfile != null)
+                    {
+                        driverProfile.Availability = DriverAvailability.Reserved;
+                        driverProfile.LockedUntil = booking.ReturnDate;
+                        await _driverProfileRepository.UpdateAsync(driverProfile, cancellationToken);
+                    }
+                }
+
+                // Finalise under the lock (re-checks overlap as defence-in-depth) and
+                // commit booking + payment + driver lock atomically. Clears the hold.
+                await _bookingRepository.ReserveVehicleAtomicAsync(
+                    booking, BookingStatus.Confirmed, booking.HoldStartedAt, null, cancellationToken);
+
+                await SendBestEffortNotificationsAsync(booking, booking.Vehicle!, driverProfile, cancellationToken);
+
                 return new BookingResponse(
                     booking.Id, booking.BookingNumber!, BookingStatus.Confirmed.ToString(),
-                    booking.GrandTotal ?? booking.TotalPrice ?? 0m, "Booking already confirmed.");
+                    grandTotal, "Booking confirmed and payment captured successfully.");
             }
-
-            if (booking.Status != BookingStatus.PaymentPending)
+            finally
             {
-                throw new ConflictException("Start the payment step before confirming the booking.");
+                userLock.Release();
             }
-
-            var nowUtc = DateTime.UtcNow;
-            if (!booking.HoldExpiresAt.HasValue || booking.HoldExpiresAt.Value <= nowUtc)
-            {
-                throw new ConflictException(
-                    "Your reservation hold has expired. Please start again — the vehicle may have been taken by another customer.");
-            }
-
-            var paymentSuccessful = await SimulatePaymentAsync(cancellationToken);
-            if (!paymentSuccessful)
-            {
-                throw new BadRequestException("Payment processing failed. Please try again.");
-            }
-
-            var grandTotal = booking.GrandTotal ?? booking.TotalPrice ?? 0m;
-
-            // Stage the payment row…
-            var payment = new BookingPayment
-            {
-                PaymentId = Guid.NewGuid(),
-                BookingId = booking.Id,
-                TransactionId = Guid.NewGuid(),
-                PaymentMethod = string.IsNullOrWhiteSpace(request.PaymentMethod) ? "credit_card" : request.PaymentMethod,
-                Amount = grandTotal,
-                Currency = "USD",
-                Status = "Captured",
-                AuthorizationCode = GenerateAuthorizationCode(),
-                ProcessedAt = nowUtc,
-                CreatedAt = nowUtc
-            };
-            await _paymentRepository.AddAsync(payment, cancellationToken);
-
-            // …and the driver lock.
-            DriverProfile? driverProfile = null;
-            if (booking.RequiresDriver && booking.AssignedDriverProfileId.HasValue)
-            {
-                driverProfile = await _driverProfileRepository.GetByIdWithUserAsync(booking.AssignedDriverProfileId.Value, cancellationToken);
-                if (driverProfile != null)
-                {
-                    driverProfile.Availability = DriverAvailability.Reserved;
-                    driverProfile.LockedUntil = booking.ReturnDate;
-                    await _driverProfileRepository.UpdateAsync(driverProfile, cancellationToken);
-                }
-            }
-
-            // Finalise under the lock (re-checks overlap as defence-in-depth) and
-            // commit booking + payment + driver lock atomically. Clears the hold.
-            await _bookingRepository.ReserveVehicleAtomicAsync(
-                booking, BookingStatus.Confirmed, booking.HoldStartedAt, null, cancellationToken);
-
-            await SendBestEffortNotificationsAsync(booking, booking.Vehicle!, driverProfile, cancellationToken);
-
-            return new BookingResponse(
-                booking.Id, booking.BookingNumber!, BookingStatus.Confirmed.ToString(),
-                grandTotal, "Booking confirmed and payment captured successfully.");
         }
 
         public async Task<CheckoutStateDto> CancelAsync(
             Guid bookingId, Guid userId, CancellationToken cancellationToken = default)
         {
-            var booking = await LoadOwnedAsync(bookingId, userId, cancellationToken);
-            if (booking.Status == BookingStatus.Cancelled)
+            var userLock = _userLocks.GetOrAdd(userId, _ => new SemaphoreSlim(1, 1));
+            await userLock.WaitAsync(cancellationToken);
+            try
             {
+                var booking = await LoadOwnedAsync(bookingId, userId, cancellationToken);
+                if (booking.Status == BookingStatus.Cancelled)
+                {
+                    return await BuildStateAsync(booking, cancellationToken);
+                }
+                if (!BookingStatusPolicy.ResumableStatuses.Contains(booking.Status))
+                {
+                    throw new ConflictException("This booking can no longer be cancelled from checkout.");
+                }
+
+                booking.Status = BookingStatus.Cancelled;
+                booking.CancelledAt = DateTime.UtcNow;
+                booking.CancellationReason = "Cancelled by customer during checkout.";
+                booking.HoldStartedAt = null;
+                booking.HoldExpiresAt = null; // release the hold immediately
+                await _bookingRepository.SaveChangesAsync(cancellationToken);
+
                 return await BuildStateAsync(booking, cancellationToken);
             }
-            if (!BookingStatusPolicy.ResumableStatuses.Contains(booking.Status))
+            finally
             {
-                throw new ConflictException("This booking can no longer be cancelled from checkout.");
+                userLock.Release();
             }
-
-            booking.Status = BookingStatus.Cancelled;
-            booking.CancelledAt = DateTime.UtcNow;
-            booking.CancellationReason = "Cancelled by customer during checkout.";
-            booking.HoldStartedAt = null;
-            booking.HoldExpiresAt = null; // release the hold immediately
-            await _bookingRepository.SaveChangesAsync(cancellationToken);
-
-            return await BuildStateAsync(booking, cancellationToken);
         }
 
         public async Task<CheckoutStateDto?> GetActiveAsync(Guid userId, CancellationToken cancellationToken = default)
