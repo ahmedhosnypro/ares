@@ -134,7 +134,7 @@ export function beginPayment(bookingId: string, accessToken: string): Promise<Ch
   return call<CheckoutState>(`/api/checkout/${bookingId}/payment`, accessToken, { method: "POST" });
 }
 
-/** Step 4 — confirm: capture payment and finalise (CONFIRMED). */
+/** Step 4 — confirm: capture payment and finalize (CONFIRMED). */
 export function confirmCheckout(
   bookingId: string,
   payload: ConfirmPayload,

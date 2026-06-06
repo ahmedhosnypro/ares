@@ -3,8 +3,6 @@
  * Checks if required ports are available using multiple fallback methods
  */
 
-// cspell:ignore fuser tuln
-
 import { $ } from "bun";
 import { logDebug, logInfo, logWarn, logError } from "../lib/logger";
 import { askYesNo } from "../lib/utils";
@@ -81,8 +79,13 @@ async function checkPortWithNetstat(port: number): Promise<PortInfo | null> {
     let result: string;
 
     try {
-      // cspell:disable-next-line
-      result = await $`netstat -tuln`.text();
+      if (process.platform === "win32") {
+        // On Windows, use -ano to get the PID and avoid DNS resolution (faster)
+        result = await $`netstat -ano`.text();
+      } else {
+        // cspell:disable-next-line
+        result = await $`netstat -tuln`.text();
+      }
     } catch {
       try {
         result = await $`netstat -an`.text();
@@ -176,6 +179,42 @@ function checkPortWithSocket(port: number): Promise<PortInfo | null> {
 export async function killProcessOnPort(port: number): Promise<boolean> {
   try {
     logInfo(`Attempting to kill process on port ${port.toString()}...`);
+
+    // Try Windows specific method
+    if (process.platform === "win32") {
+      try {
+        const result = await $`netstat -ano`.text();
+        const lines = result.split("\n");
+        const pids = new Set<string>();
+
+        for (const line of lines) {
+          if (line.includes(`:${port.toString()}`) && line.includes("LISTENING")) {
+            const parts = line.trim().split(/\s+/);
+            const pid = parts[parts.length - 1];
+            if (pid && !Number.isNaN(Number.parseInt(pid, 10))) {
+              pids.add(pid);
+            }
+          }
+        }
+
+        for (const pid of pids) {
+          logInfo(`Killing process with PID ${pid}...`);
+          try {
+            await $`taskkill /F /PID ${pid}`.quiet();
+          } catch (err) {
+            logWarn(`Failed to kill process ${pid}: ${err instanceof Error ? err.message : "Unknown error"}`);
+          }
+        }
+
+        if (pids.size > 0) {
+          await Bun.sleep(1500); // Wait slightly longer for Windows to free the port
+          const check = await checkPort(port);
+          return check.available;
+        }
+      } catch (error) {
+        logDebug(`Windows kill failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+      }
+    }
 
     // Try lsof (Linux/macOS)
     try {

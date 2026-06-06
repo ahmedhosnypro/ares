@@ -28,12 +28,21 @@ import {
   checkBun,
   checkSqlServer,
   checkRequiredPorts,
+  showPortStatus,
+  checkNgrok,
+  installNgrok,
   type SystemCheckResult,
   type SqlServerInfo,
 } from "./checks";
-import { setupBackendEnv, setupFrontendEnv, validateAllConfigs } from "./config";
+import { setupBackendEnv, setupFrontendEnv, validateAllConfigs, type BackendEnvConfig } from "./config";
 import { verifyDatabaseConnection, setupDatabase, setupSeeding, verifySeededData } from "./database";
-import { setupBackendBuild, setupBackendServer, verifyBackendAccessibility, stopBackendServer } from "./backend";
+import {
+  setupBackendBuild,
+  setupBackendServer,
+  verifyBackendAccessibility,
+  stopBackendServer,
+  restorePackages,
+} from "./backend";
 import {
   setupFrontendDependencies,
   setupFrontendServer,
@@ -126,8 +135,8 @@ async function runSystemChecks(options: SetupOptions): Promise<SystemCheckResult
 
   // Check .NET SDK
   const dotnetInfo = await checkDotnet();
-  let efToolReady = dotnetInfo.efToolInstalled;
-  let scriptToolReady = dotnetInfo.scriptToolInstalled;
+  const efToolReady = dotnetInfo.efToolInstalled;
+  const scriptToolReady = dotnetInfo.scriptToolInstalled;
   if (!dotnetInfo.installed) {
     logError(".NET SDK not found");
     logInfo("Please install .NET SDK 8.0 or later:");
@@ -144,7 +153,6 @@ async function runSystemChecks(options: SetupOptions): Promise<SystemCheckResult
       logError("Failed to install dotnet-ef tool");
       process.exit(1);
     }
-    efToolReady = true;
   } else {
     logSuccess("dotnet-ef tool is installed");
   }
@@ -157,7 +165,6 @@ async function runSystemChecks(options: SetupOptions): Promise<SystemCheckResult
       logError("Failed to install dotnet-script tool");
       process.exit(1);
     }
-    scriptToolReady = true;
   } else {
     logSuccess("dotnet-script tool is installed");
   }
@@ -211,24 +218,47 @@ async function runSystemChecks(options: SetupOptions): Promise<SystemCheckResult
     }
   }
 
-  // Check ports
-  const portsInfo = await checkRequiredPorts();
-  if (!portsInfo.backend.available) {
-    logWarn(`Port ${String(portsInfo.backend.port)} (backend) is in use`);
-    if (portsInfo.backend.processInfo) {
-      logInfo(`  Process: ${portsInfo.backend.processInfo}`);
+  // Check ngrok
+  const ngrokInfo = await checkNgrok();
+  if (ngrokInfo.installed) {
+    logSuccess(`ngrok: ${ngrokInfo.version}`);
+  } else if (osInfo.osType === "windows") {
+    logWarn("ngrok not found");
+    logInfo("Attempting to install ngrok via winget...");
+    const installed = await installNgrok();
+    if (installed) {
+      logSuccess("ngrok installed successfully via winget!");
+      logInfo("");
+      logInfo("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      logInfo("⚠️  ACTION REQUIRED: TERMINAL RESTART NEEDED ⚠️");
+      logInfo("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      logInfo("");
+      logInfo("ngrok was installed, but your system PATH has been updated.");
+      logInfo("To ensure all tools are correctly detected, please:");
+      logInfo("");
+      logInfo("1. 🚪 CLOSE this terminal window");
+      logInfo("2. 🆕 Open a NEW terminal window");
+      logInfo("3. 🚀 Run the setup script again: bun setup");
+      logInfo("");
+      logInfo("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      logInfo("");
+      process.exit(0);
+    } else {
+      logInfo("ngrok: Not installed (optional, needed for Paymob webhooks)");
     }
   } else {
-    logSuccess(`Port ${String(portsInfo.backend.port)} (backend) is available`);
+    logInfo("ngrok: Not installed (optional, needed for Paymob webhooks)");
   }
 
-  if (!portsInfo.frontend.available) {
-    logWarn(`Port ${String(portsInfo.frontend.port)} (frontend) is in use`);
-    if (portsInfo.frontend.processInfo) {
-      logInfo(`  Process: ${portsInfo.frontend.processInfo}`);
-    }
-  } else {
-    logSuccess(`Port ${String(portsInfo.frontend.port)} (frontend) is available`);
+  // Check ports
+  const portsInfo = await checkRequiredPorts();
+  
+  const backendPortOk = await showPortStatus(portsInfo.backend, "backend");
+  const frontendPortOk = await showPortStatus(portsInfo.frontend, "frontend");
+  
+  if (!backendPortOk || !frontendPortOk) {
+    logError("Required ports are not available. Please free the ports and try again.");
+    process.exit(1);
   }
 
   if (!options.skipDb) {
@@ -246,19 +276,16 @@ async function runSystemChecks(options: SetupOptions): Promise<SystemCheckResult
 
   // Build result - all checks must pass
   // Note: SQL Server check is optional - we'll prompt for connection details later
-  /* eslint-disable @typescript-eslint/no-unnecessary-condition */
-  const allPassed =
-    supported && dotnetInfo.installed && efToolReady && scriptToolReady && bunInfo.installed && bunVersionOk;
-  // SQL Server check removed - we'll validate connection during config setup
-
+  const allPassed = true; // Guaranteed by early exits above
+    
   return {
     allPassed,
     os: {
-      supported,
+      supported: true,
       info: osInfo,
     },
     dotnet: {
-      ready: dotnetInfo.installed && efToolReady && scriptToolReady,
+      ready: true,
       info: dotnetInfo,
     },
     node: {
@@ -266,12 +293,16 @@ async function runSystemChecks(options: SetupOptions): Promise<SystemCheckResult
       info: nodeInfo,
     },
     bun: {
-      ready: bunInfo.installed && bunVersionOk,
+      ready: true,
       info: bunInfo,
     },
     sqlServer: {
       ready: options.skipDb || sqlServerInfo.accessible,
       info: sqlServerInfo,
+    },
+    ngrok: {
+      installed: ngrokInfo.installed,
+      info: ngrokInfo,
     },
     ports: {
       ready: portsInfo.backend.available && portsInfo.frontend.available,
@@ -280,7 +311,6 @@ async function runSystemChecks(options: SetupOptions): Promise<SystemCheckResult
       sqlServer: portsInfo.sqlServer,
     },
   };
-  /* eslint-enable @typescript-eslint/no-unnecessary-condition */
 }
 
 // Helper functions for version checking
@@ -396,6 +426,18 @@ async function main(): Promise<void> {
     logInfo("");
   }
 
+  // Early Restore: Ensure backend projects are restored before any dotnet calls
+  // This is especially important for EF Core commands during database setup
+  if (!options.skipBackend || !options.skipDb) {
+    logStep("Backend Preparation");
+    const restoreResult = await restorePackages();
+    if (!restoreResult.success) {
+      logError("Initial backend restore failed. Please check your .NET installation.");
+      process.exit(1);
+    }
+    logInfo("");
+  }
+
   // Setup configuration
   logStep("Configuration");
 
@@ -403,14 +445,15 @@ async function main(): Promise<void> {
   const osInfo = await detectOS();
   const isDevcontainer = osInfo.isDevcontainer || osInfo.isDocker;
 
+  let backendConfig: BackendEnvConfig | undefined;
+
   try {
     // Setup backend .env
-    const backendConfig = await setupBackendEnv(options.quick, isDevcontainer);
+    backendConfig = await setupBackendEnv(options.quick, isDevcontainer);
     logInfo("");
 
-    // Setup frontend .env.local (pass backend URL)
-    const backendUrl = backendConfig.jwtIssuer || "http://localhost:5000";
-    await setupFrontendEnv(options.quick, backendUrl);
+    // Setup frontend .env.local (pass backend config for alignment)
+    await setupFrontendEnv(options.quick, backendConfig);
     logInfo("");
 
     // Validate all configuration files
@@ -593,6 +636,44 @@ async function main(): Promise<void> {
   logSuccess("🎉 Ares Car Rental setup completed successfully!");
   logInfo("");
 
+  if (backendConfig.paymobApiKey) {
+    logSuccess("✅ Paymob payment gateway configured");
+    logInfo("");
+    logInfo("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    logInfo("🚀 Paymob Setup: Next Steps");
+    logInfo("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    logInfo("");
+    logInfo("1. Set Up ngrok for Webhooks");
+    logInfo("   Since your backend runs on localhost, Paymob needs ngrok to reach it.");
+    logInfo("");
+    logInfo("   - Start ngrok: npx ngrok http 5000");
+    logInfo("   - Copy the HTTPS URL (e.g., https://abc123xyz.ngrok.io)");
+    logInfo("");
+    logInfo("2. Configure Paymob Callbacks");
+    logInfo("   Go to Paymob Dashboard → Settings → Payment Integrations → Your Integration");
+    logInfo("   Set these callback URLs:");
+    logInfo("");
+    logInfo("   - Transaction Processed Callback:");
+    logInfo("     https://YOUR_NGROK_URL/api/payments/callback");
+    logInfo("");
+    logInfo("   - Transaction Response Callback (webhook):");
+    logInfo("     https://YOUR_NGROK_URL/api/payments/webhook");
+    logInfo("");
+    logInfo("3. Test the Payment Flow");
+    logInfo("   - Open http://localhost:3000 and login as a customer");
+    logInfo("   - Create a booking and proceed to checkout");
+    logInfo("   - Use Paymob test cards:");
+    logInfo("     * Success: 4987654321098769 (CVV: any 3 digits, Expiry: future date)");
+    logInfo("     * Decline: 5123456789012346");
+    logInfo("");
+    logInfo("4. Test Cancellation & Refund");
+    logInfo("   - Customer: My Bookings → Cancel Booking (see refund preview)");
+    logInfo("   - Admin: Admin Dashboard → Bookings → Process Refund");
+    logInfo("");
+    logInfo("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    logInfo("");
+  }
+
   if (!options.skipBackend && !options.skipFrontend) {
     logInfo("Your application is now running:");
     logInfo("  - Backend:  http://localhost:5000");
@@ -631,10 +712,9 @@ async function main(): Promise<void> {
  * Wait indefinitely (until interrupted)
  */
 async function waitForever(): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  while (true) {
-    await Bun.sleep(1000);
-  }
+  return new Promise(() => {
+    // Never resolves
+  });
 }
 
 // Run main function
@@ -644,7 +724,7 @@ try {
   const errorMessage = error instanceof Error ? error.message : "Unknown error";
   logError(`Setup failed: ${errorMessage}`);
   if (error instanceof Error && error.stack) {
-    console.error(error.stack);
+    logDebug(error.stack);
   }
   process.exit(1);
 }

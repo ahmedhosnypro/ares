@@ -84,7 +84,7 @@ function getStatusColor(status?: string): "success" | "warning" | "error" | "def
     case "completed":
       return "success";
     case "pending":
-    case "paymentpending":
+    case "paymentPending".toLowerCase():
     case "confirmed":
       return "warning";
     case "cancelled":

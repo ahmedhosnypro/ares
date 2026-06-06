@@ -19,6 +19,81 @@ public static class OperationalDataSeeder
     {
         logger.LogInformation("Starting operational data seeding...");
 
+        // 0. Cleanup existing operational data (Matches behavior of cancel_data.sql)
+        logger.LogInformation("Cleaning up existing operational data...");
+        
+        // Identify targeted demo users
+        var demoUserEmails = new List<string>();
+        for (int i = 1; i <= 2; i++) demoUserEmails.Add($"newcustomer{i}@ares.local");
+        for (int i = 1; i <= 4; i++) demoUserEmails.Add($"newdriver{i}@ares.local");
+        for (int i = 1; i <= 2; i++) demoUserEmails.Add($"newinspector{i}@ares.local");
+
+        var demoUsers = await context.Users
+            .Where(u => demoUserEmails.Contains(u.Email))
+            .ToListAsync();
+        var demoUserIds = demoUsers.Select(u => u.Id).ToList();
+
+        if (demoUserIds.Any())
+        {
+            // Cancel bookings instead of deleting them to maintain referential integrity
+            var bookingsToCancel = await context.Bookings
+                .Where(b => demoUserIds.Contains(b.UserId) || 
+                           (b.AssignedInspectorId != null && demoUserIds.Contains(b.AssignedInspectorId.Value)))
+                .ToListAsync();
+            
+            foreach (var b in bookingsToCancel)
+            {
+                b.Status = BookingStatus.Cancelled;
+                b.CancelledAt = DateTime.UtcNow;
+                b.CancellationReason = "System refresh for operational seeding";
+                b.AssignedInspectorId = null;
+                b.AssignedDriverProfileId = null;
+            }
+            await context.SaveChangesAsync();
+
+            // Delete dependencies for targeted users
+            var driverProfilesToCleanup = await context.DriverProfiles
+                .Where(dp => demoUserIds.Contains(dp.UserId))
+                .ToListAsync();
+            var driverProfileIds = driverProfilesToCleanup.Select(dp => dp.Id).ToList();
+
+            if (driverProfileIds.Any())
+            {
+                var workAreas = await context.DriverWorkAreas.Where(wa => driverProfileIds.Contains(wa.DriverProfileId)).ToListAsync();
+                context.DriverWorkAreas.RemoveRange(workAreas);
+                
+                var reviews = await context.DriverReviews.Where(r => driverProfileIds.Contains(r.DriverProfileId)).ToListAsync();
+                context.DriverReviews.RemoveRange(reviews);
+                
+                context.DriverProfiles.RemoveRange(driverProfilesToCleanup);
+            }
+
+            var inspectorsToCleanup = await context.Inspectors
+                .Where(i => demoUserIds.Contains(i.UserId))
+                .ToListAsync();
+            context.Inspectors.RemoveRange(inspectorsToCleanup);
+
+            var addresses = await context.UserAddresses
+                .Where(a => demoUserIds.Contains(a.UserId))
+                .ToListAsync();
+            context.UserAddresses.RemoveRange(addresses);
+
+            var notifications = await context.Notifications
+                .Where(n => demoUserIds.Contains(n.UserId))
+                .ToListAsync();
+            context.Notifications.RemoveRange(notifications);
+
+            await context.SaveChangesAsync();
+
+            // Delete users via UserManager
+            foreach (var user in demoUsers)
+            {
+                await userManager.DeleteAsync(user);
+            }
+            
+            logger.LogInformation("Operational cleanup completed.");
+        }
+
         var random = new Random(42); // Deterministic seed
 
         // 1. Create 2 fully verified Customers

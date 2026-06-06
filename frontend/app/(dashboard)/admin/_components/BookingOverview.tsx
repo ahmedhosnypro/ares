@@ -118,7 +118,7 @@ export default function BookingOverview() {
         }
       }
     },
-    [session, theme.palette.status]
+    [session, theme.palette.status, theme.palette.text.secondary]
   );
 
   useEffect(() => {

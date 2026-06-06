@@ -1,7 +1,5 @@
 "use client";
 
-// cspell:ignore refetches
-
 import { useState, memo, useCallback, useMemo, useEffect, type JSX } from "react";
 import {
   Box,

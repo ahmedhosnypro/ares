@@ -3,9 +3,8 @@
  * Creates and manages backend/.env file
  */
 
-import prompts from "prompts";
 import { logInfo, logSuccess, logWarn, logDebug } from "../lib/logger";
-import { fileExists, backupFile } from "../lib/utils";
+import { fileExists, backupFile, parseEnv, prompts } from "../lib/utils";
 import { generateJwtSecret } from "./secrets";
 
 export interface BackendEnvConfig {
@@ -49,6 +48,13 @@ export interface BackendEnvConfig {
   smtpPassword?: string;
   smtpFromEmail?: string;
   smtpFromName?: string;
+
+  // Paymob Payment Gateway
+  paymobApiKey: string;
+  paymobIntegrationId: string;
+  paymobIframeId: string;
+  paymobHmacSecret: string;
+  paymobBaseUrl: string;
 }
 
 /**
@@ -88,164 +94,210 @@ export function getDefaultBackendConfig(isDevcontainer = false): BackendEnvConfi
     // File Upload
     uploadPath: "wwwroot/uploads",
     maxUploadSizeMb: 10,
+
+    // Paymob Payment Gateway
+    paymobApiKey: "",
+    paymobIntegrationId: "",
+    paymobIframeId: "",
+    paymobHmacSecret: "",
+    paymobBaseUrl: "https://accept.paymob.com",
   };
 }
 
 /**
+ * Prompt user for a configuration value, offering choices if an existing value is present
+ */
+async function promptValue<T extends string | number | boolean>(
+  message: string,
+  defaultValue: T,
+  existingValue?: string,
+  type: "text" | "number" | "confirm" | "password" = "text",
+  allowEmpty = false
+): Promise<T> {
+  const isValueEmpty = existingValue === undefined || existingValue.trim() === "";
+
+  // If no existing value or (it's empty AND we don't explicitly allow empty), use standard prompt
+  if (isValueEmpty && !allowEmpty) {
+    const response = await prompts({
+      type,
+      name: "value",
+      message,
+      initial: defaultValue,
+    });
+    
+    return response.value as T;
+  }
+
+  // Handle case where it was in the record but actually undefined
+  const displayValue = existingValue === undefined || existingValue.trim() === "" ? "(Empty/None)" : existingValue;
+
+  // Three-way choice: Existing, Default, or New
+  const choiceResponse = await prompts({
+    type: "select",
+    name: "action",
+    message: message,
+    choices: [
+      { 
+        title: `Use Existing: ${displayValue}`, 
+        description: existingValue === String(defaultValue) ? "(Same as default)" : "",
+        value: "existing" 
+      },
+      { title: `Use Default:  ${String(defaultValue)}`, value: "default" },
+      { title: "Enter New Value...", value: "new" },
+    ],
+    initial: 0
+  });
+
+  if (choiceResponse.action === "existing") {
+    if (existingValue === undefined || existingValue.trim() === "") {
+      if (typeof defaultValue === "number") return 0 as unknown as T;
+      if (typeof defaultValue === "boolean") return false as unknown as T;
+      return "" as unknown as T;
+    }
+    if (typeof defaultValue === "number") return Number.parseInt(existingValue, 10) as unknown as T;
+    if (typeof defaultValue === "boolean") return (existingValue.toLowerCase() === "true") as unknown as T;
+    return existingValue as unknown as T;
+  }
+  
+  if (choiceResponse.action === "default") {
+    return defaultValue;
+  }
+
+  // Manual entry for new value
+  const newResponse = await prompts({
+    type,
+    name: "value",
+    message: `Enter new value for ${message.toLowerCase()}:`,
+    initial: defaultValue,
+  });
+
+  return newResponse.value as T;
+}
+
+/**
  * Prompt user for backend configuration (interactive mode)
- * ALWAYS asks for every single value - no silent defaults
  */
 export async function promptBackendConfig(
   defaults: BackendEnvConfig,
-  isDevcontainer = false
+  _isDevcontainer = false,
+  existingEnv: Record<string, string> = {}
 ): Promise<BackendEnvConfig> {
   logInfo("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   logInfo("Backend Configuration - Interactive Setup");
   logInfo("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   logInfo("");
-  if (isDevcontainer) {
-    logInfo("🐳 Detected: Running in devcontainer");
-    logInfo("   SQL Server host should be 'mssql' (not localhost)");
-  } else {
-    logInfo("💻 Detected: Running locally");
-    logInfo("   SQL Server host should be 'localhost'");
-  }
-  logInfo("");
-  logInfo("You will be asked for EVERY configuration value.");
-  logInfo("Press Enter to accept the default shown in [brackets]");
-  logInfo("");
 
-  const response = await prompts([
-    {
-      type: "text",
-      name: "dbHost",
-      message: "Database host",
-      initial: defaults.dbHost,
-    },
-    {
-      type: "number",
-      name: "dbPort",
-      message: "Database port (0 to skip)",
-      initial: defaults.dbPort,
-      min: 0,
-      max: 65535,
-    },
-    {
-      type: "text",
-      name: "dbName",
-      message: "Database name",
-      initial: defaults.dbName,
-    },
-    {
-      type: "confirm",
-      name: "dbIntegratedSecurity",
-      message: "Use Windows Authentication (Integrated Security)?",
-      initial: defaults.dbIntegratedSecurity,
-    },
-    {
-      type: (prev, values) => (values.dbIntegratedSecurity ? null : "text"),
-      name: "dbUser",
-      message: "Database user",
-      initial: defaults.dbUser,
-    },
-    {
-      type: (prev, values) => (values.dbIntegratedSecurity ? null : "password"),
-      name: "dbPassword",
-      message: "Database password",
-      initial: defaults.dbPassword,
-    },
-    {
-      type: "text",
-      name: "jwtSecret",
-      message: "JWT secret key (auto-generated, press Enter to use)",
-      initial: defaults.jwtSecret,
-    },
-    {
-      type: "text",
-      name: "jwtIssuer",
-      message: "JWT issuer (backend URL)",
-      initial: defaults.jwtIssuer,
-    },
-    {
-      type: "text",
-      name: "jwtAudience",
-      message: "JWT audience (frontend URL)",
-      initial: defaults.jwtAudience,
-    },
-    {
-      type: "number",
-      name: "jwtExpirationMinutes",
-      message: "JWT expiration (minutes)",
-      initial: defaults.jwtExpirationMinutes,
-    },
-    {
-      type: "text",
-      name: "corsOrigins",
-      message: "CORS allowed origins (comma-separated)",
-      initial: defaults.corsOrigins,
-    },
-    {
-      type: "select",
-      name: "logLevel",
-      message: "Logging level",
-      choices: [
-        { title: "Debug", value: "Debug" },
-        { title: "Information", value: "Information" },
-        { title: "Warning", value: "Warning" },
-        { title: "Error", value: "Error" },
-      ],
-      initial: 1, // Information
-    },
-    {
-      type: "confirm",
-      name: "seedDemoData",
-      message: "Seed demo data?",
-      initial: defaults.seedDemoData,
-    },
-    {
-      type: "confirm",
-      name: "useGoogleAuth",
-      message: "Configure Google Authentication?",
-      initial: false,
-    },
-    {
-      type: (prev) => (prev ? "text" : null),
-      name: "googleClientId",
-      message: "Google Client ID",
-      initial: defaults.googleClientId,
-    },
-    {
-      type: (prev, values) => (values.useGoogleAuth ? "password" : null),
-      name: "googleClientSecret",
-      message: "Google Client Secret",
-    },
-  ]);
+  // Helper to get existing value by key
+  const getExisting = (key: string) => existingEnv[key];
+  
+  // Robust connection string parsing
+  const connString = getExisting("ConnectionStrings__DefaultConnection") || "";
+  
+  // Extract Server part (host,port)
+  const serverMatch = connString.match(/Server=([^;]+)/);
+  const serverPart = serverMatch?.[1] || "";
+  const existingHost = serverPart.split(",")[0]?.trim() || undefined;
+  const existingPort = serverPart.includes(",") ? serverPart.split(",")[1]?.trim() : (serverPart ? "0" : undefined);
+  
+  // Extract Database
+  const existingDb = connString.match(/Database=([^;]+)/)?.[1]?.trim();
+  
+  // Extract Security
+  const existingIntegrated = connString.includes("Integrated Security=True");
+  
+  // Extract User/Password
+  const existingUser = connString.match(/User=([^;]+)/)?.[1]?.trim();
+  const existingPass = connString.match(/Password=([^;]+)/)?.[1]?.trim();
 
-  // Handle user cancellation (Ctrl+C)
-  if (Object.keys(response).length === 0) {
-    logWarn("Configuration cancelled by user");
-    process.exit(0);
+  const config: BackendEnvConfig = { ...defaults };
+
+  logInfo("Database Configuration:");
+  config.dbHost = await promptValue("Database host", defaults.dbHost, existingHost);
+  
+  // For port, "0" is a valid meaningful value (omit port)
+  config.dbPort = await promptValue("Database port", defaults.dbPort, existingPort, "number", true);
+  
+  config.dbName = await promptValue("Database name", defaults.dbName, existingDb);
+
+  config.dbIntegratedSecurity = await promptValue(
+    "Use Windows Authentication?",
+    defaults.dbIntegratedSecurity,
+    existingIntegrated ? "true" : "false",
+    "confirm",
+    true
+  );
+
+  if (!config.dbIntegratedSecurity) {
+    config.dbUser = await promptValue("Database user", defaults.dbUser, existingUser);
+    config.dbPassword = await promptValue("Database password", defaults.dbPassword, existingPass, "password");
   }
 
-  const config: BackendEnvConfig = {
-    ...defaults,
-    // Sanitize dbHost to ensure single backslashes for named instances
-    dbHost: (response.dbHost as string).replace(/\\\\/g, "\\"),
-    dbPort: response.dbPort as number,
-    dbName: response.dbName as string,
-    dbIntegratedSecurity: response.dbIntegratedSecurity as boolean,
-    dbUser: response.dbUser as string,
-    dbPassword: response.dbPassword as string,
-    jwtSecret: response.jwtSecret as string,
-    jwtIssuer: response.jwtIssuer as string,
-    jwtAudience: response.jwtAudience as string,
-    jwtExpirationMinutes: response.jwtExpirationMinutes as number,
-    corsOrigins: response.corsOrigins as string,
-    logLevel: response.logLevel as string,
-    seedDemoData: response.seedDemoData as boolean,
-    googleClientId: (response.googleClientId as string) || defaults.googleClientId,
-    googleClientSecret: (response.googleClientSecret as string) || defaults.googleClientSecret,
-  };
+  logInfo("");
+  logInfo("JWT Configuration:");
+  config.jwtSecret = await promptValue("JWT secret key", defaults.jwtSecret, getExisting("Jwt__SecretKey"));
+  config.jwtIssuer = await promptValue("JWT issuer (backend URL)", defaults.jwtIssuer, getExisting("Jwt__Issuer"));
+  config.jwtAudience = await promptValue("JWT audience (frontend URL)", defaults.jwtAudience, getExisting("Jwt__Audience"));
+  config.jwtExpirationMinutes = await promptValue(
+    "JWT expiration (minutes)",
+    defaults.jwtExpirationMinutes,
+    getExisting("Jwt__ExpirationMinutes"),
+    "number"
+  );
+
+  logInfo("");
+  config.corsOrigins = await promptValue("CORS allowed origins", defaults.corsOrigins, getExisting("Cors__AllowedOrigins"));
+
+  logInfo("");
+  const logLevelResp = await prompts({
+    type: "select",
+    name: "value",
+    message: "Logging level",
+    choices: [
+      { title: "Debug", value: "Debug" },
+      { title: "Information", value: "Information" },
+      { title: "Warning", value: "Warning" },
+      { title: "Error", value: "Error" },
+    ],
+    initial: defaults.logLevel === "Debug" ? 0 : 1,
+  });
+
+  config.logLevel = (logLevelResp.value as string) || defaults.logLevel;
+
+  config.seedDemoData = await promptValue("Seed demo data?", defaults.seedDemoData, getExisting("SEED_DEMO_DATA"), "confirm", true);
+
+  logInfo("");
+  logInfo("Google OAuth:");
+  config.googleClientId = await promptValue("Google Client ID", defaults.googleClientId, getExisting("Google__ClientId"), "text", true);
+  config.googleClientSecret = await promptValue(
+    "Google Client Secret",
+    defaults.googleClientSecret,
+    getExisting("GOOGLE_CLIENT_SECRET"),
+    "password",
+    true
+  );
+
+  logInfo("");
+  logInfo("Paymob Configuration:");
+  config.paymobApiKey = await promptValue("Paymob API Key", defaults.paymobApiKey, getExisting("Paymob__ApiKey"), "text", true);
+  config.paymobIntegrationId = await promptValue("Paymob Integration ID", defaults.paymobIntegrationId, getExisting("Paymob__IntegrationId"), "text", true);
+  config.paymobIframeId = await promptValue("Paymob iFrame ID", defaults.paymobIframeId, getExisting("Paymob__IframeId"), "text", true);
+  config.paymobHmacSecret = await promptValue("Paymob HMAC Secret", defaults.paymobHmacSecret, getExisting("Paymob__HmacSecret"), "password", true);
+
+  logInfo("");
+  logInfo("File Upload:");
+  config.uploadPath = await promptValue("Upload path", defaults.uploadPath, getExisting("FileUpload__UploadPath"));
+  config.maxUploadSizeMb = await promptValue("Max file size (MB)", defaults.maxUploadSizeMb, getExisting("FileUpload__MaxFileSizeMB"), "number");
+
+  logInfo("");
+  logInfo("Email (SMTP) Settings:");
+  config.smtpHost = await promptValue("SMTP Host", defaults.smtpHost || "", getExisting("Email__SmtpHost"), "text", true);
+  if (config.smtpHost) {
+    config.smtpPort = await promptValue("SMTP Port", defaults.smtpPort || 587, getExisting("Email__SmtpPort"), "number", true);
+    config.smtpUser = await promptValue("SMTP Username", defaults.smtpUser || "", getExisting("Email__SmtpUser"), "text", true);
+    config.smtpPassword = await promptValue("SMTP Password", defaults.smtpPassword || "", getExisting("Email__SmtpPassword"), "password", true);
+    config.smtpFromEmail = await promptValue("From Email", defaults.smtpFromEmail || "", getExisting("Email__FromEmail"), "text", true);
+    config.smtpFromName = await promptValue("From Name", defaults.smtpFromName || "Ares Car Rental", getExisting("Email__FromName"), "text", true);
+  }
 
   return config;
 }
@@ -302,7 +354,7 @@ ConnectionStrings__DefaultConnection=${connectionString}
 Jwt__SecretKey=${config.jwtSecret}
 Jwt__Issuer=${config.jwtIssuer}
 Jwt__Audience=${config.jwtAudience}
-Jwt__ExpirationMinutes=${String(config.jwtExpirationMinutes)}
+Jwt__ExpirationMinutes=${config.jwtExpirationMinutes.toString()}
 
 # ============================================
 # Google OAuth Configuration
@@ -332,26 +384,38 @@ ASPNETCORE_URLS=http://localhost:5000
 # ============================================
 # Seeding Configuration
 # ============================================
-SEED_DEMO_DATA=${String(config.seedDemoData)}
+SEED_DEMO_DATA=${config.seedDemoData.toString()}
 
 # ============================================
 # File Upload Configuration
 # ============================================
 FileUpload__UploadPath=${config.uploadPath}
-FileUpload__MaxFileSizeMB=${String(config.maxUploadSizeMb)}
+FileUpload__MaxFileSizeMB=${config.maxUploadSizeMb.toString()}
 
 # ============================================
 # Email Configuration (Optional)
 # ============================================
 ${config.smtpHost ? `Email__SmtpHost=${config.smtpHost}` : "# Email__SmtpHost=smtp.example.com"}
-${config.smtpPort ? `Email__SmtpPort=${String(config.smtpPort)}` : "# Email__SmtpPort=587"}
+${config.smtpPort ? `Email__SmtpPort=${config.smtpPort.toString()}` : "# Email__SmtpPort=587"}
 ${config.smtpUser ? `Email__SmtpUser=${config.smtpUser}` : "# Email__SmtpUser=user@example.com"}
 ${config.smtpPassword ? `Email__SmtpPassword=${config.smtpPassword}` : "# Email__SmtpPassword=password"}
 ${config.smtpFromEmail ? `Email__FromEmail=${config.smtpFromEmail}` : "# Email__FromEmail=noreply@ares.com"}
 ${config.smtpFromName ? `Email__FromName=${config.smtpFromName}` : "# Email__FromName=Ares Car Rental"}
+
+
+# ============================================
+# Paymob Payment Gateway (Sandbox)
+# Sign up at: https://accept.paymob.com/portal2/en/register
+# Dashboard: https://accept.paymob.com/portal2/en/login
+# Get credentials from: Settings → Account Info & Payment Integrations
+# ============================================
+Paymob__ApiKey=${config.paymobApiKey}
+Paymob__IntegrationId=${config.paymobIntegrationId}
+Paymob__IframeId=${config.paymobIframeId}
+Paymob__HmacSecret=${config.paymobHmacSecret}
+Paymob__BaseUrl=${config.paymobBaseUrl}
 `;
 }
-
 
 /**
  * Setup backend environment file
@@ -359,29 +423,45 @@ ${config.smtpFromName ? `Email__FromName=${config.smtpFromName}` : "# Email__Fro
 export async function setupBackendEnv(quick = false, isDevcontainer = false): Promise<BackendEnvConfig> {
   const envPath = "backend/.env";
   const envExamplePath = "backend/.env.example";
+  let existingEnv: Record<string, string> = {};
+  let mode: "create" | "replace" | "upgrade" = "create";
 
   // Check if .env already exists
   if (await fileExists(envPath)) {
     logWarn(`Backend .env file already exists: ${envPath}`);
 
     if (!quick) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const { shouldOverwrite } = await prompts({
-        type: "confirm",
-        name: "shouldOverwrite",
-        message: "Overwrite existing .env file?",
-        initial: false,
+      const response = await prompts({
+        type: "select",
+        name: "choice",
+        message: "Existing .env file detected. What would you like to do?",
+        choices: [
+          { title: "Upgrade/Update (Preserve existing keys, choose values for project keys)", value: "upgrade" },
+          { title: "Replace Entirely (Start fresh from defaults)", value: "replace" },
+          { title: "Keep Existing (Skip configuration)", value: "keep" },
+        ],
       });
 
-      if (!shouldOverwrite) {
+      if (response.choice === "keep") {
         logInfo("Keeping existing .env file");
-        // Read and parse existing config (simplified - just return defaults)
-        return getDefaultBackendConfig(isDevcontainer);
+        const content = await Bun.file(envPath).text();
+        return {
+          ...getDefaultBackendConfig(isDevcontainer),
+          ...parseEnv(content),
+        } as unknown as BackendEnvConfig;
       }
 
-      // Backup existing file
-      await backupFile(envPath);
-      logInfo("Backed up existing .env file");
+      if (response.choice === "upgrade") {
+        mode = "upgrade";
+        const content = await Bun.file(envPath).text();
+        existingEnv = parseEnv(content);
+        await backupFile(envPath);
+        logInfo("Existing .env backed up and loaded for upgrade");
+      } else {
+        mode = "replace";
+        await backupFile(envPath);
+        logInfo("Existing .env backed up; starting fresh");
+      }
     } else {
       // In quick mode, backup and overwrite
       await backupFile(envPath);
@@ -389,19 +469,61 @@ export async function setupBackendEnv(quick = false, isDevcontainer = false): Pr
     }
   }
 
-  // Get configuration - ALWAYS prompt in non-quick mode
+  // Get configuration
   const defaults = getDefaultBackendConfig(isDevcontainer);
-
-  // In quick mode, use defaults silently
-  // In interactive mode, ALWAYS ask user for every value
-  const config = quick ? defaults : await promptBackendConfig(defaults, isDevcontainer);
+  const config =
+    quick || mode === "replace" || mode === "create"
+      ? await promptBackendConfig(defaults, isDevcontainer)
+      : await promptBackendConfig(defaults, isDevcontainer, existingEnv);
 
   // Generate .env content
-  const envContent = generateBackendEnvContent(config);
+  let envContent = generateBackendEnvContent(config);
+
+  // If upgrading, append any unknown keys from existing env
+  if (mode === "upgrade") {
+    const projectKeys = new Set([
+      "ConnectionStrings__DefaultConnection",
+      "Jwt__SecretKey",
+      "Jwt__Issuer",
+      "Jwt__Audience",
+      "Jwt__ExpirationMinutes",
+      "Google__ClientId",
+      "GOOGLE_CLIENT_SECRET",
+      "Cors__AllowedOrigins",
+      "Logging__LogLevel__Default",
+      "ASPNETCORE_ENVIRONMENT",
+      "ASPNETCORE_URLS",
+      "SEED_DEMO_DATA",
+      "FileUpload__UploadPath",
+      "FileUpload__MaxFileSizeMB",
+      "Email__SmtpHost",
+      "Email__SmtpPort",
+      "Email__SmtpUser",
+      "Email__SmtpPassword",
+      "Email__FromEmail",
+      "Email__FromName",
+      "Paymob__ApiKey",
+      "Paymob__IntegrationId",
+      "Paymob__IframeId",
+      "Paymob__HmacSecret",
+      "Paymob__BaseUrl",
+    ]);
+
+    let customKeysContent = "";
+    for (const [key, value] of Object.entries(existingEnv)) {
+      if (!projectKeys.has(key)) {
+        customKeysContent += `${key}=${value}\n`;
+      }
+    }
+
+    if (customKeysContent) {
+      envContent += `\n# ============================================\n# Custom/Preserved Configuration\n# ============================================\n${customKeysContent}`;
+    }
+  }
 
   // Write .env file
   await Bun.write(envPath, envContent);
-  logSuccess(`Backend .env file created: ${envPath}`);
+  logSuccess(`Backend .env file ${mode === "upgrade" ? "updated" : "created"}: ${envPath}`);
 
   // Set file permissions (Unix-like systems only)
   try {
@@ -414,11 +536,9 @@ export async function setupBackendEnv(quick = false, isDevcontainer = false): Pr
   }
 
   // Only update .env.example if it doesn't exist
-  // This prevents unnecessary changes to the template file
   if (!(await fileExists(envExamplePath))) {
     logInfo("Creating .env.example template...");
     const exampleConfig = { ...config };
-    // Replace sensitive values with placeholders
     exampleConfig.dbPassword = "YourStrongPassword123!";
     exampleConfig.jwtSecret = "your-super-secret-jwt-key-min-64-characters-long-change-this";
     if (exampleConfig.smtpPassword) {

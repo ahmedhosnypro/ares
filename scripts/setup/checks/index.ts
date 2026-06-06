@@ -28,6 +28,9 @@ export { checkSqlServer, getSqlServerInstallInstructions, showSqlServerStatus } 
 export type { PortInfo } from "./ports";
 export { checkPort, checkRequiredPorts, killProcessOnPort, showPortStatus } from "./ports";
 
+export type { NgrokInfo } from "./ngrok";
+export { checkNgrok, installNgrok, getNgrokInstallInstructions, showNgrokStatus } from "./ngrok";
+
 export interface SystemCheckResult {
   allPassed: boolean;
   os: {
@@ -49,6 +52,10 @@ export interface SystemCheckResult {
   sqlServer: {
     ready: boolean;
     info: import("./sqlserver").SqlServerInfo;
+  };
+  ngrok: {
+    installed: boolean;
+    info: import("./ngrok").NgrokInfo;
   };
   ports: {
     ready: boolean;

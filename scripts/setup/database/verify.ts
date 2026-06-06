@@ -22,7 +22,6 @@ export interface VerificationResult {
  * Get ALL table counts in a single SQL round-trip using dynamic SQL + STRING_AGG.
  * Returns pipe-delimited "TableName:Count" pairs from one query instead of N queries.
  */
-// cspell:ignore NVARCHAR executesql
 async function getAllTableCounts(connectionString: string): Promise<TableCount[]> {
   try {
     // Build dynamic SQL that counts every table in one shot

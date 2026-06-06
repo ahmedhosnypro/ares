@@ -85,29 +85,29 @@ export default function DashboardStats() {
         setSummaryData([
           {
             title: "Total Bookings",
-            value: "1,284",
-            change: "+12.5%",
+            value: "0",
+            change: "0%",
             isUp: true,
             icon: <EventAvailableIcon />,
             color: "primary",
           },
           {
             title: "Active Vehicles",
-            value: "342",
-            change: "+4.2%",
+            value: "0",
+            change: "0%",
             isUp: true,
             icon: <DirectionsCarIcon />,
             color: "success",
           },
           {
             title: "Total Revenue",
-            value: "$45,231",
-            change: "+18.2%",
+            value: "$0",
+            change: "0%",
             isUp: true,
             icon: <AttachMoneyIcon />,
             color: "warning",
           },
-          { title: "Total Users", value: "892", change: "-2.1%", isUp: false, icon: <PeopleAltIcon />, color: "error" },
+          { title: "Total Users", value: "0", change: "0%", isUp: false, icon: <PeopleAltIcon />, color: "error" },
         ]);
       } finally {
         setLoading(false);

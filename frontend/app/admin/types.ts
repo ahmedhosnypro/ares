@@ -27,9 +27,8 @@ export interface UpcomingBooking {
 }
 
 export interface ActivityItem {
-  id: string;
-  action: string;
-  user: string;
-  timestamp: string;
-  type: "booking" | "user" | "vehicle" | "payment";
+  type: string;
+  message: string;
+  createdAt: string;
+  icon: string;
 }
