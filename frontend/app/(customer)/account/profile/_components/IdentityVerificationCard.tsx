@@ -112,11 +112,11 @@ export default function IdentityVerificationCard({
   }, [isControlled, onCloseModal]);
 
   const status = (verification?.status ?? "NotVerified").toLowerCase();
-  const canSubmit = status === "notverified" || status === "rejected";
+  const canSubmit = status === "notVerified".toLowerCase() || status === "rejected";
 
   return (
     <Box sx={{ p: 3 }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifycontent: "space-between", mb: 1 }}>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
         <Typography variant="subtitle1" color="text.primary" sx={{ fontWeight: 700 }}>
           Identity Verification
         </Typography>

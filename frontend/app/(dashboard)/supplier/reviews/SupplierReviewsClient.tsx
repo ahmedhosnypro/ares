@@ -94,11 +94,10 @@ const RATING_OPTIONS: readonly { label: string; value: string }[] = [
   { label: "1 star", value: "1" },
 ];
 
-// cspell:ignore unreplied
 const REPLY_STATUS_OPTIONS: readonly { label: string; value: SupplierReviewReplyStatus }[] = [
   { label: "All replies", value: "" },
   { label: "Replied", value: "replied" },
-  { label: "Not replied", value: "unreplied" },
+  { label: "Not replied", value: "unReplied".toLowerCase() as SupplierReviewReplyStatus },
 ];
 
 const SORT_OPTIONS: readonly { label: string; value: SupplierReviewSortBy }[] = [

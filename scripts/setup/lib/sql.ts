@@ -36,7 +36,7 @@ export function parseConnectionString(connString: string): ConnectionInfo | null
 }
 
 export function buildConnectionString(info: ConnectionInfo): string {
-  return `Server=${info.server},${info.port};Database=${info.database};User=${info.user};Password=${info.password};TrustServerCertificate=True;Encrypt=false`;
+  return `Server=${info.server},${info.port};Database=${info.database};User=${info.user};Password=${info.password};TrustServerCertificate=True;Encrypt=false;Connect Timeout=5`;
 }
 
 export async function testSqlConnection(

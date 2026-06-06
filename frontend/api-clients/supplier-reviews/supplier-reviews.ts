@@ -59,8 +59,8 @@ export interface PagedResult<T> {
   totalPages: number;
 }
 
-// cspell:ignore unreplied
-export type SupplierReviewReplyStatus = "" | "replied" | "unreplied";
+export type SupplierReviewReplyStatus = "" | "replied" | "unreplied"; // using lowercase literals for backend compatibility
+
 export type SupplierReviewSortBy = "newest" | "oldest" | "highest" | "lowest";
 
 export interface SupplierReviewListQuery {

@@ -1,14 +1,47 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { Card, CardContent, Typography, Box, Badge, LinearProgress, Avatar } from "@mui/material";
 import SettingsInputAntennaIcon from "@mui/icons-material/SettingsInputAntenna";
 import PhonelinkRingIcon from "@mui/icons-material/PhonelinkRing";
+import { apiFetchJson } from "@/utils/api-client";
+import { logger } from "@/utils/logger";
+
+interface LiveTrackingData {
+  readonly totalActiveRentals: number;
+  readonly connectedPhones: number;
+}
 
 export default function LiveTrackingWidget() {
-  // Mock data for currently connected mobile devices
-  const totalActiveRentals = 45;
-  const connectedPhones = 42;
-  const connectionHealth = (connectedPhones / totalActiveRentals) * 100;
+  const { data: session, status } = useSession();
+  const [data, setData] = useState<LiveTrackingData>({ totalActiveRentals: 0, connectedPhones: 0 });
+
+  useEffect(() => {
+    if (status !== "authenticated" || !session.accessToken) return;
+
+    const fetchLiveTracking = async () => {
+      try {
+        const result = await apiFetchJson<LiveTrackingData>("api/dashboard/live-tracking", {
+          accessToken: session.accessToken,
+        });
+        setData(result);
+      } catch (error) {
+        logger.error("Failed to fetch live tracking data", error);
+      }
+    };
+
+    void fetchLiveTracking();
+    const interval = setInterval(() => {
+      void fetchLiveTracking();
+    }, 30000); // refresh every 30 seconds
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [session?.accessToken, status]);
+
+  const connectionHealth = data.totalActiveRentals > 0 ? (data.connectedPhones / data.totalActiveRentals) * 100 : 0;
 
   return (
     <Card
@@ -42,7 +75,7 @@ export default function LiveTrackingWidget() {
           </Avatar>
           <Box>
             <Typography variant="h4" sx={{ fontWeight: 900 }}>
-              {connectedPhones} / {totalActiveRentals}
+              {data.connectedPhones} / {data.totalActiveRentals}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
               Active Phones Connected

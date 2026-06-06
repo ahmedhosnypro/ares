@@ -5,7 +5,7 @@
 
 import { logDebug, logInfo, logWarn, logError } from "../lib/logger";
 import { testSqlConnection } from "../lib/sql";
-import { askYesNo } from "../lib/utils";
+import { askYesNo, checkTcpPort } from "../lib/utils";
 
 export interface SqlServerInfo {
   accessible: boolean;
@@ -22,7 +22,19 @@ export async function checkSqlServer(
 ): Promise<SqlServerInfo> {
   logDebug(`Checking SQL Server at ${host}:${port.toString()}...`);
 
-  const connectionString = `Server=${host},${port.toString()};Database=master;User=${user};Password=${password};TrustServerCertificate=True;Encrypt=false`;
+  // Fast TCP check first
+  const isPortOpen = await checkTcpPort(host, port);
+  if (!isPortOpen) {
+    logDebug(`SQL Server port ${port.toString()} is closed at ${host}`);
+    return {
+      accessible: false,
+      host,
+      port,
+    };
+  }
+
+  // Full connection test only if port is open
+  const connectionString = `Server=${host},${port.toString()};Database=master;User=${user};Password=${password};TrustServerCertificate=True;Encrypt=false;Connect Timeout=5`;
 
   const result = await testSqlConnection(connectionString);
 

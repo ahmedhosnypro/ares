@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import {
   Alert,
@@ -47,7 +47,7 @@ export default function DriverTripsClient() {
   const [error, setError] = useState("");
   const [tabIndex, setTabIndex] = useState(0);
 
-  const fetchAssignments = async () => {
+  const fetchAssignments = useCallback(async () => {
     if (!session?.accessToken) return;
     try {
       const res = await fetch(toApiUrl("/api/driver/assignments"), {
@@ -66,11 +66,11 @@ export default function DriverTripsClient() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [session?.accessToken]);
 
   useEffect(() => {
-    void fetchAssignments();
-  }, [session]);
+    fetchAssignments().catch(logger.error);
+  }, [fetchAssignments]);
 
   const assignedTrips = useMemo(
     () => assignments.filter(a => ["Confirmed", "Approved", "ReadyForDelivery"].includes(a.status)),

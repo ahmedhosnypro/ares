@@ -74,9 +74,16 @@ words:
   - colour
   - fedcm
   - Initialise
-  - notverified
-  - smol
   - unionpay
   - Farag
   - Fathy
   - paymob
+  - paymentPending
+  - notVerified
+  - unReplied
+  - refetches
+  - onepassword
+  - fuser
+  - tuln
+  - executesql
+  - NVARCHAR

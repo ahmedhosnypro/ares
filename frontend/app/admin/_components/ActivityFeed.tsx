@@ -20,11 +20,10 @@ const getActivityIcon = (type: string) => {
 };
 
 interface Activity {
-  id: string | number;
   type: string;
-  action: string;
-  user: string;
-  timestamp: string | Date;
+  message: string;
+  createdAt: string;
+  icon: string;
 }
 
 export default function ActivityFeed({ activities }: Readonly<{ activities: readonly Activity[] }>) {
@@ -46,25 +45,19 @@ export default function ActivityFeed({ activities }: Readonly<{ activities: read
           Recent Activity
         </Typography>
         <List sx={{ maxHeight: 400, overflow: "auto" }}>
-          {activities.map(activity => (
-            <ListItem key={activity.id} divider>
+          {activities.map((activity, index) => (
+            <ListItem key={`${activity.createdAt}-${index}`} divider>
               <ListItemIcon>
                 <Avatar sx={{ bgcolor: "primary.light", color: "primary.main" }}>
-                  {getActivityIcon(activity.type)}
+                  {getActivityIcon(activity.icon)}
                 </Avatar>
               </ListItemIcon>
               <ListItemText
-                primary={activity.action}
+                primary={activity.message}
                 secondary={
                   <Box component="span" sx={{ display: "flex", gap: 1, mt: 0.5 }}>
                     <Typography variant="caption" color="text.secondary">
-                      by {activity.user}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      •
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {new Date(activity.timestamp).toLocaleString()}
+                      {new Date(activity.createdAt).toLocaleString()}
                     </Typography>
                   </Box>
                 }

@@ -1,5 +1,4 @@
 import { responsiveFontSizes, createTheme, type PaletteMode, type PaletteOptions } from "@mui/material/styles";
-// cspell:ignore onepassword
 
 // Extend the Palette interface to include custom colors
 declare module "@mui/material/styles" {

@@ -209,6 +209,7 @@ scripts/setup/
 5. Check Bun version (≥1.0)
 6. Test SQL Server connectivity
 7. Check port availability (5000, 3000, 1433)
+8. Check for **ngrok** installation
 
 **Output Example:**
 
@@ -225,10 +226,15 @@ scripts/setup/
 ✔ All system checks passed!
 ```
 
-### Phase 2: Configuration
+### Phase 2: Backend Preparation
+
+1. Stop any running backend processes
+2. Restore NuGet packages for all backend projects (`dotnet restore`)
+
+### Phase 3: Configuration
 
 1. Generate secure JWT and NextAuth secrets
-2. Prompt for backend configuration (database, CORS, logging, etc.)
+2. Prompt for backend configuration (database, CORS, logging, Paymob, etc.)
 3. Generate `backend/.env` file
 4. Prompt for frontend configuration (API URL, NextAuth, etc.)
 5. Generate `frontend/.env.local` file
@@ -249,7 +255,7 @@ scripts/setup/
 ? Seed demo data: Yes
 ```
 
-### Phase 3: Database Setup
+### Phase 4: Database Setup
 
 1. Test database connection with retries
 2. Run EF Core migrations
@@ -269,9 +275,9 @@ scripts/setup/
 ✔ Found 10 users, 25 vehicles, 5 locations
 ```
 
-### Phase 4: Backend Setup
+### Phase 5: Backend Setup
 
-1. Build backend project
+1. Build backend project (`dotnet build --no-restore`)
 2. Start backend server
 3. Wait for server to be ready
 4. Test health endpoints
@@ -289,9 +295,9 @@ scripts/setup/
 ✔ Backend is healthy and accessible
 ```
 
-### Phase 5: Frontend Setup
+### Phase 6: Frontend Setup
 
-1. Install frontend dependencies
+1. Install frontend dependencies (`bun install`)
 2. Start frontend dev server
 3. Wait for server to be ready
 4. Test health endpoints
@@ -309,9 +315,9 @@ scripts/setup/
 ✔ Frontend is healthy and accessible
 ```
 
-### Phase 6: Completion
+### Phase 7: Completion
 
-Display final summary and next steps.
+Display final summary and next steps (including **Paymob** instructions).
 
 **Output Example:**
 

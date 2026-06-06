@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import {
   Alert,
@@ -51,7 +51,7 @@ export default function DriverRequestsClient() {
   const [error, setError] = useState("");
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
 
-  const fetchRequests = async () => {
+  const fetchRequests = useCallback(async () => {
     if (!session?.accessToken) return;
     try {
       const res = await fetch(toApiUrl("/api/driver/requests/available"), {
@@ -70,11 +70,11 @@ export default function DriverRequestsClient() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [session?.accessToken]);
 
   useEffect(() => {
-    void fetchRequests();
-  }, [session]);
+    fetchRequests().catch(logger.error);
+  }, [fetchRequests]);
 
   const handleAccept = async (id: string) => {
     if (!session?.accessToken) return;

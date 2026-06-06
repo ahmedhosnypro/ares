@@ -236,4 +236,121 @@ public class DashboardService : IDashboardService
             .ToList()
             .AsReadOnly();
     }
+
+    public async Task<IReadOnlyList<RecentBookingDto>> GetRecentBookingsAsync(Guid? supplierId, int limit = 5, CancellationToken cancellationToken = default)
+    {
+        var query = _context.Bookings
+            .Include(b => b.User)
+            .Include(b => b.Vehicle)
+            .AsQueryable();
+
+        if (supplierId.HasValue)
+        {
+            query = query.Where(b => b.Vehicle != null && b.Vehicle.UserId == supplierId.Value);
+        }
+
+        var recentBookings = await query
+            .OrderByDescending(b => b.CreatedAt)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+
+        return recentBookings.Select(b => new RecentBookingDto(
+            Id: b.BookingNumber ?? b.Id.ToString()[..8].ToUpperInvariant(),
+            Customer: b.User != null ? $"{b.User.FirstName} {b.User.LastName}".Trim() : "Unknown",
+            Car: b.Vehicle != null ? $"{b.Vehicle.Make} {b.Vehicle.Model}".Trim() : "Unknown",
+            Date: b.CreatedAt.ToString("MMM dd, yyyy"),
+            Status: b.Status.ToString(),
+            Amount: b.TotalPrice ?? 0
+        )).ToList().AsReadOnly();
+    }
+
+    public async Task<IReadOnlyList<UpcomingBookingDto>> GetUpcomingBookingsAsync(Guid? supplierId, int days = 7, CancellationToken cancellationToken = default)
+    {
+        var query = _context.Bookings
+            .Include(b => b.User)
+            .Include(b => b.Vehicle)
+            .Where(b => b.PickupDate >= DateTime.UtcNow && b.PickupDate <= DateTime.UtcNow.AddDays(days) && b.Status == BookingStatus.Confirmed);
+
+        if (supplierId.HasValue)
+        {
+            query = query.Where(b => b.Vehicle != null && b.Vehicle.UserId == supplierId.Value);
+        }
+
+        var upcomingBookings = await query
+            .OrderBy(b => b.PickupDate)
+            .ToListAsync(cancellationToken);
+
+        return upcomingBookings.Select(b => new UpcomingBookingDto(
+            Id: b.BookingNumber ?? b.Id.ToString()[..8].ToUpperInvariant(),
+            Customer: b.User != null ? $"{b.User.FirstName} {b.User.LastName}".Trim() : "Unknown",
+            Car: b.Vehicle != null ? $"{b.Vehicle.Make} {b.Vehicle.Model}".Trim() : "Unknown",
+            PickupDate: b.PickupDate?.ToString("MMM dd") ?? "N/A",
+            ReturnDate: b.ReturnDate?.ToString("MMM dd") ?? "N/A"
+        )).ToList().AsReadOnly();
+    }
+
+    public async Task<IReadOnlyList<RevenueDataPointDto>> GetRevenueWeekAsync(Guid? supplierId, CancellationToken cancellationToken = default)
+    {
+        var startDate = DateTime.UtcNow.Date.AddDays(-6);
+        
+        var query = _context.Bookings
+            .Where(b => b.CreatedAt >= startDate && (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Completed));
+
+        if (supplierId.HasValue)
+        {
+            query = query.Where(b => b.Vehicle != null && b.Vehicle.UserId == supplierId.Value);
+        }
+
+        var bookings = await query.ToListAsync(cancellationToken);
+
+        var grouped = bookings
+            .GroupBy(b => b.CreatedAt.Date)
+            .ToDictionary(g => g.Key, g => g.Sum(b => b.TotalPrice ?? 0));
+
+        var result = new List<RevenueDataPointDto>();
+        for (int i = 0; i < 7; i++)
+        {
+            var date = startDate.AddDays(i);
+            var revenue = grouped.ContainsKey(date) ? grouped[date] : 0;
+            result.Add(new RevenueDataPointDto(date.ToString("MMM dd"), revenue));
+        }
+
+        return result.AsReadOnly();
+    }
+
+    public async Task<LiveTrackingDto> GetLiveTrackingAsync(Guid? supplierId, CancellationToken cancellationToken = default)
+    {
+        var query = _context.Bookings.AsQueryable();
+
+        if (supplierId.HasValue)
+        {
+            query = query.Where(b => b.Vehicle != null && b.Vehicle.UserId == supplierId.Value);
+        }
+
+        var totalActiveRentals = await query.CountAsync(b => b.Status == BookingStatus.Active, cancellationToken);
+        
+        // Mock the connected phones based on active rentals for now
+        var connectedPhones = (int)Math.Round(totalActiveRentals * 0.9);
+
+        return new LiveTrackingDto(TotalActiveRentals: totalActiveRentals, ConnectedPhones: connectedPhones);
+    }
+
+    public Task<SystemStatusDto> GetSystemStatusAsync(CancellationToken cancellationToken = default)
+    {
+        // Mock system metrics for the dashboard from backend side
+        var metrics = new List<SystemMetricDto>
+        {
+            new SystemMetricDto("Server CPU Load", "32%", 32, "primary"),
+            new SystemMetricDto("Memory Usage", "68%", 68, "warning"),
+            new SystemMetricDto("Storage Capacity", "45%", 45, "success")
+        };
+
+        var status = new SystemStatusDto(
+            IsOperational: true,
+            Message: "No incidents reported in the last 24 hours.",
+            Metrics: metrics.AsReadOnly()
+        );
+
+        return Task.FromResult(status);
+    }
 }
