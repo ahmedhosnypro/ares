@@ -52,7 +52,8 @@ export default function PaymentClient({ booking, accessToken }: PaymentClientPro
   const router = useRouter();
   const [holdSecondsLeft, setHoldSecondsLeft] = useState<number | null>(null);
   const [holdExpired, setHoldExpired] = useState(false);
-  const [conflictError, setConflictError] = useState<string | null>(null);
+  const [errorStatus, setErrorStatus] = useState<number | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Initialize the vehicle hold on page mount
@@ -73,10 +74,12 @@ export default function PaymentClient({ booking, accessToken }: PaymentClientPro
       } catch (err) {
         if (!active) return;
         logger.error("Failed to begin payment hold", err);
-        if (err instanceof CheckoutError && err.status === 409) {
-          setConflictError(err.message || "This vehicle has just been reserved by another customer.");
+        if (err instanceof CheckoutError) {
+          setErrorStatus(err.status);
+          setErrorMessage(err.message);
         } else {
-          setConflictError("An unexpected error occurred while placing the reservation hold.");
+          setErrorStatus(500);
+          setErrorMessage("An unexpected error occurred while placing the reservation hold.");
         }
       } finally {
         if (active) setLoading(false);
@@ -91,7 +94,7 @@ export default function PaymentClient({ booking, accessToken }: PaymentClientPro
 
   // Handle countdown timer ticking
   useEffect(() => {
-    if (holdSecondsLeft === null || holdExpired || conflictError) return;
+    if (holdSecondsLeft === null || holdExpired || errorStatus) return;
 
     const interval = setInterval(() => {
       setHoldSecondsLeft(prev => {
@@ -106,7 +109,7 @@ export default function PaymentClient({ booking, accessToken }: PaymentClientPro
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [holdSecondsLeft, holdExpired, conflictError]);
+  }, [holdSecondsLeft, holdExpired, errorStatus]);
 
   const formatTime = (seconds: number | null) => {
     if (seconds === null) return "00:00";
@@ -123,8 +126,11 @@ export default function PaymentClient({ booking, accessToken }: PaymentClientPro
     );
   }
 
-  // Under concurrency, if another transaction locked this vehicle first, show conflict screen
-  if (conflictError) {
+  // Handle specialized errors (Verification Required, Vehicle Unavailable, etc.)
+  if (errorStatus) {
+    const isVerificationRequired = errorStatus === 403;
+    const isConflict = errorStatus === 409;
+
     return (
       <Box sx={{ minHeight: "80vh", display: "grid", placeItems: "center", px: 2 }}>
         <Card
@@ -133,26 +139,36 @@ export default function PaymentClient({ booking, accessToken }: PaymentClientPro
             maxWidth: 500,
             width: "100%",
             p: 2,
-            borderColor: "error.main",
+            borderColor: isVerificationRequired ? "warning.main" : "error.main",
             borderWidth: 1.5,
             boxShadow: t => t.palette.shadow.card,
           }}
         >
           <CardContent>
             <Stack spacing={3} sx={{ alignItems: "center", textAlign: "center" }}>
-              <WarningIcon color="error" sx={{ fontSize: 48 }} />
+              <WarningIcon color={isVerificationRequired ? "warning" : "error"} sx={{ fontSize: 48 }} />
               <Box>
-                <Typography variant="h5" sx={{ fontWeight: 800, mb: 1, color: "error.main" }}>
-                  Vehicle Unavailable
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: 800,
+                    mb: 1,
+                    color: isVerificationRequired ? "warning.main" : "error.main",
+                  }}
+                >
+                  {isVerificationRequired ? "Verification Required" : "Vehicle Unavailable"}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {conflictError}
+                  {errorMessage ||
+                    (isConflict
+                      ? "This vehicle has just been reserved by another customer."
+                      : "An unexpected error occurred.")}
                 </Typography>
               </Box>
               <Button
                 variant="contained"
                 onClick={() => {
-                  router.push("/");
+                  router.push(isVerificationRequired ? "/account/profile" : "/");
                 }}
                 sx={{
                   fontWeight: 800,
@@ -160,9 +176,13 @@ export default function PaymentClient({ booking, accessToken }: PaymentClientPro
                   px: 4,
                   height: 48,
                   textTransform: "none",
+                  bgcolor: isVerificationRequired ? "warning.main" : "primary.main",
+                  "&:hover": {
+                    bgcolor: isVerificationRequired ? "warning.dark" : "primary.dark",
+                  },
                 }}
               >
-                Browse Other Vehicles
+                {isVerificationRequired ? "Complete Verification" : "Browse Other Vehicles"}
               </Button>
             </Stack>
           </CardContent>

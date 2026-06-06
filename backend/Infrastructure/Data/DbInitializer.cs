@@ -829,7 +829,13 @@ public static class DbInitializer
         else
         {
             existingVerification.UserId = recentUserId;
-            existingVerification.Status = "Pending";
+            // Only set to Pending if it's currently null or we are in a clean state,
+            // but don't overwrite it if it's already been Approved/Rejected by an admin.
+            if (string.IsNullOrEmpty(existingVerification.Status))
+            {
+                existingVerification.Status = "Pending";
+            }
+            
             if (existingVerification.CreatedAt > now.AddDays(-4))
             {
                 existingVerification.CreatedAt = now.AddDays(-5);

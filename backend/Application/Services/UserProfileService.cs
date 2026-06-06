@@ -60,6 +60,10 @@ public class UserProfileService : IUserProfileService
             .Where(v => v.UserId == userId)
             .ToListAsync(cancellationToken);
 
+        // Get driver record for license verification
+        var driver = await _context.Drivers
+            .FirstOrDefaultAsync(d => d.UserId == userId, cancellationToken);
+
         // Build address DTO
         var addressDto = userAddress != null
             ? new AddressDto(
@@ -77,14 +81,15 @@ public class UserProfileService : IUserProfileService
             user.EmergencyContactRelationship ?? string.Empty);
 
         // Calculate verification status
-        var verificationStatus = CalculateVerificationStatus(user, verifications);
+        var verificationStatus = CalculateVerificationStatus(user, verifications, driver);
 
         // Calculate profile completeness
         var profileCompleteness = CalculateProfileCompleteness(
             user,
             userAddress,
             emergencyContactDto,
-            verifications);
+            verifications,
+            driver);
 
         // Build and return profile DTO
         var profileDto = new UserProfileDto(
@@ -292,15 +297,14 @@ public class UserProfileService : IUserProfileService
     /// </summary>
     private VerificationStatusDto CalculateVerificationStatus(
         ApplicationUser user,
-        List<Verification> verifications)
+        List<Verification> verifications,
+        Driver? driver)
     {
         var emailVerified = user.EmailConfirmed;
         var phoneVerified = user.PhoneNumberConfirmed;
 
-        // Check for driver license verification
-        var driverLicenseVerification = verifications
-            .FirstOrDefault(v => v.DocumentType == "DriverLicense" && v.Status == "Approved");
-        var driverLicenseVerified = driverLicenseVerification != null;
+        // Check for driver license verification from the Drivers table
+        var driverLicenseVerified = driver?.IsVerified ?? false;
 
         // Determine KYC level based on verifications
         var kycLevel = DetermineKycLevel(verifications);
@@ -350,7 +354,8 @@ public class UserProfileService : IUserProfileService
         ApplicationUser user,
         UserAddress? address,
         EmergencyContactDto emergencyContact,
-        List<Verification> verifications)
+        List<Verification> verifications,
+        Driver? driver)
     {
         var totalFields = 12;
         var filledFields = 0;
@@ -386,7 +391,7 @@ public class UserProfileService : IUserProfileService
         if (user.PhoneNumberConfirmed) filledFields++;
 
         // Driver license verification
-        if (verifications.Any(v => v.DocumentType == "DriverLicense" && v.Status == "Approved"))
+        if (driver?.IsVerified == true)
         {
             filledFields++;
         }

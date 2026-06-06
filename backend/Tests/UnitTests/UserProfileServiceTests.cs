@@ -106,11 +106,15 @@ public class UserProfileServiceTests
         var verificationsQueryable = verifications.AsQueryable();
         var mockVerificationsDbSet = verificationsQueryable.BuildMockDbSet();
 
+        var drivers = new List<Driver>().AsQueryable();
+        var mockDriversDbSet = drivers.BuildMockDbSet();
+
         _userRepositoryMock.Setup(x => x.GetByIdAsync(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
         _contextMock.Setup(x => x.UserAddresses).Returns(mockUserAddressDbSet.Object);
         _contextMock.Setup(x => x.Verifications).Returns(mockVerificationsDbSet.Object);
+        _contextMock.Setup(x => x.Drivers).Returns(mockDriversDbSet.Object);
 
         // Act
         var result = await _userProfileService.GetProfileAsync(userId);
@@ -570,8 +574,12 @@ public class UserProfileServiceTests
         var verificationsQueryable = verifications.AsQueryable();
         var mockVerificationsDbSet = verificationsQueryable.BuildMockDbSet();
 
+        var drivers = new List<Driver>().AsQueryable();
+        var mockDriversDbSet = drivers.BuildMockDbSet();
+
         _contextMock.Setup(x => x.UserAddresses).Returns(mockUserAddressDbSet.Object);
         _contextMock.Setup(x => x.Verifications).Returns(mockVerificationsDbSet.Object);
+        _contextMock.Setup(x => x.Drivers).Returns(mockDriversDbSet.Object);
     }
 
     private void VerifyGetProfileMocks(Guid userId)
@@ -579,6 +587,7 @@ public class UserProfileServiceTests
         _userRepositoryMock.Verify(x => x.GetByIdAsync(userId, It.IsAny<CancellationToken>()), Times.Once);
         _contextMock.Verify(x => x.UserAddresses, Times.Once);
         _contextMock.Verify(x => x.Verifications, Times.Once);
+        _contextMock.Verify(x => x.Drivers, Times.Once);
     }
 
     private void SetupUpdateProfileMocks(ApplicationUser user, UserAddress? userAddress, string newPhone, bool phoneExists = false)

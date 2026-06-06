@@ -345,27 +345,27 @@ Example: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'",
     var seedOnly = args.Any(arg => string.Equals(arg, "--seed-only", StringComparison.OrdinalIgnoreCase));
     var seedDemoData = string.Equals(Environment.GetEnvironmentVariable("SEED_DEMO_DATA"), "true", StringComparison.OrdinalIgnoreCase);
 
-    // Initialize database and seed roles
-    using (var scope = app.Services.CreateScope())
-    {
-        var services = scope.ServiceProvider;
-        try
-        {
-            // Apply any pending migrations (creates the DB if it doesn't exist)
-            var db = services.GetRequiredService<ApplicationDbContext>();
-            await db.Database.MigrateAsync();
-
-            await DbInitializer.InitializeAsync(services, seedDemoData);
-        }
-        catch (Exception ex)
-        {
-            var logger = services.GetRequiredService<ILogger<Program>>();
-            logger.LogError(ex, "An error occurred while initializing the database");
-        }
-    }
-
+    // Initialize database and seed roles ONLY when explicitly requested via --seed-only
     if (seedOnly)
     {
+        using (var scope = app.Services.CreateScope())
+        {
+            var services = scope.ServiceProvider;
+            try
+            {
+                // Apply any pending migrations (creates the DB if it doesn't exist)
+                var db = services.GetRequiredService<ApplicationDbContext>();
+                await db.Database.MigrateAsync();
+
+                await DbInitializer.InitializeAsync(services, seedDemoData);
+            }
+            catch (Exception ex)
+            {
+                var logger = services.GetRequiredService<ILogger<Program>>();
+                logger.LogError(ex, "An error occurred while initializing the database");
+            }
+        }
+
         Log.Information("Seed-only mode completed successfully.");
         return;
     }
