@@ -14,7 +14,6 @@ import {
   TableRow,
   Chip,
   alpha,
-  useTheme,
 } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 
@@ -54,20 +53,23 @@ const mockRecentBookings = [
   },
 ];
 
-type StatusKey = "active" | "completed" | "pending" | "cancelled" | "confirmed" | "blocked";
-
-const getStatusKey = (status: string): StatusKey => {
-  const s = status.toLowerCase();
-  if (s === "active") return "active";
-  if (s === "completed") return "completed";
-  if (s === "pending" || s === "paymentpending") return "pending";
-  if (s === "confirmed") return "confirmed";
-  return "cancelled";
+const getStatusColor = (status: string): "primary" | "success" | "warning" | "error" | "default" => {
+  switch (status) {
+    case "Active":
+      return "primary";
+    case "Completed":
+      return "success";
+    case "Pending":
+    case "PaymentPending":
+      return "warning";
+    case "Cancelled":
+      return "error";
+    default:
+      return "default";
+  }
 };
 
 export default function RecentBookings() {
-  const theme = useTheme();
-
   return (
     <Card
       elevation={0}
@@ -76,10 +78,11 @@ export default function RecentBookings() {
         bgcolor: "background.paper",
         border: "1px solid",
         borderColor: "divider",
-        boxShadow: t => `0 4px 6px -1px ${alpha(t.palette.common.black, 0.05)}`,
+        boxShadow: theme => `0 4px 6px -1px ${alpha(theme.palette.common.black, 0.05)}`,
         height: "100%",
       }}
     >
+      {" "}
       <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
           <Typography variant="h6" sx={{ fontWeight: "800" }}>
@@ -132,33 +135,24 @@ export default function RecentBookings() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {mockRecentBookings.map(row => {
-                const statusKey = getStatusKey(row.status);
-                const colorMain = theme.palette.status[statusKey].main;
-
-                return (
-                  <TableRow key={row.id} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
-                    <TableCell sx={{ fontWeight: "700" }}>{row.id}</TableCell>
-                    <TableCell sx={{ fontWeight: "500" }}>{row.customer}</TableCell>
-                    <TableCell>{row.car}</TableCell>
-                    <TableCell>{row.date}</TableCell>
-                    <TableCell sx={{ fontWeight: "800" }}>{row.amount}</TableCell>
-                    <TableCell sx={{ textAlign: "right" }}>
-                      <Chip
-                        label={row.status}
-                        size="small"
-                        sx={{
-                          fontWeight: "700",
-                          borderRadius: 2,
-                          bgcolor: alpha(colorMain, 0.12),
-                          color: colorMain,
-                          "& .MuiChip-label": { px: 2 },
-                        }}
-                      />
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+              {mockRecentBookings.map(row => (
+                <TableRow key={row.id} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
+                  <TableCell sx={{ fontWeight: "700" }}>{row.id}</TableCell>
+                  <TableCell sx={{ fontWeight: "500" }}>{row.customer}</TableCell>
+                  <TableCell>{row.car}</TableCell>
+                  <TableCell>{row.date}</TableCell>
+                  <TableCell sx={{ fontWeight: "800" }}>{row.amount}</TableCell>
+                  <TableCell sx={{ textAlign: "right" }}>
+                    <Chip
+                      label={row.status}
+                      color={getStatusColor(row.status)}
+                      size="small"
+                      variant="filled"
+                      sx={{ fontWeight: "700", borderRadius: 2 }}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </TableContainer>
