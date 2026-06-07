@@ -1,17 +1,10 @@
 // app/admin/types.ts
 export interface DashboardSummary {
   totalUsers: number;
-  totalSuppliers: number;
-  totalVehicles: number;
-  totalBookings: number;
-  pendingBookings: number;
-  totalRevenue: number;
-  activeVehicles?: number;
-  activeBookings?: number;
-  pendingVerifications?: number;
-  availableVehicles?: number;
-  pendingInspections?: number;
-  pendingLicenses?: number;
+  activeBookings: number;
+  pendingVerifications: number;
+  availableVehicles: number;
+  pendingInspections: number;
 }
 
 export interface RecentBooking {

@@ -10,8 +10,6 @@ import {
   DashboardAlert,
   mockAlerts,
   mockActivities,
-  RevenueDataPoint,
-  mockRevenueData,
   QuickAction,
   mockQuickActions,
   TopVehicle,
@@ -28,27 +26,11 @@ export const metadata: Metadata = {
 // Defensive coercion
 const safeNum = (v: unknown): number => (typeof v === "number" && Number.isFinite(v) ? v : 0);
 
-const MOCK_SUMMARY: readonly SummaryItem[] = [
-  { title: "Total Users", value: "892", change: "+8.4%", isUp: true, iconName: "PeopleAlt", color: "primary" },
-  {
-    title: "Active Bookings",
-    value: "234",
-    change: "+12.5%",
-    isUp: true,
-    iconName: "EventAvailable",
-    color: "primary",
-  },
-  { title: "Pending Verifications", value: "45", change: "-5.2%", isUp: false, iconName: "GppMaybe", color: "warning" },
-  { title: "Pending Licenses", value: "18", change: "+2.5%", isUp: true, iconName: "Badge", color: "warning" },
-  { title: "Available Vehicles", value: "342", change: "+4.2%", isUp: true, iconName: "DirectionsCar", color: "info" },
-  { title: "Pending Inspections", value: "12", change: "-2.1%", isUp: false, iconName: "BuildCircle", color: "error" },
-];
-
 const MOCK_RECENT_BOOKINGS: readonly BookingListItem[] = [
   {
     id: "BK-8A2F",
     customer: "John Doe",
-    customerAvatar: "https://i.pravatar.cc/150?img=11",
+    customerAvatar: "https://ui-avatars.com/api/?name=John+Doe&background=random",
     car: "BMW X7",
     date: new Date().toLocaleDateString(),
     status: "Completed",
@@ -57,7 +39,7 @@ const MOCK_RECENT_BOOKINGS: readonly BookingListItem[] = [
   {
     id: "BK-9B3C",
     customer: "Sarah Smith",
-    customerAvatar: "https://i.pravatar.cc/150?img=5",
+    customerAvatar: "https://ui-avatars.com/api/?name=Sarah+Smith&background=random",
     car: "Mercedes S-Class",
     date: new Date().toLocaleDateString(),
     status: "Active",
@@ -96,16 +78,8 @@ async function getSummary(
         color: "warning",
       },
       {
-        title: "Pending Licenses",
-        value: safeNum(data.pendingLicenses).toLocaleString(),
-        change: "+2.5%",
-        isUp: true,
-        iconName: "Badge",
-        color: "warning",
-      },
-      {
         title: "Available Vehicles",
-        value: safeNum(data.availableVehicles ?? data.totalVehicles).toLocaleString(),
+        value: safeNum(data.availableVehicles).toLocaleString(),
         change: "+4.2%",
         isUp: true,
         iconName: "DirectionsCar",
@@ -123,7 +97,14 @@ async function getSummary(
     return { summary, rawData: data };
   } catch (error) {
     logger.warn(`Failed to fetch real summary data: ${error instanceof Error ? error.message : String(error)}`);
-    return { summary: MOCK_SUMMARY, rawData: null };
+    const defaultSummary: readonly SummaryItem[] = [
+      { title: "Total Users", value: "0", change: "0%", isUp: true, iconName: "PeopleAlt", color: "primary" },
+      { title: "Active Bookings", value: "0", change: "0%", isUp: true, iconName: "EventAvailable", color: "primary" },
+      { title: "Pending Verifications", value: "0", change: "0%", isUp: false, iconName: "GppMaybe", color: "warning" },
+      { title: "Available Vehicles", value: "0", change: "0%", isUp: true, iconName: "DirectionsCar", color: "info" },
+      { title: "Pending Inspections", value: "0", change: "0%", isUp: false, iconName: "BuildCircle", color: "error" },
+    ];
+    return { summary: defaultSummary, rawData: null };
   }
 }
 
@@ -207,15 +188,6 @@ async function getActivities(accessToken: string): Promise<readonly RecentSummar
   }));
 }
 
-async function getRevenueData(accessToken: string): Promise<readonly RevenueDataPoint[]> {
-  try {
-    const data = await apiFetchJson<RevenueDataPoint[]>("api/dashboard/revenue", { accessToken });
-    return data.length > 0 ? data : mockRevenueData;
-  } catch {
-    return mockRevenueData;
-  }
-}
-
 async function getQuickActions(accessToken: string): Promise<readonly QuickAction[]> {
   try {
     const data = await apiFetchJson<QuickAction[]>("api/dashboard/quick-actions", { accessToken });
@@ -232,7 +204,6 @@ async function getTopVehicles(accessToken: string): Promise<readonly TopVehicle[
     return [];
   }
 }
-
 export default async function AdminDashboardPage() {
   const session = await getServerSession(authOptions);
 
@@ -242,11 +213,10 @@ export default async function AdminDashboardPage() {
 
   const accessToken = session.accessToken;
   const { summary, rawData: rawSummaryData } = await getSummary(accessToken);
-  const [recentBookings, alerts, activities, revenueData, quickActions, topVehicles] = await Promise.all([
+  const [recentBookings, alerts, activities, quickActions, topVehicles] = await Promise.all([
     getRecentBookings(accessToken, session.user.id, session.user.roles),
     getAlerts(accessToken),
     getActivities(accessToken),
-    getRevenueData(accessToken),
     getQuickActions(accessToken),
     getTopVehicles(accessToken),
   ]);
@@ -257,7 +227,6 @@ export default async function AdminDashboardPage() {
       recentBookings={recentBookings}
       alerts={alerts}
       activities={activities}
-      revenueData={revenueData}
       quickActions={quickActions}
       topVehicles={topVehicles}
       rawSummaryData={rawSummaryData}
