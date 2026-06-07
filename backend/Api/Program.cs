@@ -105,7 +105,11 @@ try
     // Register Application Services
     //builder.Services.AddScoped<IEmailService, DevelopmentEmailService>();
     // Add Email Service
-    builder.Services.AddScoped<IEmailService, EmailService>();
+    builder.Services.AddScoped<IEmailService, Backend.Infrastructure.Services.SmtpEmailService>();
+
+    // Register MediatR
+    builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(IEmailService).Assembly));
+
     builder.Services.AddScoped<IAuthService, AuthService>();
     builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
     builder.Services.AddScoped<ILocationService, LocationService>();
