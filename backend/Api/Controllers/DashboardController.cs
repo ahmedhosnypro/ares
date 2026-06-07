@@ -41,16 +41,10 @@ public class DashboardController : ControllerBase
         }
 
         var userId = Guid.Parse(userIdClaim.Value);
-        var isSupplier = User.IsInRole("Supplier");
-        var isAdmin = User.IsInRole("Admin");
 
-        // If the user is an Admin, they see system-wide stats (supplierId = null)
-        // If the user is just a Supplier, they see their own stats (supplierId = userId)
-        Guid? targetSupplierId = isSupplier && !isAdmin ? userId : null;
+        _logger.LogInformation("Getting dashboard summary for user {UserId}", userId);
 
-        _logger.LogInformation("Getting dashboard summary for user {UserId}, targetSupplierId: {TargetSupplierId}", userId, targetSupplierId);
-
-        var summary = await _dashboardService.GetSummaryAsync(targetSupplierId, cancellationToken);
+        var summary = await _dashboardService.GetSummaryAsync(cancellationToken);
 
         return Ok(summary);
     }
@@ -190,6 +184,20 @@ public class DashboardController : ControllerBase
         Guid? targetSupplierId = isSupplier && !isAdmin ? userId : null;
 
         var result = await _dashboardService.GetTopVehiclesAsync(targetSupplierId, limit, cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Gets revenue overview for the Admin Dashboard
+    /// </summary>
+    [HttpGet("revenue-overview")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(RevenueOverviewDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<RevenueOverviewDto>> GetRevenueOverview([FromQuery] string filter = "ThisMonth", CancellationToken cancellationToken = default)
+    {
+        var result = await _dashboardService.GetRevenueOverviewAsync(filter, cancellationToken);
         return Ok(result);
     }
 }
