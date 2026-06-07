@@ -15,16 +15,7 @@ import {
   SelectChangeEvent,
   Stack,
 } from "@mui/material";
-import {
-  ResponsiveContainer,
-  ComposedChart,
-  Area,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-} from "recharts";
+import { ResponsiveContainer, ComposedChart, Area, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import { toApiUrl } from "@/utils/api-client";
@@ -70,17 +61,13 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
           minWidth: 200,
         }}
       >
-        <Typography sx={{ fontWeight: 700, mb: 1.5, color: theme.palette.text.primary }}>
-          Date: {label}
-        </Typography>
+        <Typography sx={{ fontWeight: 700, mb: 1.5, color: theme.palette.text.primary }}>Date: {label}</Typography>
         <Stack sx={{ gap: 1 }}>
           <Typography sx={{ color: theme.palette.status.active.main, fontSize: "0.875rem" }}>
-            ● Gross Bookings: $
-            {payload.find((p) => p.dataKey === "bookings")?.value.toLocaleString() || 0}
+            ● Gross Bookings: ${payload.find(p => p.dataKey === "bookings")?.value.toLocaleString() || 0}
           </Typography>
           <Typography sx={{ color: theme.palette.status.cancelled.main, fontSize: "0.875rem" }}>
-            ■ Refunds: $
-            {payload.find((p) => p.dataKey === "refunds")?.value.toLocaleString() || 0}
+            ■ Refunds: ${payload.find(p => p.dataKey === "refunds")?.value.toLocaleString() || 0}
           </Typography>
           <Typography
             sx={{
@@ -91,8 +78,7 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
               borderTop: `1px dashed ${theme.palette.border.light}`,
             }}
           >
-            ◆ Net Revenue: $
-            {payload.find((p) => p.dataKey === "revenue")?.value.toLocaleString() || 0}
+            ◆ Net Revenue: ${payload.find(p => p.dataKey === "revenue")?.value.toLocaleString() || 0}
           </Typography>
         </Stack>
       </Box>
@@ -138,8 +124,7 @@ export default function RevenueChart() {
       } catch (err: unknown) {
         if (axios.isAxiosError(err)) {
           const responseData = err.response?.data as Record<string, unknown> | undefined;
-          const apiMessage =
-            typeof responseData?.message === "string" ? responseData.message : null;
+          const apiMessage = typeof responseData?.message === "string" ? responseData.message : null;
           setError(apiMessage || "Failed to load revenue overview");
         } else if (err instanceof Error) {
           setError(err.message);
