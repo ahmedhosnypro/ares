@@ -150,7 +150,7 @@ public class BookingRepository : PaginatedRepository<Booking>, IBookingRepositor
                       FROM [Bookings] WITH (UPDLOCK, HOLDLOCK)
                       WHERE [VehicleId] = {0}
                         AND [Id] <> {1}
-                        AND [Status] IN ('Pending','PaymentPending','Confirmed','Active','Approved','ReadyForDelivery','WaitingForDriver','NoDriverAvailable','InspectionFailed')
+                        AND [Status] IN ('PaymentPending','Confirmed','Active')
                         AND NOT ([Status] = 'PaymentPending'
                                  AND [HoldExpiresAt] IS NOT NULL
                                  AND [HoldExpiresAt] <= {2})

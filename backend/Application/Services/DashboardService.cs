@@ -20,57 +20,40 @@ public class DashboardService : IDashboardService
         _userManager = userManager;
     }
 
-    public async Task<DashboardSummaryDto> GetSummaryAsync(Guid? supplierId, CancellationToken cancellationToken = default)
+    public async Task<DashboardSummaryDto> GetSummaryAsync(CancellationToken cancellationToken = default)
     {
-        int totalUsers = 0;
-        int totalSuppliers = 0;
-        int totalVehicles = 0;
-        int totalBookings = 0;
-        int pendingBookings = 0;
-        decimal totalRevenue = 0;
+        var totalUsers = await _context.Users
+            .CountAsync(u => u.Status != "Blocked", cancellationToken);
 
-        if (supplierId.HasValue)
-        {
-            // Supplier specific stats
-            totalVehicles = await _context.Vehicles
-                .CountAsync(v => v.UserId == supplierId.Value, cancellationToken);
+        var activeBookings = await _context.Bookings
+            .CountAsync(b => b.Status == BookingStatus.Active, cancellationToken);
 
-            var supplierBookings = await _context.Bookings
-                .Include(b => b.Vehicle)
-                .Where(b => b.Vehicle != null && b.Vehicle.UserId == supplierId.Value)
-                .ToListAsync(cancellationToken);
+        var pendingVerifications = await _context.Verifications
+            .Where(v => v.Status == "Pending")
+            .Select(v => v.UserId)
+            .Distinct()
+            .CountAsync(cancellationToken);
 
-            totalBookings = supplierBookings.Count;
-            pendingBookings = supplierBookings.Count(b => b.Status == BookingStatus.Confirmed);
-            totalRevenue = supplierBookings
-                .Where(b => b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Completed)
-                .Sum(b => b.TotalPrice ?? 0);
-        }
-        else
-        {
-            // Admin stats
-            totalUsers = await _context.Users.CountAsync(cancellationToken);
+        var activeBookedVehicleIds = await _context.Bookings
+            .Where(b => b.Status == BookingStatus.Active)
+            .Select(b => b.VehicleId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
 
-            var suppliers = await _userManager.GetUsersInRoleAsync("Supplier");
-            totalSuppliers = suppliers.Count;
+        var availableVehicles = await _context.Vehicles
+            .CountAsync(v => v.IsActive && 
+                             v.AvailabilityStatus == "Available" && 
+                             !activeBookedVehicleIds.Contains(v.Id), cancellationToken);
 
-            totalVehicles = await _context.Vehicles.CountAsync(cancellationToken);
-
-            var allBookings = await _context.Bookings.ToListAsync(cancellationToken);
-            totalBookings = allBookings.Count;
-            pendingBookings = allBookings.Count(b => b.Status == BookingStatus.Confirmed);
-            totalRevenue = allBookings
-                .Where(b => b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Completed)
-                .Sum(b => b.TotalPrice ?? 0);
-        }
+        var pendingInspections = await _context.Bookings
+            .CountAsync(b => b.InspectionStatus == InspectionStatus.Pending, cancellationToken);
 
         return new DashboardSummaryDto(
             TotalUsers: totalUsers,
-            TotalSuppliers: totalSuppliers,
-            TotalVehicles: totalVehicles,
-            TotalBookings: totalBookings,
-            PendingBookings: pendingBookings,
-            TotalRevenue: totalRevenue
+            ActiveBookings: activeBookings,
+            PendingVerifications: pendingVerifications,
+            AvailableVehicles: availableVehicles,
+            PendingInspections: pendingInspections
         );
     }
 
@@ -392,5 +375,62 @@ public class DashboardService : IDashboardService
         );
 
         return Task.FromResult(status);
+    }
+
+    public async Task<RevenueOverviewDto> GetRevenueOverviewAsync(string filter, CancellationToken cancellationToken = default)
+    {
+        var now = DateTime.UtcNow;
+        DateTime startDate;
+        DateTime endDate;
+
+        if (string.Equals(filter, "ThisYear", StringComparison.OrdinalIgnoreCase))
+        {
+            startDate = new DateTime(now.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            endDate = new DateTime(now.Year, 12, 31, 23, 59, 59, DateTimeKind.Utc);
+        }
+        else // default to ThisMonth
+        {
+            startDate = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+            endDate = new DateTime(now.Year, now.Month, DateTime.DaysInMonth(now.Year, now.Month), 23, 59, 59, DateTimeKind.Utc);
+        }
+
+        // We use join to include BookingPayment, although we sum TotalPrice from Bookings 
+        // to match the exact requirement from the prompt while ensuring single optimized query.
+        var dataPoints = await _context.Bookings
+            .Where(b => b.CreatedAt >= startDate && b.CreatedAt <= endDate)
+            .GroupJoin(
+                _context.Payments,
+                b => b.Id,
+                p => p.BookingId,
+                (b, p) => new { Booking = b, Payments = p }
+            )
+            .GroupBy(x => x.Booking.CreatedAt.Date)
+            .Select(g => new
+            {
+                Date = g.Key,
+                Revenue = g.Sum(x => x.Booking.TotalPrice ?? 0),
+                Bookings = g.Sum(x => x.Booking.Status == BookingStatus.Active || x.Booking.Status == BookingStatus.Completed || x.Booking.Status == BookingStatus.Confirmed ? (x.Booking.TotalPrice ?? 0) : 0),
+                Refunds = g.Sum(x => x.Booking.Status == BookingStatus.Cancelled ? (x.Booking.TotalPrice ?? 0) : 0)
+            })
+            .OrderBy(x => x.Date)
+            .ToListAsync(cancellationToken);
+
+        var totalRevenue = dataPoints.Sum(x => x.Revenue);
+        var totalBookings = dataPoints.Sum(x => x.Bookings);
+        var totalRefunds = dataPoints.Sum(x => x.Refunds);
+
+        var chartData = dataPoints.Select(x => new ChartDataPointDto(
+            Date: x.Date.ToString("MMM d"),
+            Revenue: x.Revenue,
+            Bookings: x.Bookings,
+            Refunds: x.Refunds
+        )).ToList().AsReadOnly();
+
+        return new RevenueOverviewDto(
+            TotalRevenue: totalRevenue,
+            TotalBookings: totalBookings,
+            TotalRefunds: totalRefunds,
+            ChartData: chartData
+        );
     }
 }

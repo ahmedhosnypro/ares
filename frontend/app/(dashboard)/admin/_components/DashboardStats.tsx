@@ -14,9 +14,10 @@ import { logger } from "@/utils/logger";
 import { useAdminVehicleStats } from "@/api-clients/cars/cars";
 
 interface DashboardSummary {
-  totalSuppliers: number;
-  totalVehicles: number;
-  totalRevenue: number;
+  activeBookings: number;
+  pendingVerifications: number;
+  availableVehicles: number;
+  pendingInspections: number;
   totalUsers: number;
 }
 
@@ -26,7 +27,7 @@ interface StatItem {
   change: string;
   isUp: boolean;
   icon: React.ReactNode;
-  color: "primary" | "success" | "warning" | "error";
+  color: "primary" | "success" | "warning" | "error" | "info";
 }
 
 export default function DashboardStats() {
@@ -37,6 +38,7 @@ export default function DashboardStats() {
   const [summaryData, setSummaryData] = useState<StatItem[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Still calling this in case we want to cross-reference or override available vehicles
   const { stats: vehicleStats } = useAdminVehicleStats(session?.accessToken);
 
   useEffect(() => {
@@ -50,35 +52,43 @@ export default function DashboardStats() {
           });
           setSummaryData([
             {
-              title: "Total Suppliers",
-              value: data.totalSuppliers.toString(),
-              change: "+8.4%",
+              title: "Total Users",
+              value: data.totalUsers.toString(),
+              change: "+12.5%",
               isUp: true,
-              icon: <StorefrontIcon />,
+              icon: <PeopleAltIcon />,
               color: "primary",
             },
             {
-              title: "Active Vehicles",
-              value: data.totalVehicles.toString(),
-              change: "+4.2%",
+              title: "Active Bookings",
+              value: data.activeBookings.toString(),
+              change: "+5.2%",
               isUp: true,
-              icon: <DirectionsCarIcon />,
+              icon: <TrendingUpIcon />,
               color: "success",
             },
             {
-              title: "Total Revenue",
-              value: `$${data.totalRevenue.toLocaleString()}`,
-              change: "+18.2%",
-              isUp: true,
-              icon: <AttachMoneyIcon />,
+              title: "Pending Verifications",
+              value: data.pendingVerifications.toString(),
+              change: "-1.5%",
+              isUp: false,
+              icon: <StorefrontIcon />,
               color: "warning",
             },
             {
-              title: "Total Users",
-              value: data.totalUsers.toString(),
-              change: "-2.1%",
-              isUp: false,
-              icon: <PeopleAltIcon />,
+              title: "Available Vehicles",
+              value: data.availableVehicles.toString(),
+              change: "+2.1%",
+              isUp: true,
+              icon: <DirectionsCarIcon />,
+              color: "info",
+            },
+            {
+              title: "Pending Inspections",
+              value: data.pendingInspections.toString(),
+              change: "+8.4%",
+              isUp: true,
+              icon: <AttachMoneyIcon />,
               color: "error",
             },
           ]);
@@ -87,30 +97,45 @@ export default function DashboardStats() {
         logger.error("Failed to fetch dashboard summary:", _error);
         setSummaryData([
           {
-            title: "Total Suppliers",
-            value: "12",
-            change: "+8.4%",
+            title: "Total Users",
+            value: "892",
+            change: "+12.5%",
             isUp: true,
-            icon: <StorefrontIcon />,
+            icon: <PeopleAltIcon />,
             color: "primary",
           },
           {
-            title: "Active Vehicles",
-            value: "342",
-            change: "+4.2%",
+            title: "Active Bookings",
+            value: "145",
+            change: "+5.2%",
             isUp: true,
-            icon: <DirectionsCarIcon />,
+            icon: <TrendingUpIcon />,
             color: "success",
           },
           {
-            title: "Total Revenue",
-            value: "$45,231",
-            change: "+18.2%",
-            isUp: true,
-            icon: <AttachMoneyIcon />,
+            title: "Pending Verifications",
+            value: "23",
+            change: "-1.5%",
+            isUp: false,
+            icon: <StorefrontIcon />,
             color: "warning",
           },
-          { title: "Total Users", value: "892", change: "-2.1%", isUp: false, icon: <PeopleAltIcon />, color: "error" },
+          {
+            title: "Available Vehicles",
+            value: "342",
+            change: "+2.1%",
+            isUp: true,
+            icon: <DirectionsCarIcon />,
+            color: "info",
+          },
+          {
+            title: "Pending Inspections",
+            value: "12",
+            change: "+8.4%",
+            isUp: true,
+            icon: <AttachMoneyIcon />,
+            color: "error",
+          },
         ]);
       } finally {
         setLoading(false);

@@ -9,7 +9,7 @@ import TopVehicles from "./TopVehicles";
 import RecentBookingsTable, { BookingListItem } from "./RecentBookingsTable";
 import AlertsCenter from "./AlertsCenter";
 import LiveActivity from "./LiveActivity";
-import { RevenueDataPoint, QuickAction, TopVehicle, DashboardAlert } from "./mockData";
+import { QuickAction, TopVehicle, DashboardAlert } from "./mockData";
 import { logger } from "@/utils/logger";
 
 export interface AdminDashboardViewProps {
@@ -17,7 +17,6 @@ export interface AdminDashboardViewProps {
   readonly recentBookings: readonly BookingListItem[];
   readonly alerts: readonly DashboardAlert[];
   readonly activities: readonly RecentSummaryItem[];
-  readonly revenueData: readonly RevenueDataPoint[];
   readonly topVehicles: readonly TopVehicle[];
   readonly quickActions: readonly QuickAction[];
   readonly rawSummaryData?: unknown;
@@ -28,7 +27,6 @@ export default function AdminDashboardView({
   recentBookings,
   alerts,
   activities,
-  revenueData,
   quickActions,
   topVehicles,
   rawSummaryData,
@@ -43,7 +41,7 @@ export default function AdminDashboardView({
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12 }}>
-          <RevenueChart data={revenueData} />
+          <RevenueChart />
         </Grid>
       </Grid>
 

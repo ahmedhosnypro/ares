@@ -170,7 +170,7 @@ export default function DriverSelectionPage() {
       } catch (e) {
         logger.error("Booking recovery failed", e);
       } finally {
-        if (!cancelled) setRecovering(false);
+        setRecovering(false);
       }
     })();
     return () => {

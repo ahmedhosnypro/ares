@@ -4,7 +4,7 @@ namespace Backend.Application.Interfaces;
 
 public interface IDashboardService
 {
-    Task<DashboardSummaryDto> GetSummaryAsync(Guid? supplierId, CancellationToken cancellationToken = default);
+    Task<DashboardSummaryDto> GetSummaryAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Returns at most one latest real event per category (booking, payment, user, vehicle, verification),
@@ -23,4 +23,6 @@ public interface IDashboardService
     Task<IReadOnlyList<TopVehicleDto>> GetTopVehiclesAsync(Guid? supplierId, int limit = 5, CancellationToken cancellationToken = default);
 
     Task<SystemStatusDto> GetSystemStatusAsync(CancellationToken cancellationToken = default);
+
+    Task<RevenueOverviewDto> GetRevenueOverviewAsync(string filter, CancellationToken cancellationToken = default);
 }

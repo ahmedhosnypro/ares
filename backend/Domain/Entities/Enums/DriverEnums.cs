@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Backend.Domain.Entities.Enums
 {
     /// <summary>
@@ -5,6 +7,7 @@ namespace Backend.Domain.Entities.Enums
     /// string in the <c>driver_profiles.Status</c> column so adding new
     /// values is safe and ordering does not matter on disk.
     /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum DriverProfileStatus
     {
         /// <summary>
@@ -46,6 +49,7 @@ namespace Backend.Domain.Entities.Enums
     /// <see cref="Reserved"/> is set by the system while a driver is assigned
     /// to an active booking and is not user-toggleable.
     /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum DriverAvailability
     {
         /// <summary>Default. Driver does not appear in matching results.</summary>
