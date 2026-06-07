@@ -13,15 +13,16 @@ import {
   Skeleton,
   Alert,
   SelectChangeEvent,
+  Stack,
 } from "@mui/material";
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
+import { ResponsiveContainer, ComposedChart, Area, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import { toApiUrl } from "@/utils/api-client";
 
 export interface ChartDataPointDto {
   date: string;
-  revenue: number;
+  revenue: number; // Represents Net Revenue
   bookings: number;
   refunds: number;
 }
@@ -32,6 +33,59 @@ export interface RevenueOverviewDto {
   totalRefunds: number;
   chartData: ChartDataPointDto[];
 }
+
+export interface TooltipPayload {
+  dataKey: string;
+  value: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  payload: any;
+}
+
+export interface CustomTooltipProps {
+  active?: boolean;
+  payload?: TooltipPayload[];
+  label?: string;
+}
+
+const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
+  const theme = useTheme();
+  if (active && payload && payload.length) {
+    return (
+      <Box
+        sx={{
+          backgroundColor: theme.palette.background.paper,
+          border: `1px solid ${theme.palette.border.light}`,
+          borderRadius: 2,
+          p: 2,
+          boxShadow: theme.palette.shadow.cardHover,
+          minWidth: 200,
+        }}
+      >
+        <Typography sx={{ fontWeight: 700, mb: 1.5, color: theme.palette.text.primary }}>Date: {label}</Typography>
+        <Stack sx={{ gap: 1 }}>
+          <Typography sx={{ color: theme.palette.status.active.main, fontSize: "0.875rem" }}>
+            ● Gross Bookings: ${payload.find(p => p.dataKey === "bookings")?.value.toLocaleString() || 0}
+          </Typography>
+          <Typography sx={{ color: theme.palette.status.cancelled.main, fontSize: "0.875rem" }}>
+            ■ Refunds: ${payload.find(p => p.dataKey === "refunds")?.value.toLocaleString() || 0}
+          </Typography>
+          <Typography
+            sx={{
+              color: theme.palette.primary.main,
+              fontSize: "0.875rem",
+              fontWeight: 600,
+              pt: 0.5,
+              borderTop: `1px dashed ${theme.palette.border.light}`,
+            }}
+          >
+            ◆ Net Revenue: ${payload.find(p => p.dataKey === "revenue")?.value.toLocaleString() || 0}
+          </Typography>
+        </Stack>
+      </Box>
+    );
+  }
+  return null;
+};
 
 export default function RevenueChart() {
   const { data: session } = useSession();
@@ -53,8 +107,6 @@ export default function RevenueChart() {
 
   useEffect(() => {
     const fetchData = async () => {
-      // Don't fetch if there's no session yet, but maybe it's not strictly required
-      // if it's handled by middleware, but good to wait for the token.
       if (!session) return;
 
       try {
@@ -93,18 +145,20 @@ export default function RevenueChart() {
 
   return (
     <Card
+      className="flex flex-col w-full rounded-2xl transition-all duration-300"
       elevation={0}
       sx={{
-        borderRadius: 2,
-        border: "1px solid",
-        borderColor: theme.palette.border.main,
+        backgroundColor: theme.palette.background.paper,
+        border: `1px solid ${theme.palette.border.main}`,
         boxShadow: theme.palette.shadow.card,
         height: "100%",
-        display: "flex",
-        flexDirection: "column",
+        "&:hover": {
+          boxShadow: theme.palette.shadow.cardHover,
+        },
       }}
     >
       <CardContent sx={{ p: { xs: 2, sm: 3 }, flexGrow: 1, minWidth: 0 }}>
+        {/* Header Section */}
         <Box
           sx={{
             display: "flex",
@@ -112,17 +166,24 @@ export default function RevenueChart() {
             justifyContent: "space-between",
             alignItems: { xs: "flex-start", sm: "center" },
             gap: { xs: 2, sm: 0 },
-            mb: 3,
+            mb: 4,
           }}
         >
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+          <Typography variant="h5" sx={{ fontWeight: 700, color: theme.palette.text.primary }}>
             Revenue Overview
           </Typography>
           <FormControl size="small" sx={{ width: { xs: "100%", sm: "auto" } }}>
             <Select
               value={filter}
               onChange={handleFilterChange}
-              sx={{ minWidth: 140, borderRadius: 2, bgcolor: "background.paper" }}
+              sx={{
+                minWidth: 140,
+                borderRadius: 2,
+                bgcolor: theme.palette.background.default,
+                "& .MuiOutlinedInput-notchedOutline": {
+                  borderColor: theme.palette.border.main,
+                },
+              }}
             >
               <MenuItem value="ThisMonth">This Month</MenuItem>
               <MenuItem value="LastMonth">Last Month</MenuItem>
@@ -132,106 +193,135 @@ export default function RevenueChart() {
         </Box>
 
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
+          <Alert severity="error" sx={{ mb: 3 }}>
             {error}
           </Alert>
         )}
 
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3, mb: 4 }}>
-          <Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-              <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: theme.palette.primary.main }} />
-              <Typography variant="body2" color="text.secondary">
-                Total Revenue
-              </Typography>
-            </Box>
-            <Typography variant="h5" sx={{ fontWeight: 700 }}>
-              {loading ? <Skeleton width={100} /> : `$${(data?.totalRevenue || 0).toLocaleString()}`}
+        {/* 3 Metric Cards Section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          {/* Total Revenue (Net) - Blue Theme */}
+          <Box
+            className="rounded-xl flex flex-col justify-center transition-transform hover:-translate-y-1"
+            sx={{
+              p: 3,
+              backgroundColor: theme.palette.background.default,
+              borderLeft: `4px solid ${theme.palette.primary.main}`,
+              borderTop: `1px solid ${theme.palette.border.light}`,
+              borderRight: `1px solid ${theme.palette.border.light}`,
+              borderBottom: `1px solid ${theme.palette.border.light}`,
+            }}
+          >
+            <Typography variant="body2" sx={{ color: theme.palette.text.secondary, mb: 1, fontWeight: 500 }}>
+              Total Revenue
+            </Typography>
+            <Typography variant="h4" sx={{ color: theme.palette.primary.main, fontWeight: 800 }}>
+              {loading ? <Skeleton width={120} /> : `$${(data?.totalRevenue || 0).toLocaleString()}`}
             </Typography>
           </Box>
-          <Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-              <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: theme.palette.success.main }} />
-              <Typography variant="body2" color="text.secondary">
-                Bookings
-              </Typography>
-            </Box>
-            <Typography variant="h5" sx={{ fontWeight: 700 }}>
-              {loading ? <Skeleton width={100} /> : `$${(data?.totalBookings || 0).toLocaleString()}`}
-            </Typography>
-          </Box>
-          <Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-              <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: theme.palette.error.main }} />
-              <Typography variant="body2" color="text.secondary">
-                Refunds
-              </Typography>
-            </Box>
-            <Typography variant="h5" sx={{ fontWeight: 700 }}>
-              {loading ? <Skeleton width={100} /> : `$${(data?.totalRefunds || 0).toLocaleString()}`}
-            </Typography>
-          </Box>
-        </Box>
 
-        <Box sx={{ width: "100%", height: 300, minWidth: 0, minHeight: 0 }}>
+          {/* Gross Bookings - Green Theme */}
+          <Box
+            className="rounded-xl flex flex-col justify-center transition-transform hover:-translate-y-1"
+            sx={{
+              p: 3,
+              backgroundColor: theme.palette.background.default,
+              borderLeft: `4px solid ${theme.palette.status.active.main}`,
+              borderTop: `1px solid ${theme.palette.border.light}`,
+              borderRight: `1px solid ${theme.palette.border.light}`,
+              borderBottom: `1px solid ${theme.palette.border.light}`,
+            }}
+          >
+            <Typography variant="body2" sx={{ color: theme.palette.text.secondary, mb: 1, fontWeight: 500 }}>
+              Gross Bookings
+            </Typography>
+            <Typography variant="h4" sx={{ color: theme.palette.status.active.main, fontWeight: 800 }}>
+              {loading ? <Skeleton width={120} /> : `$${(data?.totalBookings || 0).toLocaleString()}`}
+            </Typography>
+          </Box>
+
+          {/* Refunds - Red Theme */}
+          <Box
+            className="rounded-xl flex flex-col justify-center transition-transform hover:-translate-y-1"
+            sx={{
+              p: 3,
+              backgroundColor: theme.palette.background.default,
+              borderLeft: `4px solid ${theme.palette.status.cancelled.main}`,
+              borderTop: `1px solid ${theme.palette.border.light}`,
+              borderRight: `1px solid ${theme.palette.border.light}`,
+              borderBottom: `1px solid ${theme.palette.border.light}`,
+            }}
+          >
+            <Typography variant="body2" sx={{ color: theme.palette.text.secondary, mb: 1, fontWeight: 500 }}>
+              Refunds
+            </Typography>
+            <Typography variant="h4" sx={{ color: theme.palette.status.cancelled.main, fontWeight: 800 }}>
+              {loading ? <Skeleton width={120} /> : `$${(data?.totalRefunds || 0).toLocaleString()}`}
+            </Typography>
+          </Box>
+        </div>
+
+        {/* Chart Section */}
+        <Box sx={{ width: "100%", height: 350, minWidth: 0, minHeight: 0 }}>
           {loading ? (
-            <Skeleton variant="rectangular" width="100%" height={300} sx={{ borderRadius: 2 }} />
+            <Skeleton variant="rectangular" width="100%" height={350} sx={{ borderRadius: 2 }} />
           ) : (
             mounted &&
             data && (
-              <ResponsiveContainer width="100%" height={300} minWidth={0}>
-                <LineChart data={data.chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                <ComposedChart data={data.chartData} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
+                  <defs>
+                    <linearGradient id="colorNet" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={theme.palette.primary.main} stopOpacity={0.4} />
+                      <stop offset="95%" stopColor={theme.palette.primary.main} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme.palette.border.light} />
                   <XAxis
                     dataKey="date"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
-                    dy={10}
+                    tick={{ fill: theme.palette.text.secondary, fontSize: 13 }}
+                    dy={15}
                   />
                   <YAxis
+                    yAxisId="left"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
                     tickFormatter={(value: number) => `$${value === 0 ? "0" : (value / 1000).toString() + "K"}`}
+                    tick={{ fill: theme.palette.text.secondary, fontSize: 13 }}
                     dx={-10}
                   />
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: 12,
-                      border: `1px solid ${theme.palette.border.main}`,
-                      boxShadow: theme.palette.shadow.card,
-                      backgroundColor: theme.palette.background.paper,
-                    }}
-                  />
-                  <Line
-                    type="monotone"
+                  <Tooltip content={<CustomTooltip />} cursor={{ fill: theme.palette.border.light, opacity: 0.4 }} />
+
+                  {/* Bookings Bar (Base) */}
+                  <Bar
+                    yAxisId="left"
                     dataKey="bookings"
-                    name="Bookings"
-                    stroke={theme.palette.success.main}
-                    strokeWidth={3}
-                    dot={{ r: 4, strokeWidth: 2 }}
-                    activeDot={{ r: 6 }}
+                    stackId="a"
+                    fill={theme.palette.status.active.main}
+                    radius={[0, 0, 4, 4]}
+                    barSize={40}
                   />
-                  <Line
+                  {/* Refunds Bar (Stacked on top) */}
+                  <Bar
+                    yAxisId="left"
+                    dataKey="refunds"
+                    stackId="a"
+                    fill={theme.palette.status.cancelled.main}
+                    radius={[4, 4, 0, 0]}
+                  />
+                  {/* Net Revenue Area Chart (Smooth overlay) */}
+                  <Area
+                    yAxisId="left"
                     type="monotone"
                     dataKey="revenue"
-                    name="Revenue"
                     stroke={theme.palette.primary.main}
-                    strokeWidth={3}
-                    dot={{ r: 4, strokeWidth: 2 }}
-                    activeDot={{ r: 6 }}
+                    strokeWidth={4}
+                    fillOpacity={1}
+                    fill="url(#colorNet)"
                   />
-                  <Line
-                    type="monotone"
-                    dataKey="refunds"
-                    name="Refunds"
-                    stroke={theme.palette.error.main}
-                    strokeWidth={3}
-                    dot={{ r: 4, strokeWidth: 2 }}
-                    activeDot={{ r: 6 }}
-                  />
-                </LineChart>
+                </ComposedChart>
               </ResponsiveContainer>
             )
           )}
