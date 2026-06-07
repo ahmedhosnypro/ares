@@ -22,12 +22,14 @@ export default function PaymentForm({ bookingId, accessToken }: PaymentFormProps
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const controller = new AbortController();
     const initiate = async () => {
       try {
         const res = await fetch(toApiUrl("/api/payments/initiate"), {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
           body: JSON.stringify({ bookingId }),
+          signal: controller.signal,
         });
         if (!res.ok) {
           const payload = (await res.json().catch(() => ({}))) as { message?: string };
@@ -36,11 +38,17 @@ export default function PaymentForm({ bookingId, accessToken }: PaymentFormProps
         const data = (await res.json()) as InitiateResponse;
         setIframeUrl(data.iframeUrl);
       } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") {
+          return;
+        }
         logger.error("Payment initiation failed", err);
         setError(err instanceof Error ? err.message : "Failed to load payment form");
       }
     };
     void initiate();
+    return () => {
+      controller.abort();
+    };
   }, [bookingId, accessToken]);
 
   return (
