@@ -1,51 +1,37 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Box, Typography, Paper, Stack, Button, Card, Skeleton, useTheme, alpha, type Theme } from "@mui/material";
+import { Box, Typography, Paper, Stack, Button, Skeleton, useTheme, alpha } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Link from "next/link";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import { listMyInspections, type InspectionSummary } from "@/api-clients/inspections/inspections";
+import PendingActionsIcon from "@mui/icons-material/PendingActions";
+import TodayIcon from "@mui/icons-material/Today";
+import UpdateIcon from "@mui/icons-material/Update";
+import HistoryIcon from "@mui/icons-material/History";
+import { listMyInspections, getInspectionHistory, type InspectionSummary } from "@/api-clients/inspections/inspections";
 import { logger } from "@/utils/logger";
 import InspectionStatusBadge from "./_components/InspectionStatusBadge";
-
-function StatCard({ label, value, color }: { readonly label: string; readonly value: number; readonly color: string }) {
-  return (
-    <Card
-      elevation={0}
-      sx={{
-        p: 2,
-        borderRadius: 2,
-        border: "1px solid",
-        borderColor: "divider",
-        background: (theme: Theme) =>
-          `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${alpha(color, 0.08)} 100%)`,
-      }}
-    >
-      <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 700 }}>
-        {label}
-      </Typography>
-      <Typography variant="h4" sx={{ fontWeight: 800, color }}>
-        {value}
-      </Typography>
-    </Card>
-  );
-}
+import VehicleStats from "@/app/(dashboard)/_components/VehicleStats";
 
 export default function InspectorDashboardPage() {
-  const theme = useTheme();
   const [items, setItems] = useState<InspectionSummary[]>([]);
+  const [history, setHistory] = useState<InspectionSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await listMyInspections(false);
-      setItems(data);
+      const [assignedData, historyData] = await Promise.all([
+        listMyInspections(false),
+        getInspectionHistory()
+      ]);
+      setItems(assignedData);
+      setHistory(historyData);
     } catch (err) {
-      logger.error("Failed to load assigned inspections", err);
+      logger.error("Failed to load dashboard data", err);
     } finally {
       setLoading(false);
     }
@@ -55,13 +41,39 @@ export default function InspectorDashboardPage() {
     void fetchData();
   }, [fetchData]);
 
-  const stats = useMemo(
-    () => ({
-      pending: items.filter(i => i.status === "Pending").length,
-      total: items.length,
-    }),
-    [items]
-  );
+  const stats = useMemo(() => {
+    const pending = items.filter(i => i.status === "Pending" && !i.isSubmitted);
+    const completed = history.filter(i => i.isSubmitted);
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const todaysInspections = [...items, ...history].filter(i => {
+      const d = new Date(i.inspectionDate);
+      d.setHours(0, 0, 0, 0);
+      return d.getTime() === today.getTime();
+    });
+
+    const upcoming = items.filter(i => {
+      const d = new Date(i.inspectionDate);
+      d.setHours(0, 0, 0, 0);
+      return d.getTime() > today.getTime();
+    });
+
+    return {
+      pending: pending.length,
+      completed: completed.length,
+      today: todaysInspections.length,
+      upcoming: upcoming.length,
+    };
+  }, [items, history]);
+
+  const dashboardStats = [
+    { label: "Pending Inspections", value: stats.pending, color: "warning", icon: <PendingActionsIcon /> },
+    { label: "Completed Inspections", value: stats.completed, color: "success", icon: <AssignmentTurnedInIcon /> },
+    { label: "Today's Inspections", value: stats.today, color: "primary", icon: <TodayIcon /> },
+    { label: "Upcoming Inspections", value: stats.upcoming, color: "info", icon: <UpdateIcon /> },
+  ];
 
   return (
     <Box sx={{ maxWidth: 1200, mx: "auto" }}>
@@ -70,70 +82,109 @@ export default function InspectorDashboardPage() {
           Inspector Dashboard
         </Typography>
         <Typography color="text.secondary" variant="body2">
-          Your assigned inspection tasks at a glance.
+          Overview of your assignments and recent history.
         </Typography>
       </Box>
 
-      <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <StatCard label="Pending Inspections" value={stats.pending} color={theme.palette.warning.main} />
+      {/* STATS */}
+      <VehicleStats items={dashboardStats} />
+
+      <Grid container spacing={3} sx={{ mt: 1 }}>
+        <Grid size={{ xs: 12, md: 8 }}>
+          <Paper elevation={0} sx={{ p: { xs: 2, md: 3 }, borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%" }}>
+            <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                Recent & Upcoming Assignments
+              </Typography>
+              <Button component={Link} href="/inspector/inspections" size="small" endIcon={<ArrowForwardIcon />}>
+                View all
+              </Button>
+            </Stack>
+
+            {(() => {
+              if (loading) {
+                return (
+                  <Stack spacing={1.5}>
+                    {[1, 2, 3, 4].map(n => (
+                      <Skeleton key={n} variant="rectangular" height={84} sx={{ borderRadius: 2 }} />
+                    ))}
+                  </Stack>
+                );
+              }
+              if (items.length === 0) {
+                return (
+                  <Box sx={{ textAlign: "center", py: 8, opacity: 0.7 }}>
+                    <AssignmentIcon sx={{ fontSize: 60, mb: 2, color: "text.disabled" }} />
+                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                      All caught up!
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      You have no pending inspections right now.
+                    </Typography>
+                  </Box>
+                );
+              }
+              return (
+                <Stack spacing={1.5}>
+                  {items.slice(0, 5).map(i => (
+                    <InspectionListItem key={i.inspectionId} item={i} />
+                  ))}
+                </Stack>
+              );
+            })()}
+          </Paper>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <StatCard label="All Assigned" value={stats.total} color={theme.palette.primary.main} />
+
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Paper elevation={0} sx={{ p: { xs: 2, md: 3 }, borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%", bgcolor: "background.default" }}>
+            <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                Quick Actions
+              </Typography>
+            </Stack>
+            <Stack spacing={2}>
+              <Button
+                component={Link}
+                href="/inspector/inspections"
+                variant="contained"
+                fullWidth
+                size="large"
+                startIcon={<PendingActionsIcon />}
+                sx={{ py: 1.5, justifyContent: "flex-start", px: 3, borderRadius: 2 }}
+              >
+                Start Pending Inspection
+              </Button>
+              <Button
+                component={Link}
+                href="/inspector/history"
+                variant="outlined"
+                fullWidth
+                size="large"
+                startIcon={<HistoryIcon />}
+                sx={{ py: 1.5, justifyContent: "flex-start", px: 3, borderRadius: 2, bgcolor: "background.paper" }}
+              >
+                View History
+              </Button>
+              <Button
+                component={Link}
+                href="/inspector/profile"
+                variant="outlined"
+                fullWidth
+                size="large"
+                sx={{ py: 1.5, justifyContent: "flex-start", px: 3, borderRadius: 2, bgcolor: "background.paper" }}
+              >
+                My Profile
+              </Button>
+            </Stack>
+          </Paper>
         </Grid>
       </Grid>
-
-      <Paper elevation={0} sx={{ p: { xs: 2, md: 3 }, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={1}
-          sx={{ alignItems: { xs: "flex-start", sm: "center" }, justifyContent: "space-between", mb: 2 }}
-        >
-          <Typography variant="h6" sx={{ fontWeight: 800 }}>
-            Latest Assigned Inspections
-          </Typography>
-          <Button component={Link} href="/inspector/inspections" size="small" endIcon={<ArrowForwardIcon />}>
-            View all
-          </Button>
-        </Stack>
-
-        {(() => {
-          if (loading) {
-            return (
-              <Stack spacing={1.5}>
-                {[1, 2, 3].map(n => (
-                  <Skeleton key={n} variant="rectangular" height={84} sx={{ borderRadius: 2 }} />
-                ))}
-              </Stack>
-            );
-          }
-          if (items.length === 0) {
-            return (
-              <Box sx={{ textAlign: "center", py: 6, opacity: 0.7 }}>
-                <AssignmentIcon sx={{ fontSize: 60, mb: 1, color: "text.disabled" }} />
-                <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                  All caught up!
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  You have no pending inspections right now.
-                </Typography>
-              </Box>
-            );
-          }
-          return (
-            <Stack spacing={1.5}>
-              {items.slice(0, 5).map(i => (
-                <InspectionListItem key={i.inspectionId} item={i} />
-              ))}
-            </Stack>
-          );
-        })()}
-      </Paper>
     </Box>
   );
 }
 
 function InspectionListItem({ item }: { readonly item: InspectionSummary }) {
+  const theme = useTheme();
   return (
     <Paper
       elevation={0}
@@ -142,7 +193,8 @@ function InspectionListItem({ item }: { readonly item: InspectionSummary }) {
         borderRadius: 2,
         border: "1px solid",
         borderColor: "divider",
-        "&:hover": { borderColor: "primary.main" },
+        "&:hover": { borderColor: "primary.main", bgcolor: alpha(theme.palette.primary.main, 0.02) },
+        transition: "all 0.2s"
       }}
     >
       <Stack
@@ -157,11 +209,11 @@ function InspectionListItem({ item }: { readonly item: InspectionSummary }) {
             </Typography>
             <InspectionStatusBadge status={item.status} />
           </Stack>
-          <Typography variant="body2" color="text.secondary" noWrap>
+          <Typography variant="body2" color="text.secondary" noWrap sx={{ fontWeight: 600 }}>
             {item.vehicleDisplayName}
           </Typography>
-          <Typography variant="caption" color="text.secondary">
-            Assigned {new Date(item.inspectionDate).toLocaleDateString()}
+          <Typography variant="caption" color="text.disabled">
+            Scheduled: {new Date(item.inspectionDate).toLocaleString()}
           </Typography>
         </Box>
         <Button
@@ -170,9 +222,9 @@ function InspectionListItem({ item }: { readonly item: InspectionSummary }) {
           variant="contained"
           size="small"
           startIcon={<AssignmentTurnedInIcon />}
-          sx={{ borderRadius: 2 }}
+          sx={{ borderRadius: 2, px: 2, py: 0.8 }}
         >
-          Open Inspection
+          Open
         </Button>
       </Stack>
     </Paper>

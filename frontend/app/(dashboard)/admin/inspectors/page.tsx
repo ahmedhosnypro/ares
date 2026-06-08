@@ -162,7 +162,7 @@ export default function InspectorsPage() {
           sx={{
             px: 2.5,
             py: 1.2,
-            borderRadius: 2,
+            borderRadius: 3,
             fontWeight: 700,
             background: (theme: Theme) =>
               `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
@@ -179,39 +179,43 @@ export default function InspectorsPage() {
       <VehicleStats items={inspectorStatsItems} />
 
       {/* FILTERS */}
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>
-        <TextField
-          fullWidth
-          placeholder="Search by name, email or employee code..."
-          value={search}
-          onChange={e => {
-            setSearch(e.target.value);
-          }}
-          size={isMobile ? "small" : "medium"}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            },
-          }}
-        />
-        <FormControl sx={{ minWidth: { xs: "100%", sm: 160 } }} size={isMobile ? "small" : "medium"}>
-          <Select
-            value={statusFilter}
-            onChange={(e: SelectChangeEvent) => {
-              setStatusFilter(e.target.value);
+      <Paper elevation={0} sx={{ p: 2, mb: 3, mt: 1, borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+          <TextField
+            fullWidth
+            placeholder="Search by name, email or employee code..."
+            value={search}
+            onChange={e => {
+              setSearch(e.target.value);
             }}
-            displayEmpty
-          >
-            <MenuItem value="all">All Status</MenuItem>
-            <MenuItem value="active">Active</MenuItem>
-            <MenuItem value="inactive">Disabled</MenuItem>
-          </Select>
-        </FormControl>
-      </Stack>
+            size={isMobile ? "small" : "medium"}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon color="action" />
+                  </InputAdornment>
+                ),
+                sx: { borderRadius: 2, bgcolor: "background.default" }
+              },
+            }}
+          />
+          <FormControl sx={{ minWidth: { xs: "100%", sm: 160 } }} size={isMobile ? "small" : "medium"}>
+            <Select
+              value={statusFilter}
+              onChange={(e: SelectChangeEvent) => {
+                setStatusFilter(e.target.value);
+              }}
+              displayEmpty
+              sx={{ borderRadius: 2, bgcolor: "background.default" }}
+            >
+              <MenuItem value="all">All Status</MenuItem>
+              <MenuItem value="active">Active</MenuItem>
+              <MenuItem value="inactive">Disabled</MenuItem>
+            </Select>
+          </FormControl>
+        </Stack>
+      </Paper>
 
       {/* LIST */}
       {loading ? (
@@ -228,16 +232,16 @@ export default function InspectorsPage() {
           )}
         </Stack>
       ) : (
-        <Paper sx={{ borderRadius: 2 }}>
+        <Paper sx={{ borderRadius: 3, overflow: "hidden", border: "1px solid", borderColor: "divider", elevation: 0 }}>
           <Table>
-            <TableHead>
+            <TableHead sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
               <TableRow>
-                <TableCell>Inspector</TableCell>
-                <TableCell>Contact</TableCell>
-                <TableCell>Employee Code</TableCell>
-                <TableCell>Availability</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell align="right">Actions</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Inspector</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Contact</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Employee Code</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Availability</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -249,7 +253,7 @@ export default function InspectorsPage() {
                 </TableRow>
               ) : (
                 filtered.map(i => (
-                  <TableRow key={i.inspectorId} hover>
+                  <TableRow key={i.inspectorId} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                     <TableCell>
                       <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
                         <Avatar sx={{ bgcolor: theme.palette.primary.light, fontWeight: 700 }}>
@@ -348,7 +352,7 @@ export default function InspectorsPage() {
         }}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
       >
-        <Alert severity={toast.severity} variant="filled" sx={{ width: "100%" }}>
+        <Alert severity={toast.severity} variant="filled" sx={{ width: "100%", borderRadius: 2 }}>
           {toast.message}
         </Alert>
       </Snackbar>
@@ -379,7 +383,7 @@ function InspectorMobileCard({
 }) {
   const theme = useTheme();
   return (
-    <Paper elevation={0} sx={{ p: 2, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+    <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}>
       <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
         <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", flex: 1, minWidth: 0 }}>
           <Avatar sx={{ bgcolor: theme.palette.primary.light, fontWeight: 700, width: 40, height: 40 }}>

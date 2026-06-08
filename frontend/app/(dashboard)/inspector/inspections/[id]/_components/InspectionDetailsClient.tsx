@@ -19,7 +19,9 @@ import {
   DialogActions,
   useTheme,
   alpha,
+  Slider,
   type Theme,
+  InputAdornment,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { useRouter } from "next/navigation";
@@ -29,6 +31,8 @@ import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import LockIcon from "@mui/icons-material/Lock";
+import LocalGasStationIcon from "@mui/icons-material/LocalGasStation";
+import SpeedIcon from "@mui/icons-material/Speed";
 import {
   getInspectionDetails,
   submitInspection,
@@ -64,6 +68,9 @@ export default function InspectionDetailsClient({ inspectionId }: Props): JSX.El
 
   // Local draft state
   const [notes, setNotes] = useState("");
+  const [generalCondition, setGeneralCondition] = useState("");
+  const [odometerReading, setOdometerReading] = useState<number | "">("");
+  const [fuelLevel, setFuelLevel] = useState<number>(100);
   const [decision, setDecision] = useState<"approve" | "reject" | null>(null);
   const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -81,6 +88,12 @@ export default function InspectionDetailsClient({ inspectionId }: Props): JSX.El
       const data = await getInspectionDetails(inspectionId);
       setDetails(data);
       setNotes(data.notes ?? "");
+      setGeneralCondition(data.generalCondition ?? "");
+      setOdometerReading(data.odometerReading);
+      setFuelLevel(data.fuelLevel);
+      if (data.isSubmitted) {
+        setDecision(data.status === "Approved" ? "approve" : data.status === "Rejected" ? "reject" : null);
+      }
     } catch (err) {
       logger.error("Failed to load inspection", err);
       if (err instanceof ApiError && err.status === 403) {
@@ -148,6 +161,7 @@ export default function InspectionDetailsClient({ inspectionId }: Props): JSX.El
     const errors: Record<string, string> = {};
     if (!decision) errors.decision = "Please select a decision (Approve or Reject)";
     if (!notes.trim()) errors.notes = "Please provide inspection notes";
+    if (odometerReading === "" || odometerReading < 0) errors.odometerReading = "Please enter a valid odometer reading";
     if (totalImageCount < MIN_IMAGES) errors.images = `At least ${String(MIN_IMAGES)} photo is required`;
 
     setValidationErrors(errors);
@@ -174,6 +188,9 @@ export default function InspectionDetailsClient({ inspectionId }: Props): JSX.El
       // 2. Submit the report
       await submitInspection(inspectionId, {
         notes,
+        generalCondition: generalCondition.trim() ? generalCondition : undefined,
+        odometerReading: typeof odometerReading === "number" ? odometerReading : undefined,
+        fuelLevel,
         approve: decision === "approve",
       });
 
@@ -237,9 +254,9 @@ export default function InspectionDetailsClient({ inspectionId }: Props): JSX.El
   if (!details) return <Box>Not found</Box>;
 
   return (
-    <Box>
+    <Box sx={{ maxWidth: 1200, mx: "auto" }}>
       {/* Header */}
-      <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", mb: 4 }}>
+      <Stack direction={{ xs: "column", sm: "row" }} sx={{ alignItems: { xs: "flex-start", sm: "center" }, justifyContent: "space-between", mb: 4, gap: 2 }}>
         <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
           <IconButton
             onClick={() => {
@@ -250,11 +267,11 @@ export default function InspectionDetailsClient({ inspectionId }: Props): JSX.El
             <ArrowBackIcon />
           </IconButton>
           <Box>
-            <Typography variant="h5" sx={{ fontWeight: 800 }}>
-              Inspection Details
+            <Typography variant="h4" sx={{ fontWeight: 800 }}>
+              Inspection Report
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Review and submit inspection report for booking #{details.bookingNumber}
+              Review details and submit for booking #{details.bookingNumber}
             </Typography>
           </Box>
         </Stack>
@@ -263,12 +280,12 @@ export default function InspectionDetailsClient({ inspectionId }: Props): JSX.El
 
       <Grid container spacing={3}>
         {/* A. Booking & Vehicle Info */}
-        <Grid size={{ xs: 12, md: 5 }}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <BookingInfoSection details={details} />
         </Grid>
 
-        {/* C. Inspection Form */}
-        <Grid size={{ xs: 12, md: 7 }}>
+        {/* B. Inspection Form */}
+        <Grid size={{ xs: 12, md: 8 }}>
           <InspectionReportForm
             isLocked={isLocked}
             totalImageCount={totalImageCount}
@@ -282,6 +299,12 @@ export default function InspectionDetailsClient({ inspectionId }: Props): JSX.El
             setDecision={setDecision}
             notes={notes}
             setNotes={setNotes}
+            generalCondition={generalCondition}
+            setGeneralCondition={setGeneralCondition}
+            odometerReading={odometerReading}
+            setOdometerReading={setOdometerReading}
+            fuelLevel={fuelLevel}
+            setFuelLevel={setFuelLevel}
             handleConfirmSubmit={handleConfirmSubmit}
             theme={theme}
           />
@@ -294,10 +317,11 @@ export default function InspectionDetailsClient({ inspectionId }: Props): JSX.El
         onClose={() => {
           setConfirmOpen(false);
         }}
+        sx={{ "& .MuiDialog-paper": { borderRadius: 3, p: 1 } }}
       >
-        <DialogTitle sx={{ fontWeight: 700 }}>Submit Inspection Report?</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 800 }}>Submit Inspection Report?</DialogTitle>
         <DialogContent>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body1" color="text.secondary">
             You are about to mark this vehicle as <strong>{decision?.toUpperCase()}</strong>. This action is permanent
             and will notify the relevant parties.
           </Typography>
@@ -308,6 +332,7 @@ export default function InspectionDetailsClient({ inspectionId }: Props): JSX.El
               setConfirmOpen(false);
             }}
             color="inherit"
+            sx={{ fontWeight: 600 }}
           >
             Cancel
           </Button>
@@ -317,7 +342,7 @@ export default function InspectionDetailsClient({ inspectionId }: Props): JSX.El
             }}
             variant="contained"
             color="primary"
-            sx={{ fontWeight: 700, borderRadius: 2 }}
+            sx={{ fontWeight: 700, borderRadius: 2, px: 3 }}
           >
             Confirm & Submit
           </Button>
@@ -350,10 +375,10 @@ export default function InspectionDetailsClient({ inspectionId }: Props): JSX.El
 function InfoRow({ label, value }: { readonly label: string; readonly value: string }) {
   return (
     <Box>
-      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: "block", mb: 0.2 }}>
+      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: "block", mb: 0.5, textTransform: "uppercase", letterSpacing: 0.5 }}>
         {label}
       </Typography>
-      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+      <Typography variant="body1" sx={{ fontWeight: 600 }}>
         {value}
       </Typography>
     </Box>
@@ -362,17 +387,17 @@ function InfoRow({ label, value }: { readonly label: string; readonly value: str
 
 function BookingInfoSection({ details }: { readonly details: InspectionDetails }) {
   return (
-    <Paper elevation={0} sx={{ p: 3, borderRadius: 2, border: "1px solid", borderColor: "divider", height: "100%" }}>
-      <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-        Booking Information
+    <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%", bgcolor: "background.paper" }}>
+      <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
+        Details
       </Typography>
-      <Divider sx={{ mb: 2 }} />
-      <Stack spacing={2}>
+      <Divider sx={{ mb: 3 }} />
+      <Stack spacing={3}>
         <InfoRow label="Booking Number" value={details.bookingNumber || "—"} />
         <InfoRow label="Vehicle" value={details.vehicleDisplayName} />
         <InfoRow label="Assigned To" value={details.inspectorFullName} />
-        <InfoRow label="Inspection Date" value={new Date(details.inspectionDate).toLocaleString()} />
-        {details.submittedAt && <InfoRow label="Submitted" value={new Date(details.submittedAt).toLocaleString()} />}
+        <InfoRow label="Scheduled Date" value={new Date(details.inspectionDate).toLocaleString()} />
+        {details.submittedAt && <InfoRow label="Submitted At" value={new Date(details.submittedAt).toLocaleString()} />}
       </Stack>
     </Paper>
   );
@@ -391,6 +416,12 @@ interface InspectionReportFormProps {
   readonly setDecision: (d: "approve" | "reject") => void;
   readonly notes: string;
   readonly setNotes: (n: string) => void;
+  readonly generalCondition: string;
+  readonly setGeneralCondition: (n: string) => void;
+  readonly odometerReading: number | "";
+  readonly setOdometerReading: (n: number | "") => void;
+  readonly fuelLevel: number;
+  readonly setFuelLevel: (n: number) => void;
   readonly handleConfirmSubmit: () => void;
   readonly theme: Theme;
 }
@@ -408,32 +439,105 @@ function InspectionReportForm({
   setDecision,
   notes,
   setNotes,
+  generalCondition,
+  setGeneralCondition,
+  odometerReading,
+  setOdometerReading,
+  fuelLevel,
+  setFuelLevel,
   handleConfirmSubmit,
   theme,
 }: InspectionReportFormProps) {
   return (
-    <Paper elevation={0} sx={{ p: 3, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
-      <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-        Inspection Report
-      </Typography>
-      <Divider sx={{ mb: 2 }} />
+    <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}>
+      {isLocked && (
+        <Alert icon={<LockIcon />} severity="info" sx={{ borderRadius: 2, mb: 4 }}>
+          This inspection report has been submitted and is locked for editing.
+        </Alert>
+      )}
+
+      {/* Vehicle Status (Odometer & Fuel) */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h6" sx={{ fontWeight: 800, mb: 3 }}>
+          Vehicle Metrics
+        </Typography>
+        <Grid container spacing={4}>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+              Odometer Reading
+            </Typography>
+            <TextField
+              fullWidth
+              type="number"
+              placeholder="e.g. 45000"
+              value={odometerReading}
+              onChange={e => {
+                const val = e.target.value;
+                setOdometerReading(val === "" ? "" : Number(val));
+              }}
+              disabled={isLocked || submitting}
+              error={!!validationErrors.odometerReading}
+              helperText={validationErrors.odometerReading}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SpeedIcon />
+                    </InputAdornment>
+                  ),
+                  endAdornment: <InputAdornment position="end">km</InputAdornment>,
+                  sx: { borderRadius: 2 }
+                }
+              }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+              Fuel Level: {fuelLevel}%
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", height: 56, px: 2, border: "1px solid", borderColor: "divider", borderRadius: 2, bgcolor: isLocked ? "action.disabledBackground" : "transparent" }}>
+              <LocalGasStationIcon color={isLocked ? "disabled" : "primary"} sx={{ mr: 2 }} />
+              <Slider
+                value={fuelLevel}
+                min={0}
+                max={100}
+                step={5}
+                marks={[
+                  { value: 0, label: 'E' },
+                  { value: 25 },
+                  { value: 50, label: '1/2' },
+                  { value: 75 },
+                  { value: 100, label: 'F' },
+                ]}
+                onChange={(_, newVal) => { if (typeof newVal === "number") setFuelLevel(newVal); }}
+                disabled={isLocked || submitting}
+                sx={{ mx: 2 }}
+              />
+            </Box>
+          </Grid>
+        </Grid>
+      </Box>
+
+      <Divider sx={{ mb: 4 }} />
 
       {/* Image upload */}
-      <Box sx={{ mb: 3 }}>
-        <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-            Photos ({String(totalImageCount)}/{String(MAX_IMAGES)})
+      <Box sx={{ mb: 4 }}>
+        <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+          <Typography variant="h6" sx={{ fontWeight: 800 }}>
+            Visual Evidence ({String(totalImageCount)}/{String(MAX_IMAGES)})
           </Typography>
           {!isLocked && (
             <Button
               size="small"
+              variant="outlined"
               startIcon={<AddPhotoAlternateIcon />}
               onClick={() => {
                 fileInputRef.current?.click();
               }}
               disabled={totalImageCount >= MAX_IMAGES || submitting}
+              sx={{ borderRadius: 2, fontWeight: 700 }}
             >
-              Add photos
+              Upload Photos
             </Button>
           )}
         </Stack>
@@ -449,35 +553,44 @@ function InspectionReportForm({
         {allImages.length === 0 ? (
           <Box
             sx={{
-              border: "1px dashed",
+              border: "2px dashed",
               borderColor: validationErrors.images ? "error.main" : "divider",
-              borderRadius: 2,
-              p: 4,
+              borderRadius: 3,
+              p: 6,
               textAlign: "center",
               cursor: isLocked ? "default" : "pointer",
+              bgcolor: alpha(theme.palette.background.default, 0.5),
+              transition: "all 0.2s",
+              "&:hover": { bgcolor: isLocked ? "inherit" : "action.hover" }
             }}
             onClick={() => {
               if (!isLocked) fileInputRef.current?.click();
             }}
           >
-            <AddPhotoAlternateIcon sx={{ fontSize: 48, color: "text.disabled", mb: 1 }} />
-            <Typography variant="body2" color="text.secondary">
-              {isLocked ? "No images uploaded" : "Click to upload inspection photos"}
+            <AddPhotoAlternateIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              {isLocked ? "No photos provided" : "Upload Inspection Photos"}
             </Typography>
+            {!isLocked && (
+              <Typography variant="body2" color="text.secondary">
+                Drag and drop or click to browse (Min {MIN_IMAGES}, Max {MAX_IMAGES})
+              </Typography>
+            )}
           </Box>
         ) : (
-          <Grid container spacing={1.5}>
+          <Grid container spacing={2}>
             {allImages.map(img => (
-              <Grid key={img.id} size={{ xs: 6, sm: 4 }}>
+              <Grid key={img.id} size={{ xs: 6, sm: 4, md: 3 }}>
                 <Box
                   sx={{
                     position: "relative",
                     aspectRatio: "1 / 1",
-                    borderRadius: 2,
+                    borderRadius: 3,
                     overflow: "hidden",
                     border: "1px solid",
                     borderColor: "divider",
                     bgcolor: "background.default",
+                    boxShadow: theme.shadows[1]
                   }}
                 >
                   {img.src && (
@@ -500,11 +613,13 @@ function InspectionReportForm({
                       }}
                       sx={{
                         position: "absolute",
-                        top: 4,
-                        right: 4,
-                        bgcolor: alpha(theme.palette.error.main, 0.8),
+                        top: 8,
+                        right: 8,
+                        bgcolor: alpha(theme.palette.error.main, 0.9),
                         color: "white",
-                        "&:hover": { bgcolor: theme.palette.error.main },
+                        backdropFilter: "blur(4px)",
+                        "&:hover": { bgcolor: theme.palette.error.main, transform: "scale(1.1)" },
+                        transition: "all 0.2s"
                       }}
                     >
                       <DeleteOutlinedIcon fontSize="small" />
@@ -516,19 +631,63 @@ function InspectionReportForm({
           </Grid>
         )}
         {validationErrors.images && (
-          <Typography variant="caption" color="error" sx={{ mt: 1, display: "block" }}>
+          <Typography variant="caption" color="error" sx={{ mt: 1, display: "block", fontWeight: 600 }}>
             {validationErrors.images}
           </Typography>
         )}
       </Box>
 
+      <Divider sx={{ mb: 4 }} />
+
+      {/* Conditions & Notes */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h6" sx={{ fontWeight: 800, mb: 3 }}>
+          Condition & Notes
+        </Typography>
+        
+        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+          Damage Report / General Condition (Optional)
+        </Typography>
+        <TextField
+          fullWidth
+          multiline
+          rows={2}
+          placeholder="List any visible damage, scratches, or general condition remarks..."
+          value={generalCondition}
+          onChange={e => {
+            setGeneralCondition(e.target.value);
+          }}
+          disabled={isLocked || submitting}
+          sx={{ mb: 3 }}
+          slotProps={{ input: { sx: { borderRadius: 2 } } }}
+        />
+
+        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+          Final Inspection Notes (Required)
+        </Typography>
+        <TextField
+          fullWidth
+          multiline
+          rows={4}
+          placeholder="Detailed observations to support your final decision..."
+          value={notes}
+          onChange={e => {
+            setNotes(e.target.value);
+          }}
+          disabled={isLocked || submitting}
+          error={!!validationErrors.notes}
+          helperText={validationErrors.notes}
+          slotProps={{ input: { sx: { borderRadius: 2 } } }}
+        />
+      </Box>
+
       {/* Decision */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1.5 }}>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
           Final Decision
         </Typography>
         <Grid container spacing={2}>
-          <Grid size={{ xs: 6 }}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Button
               fullWidth
               variant={decision === "approve" ? "contained" : "outlined"}
@@ -538,12 +697,12 @@ function InspectionReportForm({
               }}
               disabled={isLocked || submitting}
               startIcon={<CheckCircleIcon />}
-              sx={{ py: 1.2, borderRadius: 2, fontWeight: 700 }}
+              sx={{ py: 2, borderRadius: 2, fontWeight: 800, fontSize: "1.1rem" }}
             >
-              Approve
+              Approve Vehicle
             </Button>
           </Grid>
-          <Grid size={{ xs: 6 }}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Button
               fullWidth
               variant={decision === "reject" ? "contained" : "outlined"}
@@ -553,58 +712,34 @@ function InspectionReportForm({
               }}
               disabled={isLocked || submitting}
               startIcon={<CancelIcon />}
-              sx={{ py: 1.2, borderRadius: 2, fontWeight: 700 }}
+              sx={{ py: 2, borderRadius: 2, fontWeight: 800, fontSize: "1.1rem" }}
             >
-              Reject
+              Reject Vehicle
             </Button>
           </Grid>
         </Grid>
         {validationErrors.decision && (
-          <Typography variant="caption" color="error" sx={{ mt: 1, display: "block" }}>
+          <Typography variant="caption" color="error" sx={{ mt: 1, display: "block", fontWeight: 600 }}>
             {validationErrors.decision}
           </Typography>
         )}
       </Box>
 
-      {/* Notes */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
-          Inspection Notes
-        </Typography>
-        <TextField
-          fullWidth
-          multiline
-          rows={4}
-          placeholder="Detailed observations about the vehicle's condition..."
-          value={notes}
-          onChange={e => {
-            setNotes(e.target.value);
-          }}
-          disabled={isLocked || submitting}
-          error={!!validationErrors.notes}
-          helperText={validationErrors.notes}
-          slotProps={{
-            input: { sx: { borderRadius: 2, bgcolor: "background.default" } },
-          }}
-        />
-      </Box>
-
       {/* Submit button */}
-      {!isLocked ? (
-        <Button
-          fullWidth
-          size="large"
-          variant="contained"
-          onClick={handleConfirmSubmit}
-          disabled={submitting}
-          sx={{ py: 1.5, borderRadius: 2, fontWeight: 800, fontSize: "1rem" }}
-        >
-          {submitting ? <CircularProgress size={26} color="inherit" /> : "Submit Inspection"}
-        </Button>
-      ) : (
-        <Alert icon={<LockIcon />} severity="info" sx={{ borderRadius: 2 }}>
-          This inspection report has been submitted and is now locked for editing.
-        </Alert>
+      {!isLocked && (
+        <Box sx={{ mt: 2, borderTop: 1, borderColor: "divider", pt: 4 }}>
+          <Button
+            fullWidth
+            size="large"
+            variant="contained"
+            color="primary"
+            onClick={handleConfirmSubmit}
+            disabled={submitting}
+            sx={{ py: 2, borderRadius: 3, fontWeight: 800, fontSize: "1.1rem" }}
+          >
+            {submitting ? <CircularProgress size={26} color="inherit" /> : "Submit Final Report"}
+          </Button>
+        </Box>
       )}
     </Paper>
   );
