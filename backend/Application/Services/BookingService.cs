@@ -34,7 +34,7 @@ public class BookingService : IBookingService
     // changes. Production DI always provides a real implementation, so the
     // identity-verification gate below is enforced for real customers.
     private readonly IVerificationService? _verificationService;
-    private readonly IDriverRequestService? _driverRequestService;
+    // IDriverRequestService removed — DriverRequest system replaced by inspector auto-assignment
     private readonly IDriverPricingService? _driverPricingService;
     private readonly IDriverProfileRepository? _driverProfileRepository;
 
@@ -45,7 +45,6 @@ public class BookingService : IBookingService
         UserManager<ApplicationUser> userManager,
         INotificationService? notificationService = null,
         IVerificationService? verificationService = null,
-        IDriverRequestService? driverRequestService = null,
         IDriverPricingService? driverPricingService = null,
         IDriverProfileRepository? driverProfileRepository = null)
     {
@@ -55,7 +54,6 @@ public class BookingService : IBookingService
         _userManager = userManager;
         _notificationService = notificationService;
         _verificationService = verificationService;
-        _driverRequestService = driverRequestService;
         _driverPricingService = driverPricingService;
         _driverProfileRepository = driverProfileRepository;
     }
@@ -262,10 +260,7 @@ public class BookingService : IBookingService
             holdExpiresAt: null,
             cancellationToken);
 
-        if (effectiveNeedDriver == true && _driverRequestService != null)
-        {
-            await _driverRequestService.CheckAndEmitRequestAsync(booking.Id, cancellationToken);
-        }
+        // Driver auto-assignment is now handled by VehicleInspectionAutoAssignmentBackgroundService
 
         // Requirement 4.8: Create notification for the booking owner (customer).
         if (request.CustomerUserId.HasValue && request.CustomerUserId.Value != userId)
@@ -1409,7 +1404,7 @@ public class BookingService : IBookingService
         return new BookingInspectionFullDto(
             InspectionId: inspection.InspectionId,
             InspectionType: inspection.InspectionType,
-            InspectorId: inspection.InspectorId,
+            InspectorId: inspection.InspectorId ?? Guid.Empty,
             InspectorName: inspectorName,
             Status: inspection.Status.ToString(),
             InspectionDate: inspection.InspectionDate,

@@ -33,8 +33,6 @@ namespace Backend.Infrastructure.Data
         public DbSet<DriverProfile> DriverProfiles { get; set; }
         public DbSet<DriverWorkArea> DriverWorkAreas { get; set; }
         public DbSet<ServiceArea> ServiceAreas { get; set; }
-        public DbSet<DriverRequest> DriverRequests { get; set; }
-        public DbSet<DriverRequestResponse> DriverRequestResponses { get; set; }
         public DbSet<DriverReview> DriverReviews { get; set; }
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<BookingPayment> Payments { get; set; }
@@ -75,15 +73,19 @@ namespace Backend.Infrastructure.Data
         IQueryable<DriverProfile> IApplicationDbContext.DriverProfiles => DriverProfiles;
         IQueryable<DriverWorkArea> IApplicationDbContext.DriverWorkAreas => DriverWorkAreas;
         IQueryable<ServiceArea> IApplicationDbContext.ServiceAreas => ServiceAreas;
-        IQueryable<DriverRequest> IApplicationDbContext.DriverRequests => DriverRequests;
-        IQueryable<DriverRequestResponse> IApplicationDbContext.DriverRequestResponses => DriverRequestResponses;
         IQueryable<DriverReview> IApplicationDbContext.DriverReviews => DriverReviews;
         IQueryable<VehicleInspection> IApplicationDbContext.VehicleInspections => VehicleInspections;
         IQueryable<InspectionImage> IApplicationDbContext.InspectionImages => InspectionImages;
+        IQueryable<Inspector> IApplicationDbContext.Inspectors => Inspectors;
 
         public void AddFavorite(Favorite favorite)
         {
             Favorites.Add(favorite);
+        }
+
+        public void AddVehicleInspection(VehicleInspection inspection)
+        {
+            VehicleInspections.Add(inspection);
         }
 
         public void AddBookingCancellation(BookingCancellation cancellation)

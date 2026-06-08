@@ -8,7 +8,7 @@ namespace Backend.Application.Interfaces
 {
     public interface IDriverNotificationService
     {
-        Task NotifyDriversOfNewRequestAsync(DriverRequest request, IEnumerable<Guid> eligibleDriverUserIds, CancellationToken cancellationToken = default);
+        Task NotifyDriversOfNewRequestAsync(IEnumerable<Guid> eligibleDriverUserIds, CancellationToken cancellationToken = default);
         Task NotifyDriverApprovedAsync(Guid driverUserId, CancellationToken cancellationToken = default);
         Task NotifyDriverRejectedAsync(Guid driverUserId, string reason, CancellationToken cancellationToken = default);
         Task NotifyDriverAssignedAsync(Guid driverUserId, Booking booking, CancellationToken cancellationToken = default);

@@ -24,5 +24,8 @@ namespace Backend.Domain.Entities
         public new DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public new DateTime? UpdatedAt { get; set; }
+
+        [MaxLength(100)]
+        public string? Region { get; set; }
     }
 }

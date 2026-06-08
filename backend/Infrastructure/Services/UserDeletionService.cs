@@ -88,11 +88,6 @@ public class UserDeletionService : IUserDeletionService
 
             if (driverProfileIds.Count > 0)
             {
-                var responses = await _context.DriverRequestResponses
-                    .Where(r => driverProfileIds.Contains(r.DriverProfileId))
-                    .ToListAsync(cancellationToken);
-                Remove(deleted, "DriverRequestResponses", _context.DriverRequestResponses, responses);
-
                 var workAreas = await _context.DriverWorkAreas
                     .Where(w => driverProfileIds.Contains(w.DriverProfileId))
                     .ToListAsync(cancellationToken);

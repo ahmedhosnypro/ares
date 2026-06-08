@@ -51,7 +51,7 @@ namespace Backend.Application.Services
             }
         }
 
-        public async Task NotifyDriversOfNewRequestAsync(DriverRequest request, IEnumerable<Guid> eligibleDriverUserIds, CancellationToken cancellationToken = default)
+        public async Task NotifyDriversOfNewRequestAsync(IEnumerable<Guid> eligibleDriverUserIds, CancellationToken cancellationToken = default)
         {
             if (eligibleDriverUserIds == null) return;
             foreach (var userId in eligibleDriverUserIds)

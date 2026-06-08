@@ -27,11 +27,10 @@ public interface IApplicationDbContext
     IQueryable<DriverProfile> DriverProfiles { get; }
     IQueryable<DriverWorkArea> DriverWorkAreas { get; }
     IQueryable<ServiceArea> ServiceAreas { get; }
-    IQueryable<DriverRequest> DriverRequests { get; }
-    IQueryable<DriverRequestResponse> DriverRequestResponses { get; }
     IQueryable<DriverReview> DriverReviews { get; }
     IQueryable<VehicleInspection> VehicleInspections { get; }
     IQueryable<InspectionImage> InspectionImages { get; }
+    IQueryable<Inspector> Inspectors { get; }
     void AddFavorite(Favorite favorite);
     void AddBookingCancellation(BookingCancellation cancellation);
     void AddUserAddress(UserAddress userAddress);
@@ -43,5 +42,6 @@ public interface IApplicationDbContext
     void RemoveVehicleFeatures(IEnumerable<VehicleFeature> features);
     void AddVehicleFeatures(IEnumerable<VehicleFeature> features);
     void AddSystemSetting(SystemSetting setting);
+    void AddVehicleInspection(VehicleInspection inspection);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

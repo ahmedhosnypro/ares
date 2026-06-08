@@ -31,31 +31,29 @@ public class DriverAssignmentConcurrencyTests
 {
     private readonly Mock<IDriverProfileRepository> _profiles = new();
     private readonly Mock<IBookingRepository> _bookings = new();
-    private readonly Mock<IDriverRequestRepository> _requests = new();
     private readonly Mock<IDriverNotificationService> _notifications = new();
-    private readonly Mock<IDriverRequestService> _requestService = new();
     private readonly Mock<IApplicationDbContext> _context = new();
+    private readonly Mock<IDriverReviewRepository> _driverReviews = new();
+    private readonly Mock<IDriverPricingService> _driverPricing = new();
     private readonly DriverAssignmentService _service;
 
     private readonly Guid _customerId = Guid.NewGuid();
     private readonly Guid _bookingId = Guid.NewGuid();
     private readonly Guid _driverProfileId = Guid.NewGuid();
-    private readonly Guid _requestId = Guid.NewGuid();
 
     public DriverAssignmentConcurrencyTests()
     {
         // Make every Task-returning side-effect a no-op so awaits don't NRE.
         _profiles.Setup(x => x.UpdateAsync(It.IsAny<DriverProfile>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _bookings.Setup(x => x.UpdateAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _requests.Setup(x => x.UpdateAsync(It.IsAny<DriverRequest>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _notifications.Setup(x => x.NotifyDriverAssignedAsync(It.IsAny<Guid>(), It.IsAny<Booking>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _notifications.Setup(x => x.NotifyOtherDriversNotSelectedAsync(It.IsAny<IEnumerable<Guid>>(), It.IsAny<Booking>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _notifications.Setup(x => x.NotifyCustomerDriverCancelledAsync(It.IsAny<Guid>(), It.IsAny<Booking>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _requestService.Setup(x => x.CheckAndEmitRequestAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _driverPricing.Setup(x => x.GetDailyRateAsync(It.IsAny<CancellationToken>())).ReturnsAsync(100m);
 
         _service = new DriverAssignmentService(
-            _profiles.Object, _bookings.Object, _requests.Object,
-            _notifications.Object, _requestService.Object, _context.Object);
+            _profiles.Object, _bookings.Object,
+            _notifications.Object, _context.Object,
+            _driverReviews.Object, _driverPricing.Object);
     }
 
     private Booking ValidBooking(Guid? assigned = null) => new Booking
@@ -72,21 +70,6 @@ public class DriverAssignmentConcurrencyTests
     private void SetupHappyPathLookups(Booking booking)
     {
         _bookings.Setup(x => x.GetByIdAsync(_bookingId, It.IsAny<CancellationToken>())).ReturnsAsync(booking);
-
-        var openRequest = new DriverRequest { Id = _requestId, BookingId = _bookingId, Status = DriverRequestStatus.Open };
-        _requests.Setup(x => x.GetByBookingIdAsync(_bookingId, It.IsAny<CancellationToken>())).ReturnsAsync(openRequest);
-
-        var withResponses = new DriverRequest
-        {
-            Id = _requestId,
-            BookingId = _bookingId,
-            Status = DriverRequestStatus.Open,
-            Responses = new List<DriverRequestResponse>
-            {
-                new() { DriverProfileId = _driverProfileId, Action = DriverResponseAction.Accepted }
-            }
-        };
-        _requests.Setup(x => x.GetByIdWithResponsesAsync(_requestId, It.IsAny<CancellationToken>())).ReturnsAsync(withResponses);
 
         _profiles.Setup(x => x.GetByIdAsync(_driverProfileId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new DriverProfile
