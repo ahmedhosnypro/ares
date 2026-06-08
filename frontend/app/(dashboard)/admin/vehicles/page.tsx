@@ -129,14 +129,7 @@ function DonutChart({
     <Box sx={{ position: "relative", width: 110, height: 110, flexShrink: 0 }}>
       <svg width="110" height="110" viewBox="0 0 110 110">
         {/* Background track */}
-        <circle
-          cx="55"
-          cy="55"
-          r={radius}
-          fill="none"
-          stroke={alpha(theme.palette.divider, 0.4)}
-          strokeWidth="10"
-        />
+        <circle cx="55" cy="55" r={radius} fill="none" stroke={alpha(theme.palette.divider, 0.4)} strokeWidth="10" />
         {/* Segments — rotate so first segment starts at top */}
         <g transform="rotate(-90 55 55)">
           {segments.map((seg, i) => (
@@ -167,9 +160,7 @@ function DonutChart({
           justifyContent: "center",
         }}
       >
-        <Typography sx={{ fontWeight: 800, fontSize: 22, lineHeight: 1 }}>
-          {total}
-        </Typography>
+        <Typography sx={{ fontWeight: 800, fontSize: 22, lineHeight: 1 }}>{total}</Typography>
       </Box>
     </Box>
   );
@@ -194,7 +185,8 @@ function TrendBadge({ value }: { value?: number }): JSX.Element | null {
           color: isUp ? "success.main" : "error.main",
         }}
       >
-        {isUp ? "+" : ""}{value}%
+        {isUp ? "+" : ""}
+        {value}%
       </Typography>
     </Stack>
   );
@@ -260,15 +252,7 @@ function StatCard({
 }
 
 // ── Legend item ──
-function LegendItem({
-  color,
-  label,
-  pct,
-}: {
-  color: string;
-  label: string;
-  pct: number;
-}): JSX.Element {
+function LegendItem({ color, label, pct }: { color: string; label: string; pct: number }): JSX.Element {
   return (
     <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}>
       <Stack direction="row" spacing={0.8} sx={{ alignItems: "center" }}>
@@ -325,12 +309,7 @@ function FleetOverview({
           }}
         >
           <Stack direction="row" spacing={2.5} sx={{ alignItems: "center" }}>
-            <DonutChart
-              available={availableCount}
-              booked={rentalCount}
-              maintenance={maintenanceCount}
-              total={total}
-            />
+            <DonutChart available={availableCount} booked={rentalCount} maintenance={maintenanceCount} total={total} />
             <Stack spacing={1} sx={{ flex: 1 }}>
               <LegendItem color={theme.palette.success.main} label="Available" pct={availPct} />
               <LegendItem color={theme.palette.primary.main} label="Booked" pct={bookedPct} />
@@ -375,7 +354,6 @@ function FleetOverview({
     </Grid>
   );
 }
-
 
 // ── Static filter option lists. Defined as module-level constants so the
 //    dropdowns don't re-create their option arrays on every render and so

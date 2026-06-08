@@ -69,25 +69,28 @@ export default function CreateUserPage() {
     { label: "Password missing", done: Boolean(form.password), missingLabel: "Password missing" },
     { label: "Role unassigned", done: Boolean(form.role), missingLabel: "Role unassigned" },
   ];
-  const completenessScore = Math.round(
-    (completenessItems.filter(i => i.done).length / completenessItems.length) * 100
-  );
+  const completenessScore = Math.round((completenessItems.filter(i => i.done).length / completenessItems.length) * 100);
 
-  const createUserSchema = z.object({
-    email: z.email({ message: "Invalid email" }),
-    password: passwordSchema,
-    confirmPassword: z.string(),
-    firstName: z.string().min(1, "First name is required"),
-    lastName: z.string().min(1, "Last name is required"),
-    phoneNumber: z.string().optional().refine(v => !v || /^[0-9+\s\-().]{8,15}$/.test(v), {
-      message: "Invalid phone number",
-    }),
-    status: z.string(),
-    role: z.string().min(1, "Role is required"),
-  }).refine(data => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
+  const createUserSchema = z
+    .object({
+      email: z.email({ message: "Invalid email" }),
+      password: passwordSchema,
+      confirmPassword: z.string(),
+      firstName: z.string().min(1, "First name is required"),
+      lastName: z.string().min(1, "Last name is required"),
+      phoneNumber: z
+        .string()
+        .optional()
+        .refine(v => !v || /^[0-9+\s\-().]{8,15}$/.test(v), {
+          message: "Invalid phone number",
+        }),
+      status: z.string(),
+      role: z.string().min(1, "Role is required"),
+    })
+    .refine(data => data.password === data.confirmPassword, {
+      message: "Passwords do not match",
+      path: ["confirmPassword"],
+    });
 
   const handleSubmit = async () => {
     try {
@@ -147,7 +150,6 @@ export default function CreateUserPage() {
 
   return (
     <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 }, width: "100%", boxSizing: "border-box", overflowX: "hidden" }}>
-
       {/* Breadcrumb */}
       <Stack
         direction="row"
@@ -157,7 +159,9 @@ export default function CreateUserPage() {
         <Typography
           variant="caption"
           sx={{ cursor: "pointer", "&:hover": { color: "primary.main" } }}
-          onClick={() => { router.push("/admin/users"); }}
+          onClick={() => {
+            router.push("/admin/users");
+          }}
         >
           Users
         </Typography>
@@ -189,14 +193,12 @@ export default function CreateUserPage() {
           </Typography>
         </Box>
 
-        <Stack
-          direction="row"
-          spacing={1.5}
-          sx={{ width: { xs: "100%", sm: "auto" }, flexShrink: 0 }}
-        >
+        <Stack direction="row" spacing={1.5} sx={{ width: { xs: "100%", sm: "auto" }, flexShrink: 0 }}>
           <Button
             variant="outlined"
-            onClick={() => { router.back(); }}
+            onClick={() => {
+              router.back();
+            }}
             sx={{
               flex: { xs: 1, sm: "unset" },
               borderRadius: 2,
@@ -212,7 +214,9 @@ export default function CreateUserPage() {
           <Button
             variant="contained"
             startIcon={saving ? undefined : <AddBoxOutlinedIcon />}
-            onClick={() => { void handleSubmit(); }}
+            onClick={() => {
+              void handleSubmit();
+            }}
             disabled={saving}
             sx={{
               flex: { xs: 1, sm: "unset" },
@@ -227,14 +231,16 @@ export default function CreateUserPage() {
         </Stack>
       </Stack>
 
-      {error && <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>{error}</Alert>}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
+          {error}
+        </Alert>
+      )}
 
       {/* Two-column layout */}
       <Grid container spacing={{ xs: 2, md: 2.5 }} sx={{ alignItems: "flex-start" }}>
-
         {/* LEFT: form cards */}
         <Grid size={{ xs: 12, lg: 8.5 }}>
-
           {/* Account Credentials */}
           <Paper
             elevation={0}
@@ -253,7 +259,9 @@ export default function CreateUserPage() {
               </Box>
               <Box sx={{ minWidth: 0 }}>
                 <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>Account Credentials</Typography>
-                <Typography variant="caption" color="text.secondary">Primary authentication details.</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Primary authentication details.
+                </Typography>
               </Box>
             </Stack>
 
@@ -261,12 +269,18 @@ export default function CreateUserPage() {
               {/* Email */}
               <Box>
                 <Typography sx={fieldLabel}>
-                  Email Address <Box component="span" sx={{ color: "error.main" }}>*</Box>
+                  Email Address{" "}
+                  <Box component="span" sx={{ color: "error.main" }}>
+                    *
+                  </Box>
                 </Typography>
                 <TextField
                   placeholder="user@company.com"
                   value={form.email}
-                  onChange={e => { setForm({ ...form, email: e.target.value }); if (fieldErrors.email) setFieldErrors(p => ({ ...p, email: undefined })); }}
+                  onChange={e => {
+                    setForm({ ...form, email: e.target.value });
+                    if (fieldErrors.email) setFieldErrors(p => ({ ...p, email: undefined }));
+                  }}
                   fullWidth
                   error={Boolean(fieldErrors.email)}
                   helperText={fieldErrors.email}
@@ -287,12 +301,18 @@ export default function CreateUserPage() {
               <Grid container spacing={{ xs: 2, sm: 2.5 }}>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography sx={fieldLabel}>
-                    Temporary Password <Box component="span" sx={{ color: "error.main" }}>*</Box>
+                    Temporary Password{" "}
+                    <Box component="span" sx={{ color: "error.main" }}>
+                      *
+                    </Box>
                   </Typography>
                   <TextField
                     type={showPassword ? "text" : "password"}
                     value={form.password}
-                    onChange={e => { setForm({ ...form, password: e.target.value }); if (fieldErrors.password) setFieldErrors(p => ({ ...p, password: undefined })); }}
+                    onChange={e => {
+                      setForm({ ...form, password: e.target.value });
+                      if (fieldErrors.password) setFieldErrors(p => ({ ...p, password: undefined }));
+                    }}
                     fullWidth
                     error={Boolean(fieldErrors.password)}
                     helperText={fieldErrors.password}
@@ -301,7 +321,12 @@ export default function CreateUserPage() {
                       input: {
                         endAdornment: (
                           <InputAdornment position="end">
-                            <IconButton onClick={() => { setShowPassword(v => !v); }} edge="end">
+                            <IconButton
+                              onClick={() => {
+                                setShowPassword(v => !v);
+                              }}
+                              edge="end"
+                            >
                               {showPassword ? <VisibilityOffOutlinedIcon /> : <VisibilityOutlinedIcon />}
                             </IconButton>
                           </InputAdornment>
@@ -312,12 +337,18 @@ export default function CreateUserPage() {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography sx={fieldLabel}>
-                    Confirm Password <Box component="span" sx={{ color: "error.main" }}>*</Box>
+                    Confirm Password{" "}
+                    <Box component="span" sx={{ color: "error.main" }}>
+                      *
+                    </Box>
                   </Typography>
                   <TextField
                     type={showConfirmPassword ? "text" : "password"}
                     value={form.confirmPassword}
-                    onChange={e => { setForm({ ...form, confirmPassword: e.target.value }); if (fieldErrors.confirmPassword) setFieldErrors(p => ({ ...p, confirmPassword: undefined })); }}
+                    onChange={e => {
+                      setForm({ ...form, confirmPassword: e.target.value });
+                      if (fieldErrors.confirmPassword) setFieldErrors(p => ({ ...p, confirmPassword: undefined }));
+                    }}
                     fullWidth
                     error={Boolean(fieldErrors.confirmPassword)}
                     helperText={fieldErrors.confirmPassword}
@@ -326,7 +357,12 @@ export default function CreateUserPage() {
                       input: {
                         endAdornment: (
                           <InputAdornment position="end">
-                            <IconButton onClick={() => { setShowConfirmPassword(v => !v); }} edge="end">
+                            <IconButton
+                              onClick={() => {
+                                setShowConfirmPassword(v => !v);
+                              }}
+                              edge="end"
+                            >
                               {showConfirmPassword ? <VisibilityOffOutlinedIcon /> : <VisibilityOutlinedIcon />}
                             </IconButton>
                           </InputAdornment>
@@ -345,7 +381,9 @@ export default function CreateUserPage() {
                 control={
                   <Checkbox
                     checked={form.requirePasswordChange}
-                    onChange={e => { setForm({ ...form, requirePasswordChange: e.target.checked }); }}
+                    onChange={e => {
+                      setForm({ ...form, requirePasswordChange: e.target.checked });
+                    }}
                   />
                 }
                 label={
@@ -375,7 +413,9 @@ export default function CreateUserPage() {
               </Box>
               <Box sx={{ minWidth: 0 }}>
                 <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>Personal Details</Typography>
-                <Typography variant="caption" color="text.secondary">Identity and contact information.</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Identity and contact information.
+                </Typography>
               </Box>
             </Stack>
 
@@ -383,12 +423,18 @@ export default function CreateUserPage() {
               <Grid container spacing={{ xs: 2, sm: 2.5 }}>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography sx={fieldLabel}>
-                    First Name <Box component="span" sx={{ color: "error.main" }}>*</Box>
+                    First Name{" "}
+                    <Box component="span" sx={{ color: "error.main" }}>
+                      *
+                    </Box>
                   </Typography>
                   <TextField
                     placeholder="John"
                     value={form.firstName}
-                    onChange={e => { setForm({ ...form, firstName: e.target.value }); if (fieldErrors.firstName) setFieldErrors(p => ({ ...p, firstName: undefined })); }}
+                    onChange={e => {
+                      setForm({ ...form, firstName: e.target.value });
+                      if (fieldErrors.firstName) setFieldErrors(p => ({ ...p, firstName: undefined }));
+                    }}
                     fullWidth
                     error={Boolean(fieldErrors.firstName)}
                     helperText={fieldErrors.firstName}
@@ -397,12 +443,18 @@ export default function CreateUserPage() {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography sx={fieldLabel}>
-                    Last Name <Box component="span" sx={{ color: "error.main" }}>*</Box>
+                    Last Name{" "}
+                    <Box component="span" sx={{ color: "error.main" }}>
+                      *
+                    </Box>
                   </Typography>
                   <TextField
                     placeholder="Doe"
                     value={form.lastName}
-                    onChange={e => { setForm({ ...form, lastName: e.target.value }); if (fieldErrors.lastName) setFieldErrors(p => ({ ...p, lastName: undefined })); }}
+                    onChange={e => {
+                      setForm({ ...form, lastName: e.target.value });
+                      if (fieldErrors.lastName) setFieldErrors(p => ({ ...p, lastName: undefined }));
+                    }}
                     fullWidth
                     error={Boolean(fieldErrors.lastName)}
                     helperText={fieldErrors.lastName}
@@ -440,7 +492,10 @@ export default function CreateUserPage() {
                     <TextField
                       placeholder="(555) 000-0000"
                       value={form.phoneNumber}
-                      onChange={e => { setForm({ ...form, phoneNumber: e.target.value }); if (fieldErrors.phoneNumber) setFieldErrors(p => ({ ...p, phoneNumber: undefined })); }}
+                      onChange={e => {
+                        setForm({ ...form, phoneNumber: e.target.value });
+                        if (fieldErrors.phoneNumber) setFieldErrors(p => ({ ...p, phoneNumber: undefined }));
+                      }}
                       fullWidth
                       error={Boolean(fieldErrors.phoneNumber)}
                       helperText={fieldErrors.phoneNumber}
@@ -453,7 +508,9 @@ export default function CreateUserPage() {
                   <TextField
                     type="date"
                     value={form.dateOfBirth}
-                    onChange={e => { setForm({ ...form, dateOfBirth: e.target.value }); }}
+                    onChange={e => {
+                      setForm({ ...form, dateOfBirth: e.target.value });
+                    }}
                     fullWidth
                     slotProps={{ inputLabel: { shrink: true } }}
                     sx={bigInputSx}
@@ -466,7 +523,6 @@ export default function CreateUserPage() {
 
         {/* RIGHT: sidebar */}
         <Grid size={{ xs: 12, lg: 3.5 }}>
-
           {/* Profile Photo */}
           <Paper
             elevation={0}
@@ -500,13 +556,17 @@ export default function CreateUserPage() {
               }}
             >
               <PhotoCameraOutlinedIcon sx={{ color: "text.disabled", fontSize: 30 }} />
-              <Typography variant="caption" sx={{ color: "text.disabled", fontWeight: 500 }}>Upload</Typography>
+              <Typography variant="caption" sx={{ color: "text.disabled", fontWeight: 500 }}>
+                Upload
+              </Typography>
               <input
                 id="profile-photo-input"
                 type="file"
                 accept=".jpeg,.jpg,.png,.gif"
                 hidden
-                onChange={e => { setForm(prev => ({ ...prev, profilePhoto: e.target.files?.[0] ?? null })); }}
+                onChange={e => {
+                  setForm(prev => ({ ...prev, profilePhoto: e.target.files?.[0] ?? null }));
+                }}
               />
             </Box>
             <Typography
@@ -533,9 +593,14 @@ export default function CreateUserPage() {
             <Stack direction="row" spacing={1.25} sx={{ alignItems: "center", mb: 2 }}>
               <Box
                 sx={{
-                  width: 34, height: 34, borderRadius: 1.5,
-                  bgcolor: "warning.lighter", color: "warning.main",
-                  display: "flex", alignItems: "center", justifyContent: "center",
+                  width: 34,
+                  height: 34,
+                  borderRadius: 1.5,
+                  bgcolor: "warning.lighter",
+                  color: "warning.main",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                   flexShrink: 0,
                 }}
               >
@@ -543,18 +608,25 @@ export default function CreateUserPage() {
               </Box>
               <Box sx={{ minWidth: 0 }}>
                 <Typography sx={{ fontWeight: 700, fontSize: 14 }}>Access Control</Typography>
-                <Typography variant="caption" color="text.secondary">Permissions and status.</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Permissions and status.
+                </Typography>
               </Box>
             </Stack>
 
             <Box sx={{ mb: 2 }}>
               <Typography sx={{ ...fieldLabel, mb: 1 }}>
-                System Role <Box component="span" sx={{ color: "error.main" }}>*</Box>
+                System Role{" "}
+                <Box component="span" sx={{ color: "error.main" }}>
+                  *
+                </Box>
               </Typography>
               <TextField
                 select
                 value={form.role}
-                onChange={e => { setForm(prev => ({ ...prev, role: e.target.value })); }}
+                onChange={e => {
+                  setForm(prev => ({ ...prev, role: e.target.value }));
+                }}
                 fullWidth
                 size="small"
                 error={Boolean(fieldErrors.role)}
@@ -564,7 +636,9 @@ export default function CreateUserPage() {
                   input: { style: { fontSize: 13 } },
                 }}
               >
-                <MenuItem value="" disabled><em style={{ color: "var(--mui-palette-text-disabled)" }}>Select a role...</em></MenuItem>
+                <MenuItem value="" disabled>
+                  <em style={{ color: "var(--mui-palette-text-disabled)" }}>Select a role...</em>
+                </MenuItem>
                 <MenuItem value="Supplier">Supplier</MenuItem>
                 <MenuItem value="Admin">Admin</MenuItem>
                 <MenuItem value="User">User</MenuItem>
@@ -576,7 +650,10 @@ export default function CreateUserPage() {
               <ToggleButtonGroup
                 value={form.status}
                 exclusive
-                onChange={(_, v) => { const status = v as string; if (status) setForm(prev => ({ ...prev, status })); }}
+                onChange={(_, v) => {
+                  const status = v as string;
+                  if (status) setForm(prev => ({ ...prev, status }));
+                }}
                 fullWidth
                 size="small"
                 sx={{
@@ -584,7 +661,7 @@ export default function CreateUserPage() {
                   flexWrap: "nowrap",
                   "& .MuiToggleButton-root": {
                     flex: 1,
-                    minWidth: 0,          // allow shrinking below content size
+                    minWidth: 0, // allow shrinking below content size
                     fontSize: { xs: 10, sm: 11 },
                     fontWeight: 600,
                     textTransform: "none",
@@ -597,9 +674,21 @@ export default function CreateUserPage() {
                     color: "text.secondary",
                     "&.Mui-selected": { bgcolor: "transparent" },
                   },
-                  "& .MuiToggleButton-root[value='active'].Mui-selected": { borderColor: "success.main", color: "success.main", bgcolor: "success.lighter" },
-                  "& .MuiToggleButton-root[value='pending'].Mui-selected": { borderColor: "warning.main", color: "warning.main", bgcolor: "warning.lighter" },
-                  "& .MuiToggleButton-root[value='blocked'].Mui-selected": { borderColor: "error.main", color: "error.main", bgcolor: "error.lighter" },
+                  "& .MuiToggleButton-root[value='active'].Mui-selected": {
+                    borderColor: "success.main",
+                    color: "success.main",
+                    bgcolor: "success.lighter",
+                  },
+                  "& .MuiToggleButton-root[value='pending'].Mui-selected": {
+                    borderColor: "warning.main",
+                    color: "warning.main",
+                    bgcolor: "warning.lighter",
+                  },
+                  "& .MuiToggleButton-root[value='blocked'].Mui-selected": {
+                    borderColor: "error.main",
+                    color: "error.main",
+                    bgcolor: "error.lighter",
+                  },
                 }}
               >
                 <ToggleButton value="active">
@@ -642,21 +731,26 @@ export default function CreateUserPage() {
               variant="determinate"
               value={completenessScore}
               sx={{
-                borderRadius: 2, height: 5, mb: 0.75, bgcolor: "action.hover",
+                borderRadius: 2,
+                height: 5,
+                mb: 0.75,
+                bgcolor: "action.hover",
                 "& .MuiLinearProgress-bar": { borderRadius: 2, bgcolor: "primary.main" },
               }}
             />
             <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
-              {completenessScore}% complete.{completenessScore < 100 ? " Required fields missing." : " Ready to provision."}
+              {completenessScore}% complete.
+              {completenessScore < 100 ? " Required fields missing." : " Ready to provision."}
             </Typography>
 
             <Stack spacing={0.75}>
               {completenessItems.map(item => (
                 <Stack key={item.label} direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                  {item.done
-                    ? <CheckCircleIcon sx={{ fontSize: 14, color: "success.main", flexShrink: 0 }} />
-                    : <RadioButtonUncheckedIcon sx={{ fontSize: 14, color: "divider", flexShrink: 0 }} />
-                  }
+                  {item.done ? (
+                    <CheckCircleIcon sx={{ fontSize: 14, color: "success.main", flexShrink: 0 }} />
+                  ) : (
+                    <RadioButtonUncheckedIcon sx={{ fontSize: 14, color: "divider", flexShrink: 0 }} />
+                  )}
                   <Typography variant="caption" sx={{ color: item.done ? "success.main" : "text.disabled" }}>
                     {item.done
                       ? item.label.replace(" missing", " ✓").replace(" unassigned", " assigned")

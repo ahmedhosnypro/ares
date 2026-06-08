@@ -90,15 +90,7 @@ const cardSx = {
 };
 // ─────────────────────────────────────────────────────────────────────────────
 
-function SectionHeader({
-  icon,
-  title,
-  subtitle,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  subtitle: string;
-}) {
+function SectionHeader({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle: string }) {
   return (
     <Stack direction="row" spacing={1.5} sx={{ alignItems: "flex-start", mb: 2.5 }}>
       <Box
@@ -106,7 +98,8 @@ function SectionHeader({
           width: 34,
           height: 34,
           borderRadius: 1.5,
-          background: "linear-gradient(135deg, rgba(var(--mui-palette-primary-mainChannel) / 0.12), rgba(var(--mui-palette-primary-mainChannel) / 0.06))",
+          background:
+            "linear-gradient(135deg, rgba(var(--mui-palette-primary-mainChannel) / 0.12), rgba(var(--mui-palette-primary-mainChannel) / 0.06))",
           border: "1px solid",
           borderColor: "primary.light",
           display: "flex",
@@ -173,10 +166,18 @@ function ActionPanel({
           {/* Progress indicator */}
           <Stack spacing={1} sx={{ mb: 2 }}>
             <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
-              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.8 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.8 }}
+              >
                 Form Progress
               </Typography>
-              <Typography variant="caption" color={allMandatoryFilled ? "success.main" : "text.secondary"} sx={{ fontWeight: 700 }}>
+              <Typography
+                variant="caption"
+                color={allMandatoryFilled ? "success.main" : "text.secondary"}
+                sx={{ fontWeight: 700 }}
+              >
                 {filledCount}/{totalCount}
               </Typography>
             </Stack>
@@ -223,7 +224,9 @@ function ActionPanel({
         <Button
           variant="contained"
           fullWidth
-          onClick={() => { onSubmit(); }}
+          onClick={() => {
+            onSubmit();
+          }}
           disabled={saving}
           startIcon={saving ? undefined : <BusinessCenterIcon fontSize="small" />}
           sx={{
@@ -247,7 +250,9 @@ function ActionPanel({
         <Button
           variant="outlined"
           fullWidth
-          onClick={() => { onBack(); }}
+          onClick={() => {
+            onBack();
+          }}
           sx={{
             borderRadius: 2,
             fontWeight: 600,
@@ -304,7 +309,9 @@ export default function CreateSupplierPage() {
   const handleLogoChange = (file: File | null) => {
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = e => { setLogoPreview(e.target?.result as string); };
+    reader.onload = e => {
+      setLogoPreview(e.target?.result as string);
+    };
     reader.readAsDataURL(file);
   };
 
@@ -360,7 +367,6 @@ export default function CreateSupplierPage() {
 
   return (
     <Box sx={{ pb: { xs: "108px", sm: "72px", lg: 4 } }}>
-
       {/* ── TOP BAR ── */}
       <Box
         sx={{
@@ -377,7 +383,9 @@ export default function CreateSupplierPage() {
         <Box>
           <Stack direction="row" spacing={0.75} sx={{ alignItems: "center", mb: 0.75 }}>
             <Box
-              onClick={() => { router.push("/admin/suppliers"); }}
+              onClick={() => {
+                router.push("/admin/suppliers");
+              }}
               sx={{
                 display: "flex",
                 alignItems: "center",
@@ -389,10 +397,16 @@ export default function CreateSupplierPage() {
               }}
             >
               <ArrowBackIcon sx={{ fontSize: 14 }} />
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>Suppliers</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                Suppliers
+              </Typography>
             </Box>
-            <Typography variant="body2" color="text.disabled">›</Typography>
-            <Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>Create New</Typography>
+            <Typography variant="body2" color="text.disabled">
+              ›
+            </Typography>
+            <Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>
+              Create New
+            </Typography>
           </Stack>
 
           <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
@@ -415,7 +429,9 @@ export default function CreateSupplierPage() {
 
       {error && (
         <Box sx={{ px: { xs: 2, sm: 3, md: 4 }, pt: 2 }}>
-          <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>
+          <Alert severity="error" sx={{ borderRadius: 2 }}>
+            {error}
+          </Alert>
         </Box>
       )}
 
@@ -429,7 +445,6 @@ export default function CreateSupplierPage() {
           {/* ── LEFT COLUMN ── */}
           <Box sx={{ flex: 1, minWidth: 0, width: "100%" }}>
             <Stack spacing={{ xs: 2, sm: 2.5 }}>
-
               {/* Company Profile */}
               <Paper elevation={0} sx={cardSx}>
                 <SectionHeader
@@ -445,7 +460,9 @@ export default function CreateSupplierPage() {
                     error={Boolean(fieldErrors.companyName)}
                     helperText={fieldErrors.companyName}
                     placeholder="e.g. Apex Logistics Rentals"
-                    onChange={e => { setForm({ ...form, companyName: e.target.value }); }}
+                    onChange={e => {
+                      setForm({ ...form, companyName: e.target.value });
+                    }}
                     sx={inputSx}
                     required
                   />
@@ -457,7 +474,9 @@ export default function CreateSupplierPage() {
                       error={Boolean(fieldErrors.commercialRegistrationNumber)}
                       helperText={fieldErrors.commercialRegistrationNumber}
                       placeholder="CRN-0000-0000"
-                      onChange={e => { setForm({ ...form, commercialRegistrationNumber: e.target.value }); }}
+                      onChange={e => {
+                        setForm({ ...form, commercialRegistrationNumber: e.target.value });
+                      }}
                       sx={inputSx}
                       required
                     />
@@ -468,7 +487,9 @@ export default function CreateSupplierPage() {
                       error={Boolean(fieldErrors.taxId)}
                       helperText={fieldErrors.taxId}
                       placeholder="TAX-0000-0000"
-                      onChange={e => { setForm({ ...form, taxId: e.target.value }); }}
+                      onChange={e => {
+                        setForm({ ...form, taxId: e.target.value });
+                      }}
                       sx={inputSx}
                       required
                     />
@@ -497,12 +518,16 @@ export default function CreateSupplierPage() {
                         input: {
                           startAdornment: (
                             <InputAdornment position="start">
-                              <Box component="span" sx={{ color: "text.disabled", fontSize: 18 }}>✉</Box>
+                              <Box component="span" sx={{ color: "text.disabled", fontSize: 18 }}>
+                                ✉
+                              </Box>
                             </InputAdornment>
                           ),
                         },
                       }}
-                      onChange={e => { setForm({ ...form, email: e.target.value }); }}
+                      onChange={e => {
+                        setForm({ ...form, email: e.target.value });
+                      }}
                       sx={inputSx}
                       required
                     />
@@ -513,7 +538,9 @@ export default function CreateSupplierPage() {
                       value={form.password}
                       error={Boolean(fieldErrors.password)}
                       helperText={fieldErrors.password}
-                      onChange={e => { setForm({ ...form, password: e.target.value }); }}
+                      onChange={e => {
+                        setForm({ ...form, password: e.target.value });
+                      }}
                       sx={inputSx}
                       required
                     />
@@ -526,11 +553,15 @@ export default function CreateSupplierPage() {
                       label="Platform Role"
                       fullWidth
                       value={platformRole}
-                      onChange={e => { setPlatformRole(e.target.value); }}
+                      onChange={e => {
+                        setPlatformRole(e.target.value);
+                      }}
                       sx={inputSx}
                     >
                       {MOCK_PLATFORM_ROLES.map(r => (
-                        <MenuItem key={r} value={r}>{r}</MenuItem>
+                        <MenuItem key={r} value={r}>
+                          {r}
+                        </MenuItem>
                       ))}
                     </TextField>
                     <TextField
@@ -539,7 +570,9 @@ export default function CreateSupplierPage() {
                       fullWidth
                       value={form.status}
                       error={Boolean(fieldErrors.status)}
-                      onChange={e => { setForm({ ...form, status: e.target.value }); }}
+                      onChange={e => {
+                        setForm({ ...form, status: e.target.value });
+                      }}
                       sx={inputSx}
                     >
                       <MenuItem value="active">Active</MenuItem>
@@ -565,7 +598,9 @@ export default function CreateSupplierPage() {
                       error={Boolean(fieldErrors.firstName)}
                       helperText={fieldErrors.firstName}
                       placeholder="Jane"
-                      onChange={e => { setForm({ ...form, firstName: e.target.value }); }}
+                      onChange={e => {
+                        setForm({ ...form, firstName: e.target.value });
+                      }}
                       sx={inputSx}
                       required
                     />
@@ -576,7 +611,9 @@ export default function CreateSupplierPage() {
                       error={Boolean(fieldErrors.lastName)}
                       helperText={fieldErrors.lastName}
                       placeholder="Doe"
-                      onChange={e => { setForm({ ...form, lastName: e.target.value }); }}
+                      onChange={e => {
+                        setForm({ ...form, lastName: e.target.value });
+                      }}
                       sx={inputSx}
                       required
                     />
@@ -596,7 +633,9 @@ export default function CreateSupplierPage() {
                             <TextField
                               select
                               value={phoneCountryCode}
-                              onChange={e => { setPhoneCountryCode(e.target.value); }}
+                              onChange={e => {
+                                setPhoneCountryCode(e.target.value);
+                              }}
                               variant="standard"
                               sx={{
                                 minWidth: isMobile ? 52 : 58,
@@ -607,7 +646,9 @@ export default function CreateSupplierPage() {
                               }}
                             >
                               {PHONE_COUNTRY_CODES.map(c => (
-                                <MenuItem key={c.code} value={c.code}>{c.label}</MenuItem>
+                                <MenuItem key={c.code} value={c.code}>
+                                  {c.label}
+                                </MenuItem>
                               ))}
                             </TextField>
                             <Divider orientation="vertical" flexItem sx={{ mx: 1, my: 0.5 }} />
@@ -615,7 +656,9 @@ export default function CreateSupplierPage() {
                         ),
                       },
                     }}
-                    onChange={e => { setForm({ ...form, phoneNumber: e.target.value }); }}
+                    onChange={e => {
+                      setForm({ ...form, phoneNumber: e.target.value });
+                    }}
                     sx={inputSx}
                     required
                   />
@@ -627,7 +670,6 @@ export default function CreateSupplierPage() {
           {/* ── RIGHT SIDEBAR ── */}
           <Box sx={{ width: { xs: "100%", lg: 292 }, flexShrink: 0 }}>
             <Stack spacing={{ xs: 2, sm: 2.5 }}>
-
               {/* ── ACTION PANEL — Desktop only (top of sidebar) ── */}
               {isDesktop && (
                 <ActionPanel
@@ -637,8 +679,12 @@ export default function CreateSupplierPage() {
                   totalCount={totalCount}
                   mandatoryFields={mandatoryFields}
                   saving={saving}
-                  onSubmit={() => { void handleSubmit(); }}
-                  onBack={() => { router.back(); }}
+                  onSubmit={() => {
+                    void handleSubmit();
+                  }}
+                  onBack={() => {
+                    router.back();
+                  }}
                 />
               )}
 
@@ -653,12 +699,18 @@ export default function CreateSupplierPage() {
                   Company Logo
                 </Typography>
                 <Box
-                  onClick={() => { fileInputRef.current?.click(); }}
-                  onDragOver={e => { e.preventDefault(); }}
+                  onClick={() => {
+                    fileInputRef.current?.click();
+                  }}
+                  onDragOver={e => {
+                    e.preventDefault();
+                  }}
                   onDrop={e => {
                     e.preventDefault();
                     const { files } = e.dataTransfer;
-                    if (files.length > 0) { handleLogoChange(files[0]); }
+                    if (files.length > 0) {
+                      handleLogoChange(files[0]);
+                    }
                   }}
                   sx={{
                     border: "1.5px dashed",
@@ -723,10 +775,18 @@ export default function CreateSupplierPage() {
                       >
                         <CloudUploadIcon sx={{ color: "text.disabled", fontSize: 22 }} />
                       </Box>
-                      <Typography variant="caption" color="primary" sx={{ textAlign: "center", fontWeight: 600, px: 1 }}>
+                      <Typography
+                        variant="caption"
+                        color="primary"
+                        sx={{ textAlign: "center", fontWeight: 600, px: 1 }}
+                      >
                         Click to upload or drag &amp; drop
                       </Typography>
-                      <Typography variant="caption" color="text.disabled" sx={{ textAlign: "center", px: 1, fontSize: 10 }}>
+                      <Typography
+                        variant="caption"
+                        color="text.disabled"
+                        sx={{ textAlign: "center", px: 1, fontSize: 10 }}
+                      >
                         SVG, PNG, JPG or GIF (max. 800×400px)
                       </Typography>
                     </>
@@ -737,7 +797,9 @@ export default function CreateSupplierPage() {
                   type="file"
                   accept="image/svg+xml,image/png,image/jpeg,image/gif"
                   style={{ display: "none" }}
-                  onChange={e => { handleLogoChange(e.target.files?.[0] ?? null); }}
+                  onChange={e => {
+                    handleLogoChange(e.target.files?.[0] ?? null);
+                  }}
                 />
               </Paper>
 
@@ -754,20 +816,28 @@ export default function CreateSupplierPage() {
                     label="Country"
                     fullWidth
                     value={country}
-                    onChange={e => { setCountry(e.target.value); }}
+                    onChange={e => {
+                      setCountry(e.target.value);
+                    }}
                     sx={inputSx}
                     required
                   >
-                    <MenuItem value="" disabled>Select a country</MenuItem>
+                    <MenuItem value="" disabled>
+                      Select a country
+                    </MenuItem>
                     {MOCK_COUNTRIES.map(c => (
-                      <MenuItem key={c} value={c}>{c}</MenuItem>
+                      <MenuItem key={c} value={c}>
+                        {c}
+                      </MenuItem>
                     ))}
                   </TextField>
                   <TextField
                     label="City"
                     fullWidth
                     value={city}
-                    onChange={e => { setCity(e.target.value); }}
+                    onChange={e => {
+                      setCity(e.target.value);
+                    }}
                     placeholder="e.g. Dubai"
                     sx={inputSx}
                     required
@@ -778,13 +848,14 @@ export default function CreateSupplierPage() {
                     multiline
                     rows={2}
                     value={streetAddress}
-                    onChange={e => { setStreetAddress(e.target.value); }}
+                    onChange={e => {
+                      setStreetAddress(e.target.value);
+                    }}
                     placeholder="Building, Floor, Street..."
                     sx={inputSx}
                   />
                 </Stack>
               </Paper>
-
             </Stack>
           </Box>
         </Stack>
@@ -827,11 +898,18 @@ export default function CreateSupplierPage() {
                 <Button
                   variant="outlined"
                   fullWidth
-                  onClick={() => { router.back(); }}
+                  onClick={() => {
+                    router.back();
+                  }}
                   sx={{
-                    borderRadius: 2, fontWeight: 600, fontSize: 12,
-                    letterSpacing: 0.5, py: 0.9, textTransform: "uppercase",
-                    color: "text.secondary", borderColor: "divider",
+                    borderRadius: 2,
+                    fontWeight: 600,
+                    fontSize: 12,
+                    letterSpacing: 0.5,
+                    py: 0.9,
+                    textTransform: "uppercase",
+                    color: "text.secondary",
+                    borderColor: "divider",
                   }}
                 >
                   Cancel
@@ -839,11 +917,17 @@ export default function CreateSupplierPage() {
                 <Button
                   variant="contained"
                   fullWidth
-                  onClick={() => { void handleSubmit(); }}
+                  onClick={() => {
+                    void handleSubmit();
+                  }}
                   disabled={saving}
                   sx={{
-                    borderRadius: 2, fontWeight: 700, fontSize: 12,
-                    letterSpacing: 0.5, py: 0.9, textTransform: "uppercase",
+                    borderRadius: 2,
+                    fontWeight: 700,
+                    fontSize: 12,
+                    letterSpacing: 0.5,
+                    py: 0.9,
+                    textTransform: "uppercase",
                     boxShadow: "0 2px 8px rgba(var(--mui-palette-primary-mainChannel) / 0.35)",
                   }}
                 >
@@ -852,7 +936,11 @@ export default function CreateSupplierPage() {
               </Stack>
             </Stack>
           ) : (
-            <Stack direction="row" spacing={2} sx={{ alignItems: "center", justifyContent: "space-between", flexWrap: "nowrap" }}>
+            <Stack
+              direction="row"
+              spacing={2}
+              sx={{ alignItems: "center", justifyContent: "space-between", flexWrap: "nowrap" }}
+            >
               <Stack direction="row" spacing={1} sx={{ alignItems: "center", minWidth: 0, overflow: "hidden" }}>
                 {allMandatoryFilled ? (
                   <>
@@ -870,23 +958,35 @@ export default function CreateSupplierPage() {
               <Stack direction="row" spacing={1.5} sx={{ flexShrink: 0 }}>
                 <Button
                   variant="outlined"
-                  onClick={() => { router.back(); }}
+                  onClick={() => {
+                    router.back();
+                  }}
                   sx={{
-                    borderRadius: 2, fontWeight: 600, letterSpacing: 0.5,
-                    whiteSpace: "nowrap", textTransform: "uppercase",
-                    px: { sm: 2, md: 3 }, color: "text.secondary", borderColor: "divider",
+                    borderRadius: 2,
+                    fontWeight: 600,
+                    letterSpacing: 0.5,
+                    whiteSpace: "nowrap",
+                    textTransform: "uppercase",
+                    px: { sm: 2, md: 3 },
+                    color: "text.secondary",
+                    borderColor: "divider",
                   }}
                 >
                   Cancel
                 </Button>
                 <Button
                   variant="contained"
-                  onClick={() => { void handleSubmit(); }}
+                  onClick={() => {
+                    void handleSubmit();
+                  }}
                   disabled={saving}
                   startIcon={saving ? undefined : <BusinessCenterIcon fontSize="small" />}
                   sx={{
-                    borderRadius: 2, fontWeight: 700, letterSpacing: 0.5,
-                    whiteSpace: "nowrap", textTransform: "uppercase",
+                    borderRadius: 2,
+                    fontWeight: 700,
+                    letterSpacing: 0.5,
+                    whiteSpace: "nowrap",
+                    textTransform: "uppercase",
                     px: { sm: 2, md: 3 },
                     boxShadow: "0 2px 8px rgba(var(--mui-palette-primary-mainChannel) / 0.35)",
                   }}
