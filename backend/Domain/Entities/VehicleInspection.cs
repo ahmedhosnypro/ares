@@ -23,8 +23,7 @@ namespace Backend.Domain.Entities
         [ForeignKey(nameof(BookingId))]
         public Booking? Booking { get; set; }
 
-        [Required]
-        public Guid InspectorId { get; set; }
+        public Guid? InspectorId { get; set; }
 
         [ForeignKey(nameof(InspectorId))]
         public ApplicationUser? Inspector { get; set; }

@@ -16,25 +16,25 @@ namespace Backend.Application.Services
     {
         private readonly IDriverProfileRepository _profileRepository;
         private readonly IBookingRepository _bookingRepository;
-        private readonly IDriverRequestRepository _requestRepository;
         private readonly IDriverNotificationService _notificationService;
-        private readonly IDriverRequestService _driverRequestService;
         private readonly IApplicationDbContext _context;
+        private readonly IDriverReviewRepository _driverReviewRepository;
+        private readonly IDriverPricingService _driverPricingService;
 
         public DriverAssignmentService(
             IDriverProfileRepository profileRepository,
             IBookingRepository bookingRepository,
-            IDriverRequestRepository requestRepository,
             IDriverNotificationService notificationService,
-            IDriverRequestService driverRequestService,
-            IApplicationDbContext context)
+            IApplicationDbContext context,
+            IDriverReviewRepository driverReviewRepository,
+            IDriverPricingService driverPricingService)
         {
             _profileRepository = profileRepository;
             _bookingRepository = bookingRepository;
-            _requestRepository = requestRepository;
             _notificationService = notificationService;
-            _driverRequestService = driverRequestService;
             _context = context;
+            _driverReviewRepository = driverReviewRepository;
+            _driverPricingService = driverPricingService;
         }
 
         public async Task<IEnumerable<DriverAssignmentDto>> GetDriverAssignmentsAsync(Guid driverProfileId, CancellationToken cancellationToken = default)
@@ -87,6 +87,37 @@ namespace Backend.Application.Services
             return locationStr;
         }
 
+        public async Task<IEnumerable<PublicDriverDto>> GetAvailableDriversForBookingAsync(Guid bookingId, Guid customerId, CancellationToken cancellationToken = default)
+        {
+            var booking = await _bookingRepository.GetByIdAsync(bookingId, cancellationToken);
+            if (booking == null) throw new NotFoundException("Booking not found.");
+            if (booking.UserId != customerId) throw new ForbiddenException("You don't own this booking.");
+            if (!booking.PickupDate.HasValue || !booking.ReturnDate.HasValue)
+                return Enumerable.Empty<PublicDriverDto>();
+
+            var profiles = await _profileRepository.GetAvailableDriversForWindowAsync(booking.PickupDate.Value, booking.ReturnDate.Value, booking.Id, cancellationToken);
+            var driverDtos = new List<PublicDriverDto>();
+
+            foreach (var dp in profiles)
+            {
+                if (dp.IsActive)
+                {
+                    var (avgRating, totalTrips) = await _driverReviewRepository.GetDriverRatingStatsAsync(dp.Id, cancellationToken);
+
+                    driverDtos.Add(new PublicDriverDto
+                    {
+                        DriverProfileId = dp.Id,
+                        FirstName = dp.User?.FirstName,
+                        LastName = dp.User?.LastName,
+                        ProfilePictureUrl = dp.User?.ProfileImage,
+                        AverageRating = avgRating,
+                        TotalTrips = totalTrips
+                    });
+                }
+            }
+
+            return driverDtos;
+        }
 
         public async Task SelectDriverAsync(Guid bookingId, Guid driverProfileId, Guid customerId, CancellationToken cancellationToken = default)
         {
@@ -95,15 +126,6 @@ namespace Backend.Application.Services
             if (booking.UserId != customerId) throw new ForbiddenException("You don't own this booking.");
             if (booking.AssignedDriverProfileId.HasValue)
                 throw new BadRequestException("A driver is already assigned to this booking.");
-
-            var request = await _requestRepository.GetByBookingIdAsync(bookingId, cancellationToken);
-            if (request == null) throw new BadRequestException("No open request for this booking.");
-
-            var requestWithResponses = await _requestRepository.GetByIdWithResponsesAsync(request.Id, cancellationToken);
-            if (requestWithResponses == null || !requestWithResponses.Responses.Any(r => r.DriverProfileId == driverProfileId && r.Action == DriverResponseAction.Accepted))
-            {
-                throw new BadRequestException("This driver did not accept the request.");
-            }
 
             if (!booking.PickupDate.HasValue || !booking.ReturnDate.HasValue)
                 throw new BadRequestException("Booking is missing pickup/return dates.");
@@ -122,23 +144,24 @@ namespace Backend.Application.Services
             booking.AssignedDriverProfileId = driverProfileId;
             booking.DriverLockedUntil = booking.ReturnDate;
             booking.DriverAssignmentStatus = DriverAssignmentStatus.Assigned;
-            // BookingStatus remains unchanged (e.g. Confirmed)
-
-            request.Status = DriverRequestStatus.Fulfilled;
-            request.FulfilledAt = DateTime.UtcNow;
-            request.FulfilledByDriverProfileId = driverProfileId;
 
             driverProfile.LockedUntil = booking.ReturnDate;
             driverProfile.Availability = DriverAvailability.Reserved;
+
+            // Compute/populate driver fee if needed
+            if (booking.DriverFee == null || booking.DriverFee == 0)
+            {
+                var totalDays = (booking.ReturnDate.Value - booking.PickupDate.Value).Days;
+                if (totalDays < 1) totalDays = 1;
+                var dailyRate = await _driverPricingService.GetDailyRateAsync(cancellationToken);
+                booking.DriverFee = dailyRate * totalDays;
+                booking.GrandTotal = (booking.VehicleFee ?? booking.TotalPrice ?? 0) + booking.DriverFee.Value;
+                booking.TotalPrice = booking.GrandTotal;
+            }
+
             await _profileRepository.UpdateAsync(driverProfile, cancellationToken);
-
             await _bookingRepository.UpdateAsync(booking, cancellationToken);
-            await _requestRepository.UpdateAsync(request, cancellationToken);
 
-            // Single atomic commit (booking + request + profile share one
-            // DbContext). The DriverProfile rowversion makes this fail if
-            // another selection mutated the same driver first — preventing a
-            // double assignment / overlapping reservation under concurrency.
             try
             {
                 await _bookingRepository.SaveChangesAsync(cancellationToken);
@@ -150,21 +173,6 @@ namespace Backend.Application.Services
             }
 
             await _notificationService.NotifyDriverAssignedAsync(driverProfile.UserId, booking, cancellationToken);
-
-            // Notify the other interested drivers that they were not selected.
-            var otherProfileIds = requestWithResponses.Responses
-                .Where(x => x.DriverProfileId != driverProfileId)
-                .Select(x => x.DriverProfileId)
-                .Distinct()
-                .ToList();
-
-            var otherUserIds = new List<Guid>();
-            foreach (var pid in otherProfileIds)
-            {
-                var p = await _profileRepository.GetByIdAsync(pid, cancellationToken);
-                if (p != null) otherUserIds.Add(p.UserId);
-            }
-            await _notificationService.NotifyOtherDriversNotSelectedAsync(otherUserIds, booking, cancellationToken);
         }
 
         public async Task ChangeDriverAsync(Guid bookingId, ChangeDriverRequest request, Guid customerId, CancellationToken cancellationToken = default)
@@ -196,8 +204,6 @@ namespace Backend.Application.Services
                 }
             }
 
-            // Atomic release of booking + old driver in one commit; rowversion
-            // guards against a concurrent operation on the same driver.
             try
             {
                 await _bookingRepository.SaveChangesAsync(cancellationToken);
@@ -211,10 +217,6 @@ namespace Backend.Application.Services
             {
                 await _notificationService.NotifyDriverRemovedAsync(oldProfile.UserId, booking, cancellationToken);
             }
-
-            // Re-open the driver search so the customer can pick a new driver.
-            // (The prior request is Fulfilled, so a fresh Open request is created.)
-            await _driverRequestService.CheckAndEmitRequestAsync(bookingId, cancellationToken);
         }
 
         public async Task CancelDriverAsync(Guid bookingId, Guid customerId, CancellationToken cancellationToken = default)
@@ -236,14 +238,6 @@ namespace Backend.Application.Services
             booking.DriverLockedUntil = null;
             booking.RequiresDriver = false;
             booking.DriverAssignmentStatus = DriverAssignmentStatus.NotRequired;
-
-            // Mark any open request for this booking as cancelled.
-            var request = await _requestRepository.GetByBookingIdAsync(bookingId, cancellationToken);
-            if (request != null)
-            {
-                request.Status = DriverRequestStatus.Cancelled;
-                await _requestRepository.UpdateAsync(request, cancellationToken);
-            }
 
             await _bookingRepository.UpdateAsync(booking, cancellationToken);
 
@@ -308,12 +302,6 @@ namespace Backend.Application.Services
             }
 
             await _notificationService.NotifyCustomerDriverCancelledAsync(booking.UserId, booking, cancellationToken);
-
-            // Re-open the driver search so another driver can be selected.
-            if (booking.RequiresDriver)
-            {
-                await _driverRequestService.CheckAndEmitRequestAsync(bookingId, cancellationToken);
-            }
         }
     }
 }

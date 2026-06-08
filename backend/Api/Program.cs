@@ -139,12 +139,10 @@ try
 
     // ─── Driver Module ──────────────────────────────────────────────────
     builder.Services.AddScoped<IDriverProfileRepository, DriverProfileRepository>();
-    builder.Services.AddScoped<IDriverRequestRepository, DriverRequestRepository>();
     builder.Services.AddScoped<IDriverReviewRepository, DriverReviewRepository>();
     builder.Services.AddScoped<IServiceAreaRepository, ServiceAreaRepository>();
 
     builder.Services.AddScoped<IDriverProfileService, DriverProfileService>();
-    builder.Services.AddScoped<IDriverRequestService, DriverRequestService>();
     builder.Services.AddScoped<IDriverAssignmentService, DriverAssignmentService>();
     builder.Services.AddScoped<IDriverReviewService, DriverReviewService>();
     builder.Services.AddScoped<IDriverDashboardService, DriverDashboardService>();
@@ -152,12 +150,11 @@ try
     builder.Services.AddScoped<IServiceAreaService, ServiceAreaService>();
     builder.Services.AddScoped<IDriverNotificationService, DriverNotificationService>();
     builder.Services.AddScoped<IDriverPricingService, DriverPricingService>();
-
-    builder.Services.AddHostedService<Backend.Application.Services.Background.DriverRequestExpirationHostedService>();
     builder.Services.AddScoped<Backend.Application.Services.ISettingsService, Backend.Infrastructure.Services.SettingsService>();
     builder.Services.AddScoped<Backend.Application.Services.ITermsService, Backend.Application.Services.TermsService>();
     builder.Services.AddScoped<Backend.Application.Services.IAboutService, Backend.Application.Services.AboutService>();
     builder.Services.AddHostedService<Backend.Infrastructure.Services.BookingStatusUpdateService>();
+    builder.Services.AddHostedService<Backend.Infrastructure.BackgroundServices.VehicleInspectionAutoAssignmentBackgroundService>();
 
     // Paymob
     builder.Services.Configure<Backend.Application.Settings.PaymobSettings>(builder.Configuration.GetSection("Paymob"));

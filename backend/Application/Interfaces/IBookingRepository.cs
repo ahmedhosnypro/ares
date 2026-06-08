@@ -113,4 +113,12 @@ public interface IBookingRepository : IPaginatedRepository<Booking>
     Task<IEnumerable<Booking>> GetAssignmentsForDriverAsync(
         Guid driverProfileId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets all bookings that are confirmed and starting within the specified time,
+    /// but don't have a vehicle inspection assigned yet.
+    /// </summary>
+    Task<IEnumerable<Booking>> GetBookingsForAutoAssignmentAsync(
+        DateTime targetTime,
+        CancellationToken cancellationToken = default);
 }

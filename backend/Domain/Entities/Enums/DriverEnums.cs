@@ -62,33 +62,4 @@ namespace Backend.Domain.Entities.Enums
         Reserved
     }
 
-    /// <summary>
-    /// Lifecycle status of a <see cref="DriverRequest"/>.
-    /// </summary>
-    public enum DriverRequestStatus
-    {
-        /// <summary>Currently soliciting driver interest.</summary>
-        Open,
-
-        /// <summary>Customer selected a driver — request closed successfully.</summary>
-        Fulfilled,
-
-        /// <summary>Background sweep expired the request after 60 minutes.</summary>
-        Expired,
-
-        /// <summary>Customer cancelled the underlying booking before fulfillment.</summary>
-        Cancelled
-    }
-
-    /// <summary>
-    /// Driver's response action on a request. The brief explicitly states
-    /// "Accept = Interested. No assignment yet." — Decline / Withdraw are
-    /// reserved for future use without an extra migration.
-    /// </summary>
-    public enum DriverResponseAction
-    {
-        Accepted,
-        Declined,
-        Withdrawn
-    }
 }

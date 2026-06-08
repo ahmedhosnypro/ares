@@ -369,7 +369,9 @@ public class InspectionService : IInspectionService
         if (inspection == null) return null;
 
         var booking = await _bookingRepository.GetBookingWithDetailsAsync(inspection.BookingId, cancellationToken);
-        var inspectorUser = await _userManager.FindByIdAsync(inspection.InspectorId.ToString());
+        var inspectorUser = inspection.InspectorId.HasValue 
+            ? await _userManager.FindByIdAsync(inspection.InspectorId.Value.ToString())
+            : null;
 
         var images = (await _inspectionImageRepository.GetAllAsync(cancellationToken))
             .Where(i => i.InspectionId == inspection.InspectionId)
@@ -383,7 +385,7 @@ public class InspectionService : IInspectionService
             BookingNumber: booking?.BookingNumber,
             VehicleId: inspection.VehicleId,
             VehicleDisplayName: BuildVehicleLabel(booking?.Vehicle),
-            InspectorId: inspection.InspectorId,
+            InspectorId: inspection.InspectorId ?? Guid.Empty,
             InspectorFullName: BuildPersonName(inspectorUser),
             Status: inspection.Status.ToString(),
             IsSubmitted: inspection.IsSubmitted,
@@ -412,7 +414,9 @@ public class InspectionService : IInspectionService
         foreach (var inspection in inspections)
         {
             var booking = await _bookingRepository.GetBookingWithDetailsAsync(inspection.BookingId, cancellationToken);
-            var inspectorUser = await _userManager.FindByIdAsync(inspection.InspectorId.ToString());
+            var inspectorUser = inspection.InspectorId.HasValue
+                ? await _userManager.FindByIdAsync(inspection.InspectorId.Value.ToString())
+                : null;
 
             dtos.Add(new InspectionDto(
                 InspectionId: inspection.InspectionId,
@@ -420,7 +424,7 @@ public class InspectionService : IInspectionService
                 BookingNumber: booking?.BookingNumber,
                 VehicleId: inspection.VehicleId,
                 VehicleDisplayName: BuildVehicleLabel(booking?.Vehicle),
-                InspectorId: inspection.InspectorId,
+                InspectorId: inspection.InspectorId ?? Guid.Empty,
                 InspectorFullName: BuildPersonName(inspectorUser),
                 Status: inspection.Status.ToString(),
                 IsSubmitted: inspection.IsSubmitted,

@@ -14,18 +14,15 @@ namespace Backend.Application.Services
         private readonly IDriverProfileRepository _profileRepository;
         private readonly IDriverReviewRepository _reviewRepository;
         private readonly IBookingRepository _bookingRepository;
-        private readonly IDriverRequestRepository _requestRepository;
 
         public DriverDashboardService(
             IDriverProfileRepository profileRepository,
             IDriverReviewRepository reviewRepository,
-            IBookingRepository bookingRepository,
-            IDriverRequestRepository requestRepository)
+            IBookingRepository bookingRepository)
         {
             _profileRepository = profileRepository;
             _reviewRepository = reviewRepository;
             _bookingRepository = bookingRepository;
-            _requestRepository = requestRepository;
         }
 
         public async Task<DriverDashboardSummaryDto> GetSummaryAsync(Guid driverProfileId, CancellationToken cancellationToken = default)
@@ -52,10 +49,6 @@ namespace Backend.Application.Services
                 .Where(b => b.Status == BookingStatus.Completed)
                 .Sum(b => b.DriverFee ?? 0m);
 
-            // Open requests the driver has expressed interest in but are not yet resolved.
-            var myRequests = await _requestRepository.GetRequestsRespondedByDriverAsync(driverProfileId, cancellationToken);
-            var activeRequestsCount = myRequests.Count(r => r.Status == DriverRequestStatus.Open);
-
             return new DriverDashboardSummaryDto
             {
                 Status = profile.Status.ToString(),
@@ -69,7 +62,7 @@ namespace Backend.Application.Services
                 UpcomingTrips = upcomingTrips,
                 // Back-compat fields
                 TotalTripsCompleted = completedTrips,
-                ActiveRequestsCount = activeRequestsCount,
+                ActiveRequestsCount = 0, // DriverRequest system removed
                 UpcomingAssignmentsCount = upcomingTrips
             };
         }
