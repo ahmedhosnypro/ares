@@ -1,32 +1,39 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Box, Typography, Paper, Stack, Button, Skeleton, useTheme, alpha } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Link from "next/link";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
+import CarRepairIcon from "@mui/icons-material/CarRepair";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import PendingActionsIcon from "@mui/icons-material/PendingActions";
-import TodayIcon from "@mui/icons-material/Today";
-import UpdateIcon from "@mui/icons-material/Update";
 import HistoryIcon from "@mui/icons-material/History";
-import { listMyInspections, getInspectionHistory, type InspectionSummary } from "@/api-clients/inspections/inspections";
+import {
+  listMyInspections,
+  getInspectorTodayStats,
+  type InspectionSummary,
+  type InspectorTodayStats,
+} from "@/api-clients/inspections/inspections";
 import { logger } from "@/utils/logger";
 import InspectionStatusBadge from "./_components/InspectionStatusBadge";
 import VehicleStats from "@/app/(dashboard)/_components/VehicleStats";
 
 export default function InspectorDashboardPage() {
   const [items, setItems] = useState<InspectionSummary[]>([]);
-  const [history, setHistory] = useState<InspectionSummary[]>([]);
+  const [stats, setStats] = useState<InspectorTodayStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [assignedData, historyData] = await Promise.all([listMyInspections(false), getInspectionHistory()]);
+      const [assignedData, statsData] = await Promise.all([listMyInspections(false), getInspectorTodayStats()]);
       setItems(assignedData);
-      setHistory(historyData);
+      setStats(statsData);
     } catch (err) {
       logger.error("Failed to load dashboard data", err);
     } finally {
@@ -38,38 +45,35 @@ export default function InspectorDashboardPage() {
     void fetchData();
   }, [fetchData]);
 
-  const stats = useMemo(() => {
-    const pending = items.filter(i => i.status === "Pending" && !i.isSubmitted);
-    const completed = history.filter(i => i.isSubmitted);
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const todaysInspections = [...items, ...history].filter(i => {
-      const d = new Date(i.inspectionDate);
-      d.setHours(0, 0, 0, 0);
-      return d.getTime() === today.getTime();
-    });
-
-    const upcoming = items.filter(i => {
-      const d = new Date(i.inspectionDate);
-      d.setHours(0, 0, 0, 0);
-      return d.getTime() > today.getTime();
-    });
-
-    return {
-      pending: pending.length,
-      completed: completed.length,
-      today: todaysInspections.length,
-      upcoming: upcoming.length,
-    };
-  }, [items, history]);
-
   const dashboardStats = [
-    { label: "Pending Inspections", value: stats.pending, color: "warning", icon: <PendingActionsIcon /> },
-    { label: "Completed Inspections", value: stats.completed, color: "success", icon: <AssignmentTurnedInIcon /> },
-    { label: "Today's Inspections", value: stats.today, color: "primary", icon: <TodayIcon /> },
-    { label: "Upcoming Inspections", value: stats.upcoming, color: "info", icon: <UpdateIcon /> },
+    {
+      label: "Check-Outs",
+      value: stats?.checkOutsCount ?? 0,
+      color: "success",
+      icon: <DirectionsCarIcon fontSize="small" />,
+      subtitle: "Deliveries today",
+    },
+    {
+      label: "Check-Ins",
+      value: stats?.checkInsCount ?? 0,
+      color: "error",
+      icon: <CarRepairIcon fontSize="small" />,
+      subtitle: "Returns today",
+    },
+    {
+      label: "Overdue Tasks",
+      value: stats?.overdueCount ?? 0,
+      color: "warning",
+      icon: <WarningAmberIcon fontSize="small" />,
+      subtitle: "Past due",
+    },
+    {
+      label: "Completed Today",
+      value: stats?.completedTodayCount ?? 0,
+      color: "info",
+      icon: <CheckCircleOutlinedIcon fontSize="small" />,
+      subtitle: "Done today",
+    },
   ];
 
   return (
@@ -79,12 +83,12 @@ export default function InspectorDashboardPage() {
           Inspector Dashboard
         </Typography>
         <Typography color="text.secondary" variant="body2">
-          Overview of your assignments and recent history.
+          Overview of your assignments and today&apos;s metrics.
         </Typography>
       </Box>
 
-      {/* STATS */}
-      <VehicleStats items={dashboardStats} />
+      {/* KPI STATS */}
+      <VehicleStats items={dashboardStats} loading={loading} />
 
       <Grid container spacing={3} sx={{ mt: 1 }}>
         <Grid size={{ xs: 12, md: 8 }}>
@@ -94,7 +98,7 @@ export default function InspectorDashboardPage() {
           >
             <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", mb: 3 }}>
               <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                Recent & Upcoming Assignments
+                Recent &amp; Upcoming Assignments
               </Typography>
               <Button component={Link} href="/inspector/inspections" size="small" endIcon={<ArrowForwardIcon />}>
                 View all

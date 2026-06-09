@@ -150,3 +150,18 @@ export async function getInspectionHistory(): Promise<InspectionSummary[]> {
     accessToken: await token(),
   });
 }
+
+// ─── Inspector today KPI stats ────────────────────────────────────────
+export interface InspectorTodayStats {
+  checkOutsCount: number;
+  checkInsCount: number;
+  overdueCount: number;
+  completedTodayCount: number;
+}
+
+export async function getInspectorTodayStats(): Promise<InspectorTodayStats> {
+  return apiFetchJson<InspectorTodayStats>(`/api/inspector/today-stats`, {
+    method: "GET",
+    accessToken: await token(),
+  });
+}

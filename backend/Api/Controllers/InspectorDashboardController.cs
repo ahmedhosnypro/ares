@@ -1,5 +1,7 @@
 using Backend.Application.DTOs.Inspection;
+using Backend.Application.Features.VehicleInspections.Queries.GetInspectorTodayStats;
 using Backend.Application.Services;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -17,14 +19,28 @@ namespace Backend.Api.Controllers;
 public class InspectorDashboardController : ControllerBase
 {
     private readonly IInspectionService _inspectionService;
+    private readonly IMediator _mediator;
     private readonly ILogger<InspectorDashboardController> _logger;
 
     public InspectorDashboardController(
         IInspectionService inspectionService,
+        IMediator mediator,
         ILogger<InspectorDashboardController> logger)
     {
         _inspectionService = inspectionService;
+        _mediator = mediator;
         _logger = logger;
+    }
+
+    /// <summary>Today's KPI stats for the inspector dashboard.</summary>
+    [HttpGet("today-stats")]
+    [ProducesResponseType(typeof(InspectorTodayStatsDto), StatusCodes.Status200OK)]
+    public async Task<ActionResult<InspectorTodayStatsDto>> GetTodayStats(
+        CancellationToken cancellationToken = default)
+    {
+        if (!TryGetCurrentUserId(out var userId)) return Unauthorized();
+        var stats = await _mediator.Send(new GetInspectorTodayStatsQuery(userId), cancellationToken);
+        return Ok(stats);
     }
 
     /// <summary>Open inspections currently assigned to me.</summary>
