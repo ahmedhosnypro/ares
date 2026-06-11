@@ -8,7 +8,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import VehicleAutocomplete from "./VehicleAutocomplete";
-import { PublicVehicleCard } from "@/utils/public-data";
+import { PublicCategory, PublicVehicleCard } from "@/utils/public-data";
 
 interface Location {
   id: string;
@@ -17,6 +17,7 @@ interface Location {
 
 interface SearchFormFilterProps {
   readonly locations: readonly Location[];
+  readonly categories: readonly PublicCategory[];
   readonly defaultLocationId: string;
   readonly defaultPickupDate: string;
   readonly defaultReturnDate: string;
@@ -28,6 +29,7 @@ interface SearchFormFilterProps {
 
 export default function SearchFormFilter({
   locations,
+  categories,
   defaultLocationId,
   defaultPickupDate,
   defaultReturnDate,
@@ -47,9 +49,7 @@ export default function SearchFormFilter({
 
   const vehicleCategories = [
     { value: "", label: "All Categories" },
-    { value: "Compact", label: "Compact & Mini" },
-    { value: "Standard", label: "Mid-Size & Standard" },
-    { value: "Premium", label: "SUVs & Maxi" },
+    ...categories.map(c => ({ value: c.name, label: c.name })),
   ];
 
   const transmissionOptions = [
