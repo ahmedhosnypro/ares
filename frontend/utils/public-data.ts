@@ -73,6 +73,12 @@ export interface PublicDestinationCard {
   vehicleCount: number;
 }
 
+export interface PublicCategory {
+  id: string;
+  name: string;
+  vehicleCount?: number;
+}
+
 interface ApiPagedResponse<T> {
   data?: T[];
   resultData?: T[];
@@ -195,6 +201,15 @@ interface ApiDestinationDto {
   ImageUrl?: string | null;
   startingPrice?: ApiValue;
   StartingPrice?: ApiValue;
+  vehicleCount?: ApiValue;
+  VehicleCount?: ApiValue;
+}
+
+interface ApiCategoryDto {
+  id?: string;
+  Id?: string;
+  name?: string | null;
+  Name?: string | null;
   vehicleCount?: ApiValue;
   VehicleCount?: ApiValue;
 }
@@ -369,6 +384,14 @@ function normalizeDestination(destination: ApiDestinationDto): PublicDestination
   };
 }
 
+function normalizeCategory(category: ApiCategoryDto): PublicCategory {
+  return {
+    id: category.id ?? category.Id ?? "",
+    name: asString(category.name ?? category.Name, "Category"),
+    vehicleCount: asOptionalNumber(category.vehicleCount ?? category.VehicleCount),
+  };
+}
+
 async function fetchJsonOrNull<T>(url: string, init?: RequestInit): Promise<T | null> {
   try {
     const response = await fetch(url, init);
@@ -491,6 +514,21 @@ export async function fetchPublicDestinations(limit = 4): Promise<PublicDestinat
   return normalizeCollection(payload)
     .map(normalizeDestination)
     .filter(destination => Boolean(destination.id));
+}
+
+export async function fetchPublicCategories(): Promise<PublicCategory[]> {
+  const payload = await fetchJsonOrNull<ApiCategoryDto[] | ApiPagedResponse<ApiCategoryDto>>(
+    toApiUrl(`/api/admin/categories`),
+    { cache: "no-store" }
+  );
+
+  if (!payload) {
+    return [];
+  }
+
+  return normalizeCollection(payload)
+    .map(normalizeCategory)
+    .filter(category => Boolean(category.id));
 }
 
 export function formatCurrency(value: number, currency = "USD"): string {
