@@ -89,6 +89,8 @@ public static class DbInitializer
                     await context.SaveChangesAsync();
                 }
             }
+            
+            await EnsureCategoriesAndCategorizeVehiclesAsync(context, logger);
 
             logger.LogInformation("Database initialization completed successfully");
         }
@@ -1055,6 +1057,175 @@ public static class DbInitializer
                 });
             }
         }
+    }
+
+    private static async Task EnsureCategoriesAndCategorizeVehiclesAsync(ApplicationDbContext context, ILogger logger)
+    {
+        logger.LogInformation("Ensuring vehicle categories and categorizing vehicles...");
+
+        // 1. Define sensible vehicle categories
+        var expectedCategories = new[]
+        {
+            new { Name = "Economy", Description = "Fuel-efficient, budget-friendly cars perfect for daily commutes and short city trips.", Commission = 10.00m, Discount = 5.00m },
+            new { Name = "Standard", Description = "Comfortable, reliable mid-sized vehicles suitable for business or family travel.", Commission = 12.00m, Discount = 5.00m },
+            new { Name = "Luxury", Description = "Premium high-end vehicles delivering refined performance and exceptional comfort.", Commission = 15.00m, Discount = 10.00m },
+            new { Name = "SUV", Description = "Spacious, versatile sport utility vehicles ideal for family adventures and road trips.", Commission = 14.00m, Discount = 5.00m },
+            new { Name = "Van", Description = "High-capacity multi-passenger vans and cargo vehicles for group travel or transport.", Commission = 13.00m, Discount = 5.00m },
+            new { Name = "Electric", Description = "Modern, eco-friendly battery electric vehicles with zero emissions.", Commission = 11.00m, Discount = 5.00m },
+            new { Name = "Hybrid", Description = "Smart, fuel-efficient vehicles powered by a combination of gasoline and electric systems.", Commission = 11.00m, Discount = 5.00m }
+        };
+
+        var categoriesCreated = new List<string>();
+        var dbCategories = await context.Categories.ToListAsync();
+
+        foreach (var catDef in expectedCategories)
+        {
+            var existing = dbCategories.FirstOrDefault(c => c.Name.Equals(catDef.Name, StringComparison.OrdinalIgnoreCase));
+            if (existing == null)
+            {
+                var newCat = new Category
+                {
+                    Id = Guid.NewGuid(),
+                    Name = catDef.Name,
+                    Description = catDef.Description,
+                    CommissionPercentage = catDef.Commission,
+                    DiscountPercentage = catDef.Discount,
+                    IsActive = true
+                };
+                await context.Categories.AddAsync(newCat);
+                dbCategories.Add(newCat);
+                categoriesCreated.Add(catDef.Name);
+            }
+        }
+
+        if (categoriesCreated.Count > 0)
+        {
+            await context.SaveChangesAsync();
+            logger.LogInformation("Created new vehicle categories: {Categories}", string.Join(", ", categoriesCreated));
+        }
+
+        // Get references to categories in memory
+        var economyCategory = dbCategories.First(c => c.Name.Equals("Economy", StringComparison.OrdinalIgnoreCase));
+        var standardCategory = dbCategories.First(c => c.Name.Equals("Standard", StringComparison.OrdinalIgnoreCase));
+        var luxuryCategory = dbCategories.First(c => c.Name.Equals("Luxury", StringComparison.OrdinalIgnoreCase));
+        var suvCategory = dbCategories.First(c => c.Name.Equals("SUV", StringComparison.OrdinalIgnoreCase));
+        var vanCategory = dbCategories.First(c => c.Name.Equals("Van", StringComparison.OrdinalIgnoreCase));
+        var electricCategory = dbCategories.First(c => c.Name.Equals("Electric", StringComparison.OrdinalIgnoreCase));
+        var hybridCategory = dbCategories.First(c => c.Name.Equals("Hybrid", StringComparison.OrdinalIgnoreCase));
+
+        // 2. Query and process all vehicles
+        var vehicles = await context.Vehicles.ToListAsync();
+        var counts = new Dictionary<string, int>
+        {
+            { "Economy", 0 },
+            { "Standard", 0 },
+            { "Luxury", 0 },
+            { "SUV", 0 },
+            { "Van", 0 },
+            { "Electric", 0 },
+            { "Hybrid", 0 }
+        };
+        var uncategorizedVehicles = new List<string>();
+        bool modified = false;
+
+        foreach (var vehicle in vehicles)
+        {
+            var make = vehicle.Make ?? string.Empty;
+            var model = vehicle.Model ?? string.Empty;
+            var description = vehicle.Description ?? string.Empty;
+            var fuelType = vehicle.FuelType ?? string.Empty;
+            var seats = vehicle.Seats ?? 0;
+            var price = vehicle.PricePerDay ?? 0m;
+
+            // Check if vehicle is completely blank/uncategorizable
+            if (string.IsNullOrWhiteSpace(make) && string.IsNullOrWhiteSpace(model) && seats == 0 && price == 0m)
+            {
+                uncategorizedVehicles.Add($"ID: {vehicle.Id} (Unknown)");
+                continue;
+            }
+
+            Category targetCategory;
+
+            // 1. Electric
+            if (fuelType.Contains("electric", StringComparison.OrdinalIgnoreCase) || 
+                model.Contains("electric", StringComparison.OrdinalIgnoreCase) ||
+                description.Contains("electric", StringComparison.OrdinalIgnoreCase))
+            {
+                targetCategory = electricCategory;
+            }
+            // 2. Hybrid
+            else if (fuelType.Contains("hybrid", StringComparison.OrdinalIgnoreCase) ||
+                     model.Contains("hybrid", StringComparison.OrdinalIgnoreCase) ||
+                     description.Contains("hybrid", StringComparison.OrdinalIgnoreCase))
+            {
+                targetCategory = hybridCategory;
+            }
+            // 3. Van
+            else if (model.Contains("van", StringComparison.OrdinalIgnoreCase) || 
+                     model.Contains("transit", StringComparison.OrdinalIgnoreCase) ||
+                     description.Contains("van", StringComparison.OrdinalIgnoreCase) || 
+                     description.Contains("transit", StringComparison.OrdinalIgnoreCase) ||
+                     seats >= 7)
+            {
+                targetCategory = vanCategory;
+            }
+            // 4. SUV
+            else if (model.Contains("suv", StringComparison.OrdinalIgnoreCase) || 
+                     model.Contains("crossover", StringComparison.OrdinalIgnoreCase) ||
+                     description.Contains("suv", StringComparison.OrdinalIgnoreCase) || 
+                     description.Contains("crossover", StringComparison.OrdinalIgnoreCase) ||
+                     new[] { "rav4", "tucson", "cherokee", "cx-5", "sportage", "santa fe", "qashqai" }.Any(m => model.Contains(m, StringComparison.OrdinalIgnoreCase)))
+            {
+                targetCategory = suvCategory;
+            }
+            // 5. Luxury
+            else if (price >= 150m || 
+                     new[] { "bmw", "mercedes", "audi", "lexus", "porsche", "tesla", "volvo" }.Any(brand => make.Contains(brand, StringComparison.OrdinalIgnoreCase)))
+            {
+                targetCategory = luxuryCategory;
+            }
+            // 6. Economy
+            else if (seats <= 4 || price < 45m)
+            {
+                targetCategory = economyCategory;
+            }
+            // 7. Standard
+            else
+            {
+                targetCategory = standardCategory;
+            }
+
+            if (vehicle.CategoryId != targetCategory.Id)
+            {
+                vehicle.CategoryId = targetCategory.Id;
+                modified = true;
+            }
+
+            counts[targetCategory.Name]++;
+        }
+
+        if (modified)
+        {
+            await context.SaveChangesAsync();
+            logger.LogInformation("Successfully updated and saved categorized vehicles in database.");
+        }
+
+        // Output summary to logs
+        logger.LogInformation("================ VEHICLE CATEGORIZATION SUMMARY ================");
+        logger.LogInformation("Categories Created: {CategoriesCount} ({Categories})", categoriesCreated.Count, string.Join(", ", categoriesCreated));
+        foreach (var kvp in counts)
+        {
+            logger.LogInformation("Category '{CategoryName}': {Count} vehicles assigned", kvp.Key, kvp.Value);
+        }
+        if (uncategorizedVehicles.Count > 0)
+        {
+            logger.LogWarning("Uncategorized Vehicles: {Count} - {Details}", uncategorizedVehicles.Count, string.Join(", ", uncategorizedVehicles));
+        }
+        else
+        {
+            logger.LogInformation("Uncategorized Vehicles: 0");
+        }
+        logger.LogInformation("================================================================");
     }
 }
 
