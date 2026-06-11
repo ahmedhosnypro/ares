@@ -38,7 +38,7 @@ export default function CommissionSettingsTab() {
       setError(null);
       if (!session?.accessToken) return;
       
-      const res = await apiFetchJson<{ globalCommissionPercentage?: number }>("api/admin/commission", {
+      const res = await apiFetchJson<{ globalCommissionPercentage?: number }>("api/admin/commission/global", {
         accessToken: session.accessToken,
       });
       setPercentage(res?.globalCommissionPercentage?.toString() || "0");
@@ -62,7 +62,7 @@ export default function CommissionSettingsTab() {
         throw new Error("Commission percentage must be between 0 and 100");
       }
 
-      await apiFetchJson("api/admin/commission", {
+      await apiFetchJson("api/admin/commission/global", {
         method: "PUT",
         accessToken: session.accessToken,
         body: JSON.stringify({ percentage: numValue }),
