@@ -8,6 +8,8 @@ import GppMaybeIcon from "@mui/icons-material/GppMaybe";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import BuildCircleIcon from "@mui/icons-material/BuildCircle";
 import BadgeIcon from "@mui/icons-material/Badge";
+import CategoryIcon from "@mui/icons-material/Category";
+import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import { StatCard } from "../../_components/VehicleStats";
 
 export interface SummaryItem {
@@ -25,7 +27,9 @@ export interface SummaryItem {
     | "GppMaybe"
     | "PersonOutlined"
     | "BuildCircle"
-    | "Badge";
+    | "Badge"
+    | "Category"
+    | "LocalOffer";
 }
 
 const IconMap = {
@@ -38,6 +42,8 @@ const IconMap = {
   PersonOutlined: PersonOutlinedIcon,
   BuildCircle: BuildCircleIcon,
   Badge: BadgeIcon,
+  Category: CategoryIcon,
+  LocalOffer: LocalOfferIcon,
 };
 
 export default function StatCardGrid({ items }: { readonly items: readonly SummaryItem[] }) {
