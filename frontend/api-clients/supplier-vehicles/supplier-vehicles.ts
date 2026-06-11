@@ -45,6 +45,7 @@ export interface SupplierVehicleDetails {
   imageUrl: string;
   status: string;
   availabilityStatus: string;
+  categoryId?: string;
   bookingsCount: number;
   /** Server-side flag — true when the vehicle is in a Rejected state. */
   isReadOnly: boolean;
@@ -102,6 +103,7 @@ export interface CreateSupplierVehiclePayload {
   imageUrl?: string;
   images?: VehicleImageUpdatePayload[];
   features?: VehicleFeatureUpdatePayload[];
+  categoryId: string;
 }
 
 /**
