@@ -114,7 +114,9 @@ export default function CommissionSettingsTab() {
               fullWidth
               type="number"
               value={percentage}
-              onChange={e => { setPercentage(e.target.value); }}
+              onChange={e => {
+                setPercentage(e.target.value);
+              }}
               slotProps={{
                 input: {
                   startAdornment: (

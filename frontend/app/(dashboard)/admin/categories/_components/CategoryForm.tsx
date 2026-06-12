@@ -90,7 +90,11 @@ export default function CategoryForm({ open, category, onClose, onSuccess }: Cat
   return (
     <Dialog open={open} onClose={loading ? undefined : onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ fontWeight: 700 }}>{category ? "Edit Category" : "Add Category"}</DialogTitle>
-      <form onSubmit={(e) => { void handleSubmit(e); }}>
+      <form
+        onSubmit={e => {
+          void handleSubmit(e);
+        }}
+      >
         <DialogContent dividers>
           <Stack spacing={3}>
             <TextField

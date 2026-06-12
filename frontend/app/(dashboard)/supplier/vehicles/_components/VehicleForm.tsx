@@ -77,7 +77,9 @@ export default function VehicleForm({
 
   useEffect(() => {
     getCategories()
-      .then(data => { setCategories(data.filter(c => c.isActive)); })
+      .then(data => {
+        setCategories(data.filter(c => c.isActive));
+      })
       .catch(() => {});
   }, []);
 

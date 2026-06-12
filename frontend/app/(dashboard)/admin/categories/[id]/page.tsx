@@ -74,7 +74,12 @@ export default function CategoryDetailsPage({ params }: { readonly params: Promi
     return (
       <Box sx={{ p: 4, textAlign: "center" }}>
         <Alert severity="error">{error || "Category not found."}</Alert>
-        <Button onClick={() => { router.push("/admin/categories"); }} sx={{ mt: 2 }}>
+        <Button
+          onClick={() => {
+            router.push("/admin/categories");
+          }}
+          sx={{ mt: 2 }}
+        >
           Back to Categories
         </Button>
       </Box>
@@ -84,7 +89,11 @@ export default function CategoryDetailsPage({ params }: { readonly params: Promi
   return (
     <Box sx={{ width: "100%", maxWidth: 1200, mx: "auto", p: { xs: 2, sm: 3 } }}>
       <Stack direction="row" spacing={2} sx={{ alignItems: "center", mb: 4 }}>
-        <IconButton onClick={() => { router.push("/admin/categories"); }}>
+        <IconButton
+          onClick={() => {
+            router.push("/admin/categories");
+          }}
+        >
           <BackIcon />
         </IconButton>
         <Box>
@@ -224,7 +233,12 @@ export default function CategoryDetailsPage({ params }: { readonly params: Promi
                         </TableCell>
                         <TableCell>{v.licensePlate || "—"}</TableCell>
                         <TableCell align="right">
-                          <Button size="small" onClick={() => { router.push(`/admin/vehicles/${v.id}`); }}>
+                          <Button
+                            size="small"
+                            onClick={() => {
+                              router.push(`/admin/vehicles/${v.id}`);
+                            }}
+                          >
                             View
                           </Button>
                         </TableCell>

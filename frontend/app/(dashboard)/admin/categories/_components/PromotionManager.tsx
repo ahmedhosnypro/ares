@@ -244,10 +244,21 @@ export default function PromotionManager({ categoryId }: { readonly categoryId: 
                         }}
                       />
                       <Stack direction="row" spacing={0.5}>
-                        <IconButton size="small" onClick={() => { handleEdit(promo); }}>
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            handleEdit(promo);
+                          }}
+                        >
                           <EditIcon fontSize="small" />
                         </IconButton>
-                        <IconButton size="small" onClick={() => { void handleDelete(promo.id); }} color="error">
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            void handleDelete(promo.id);
+                          }}
+                          color="error"
+                        >
                           <DeleteIcon fontSize="small" />
                         </IconButton>
                       </Stack>
@@ -266,9 +277,24 @@ export default function PromotionManager({ categoryId }: { readonly categoryId: 
         </Box>
       </Paper>
 
-      <Dialog open={formOpen} onClose={submitting ? undefined : () => { setFormOpen(false); }} maxWidth="xs" fullWidth>
+      <Dialog
+        open={formOpen}
+        onClose={
+          submitting
+            ? undefined
+            : () => {
+                setFormOpen(false);
+              }
+        }
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle sx={{ fontWeight: 700 }}>{editingPromotion ? "Edit Promotion" : "Add Promotion"}</DialogTitle>
-        <form onSubmit={(e) => { void handleSubmit(e); }}>
+        <form
+          onSubmit={e => {
+            void handleSubmit(e);
+          }}
+        >
           <DialogContent dividers>
             <Stack spacing={3}>
               <TextField
@@ -334,7 +360,13 @@ export default function PromotionManager({ categoryId }: { readonly categoryId: 
             </Stack>
           </DialogContent>
           <DialogActions sx={{ p: 2 }}>
-            <Button onClick={() => { setFormOpen(false); }} disabled={submitting} color="inherit">
+            <Button
+              onClick={() => {
+                setFormOpen(false);
+              }}
+              disabled={submitting}
+              color="inherit"
+            >
               Cancel
             </Button>
             <Button type="submit" variant="contained" disabled={submitting} sx={{ fontWeight: 700 }}>
@@ -347,7 +379,9 @@ export default function PromotionManager({ categoryId }: { readonly categoryId: 
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}
-        onClose={() => { setSnackbar({ ...snackbar, open: false }); }}
+        onClose={() => {
+          setSnackbar({ ...snackbar, open: false });
+        }}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
       >
         <Alert severity={snackbar.severity}>{snackbar.message}</Alert>

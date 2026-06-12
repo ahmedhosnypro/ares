@@ -139,7 +139,12 @@ export default function AdminCategoriesPage() {
         ) : error ? (
           <Box sx={{ p: 4, textAlign: "center" }}>
             <Alert severity="error">{error}</Alert>
-            <Button onClick={() => { void fetchCategories(); }} sx={{ mt: 2 }}>
+            <Button
+              onClick={() => {
+                void fetchCategories();
+              }}
+              sx={{ mt: 2 }}
+            >
               Retry
             </Button>
           </Box>
@@ -161,7 +166,9 @@ export default function AdminCategoriesPage() {
                     <TableRow
                       key={c.id}
                       hover
-                      onClick={() => { router.push(`/admin/categories/${c.id}`); }}
+                      onClick={() => {
+                        router.push(`/admin/categories/${c.id}`);
+                      }}
                       sx={{ cursor: "pointer" }}
                     >
                       <TableCell>
@@ -245,7 +252,9 @@ export default function AdminCategoriesPage() {
         <CategoryForm
           open={formOpen}
           category={editingCategory}
-          onClose={() => { setFormOpen(false); }}
+          onClose={() => {
+            setFormOpen(false);
+          }}
           onSuccess={handleFormSuccess}
         />
       )}
@@ -253,7 +262,9 @@ export default function AdminCategoriesPage() {
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
-        onClose={() => { setSnackbar({ ...snackbar, open: false }); }}
+        onClose={() => {
+          setSnackbar({ ...snackbar, open: false });
+        }}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
       >
         <Alert severity={snackbar.severity} sx={{ width: "100%" }}>
