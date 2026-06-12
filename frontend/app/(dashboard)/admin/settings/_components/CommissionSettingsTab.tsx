@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -18,6 +18,7 @@ import PercentRoundedIcon from "@mui/icons-material/PercentRounded";
 import { useSession } from "next-auth/react";
 import { apiFetchJson } from "@/utils/api-client";
 import { useTheme } from "@mui/material";
+import { logger } from "@/utils/logger";
 
 export default function CommissionSettingsTab() {
   const theme = useTheme();
@@ -28,11 +29,7 @@ export default function CommissionSettingsTab() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchCommission();
-  }, []);
-
-  const fetchCommission = async () => {
+  const fetchCommission = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -41,14 +38,21 @@ export default function CommissionSettingsTab() {
       const res = await apiFetchJson<{ globalCommissionPercentage?: number }>("api/admin/commission/global", {
         accessToken: session.accessToken,
       });
-      setPercentage(res?.globalCommissionPercentage?.toString() || "0");
-    } catch (err: any) {
-      console.error("Failed to fetch global commission:", err);
-      setError(err.message || "Failed to load global commission.");
+      setPercentage(res.globalCommissionPercentage?.toString() || "0");
+    } catch (err: unknown) {
+      logger.error("Failed to fetch global commission:", err);
+      const errMsg = err instanceof Error ? err.message : "Failed to load global commission.";
+      setError(errMsg);
     } finally {
       setLoading(false);
     }
-  };
+  }, [session?.accessToken]);
+
+  useEffect(() => {
+    fetchCommission().catch((err: unknown) => {
+      logger.error("Error in fetchCommission:", err);
+    });
+  }, [fetchCommission]);
 
   const handleSave = async () => {
     try {
@@ -68,9 +72,10 @@ export default function CommissionSettingsTab() {
         body: JSON.stringify({ percentage: numValue }),
       });
       setSuccess("Global commission percentage updated successfully.");
-    } catch (err: any) {
-      console.error("Failed to update global commission:", err);
-      setError(err.message || err.response?.data?.message || "Failed to update global commission.");
+    } catch (err: unknown) {
+      logger.error("Failed to update global commission:", err);
+      const apiError = err as { message?: string; response?: { data?: { message?: string } } };
+      setError(apiError.message || apiError.response?.data?.message || "Failed to update global commission.");
     } finally {
       setSaving(false);
     }
@@ -135,7 +140,9 @@ export default function CommissionSettingsTab() {
               variant="contained"
               color="primary"
               startIcon={saving ? <CircularProgress size={20} color="inherit" /> : <SaveRoundedIcon />}
-              onClick={handleSave}
+              onClick={() => {
+                void handleSave();
+              }}
               disabled={saving}
               sx={{ px: 4, py: 1.5, borderRadius: 2 }}
             >

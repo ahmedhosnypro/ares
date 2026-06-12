@@ -1170,8 +1170,8 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
               title="Pickup Inspection"
               icon={<InspectionIcon />}
               inspection={booking.pickupInspection}
-              fallbackAssignedInspectorName={booking.inspection?.assignedInspectorName ?? null}
-              fallbackStatus={booking.inspection?.preInspectionStatus ?? null}
+              fallbackAssignedInspectorName={booking.inspection.assignedInspectorName ?? null}
+              fallbackStatus={booking.inspection.preInspectionStatus ?? null}
             />
 
             {/* 7. Return Inspection */}
@@ -1179,8 +1179,8 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
               title="Return Inspection"
               icon={<InspectionIcon />}
               inspection={booking.returnInspection}
-              fallbackAssignedInspectorName={booking.inspection?.assignedInspectorName ?? null}
-              fallbackStatus={booking.inspection?.postInspectionStatus ?? null}
+              fallbackAssignedInspectorName={booking.inspection.assignedInspectorName ?? null}
+              fallbackStatus={booking.inspection.postInspectionStatus ?? null}
             />
           </>
         )}
