@@ -8,8 +8,10 @@ import InfoRoundedIcon from "@mui/icons-material/InfoRounded";
 import GeneralSettingsTab from "./_components/GeneralSettingsTab";
 import TermsSettingsTab from "./_components/TermsSettingsTab";
 import AboutSettingsTab from "./_components/AboutSettingsTab";
+import CommissionSettingsTab from "./_components/CommissionSettingsTab";
+import AccountBalanceRoundedIcon from "@mui/icons-material/AccountBalanceRounded";
 
-type SettingsTabKey = "general" | "terms" | "about";
+type SettingsTabKey = "general" | "terms" | "about" | "commission";
 
 export default function AdminSettingsPage() {
   const [tab, setTab] = useState<SettingsTabKey>("general");
@@ -36,6 +38,12 @@ export default function AdminSettingsPage() {
         <Tabs value={tab} onChange={handleTabChange}>
           <Tab icon={<SettingsRoundedIcon fontSize="small" />} iconPosition="start" label="General" value="general" />
           <Tab
+            icon={<AccountBalanceRoundedIcon fontSize="small" />}
+            iconPosition="start"
+            label="Commission"
+            value="commission"
+          />
+          <Tab
             icon={<GavelRoundedIcon fontSize="small" />}
             iconPosition="start"
             label="Terms of Service"
@@ -46,6 +54,7 @@ export default function AdminSettingsPage() {
       </Box>
 
       {tab === "general" && <GeneralSettingsTab />}
+      {tab === "commission" && <CommissionSettingsTab />}
       {tab === "terms" && <TermsSettingsTab />}
       {tab === "about" && <AboutSettingsTab />}
     </Box>

@@ -2,6 +2,7 @@ import SearchPageContent from "./SearchPageContent";
 import {
   fetchFeaturedVehicles,
   fetchPublicLocations,
+  fetchPublicCategories,
   formatDateInputValue,
   type PublicLocation,
 } from "@/utils/public-data";
@@ -40,7 +41,7 @@ function findLocationById(locations: PublicLocation[], locationId: string): Publ
 export default async function SearchPage({ searchParams }: Readonly<PageProps>) {
   const resolvedSearchParams = await searchParams;
   const defaultDates = getDefaultDates();
-  const locations = await fetchPublicLocations();
+  const [locations, categories] = await Promise.all([fetchPublicLocations(), fetchPublicCategories()]);
 
   const requestedLocationId = firstValue(resolvedSearchParams.pickupLocationId);
   // Don't default to locations[0] if no location is requested
@@ -63,6 +64,7 @@ export default async function SearchPage({ searchParams }: Readonly<PageProps>) 
   return (
     <SearchPageContent
       locations={locations}
+      categories={categories}
       vehicles={vehicles}
       pickupLocationId={pickupLocationId}
       pickupDate={pickupDate}

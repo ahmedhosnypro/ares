@@ -16,6 +16,7 @@ public record UpdateVehicleRequest(
     int? Seats,
     decimal? PricePerDay,
     [MaxLength(100)] string? LocationCity,
+    Guid? CategoryId,
     string? Description,
     [MaxLength(50)] string? Status,
     [MaxLength(50)] string? AvailabilityStatus,

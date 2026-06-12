@@ -34,6 +34,10 @@ namespace Backend.Infrastructure.BackgroundServices
                 {
                     await AssignInspectorsAsync(stoppingToken);
                 }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                    // Normal shutdown, ignore
+                }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error occurred executing inspector auto-assignment.");

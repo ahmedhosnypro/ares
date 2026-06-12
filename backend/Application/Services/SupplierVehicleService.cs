@@ -243,6 +243,7 @@ public class SupplierVehicleService : ISupplierVehicleService
             Seats = request.Seats,
             PricePerDay = request.PricePerDay,
             LocationCity = request.LocationCity,
+            CategoryId = request.CategoryId,
             Description = request.Description,
             Status = StatusPending,                 // ← per spec
             AvailabilityStatus = AvailabilityUnavailable,
@@ -353,6 +354,7 @@ public class SupplierVehicleService : ISupplierVehicleService
         if (request.Seats.HasValue) vehicle.Seats = request.Seats.Value;
         if (request.PricePerDay.HasValue) vehicle.PricePerDay = request.PricePerDay.Value;
         if (!string.IsNullOrWhiteSpace(request.LocationCity)) vehicle.LocationCity = request.LocationCity;
+        if (request.CategoryId.HasValue) vehicle.CategoryId = request.CategoryId.Value;
         if (request.Description != null) vehicle.Description = request.Description;
 
         // Update images if provided

@@ -23,6 +23,8 @@ namespace Backend.Infrastructure.Data
         public DbSet<UserAddress> UserAddresses { get; set; }
         public DbSet<Verification> Verifications { get; set; }
         public DbSet<CompanyProfile> CompanyProfiles { get; set; }
+        public DbSet<Category> Categories { get; set; }
+        public DbSet<Promotion> Promotions { get; set; }
         public DbSet<Vehicle> Vehicles { get; set; }
         public DbSet<VehicleImage> VehicleImages { get; set; }
         public DbSet<Driver> Drivers { get; set; }
@@ -54,6 +56,8 @@ namespace Backend.Infrastructure.Data
         public DbSet<InspectionImage> InspectionImages { get; set; }
         public DbSet<VehicleAvailability> VehicleAvailabilities { get; set; }
         // Explicit interface implementation for IApplicationDbContext
+        IQueryable<Category> IApplicationDbContext.Categories => Categories;
+        IQueryable<Promotion> IApplicationDbContext.Promotions => Promotions;
         IQueryable<Vehicle> IApplicationDbContext.Vehicles => Vehicles;
         IQueryable<VehicleImage> IApplicationDbContext.VehicleImages => VehicleImages;
         IQueryable<Booking> IApplicationDbContext.Bookings => Bookings;
@@ -140,6 +144,26 @@ namespace Backend.Infrastructure.Data
         public void AddSystemSetting(SystemSetting setting)
         {
             SystemSettings.Add(setting);
+        }
+
+        public void AddCategory(Category category)
+        {
+            Categories.Add(category);
+        }
+
+        public void RemoveCategory(Category category)
+        {
+            Categories.Remove(category);
+        }
+
+        public void AddPromotion(Promotion promotion)
+        {
+            Promotions.Add(promotion);
+        }
+
+        public void RemovePromotion(Promotion promotion)
+        {
+            Promotions.Remove(promotion);
         }
 
         protected override void OnModelCreating(ModelBuilder builder)

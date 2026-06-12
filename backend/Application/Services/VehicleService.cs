@@ -63,6 +63,10 @@ public class VehicleService : IVehicleService
                 .ToList();
         }
 
+        var activePromotions = await _context.Promotions
+            .Where(p => p.Status == "Active" && p.StartDate <= DateTime.UtcNow && p.EndDate >= DateTime.UtcNow)
+            .ToDictionaryAsync(p => p.CategoryId, p => p.DiscountPercentage, cancellationToken);
+
         var vehicleDtos = new List<VehicleListDto>();
         foreach (var vehicle in vehicleList)
         {
@@ -72,12 +76,19 @@ public class VehicleService : IVehicleService
                              ?? vehicle.Images.FirstOrDefault()?.ImageUrl
                              ?? string.Empty;
 
+            var baseRate = vehicle.PricePerDay ?? 0;
+            var dailyRate = baseRate;
+            if (vehicle.CategoryId.HasValue && activePromotions.TryGetValue(vehicle.CategoryId.Value, out var discount))
+            {
+                dailyRate = baseRate * (1 - (discount / 100m));
+            }
+
             vehicleDtos.Add(new VehicleListDto(
                 vehicle.Id,
                 vehicle.Make ?? string.Empty,
                 vehicle.Model ?? string.Empty,
                 vehicle.Status ?? string.Empty,
-                vehicle.PricePerDay ?? 0,
+                dailyRate,
                 "USD",
                 primaryImage,
                 averageRating,
@@ -543,6 +554,10 @@ public class VehicleService : IVehicleService
             .ToListAsync(cancellationToken);
         var onRentalIds = new HashSet<Guid>(onRentalIdSet);
 
+        var activePromotions = await _context.Promotions
+            .Where(p => p.Status == "Active" && p.StartDate <= DateTime.UtcNow && p.EndDate >= DateTime.UtcNow)
+            .ToDictionaryAsync(p => p.CategoryId, p => p.DiscountPercentage, cancellationToken);
+
         var vehicleDtos = new List<VehicleListDto>();
         foreach (var vehicle in vehicles)
         {
@@ -556,12 +571,19 @@ public class VehicleService : IVehicleService
                 ? null
                 : $"{vehicle.User.FirstName} {vehicle.User.LastName}".Trim();
 
+            var baseRate = vehicle.PricePerDay ?? 0;
+            var dailyRate = baseRate;
+            if (vehicle.CategoryId.HasValue && activePromotions.TryGetValue(vehicle.CategoryId.Value, out var discount))
+            {
+                dailyRate = baseRate * (1 - (discount / 100m));
+            }
+
             vehicleDtos.Add(new VehicleListDto(
                 VehicleId: vehicle.Id,
                 Make: vehicle.Make ?? string.Empty,
                 Model: vehicle.Model ?? string.Empty,
                 Category: vehicle.Status ?? string.Empty,
-                DailyRate: vehicle.PricePerDay ?? 0,
+                DailyRate: dailyRate,
                 Currency: "USD",
                 ImageUrl: primaryImage,
                 Rating: averageRating,
@@ -622,6 +644,7 @@ public class VehicleService : IVehicleService
             Seats = request.Seats,
             PricePerDay = request.PricePerDay,
             LocationCity = request.LocationCity,
+            CategoryId = request.CategoryId,
             Description = request.Description,
             Status = request.Status,
             AvailabilityStatus = request.AvailabilityStatus,
@@ -704,6 +727,9 @@ public class VehicleService : IVehicleService
 
         if (!string.IsNullOrWhiteSpace(request.LocationCity))
             vehicle.LocationCity = request.LocationCity;
+
+        if (request.CategoryId.HasValue)
+            vehicle.CategoryId = request.CategoryId.Value;
 
         if (request.Description != null)
             vehicle.Description = request.Description;

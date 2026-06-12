@@ -549,6 +549,11 @@ Thank you for your business!
 
         var result = _refundCalculator.Calculate(booking.Status, booking.PickupDate ?? DateTime.UtcNow.AddDays(1), payment.Amount);
         var refundAmount = isAdmin && adminOverrideAmount.HasValue ? adminOverrideAmount.Value : result.RefundAmount;
+        var cancellationFee = payment.Amount - refundAmount;
+
+        var commissionPercentage = booking.CommissionPercentage ?? 0m;
+        var refundCommissionAmount = cancellationFee * (commissionPercentage / 100m);
+        var refundSupplierAmount = cancellationFee - refundCommissionAmount;
 
         if (refundAmount > 0 && payment.PaymobTransactionId.HasValue)
         {
@@ -563,7 +568,9 @@ Thank you for your business!
             PolicyType = result.PolicyType,
             RefundPercentage = result.RefundPercentage,
             OriginalAmount = payment.Amount,
-            CancellationFee = payment.Amount - refundAmount,
+            CancellationFee = cancellationFee,
+            RefundCommissionAmount = Math.Round(refundCommissionAmount, 2),
+            RefundSupplierAmount = Math.Round(refundSupplierAmount, 2),
             Currency = payment.Currency,
             RefundStatus = refundAmount > 0 ? RefundStatus.Processing : RefundStatus.Completed,
             RefundTransactionId = refundAmount > 0 ? Guid.NewGuid() : null,

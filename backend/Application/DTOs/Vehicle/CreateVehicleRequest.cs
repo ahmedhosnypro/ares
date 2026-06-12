@@ -17,6 +17,7 @@ public record CreateVehicleRequest(
     [Required] int Seats,
     [Required] decimal PricePerDay,
     [Required][MaxLength(100)] string LocationCity,
+    [Required] Guid CategoryId,
     string? Description,
     [MaxLength(50)] string Status = "Active",
     [MaxLength(50)] string AvailabilityStatus = "Available"

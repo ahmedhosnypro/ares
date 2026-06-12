@@ -5,5 +5,8 @@ public record DashboardSummaryDto(
     int ActiveBookings,
     int PendingVerifications,
     int AvailableVehicles,
-    int PendingInspections
+    int PendingInspections,
+    int TotalCategories = 0,
+    int ActivePromotions = 0,
+    Dictionary<string, int>? VehiclesPerCategory = null
 );

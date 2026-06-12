@@ -131,6 +131,7 @@ try
     builder.Services.AddScoped<ISupplierVehicleService, SupplierVehicleService>();
     builder.Services.AddScoped<ISupplierBookingService, SupplierBookingService>();
     builder.Services.AddScoped<ISupplierEarningsService, SupplierEarningsService>();
+    builder.Services.AddScoped<ICommissionService, CommissionService>();
     builder.Services.AddScoped<ISupplierNotificationService, SupplierNotificationService>();
     builder.Services.AddScoped<ISupplierReviewService, SupplierReviewService>();
     // ─── Inspector / Inspection workflow ──────────────────────────────────

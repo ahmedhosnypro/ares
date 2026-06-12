@@ -20,6 +20,7 @@ export const vehicleFormSchema = z.object({
   locationCity: z.string().trim().min(2, "City is required"),
   description: z.string().optional(),
   imageUrl: z.string().optional(),
+  categoryId: z.string().min(1, "Category is required"),
 });
 
 export type VehicleFormValues = z.infer<typeof vehicleFormSchema>;
@@ -41,4 +42,5 @@ export const DEFAULT_VEHICLE_FORM: VehicleFormValues = {
   locationCity: "",
   description: "",
   imageUrl: "",
+  categoryId: "",
 };

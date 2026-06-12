@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel.DataAnnotations.Schema;
 using Backend.Domain.Entities.Enums;
 
 namespace Backend.Domain.Entities
@@ -20,6 +21,12 @@ namespace Backend.Domain.Entities
 
         [System.ComponentModel.DataAnnotations.Schema.NotMapped]
         public decimal RefundAmount => OriginalAmount - CancellationFee;
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal RefundCommissionAmount { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal RefundSupplierAmount { get; set; }
 
         public string Currency { get; set; } = "USD";
 

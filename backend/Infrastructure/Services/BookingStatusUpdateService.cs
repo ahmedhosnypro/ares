@@ -31,6 +31,10 @@ public class BookingStatusUpdateService : BackgroundService
             {
                 await UpdateBookingStatusesAsync(stoppingToken);
             }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                // Normal shutdown, ignore
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred executing BookingStatusUpdateService.");

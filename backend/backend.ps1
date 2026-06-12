@@ -252,30 +252,46 @@ function Select-PlainMenu {
 
 function Sign-Assemblies {
     Write-Host '▶ Unblocking and signing compiled assemblies to bypass Application Control policy'
-    Get-ChildItem -Path $BackendDir -Filter "*.dll" -Recurse | ForEach-Object {
-        if ($_.FullName -like "*\bin\Debug\net10.0\*") {
-            Unblock-File -Path $_.FullName -ErrorAction SilentlyContinue
+    
+    $projectNames = @('Domain', 'Application', 'Infrastructure', 'Api', 'Tests')
+    
+    # Run the unblocking and signing in an external PowerShell process
+    # to prevent PowerShell from leaking file locks in the user's active session.
+    $signBlock = {
+        param($BackendDir, $projectNames)
+        $cert = Get-ChildItem Cert:\CurrentUser\My | Where-Object { $_.Subject -eq "CN=DevCert" } | Select-Object -First 1
+        if ($null -eq $cert) {
+            $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=DevCert" -CertStoreLocation "Cert:\CurrentUser\My" -ErrorAction SilentlyContinue
         }
-    }
-    $cert = Get-ChildItem Cert:\CurrentUser\My | Where-Object { $_.Subject -eq "CN=DevCert" } | Select-Object -First 1
-    if ($null -eq $cert) {
-        $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=DevCert" -CertStoreLocation "Cert:\CurrentUser\My" -ErrorAction SilentlyContinue
-    }
-    if ($cert) {
-        Get-ChildItem -Path $BackendDir -Filter "*.dll" -Recurse | ForEach-Object {
-            if ($_.FullName -like "*\bin\Debug\net10.0\*") {
-                Set-AuthenticodeSignature -FilePath $_.FullName -Certificate $cert -ErrorAction SilentlyContinue | Out-Null
+        if ($cert) {
+            Get-ChildItem -Path $BackendDir -Filter "*.dll" -Recurse | ForEach-Object {
+                if ($_.FullName -like "*\bin\Debug\net10.0\*") {
+                    if ($_.BaseName -in $projectNames) {
+                        $filePath = $_.FullName
+                        for ($retry = 1; $retry -le 5; $retry++) {
+                            try {
+                                Unblock-File -Path $filePath -ErrorAction SilentlyContinue
+                                Set-AuthenticodeSignature -FilePath $filePath -Certificate $cert -ErrorAction Stop | Out-Null
+                                break
+                            } catch {
+                                Start-Sleep -Milliseconds 200
+                            }
+                        }
+                    }
+                }
             }
         }
-        Write-Host '✔ Successfully unblocked and signed compiled assemblies.'
-    } else {
-        Write-Host '⚠ Failed to obtain or create code-signing certificate.'
     }
+    
+    & powershell.exe -NoProfile -NonInteractive -Command $signBlock -args $BackendDir, $projectNames
+    Write-Host '✔ Finished signing compiled assemblies.'
 }
 
 function Action-Build {
     [void](Invoke-LabelledCommand -Label 'Building solution' -FilePath 'dotnet' -Arguments @('build', $Solution))
-    Sign-Assemblies
+    if ($env:ARES_SIGN_ASSEMBLIES -eq 'true') {
+        Sign-Assemblies
+    }
 }
 
 function Action-Run {

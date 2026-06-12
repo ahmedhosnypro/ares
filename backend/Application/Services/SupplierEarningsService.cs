@@ -76,10 +76,9 @@ public class SupplierEarningsService : ISupplierEarningsService
         // filtering in one place.
         var completedQuery = EarningsEligibleBookings(supplierId);
 
-        // ── Total lifetime earnings ──────────────────────────────────────
         // Null-coalesce in the selector so SUM never returns NULL.
         var totalEarnings = await completedQuery
-            .SumAsync(b => b.TotalPrice ?? 0m, cancellationToken);
+            .SumAsync(b => b.SupplierAmount ?? b.TotalPrice ?? 0m, cancellationToken);
 
         // ── Completed bookings count (lifetime) ──────────────────────────
         var completedBookingsCount = await completedQuery.CountAsync(cancellationToken);
@@ -90,13 +89,13 @@ public class SupplierEarningsService : ISupplierEarningsService
         var thisMonthRevenue = await completedQuery
             .Where(b => (b.ReturnDate ?? b.CreatedAt) >= thisMonthStart
                         && (b.ReturnDate ?? b.CreatedAt) < nextMonthStart)
-            .SumAsync(b => b.TotalPrice ?? 0m, cancellationToken);
+            .SumAsync(b => b.SupplierAmount ?? b.TotalPrice ?? 0m, cancellationToken);
 
         // ── Last-month revenue ───────────────────────────────────────────
         var lastMonthRevenue = await completedQuery
             .Where(b => (b.ReturnDate ?? b.CreatedAt) >= lastMonthStart
                         && (b.ReturnDate ?? b.CreatedAt) < thisMonthStart)
-            .SumAsync(b => b.TotalPrice ?? 0m, cancellationToken);
+            .SumAsync(b => b.SupplierAmount ?? b.TotalPrice ?? 0m, cancellationToken);
 
         return new SupplierEarningsStatsDto(
             TotalEarnings: totalEarnings,
@@ -130,7 +129,7 @@ public class SupplierEarningsService : ISupplierEarningsService
             .Select(g => new
             {
                 Month = g.Key,
-                Revenue = g.Sum(b => b.TotalPrice ?? 0m),
+                Revenue = g.Sum(b => b.SupplierAmount ?? b.TotalPrice ?? 0m),
             })
             .ToListAsync(cancellationToken);
 
@@ -169,7 +168,7 @@ public class SupplierEarningsService : ISupplierEarningsService
             .Select(g => new
             {
                 VehicleId = g.Key,
-                TotalEarnings = g.Sum(b => b.TotalPrice ?? 0m),
+                TotalEarnings = g.Sum(b => b.SupplierAmount ?? b.TotalPrice ?? 0m),
                 CompletedBookingsCount = g.Count(),
             })
             .OrderByDescending(x => x.TotalEarnings)

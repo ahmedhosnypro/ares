@@ -5,7 +5,6 @@ import { useSession } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import {
   Dashboard as DashboardIcon,
-  DirectionsCar as RequestsIcon,
   Route as TripsIcon,
   AttachMoney as EarningsIcon,
   Person as ProfileIcon,
@@ -17,7 +16,6 @@ import { logger } from "@/utils/logger";
 
 const menuItems: DashboardMenuItem[] = [
   { text: "Dashboard", icon: <DashboardIcon />, path: "/driver/dashboard" },
-  { text: "Requests", icon: <RequestsIcon />, path: "/driver/requests" },
   { text: "My Trips", icon: <TripsIcon />, path: "/driver/trips" },
   { text: "Earnings", icon: <EarningsIcon />, path: "/driver/earnings" },
   { text: "Profile", icon: <ProfileIcon />, path: "/driver/profile" },

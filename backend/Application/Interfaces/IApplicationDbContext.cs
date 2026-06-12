@@ -7,6 +7,8 @@ namespace Backend.Application.Interfaces;
 /// </summary>
 public interface IApplicationDbContext
 {
+    IQueryable<Category> Categories { get; }
+    IQueryable<Promotion> Promotions { get; }
     IQueryable<Vehicle> Vehicles { get; }
     IQueryable<VehicleImage> VehicleImages { get; }
     IQueryable<Booking> Bookings { get; }
@@ -43,5 +45,9 @@ public interface IApplicationDbContext
     void AddVehicleFeatures(IEnumerable<VehicleFeature> features);
     void AddSystemSetting(SystemSetting setting);
     void AddVehicleInspection(VehicleInspection inspection);
+    void AddCategory(Category category);
+    void RemoveCategory(Category category);
+    void AddPromotion(Promotion promotion);
+    void RemovePromotion(Promotion promotion);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

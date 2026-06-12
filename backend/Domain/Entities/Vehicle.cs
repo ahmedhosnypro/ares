@@ -57,5 +57,10 @@ namespace Backend.Domain.Entities
         public ICollection<VehicleImage> Images { get; set; } = new List<VehicleImage>();
 
         public ICollection<VehicleAvailability> AvailabilityPeriods { get; set; } = new List<VehicleAvailability>();
+
+        public Guid? CategoryId { get; set; }
+
+        [ForeignKey(nameof(CategoryId))]
+        public Category? Category { get; set; }
     }
 }

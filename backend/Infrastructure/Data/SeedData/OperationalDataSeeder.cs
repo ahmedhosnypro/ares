@@ -26,7 +26,7 @@ public static class OperationalDataSeeder
         var demoUserEmails = new List<string>();
         for (int i = 1; i <= 2; i++) demoUserEmails.Add($"newcustomer{i}@ares.local");
         for (int i = 1; i <= 4; i++) demoUserEmails.Add($"newdriver{i}@ares.local");
-        for (int i = 1; i <= 2; i++) demoUserEmails.Add($"newinspector{i}@ares.local");
+        for (int i = 1; i <= 4; i++) demoUserEmails.Add($"newinspector{i}@ares.local");
 
         var demoUsers = await context.Users
             .Where(u => u.Email != null && demoUserEmails.Contains(u.Email))
@@ -148,12 +148,25 @@ public static class OperationalDataSeeder
             driverProfiles.Add(profile);
         }
 
-        // 3. Create 2 Inspectors
+        // 3. Create 4 Inspectors
         var inspectors = new List<ApplicationUser>();
-        for (int i = 1; i <= 2; i++)
+        var inspectorLocations = new[]
         {
-            var email = $"newinspector{i}@ares.local";
-            var inspector = await EnsureUserAsync(userManager, email, $"InspFirst{i}", $"InspLast{i}", $"+2013000000{i}", "Inspector", true);
+            "12 Tahrir Square",
+            "Corniche Road",
+            "Naama Bay",
+            "Marina Boulevard"
+        };
+        var firstNames = new[] { "Cairo", "Alex", "Sharm", "Hurghada" };
+
+        for (int i = 0; i < 4; i++)
+        {
+            var index = i + 1;
+            var email = $"newinspector{index}@ares.local";
+            var locationName = inspectorLocations[i];
+            var firstName = firstNames[i];
+            
+            var inspector = await EnsureUserAsync(userManager, email, $"{firstName}Insp", "Official", $"+2013000000{index}", "Inspector", true);
             inspectors.Add(inspector);
 
             var inspectorProfile = await context.Inspectors.FirstOrDefaultAsync(ip => ip.UserId == inspector.Id);
@@ -163,10 +176,19 @@ public static class OperationalDataSeeder
                 {
                     Id = Guid.NewGuid(),
                     UserId = inspector.Id,
-                    EmployeeCode = $"EMP-INSP-00{i}",
-                    IsActive = true
+                    EmployeeCode = $"EMP-INSP-00{index}",
+                    Region = locationName,
+                    IsActive = true,
+                    IsAvailable = true
                 };
                 await context.Inspectors.AddAsync(inspectorProfile);
+            }
+            else
+            {
+                inspectorProfile.Region = locationName;
+                inspectorProfile.EmployeeCode = $"EMP-INSP-00{index}";
+                inspectorProfile.IsActive = true;
+                inspectorProfile.IsAvailable = true;
             }
         }
 
@@ -188,7 +210,7 @@ public static class OperationalDataSeeder
             .ToList();
 
         var paymentMethods = new[] { "CreditCard", "DebitCard", "VodafoneCash", "InstaPay" };
-        var locations = new[] { "Cairo Airport", "Tahrir Square", "Alexandria Corniche", "Giza Pyramids", "Sharm El Sheikh" };
+        var locations = new[] { "12 Tahrir Square", "Corniche Road", "Naama Bay", "Marina Boulevard" };
 
         var generatedBookings = new List<Booking>();
         var now = DateTime.UtcNow;
@@ -199,7 +221,10 @@ public static class OperationalDataSeeder
             var customer = customers[random.Next(customers.Count)];
             var vehicle = vehicles[random.Next(vehicles.Count)];
             var driverProfile = i % 2 == 0 ? driverProfiles[random.Next(driverProfiles.Count)] : null;
-            var inspector = inspectors[random.Next(inspectors.Count)];
+            
+            var locationIndex = random.Next(locations.Length);
+            var bookingLocation = locations[locationIndex];
+            var inspector = inspectors[locationIndex];
 
             // Ensure high revenue by multiplying price and days
             var totalDays = random.Next(3, 15);
@@ -223,7 +248,7 @@ public static class OperationalDataSeeder
                 VehicleId = vehicle.Id,
                 PickupDate = pickupDate,
                 ReturnDate = returnDate,
-                PickupLocation = locations[random.Next(locations.Length)],
+                PickupLocation = bookingLocation,
                 DropoffLocation = locations[random.Next(locations.Length)],
                 TotalDays = totalDays,
                 RequiresDriver = driverProfile != null,

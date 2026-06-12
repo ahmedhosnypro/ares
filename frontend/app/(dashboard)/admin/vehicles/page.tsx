@@ -15,6 +15,7 @@ import {
   Paper,
   Avatar,
   Chip,
+  Checkbox,
   Stack,
   CircularProgress,
   LinearProgress,
@@ -56,6 +57,7 @@ import {
   type VehicleSortBy,
 } from "@/api-clients/cars/cars";
 import { getSuppliers, type Supplier } from "@/api-clients/suppliers/suppliers";
+import { getCategories, bulkAssignVehicles, type Category } from "@/api-clients/categories/categories";
 
 // ── Static filter option lists. Defined as module-level constants so the
 //    dropdowns don't re-create their option arrays on every render and so
@@ -307,6 +309,9 @@ interface VehicleListContentProps {
   readonly page: number;
   readonly handlePageChange: (_: unknown, v: number) => void;
   readonly refresh: () => void;
+  readonly selectedVehicleIds: Set<string>;
+  readonly toggleVehicleSelection: (id: string) => void;
+  readonly toggleSelectAll: () => void;
 }
 
 const VehicleListContent = memo(function VehicleListContent({
@@ -324,6 +329,9 @@ const VehicleListContent = memo(function VehicleListContent({
   page,
   handlePageChange,
   refresh,
+  selectedVehicleIds,
+  toggleVehicleSelection,
+  toggleSelectAll,
 }: VehicleListContentProps): JSX.Element {
   if (loading && vehicles.length === 0 && !listError) {
     return (
@@ -397,6 +405,9 @@ const VehicleListContent = memo(function VehicleListContent({
       totalPages={totalPages}
       page={page}
       handlePageChange={handlePageChange}
+      selectedVehicleIds={selectedVehicleIds}
+      toggleVehicleSelection={toggleVehicleSelection}
+      toggleSelectAll={toggleSelectAll}
     />
   );
 });
@@ -472,6 +483,9 @@ interface DesktopVehicleListProps {
   readonly totalPages: number;
   readonly page: number;
   readonly handlePageChange: (_: unknown, v: number) => void;
+  readonly selectedVehicleIds: Set<string>;
+  readonly toggleVehicleSelection: (id: string) => void;
+  readonly toggleSelectAll: () => void;
 }
 
 function DesktopVehicleList({
@@ -486,7 +500,13 @@ function DesktopVehicleList({
   totalPages,
   page,
   handlePageChange,
+  selectedVehicleIds,
+  toggleVehicleSelection,
+  toggleSelectAll,
 }: DesktopVehicleListProps) {
+  const allSelected = vehicles.length > 0 && vehicles.every(v => selectedVehicleIds.has(v.vehicleId || v.id));
+  const someSelected = vehicles.some(v => selectedVehicleIds.has(v.vehicleId || v.id)) && !allSelected;
+
   return (
     <Paper
       elevation={0}
@@ -528,7 +548,16 @@ function DesktopVehicleList({
                 },
               }}
             >
-              <TableCell sx={{ pl: 6 }}>Vehicle</TableCell>
+              <TableCell padding="checkbox" sx={{ pl: 2 }}>
+                <Checkbox
+                  size="small"
+                  checked={allSelected}
+                  indeterminate={someSelected}
+                  onChange={toggleSelectAll}
+                  color="primary"
+                />
+              </TableCell>
+              <TableCell sx={{ pl: 2 }}>Vehicle</TableCell>
               <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>Category</TableCell>
               <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Daily Rate</TableCell>
               <TableCell sx={{ display: { xs: "none", lg: "table-cell" } }}>Supplier</TableCell>
@@ -550,6 +579,10 @@ function DesktopVehicleList({
                   theme={theme}
                   onDelete={handleDelete}
                   onNavigate={handleNavigate}
+                  selected={selectedVehicleIds.has(v.vehicleId || v.id)}
+                  onToggle={() => {
+                    toggleVehicleSelection(v.vehicleId || v.id);
+                  }}
                 />
               ))
             ) : (
@@ -636,11 +669,15 @@ function VehicleTableRow({
   theme,
   onDelete,
   onNavigate,
+  selected,
+  onToggle,
 }: {
   readonly v: Vehicle;
   readonly theme: Theme;
   readonly onDelete: (id: string, available: boolean, hasBookings?: boolean) => void;
   readonly onNavigate: (path: string) => void;
+  readonly selected: boolean;
+  readonly onToggle: () => void;
 }) {
   const status = getStatusConfig(v);
   const paletteColor = theme.palette[status.colorKey] as {
@@ -659,7 +696,10 @@ function VehicleTableRow({
         },
       }}
     >
-      <TableCell sx={{ py: { xs: 1.2, sm: 1.8 } }}>
+      <TableCell padding="checkbox" sx={{ pl: 2 }}>
+        <Checkbox size="small" checked={selected} onChange={onToggle} color="primary" />
+      </TableCell>
+      <TableCell sx={{ py: { xs: 1.2, sm: 1.8 }, pl: 2 }}>
         <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
           <Box
             sx={{
@@ -789,6 +829,12 @@ export default function AdminCarsPage() {
   const [openDelete, setOpenDelete] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const [selectedVehicleIds, setSelectedVehicleIds] = useState<Set<string>>(new Set());
+  const [openBulkAssign, setOpenBulkAssign] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [bulkAssignLoading, setBulkAssignLoading] = useState(false);
+
   // ── Filter state. Search is debounced inside `useVehicles`; the other four
   //    fields take effect immediately. All four flow into the backend
   //    AdminVehicleFilterRequest so search/filter/sort run on the database
@@ -855,6 +901,13 @@ export default function AdminCarsPage() {
         setSuppliers(list);
       } catch (err) {
         logger.error("Failed to load suppliers for filter dropdown", err);
+      }
+
+      try {
+        const catResult = await getCategories();
+        setCategories(catResult);
+      } catch (err) {
+        logger.error("Failed to load categories for bulk assign", err);
       }
     })();
   }, []);
@@ -925,6 +978,51 @@ export default function AdminCarsPage() {
     [setPage]
   );
 
+  const toggleVehicleSelection = useCallback((id: string) => {
+    setSelectedVehicleIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAll = useCallback(() => {
+    if (vehicles.length === 0) return;
+    const currentIds = vehicles.map(v => v.vehicleId || v.id);
+    const allSelected = currentIds.every(id => selectedVehicleIds.has(id));
+
+    setSelectedVehicleIds(prev => {
+      const next = new Set(prev);
+      if (allSelected) {
+        currentIds.forEach(id => next.delete(id));
+      } else {
+        currentIds.forEach(id => next.add(id));
+      }
+      return next;
+    });
+  }, [vehicles, selectedVehicleIds]);
+
+  const handleBulkAssignSubmit = async () => {
+    if (!selectedCategoryId || selectedVehicleIds.size === 0) return;
+
+    setBulkAssignLoading(true);
+    try {
+      await bulkAssignVehicles(selectedCategoryId, Array.from(selectedVehicleIds));
+      setOpenBulkAssign(false);
+      setSelectedVehicleIds(new Set());
+      refresh();
+      refreshStats();
+    } catch (err) {
+      setErrorMsg(getErrorMessage(err));
+    } finally {
+      setBulkAssignLoading(false);
+    }
+  };
+
   return (
     <Box sx={{ p: { xs: 1.5, sm: 3, md: 4 }, maxWidth: 1300, mx: "auto" }}>
       {/* HEADER */}
@@ -941,32 +1039,46 @@ export default function AdminCarsPage() {
           </Typography>
         </Box>
 
-        <Box
-          onClick={() => {
-            handleNavigate("/admin/vehicles/create");
-          }}
-          sx={{
-            px: 2.5,
-            py: 1.2,
-            borderRadius: 2,
-            fontWeight: 700,
-            color: "primary.contrastText",
-            cursor: "pointer",
-            background: t => `linear-gradient(135deg, ${t.palette.primary.main}, ${t.palette.primary.dark})`,
-            boxShadow: 3,
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            transition: "0.2s",
-            whiteSpace: "nowrap",
-            alignSelf: { xs: "stretch", sm: "auto" },
-            justifyContent: { xs: "center", sm: "flex-start" },
-            "&:hover": { transform: "translateY(-2px)", boxShadow: 6 },
-          }}
-        >
-          <AddIcon fontSize="small" />
-          Add New Vehicle
-        </Box>
+        <Stack direction="row" spacing={2} sx={{ alignSelf: { xs: "stretch", sm: "auto" } }}>
+          {selectedVehicleIds.size > 0 && (
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={() => {
+                setOpenBulkAssign(true);
+              }}
+              sx={{ fontWeight: 700, borderRadius: 2 }}
+            >
+              Bulk Assign Category ({selectedVehicleIds.size})
+            </Button>
+          )}
+
+          <Box
+            onClick={() => {
+              handleNavigate("/admin/vehicles/create");
+            }}
+            sx={{
+              px: 2.5,
+              py: 1.2,
+              borderRadius: 2,
+              fontWeight: 700,
+              color: "primary.contrastText",
+              cursor: "pointer",
+              background: t => `linear-gradient(135deg, ${t.palette.primary.main}, ${t.palette.primary.dark})`,
+              boxShadow: 3,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              transition: "0.2s",
+              whiteSpace: "nowrap",
+              justifyContent: { xs: "center", sm: "flex-start" },
+              "&:hover": { transform: "translateY(-2px)", boxShadow: 6 },
+            }}
+          >
+            <AddIcon fontSize="small" />
+            Add New Vehicle
+          </Box>
+        </Stack>
       </Stack>
 
       {statsError && (
@@ -1137,7 +1249,71 @@ export default function AdminCarsPage() {
         page={page}
         handlePageChange={handlePageChange}
         refresh={refresh}
+        selectedVehicleIds={selectedVehicleIds}
+        toggleVehicleSelection={toggleVehicleSelection}
+        toggleSelectAll={toggleSelectAll}
       />
+
+      {/* BULK ASSIGN DIALOG */}
+      <Dialog
+        open={openBulkAssign}
+        onClose={() => {
+          setOpenBulkAssign(false);
+        }}
+        fullWidth
+        maxWidth="xs"
+        slotProps={{
+          paper: { sx: { borderRadius: 2, p: 1, mx: { xs: 2, sm: "auto" } } },
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>Bulk Assign Category</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 3 }}>
+            Select a category to assign to <strong>{selectedVehicleIds.size}</strong> selected vehicles.
+          </Typography>
+          <TextField
+            select
+            fullWidth
+            label="Category"
+            value={selectedCategoryId}
+            onChange={e => {
+              setSelectedCategoryId(e.target.value);
+            }}
+          >
+            <MenuItem value="" disabled>
+              Select a category
+            </MenuItem>
+            {categories.map(c => (
+              <MenuItem key={c.id} value={c.id}>
+                {c.name}
+              </MenuItem>
+            ))}
+          </TextField>
+        </DialogContent>
+        <DialogActions sx={{ flexWrap: "wrap", gap: 1, pb: 2, px: 2 }}>
+          <Button
+            onClick={() => {
+              setOpenBulkAssign(false);
+            }}
+            variant="outlined"
+            sx={{ borderRadius: 2, flex: { xs: 1, sm: "none" } }}
+            disabled={bulkAssignLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              void handleBulkAssignSubmit();
+            }}
+            color="primary"
+            variant="contained"
+            disabled={!selectedCategoryId || bulkAssignLoading}
+            sx={{ borderRadius: 2, fontWeight: 700, flex: { xs: 1, sm: "none" } }}
+          >
+            {bulkAssignLoading ? <CircularProgress size={24} color="inherit" /> : "Confirm"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* DELETE DIALOG */}
       <Dialog

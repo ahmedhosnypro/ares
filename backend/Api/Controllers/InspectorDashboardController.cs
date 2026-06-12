@@ -1,5 +1,8 @@
 using Backend.Application.DTOs.Inspection;
+using Backend.Application.Features.VehicleInspections.Queries.GetInspectorTasks;
+using Backend.Application.Features.VehicleInspections.Queries.GetInspectorTodayStats;
 using Backend.Application.Services;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -17,26 +20,42 @@ namespace Backend.Api.Controllers;
 public class InspectorDashboardController : ControllerBase
 {
     private readonly IInspectionService _inspectionService;
+    private readonly IMediator _mediator;
     private readonly ILogger<InspectorDashboardController> _logger;
 
     public InspectorDashboardController(
         IInspectionService inspectionService,
+        IMediator mediator,
         ILogger<InspectorDashboardController> logger)
     {
         _inspectionService = inspectionService;
+        _mediator = mediator;
         _logger = logger;
     }
 
-    /// <summary>Open inspections currently assigned to me.</summary>
-    [HttpGet("inspections")]
-    [ProducesResponseType(typeof(IReadOnlyList<InspectionDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IReadOnlyList<InspectionDto>>> GetAssigned(
-        [FromQuery] bool includeSubmitted = false,
+    /// <summary>Today's KPI stats for the inspector dashboard.</summary>
+    [HttpGet("today-stats")]
+    [ProducesResponseType(typeof(InspectorTodayStatsDto), StatusCodes.Status200OK)]
+    public async Task<ActionResult<InspectorTodayStatsDto>> GetTodayStats(
         CancellationToken cancellationToken = default)
     {
         if (!TryGetCurrentUserId(out var userId)) return Unauthorized();
-        var inspections = await _inspectionService.GetAssignedAsync(userId, includeSubmitted, cancellationToken);
-        return Ok(inspections);
+        var stats = await _mediator.Send(new GetInspectorTodayStatsQuery(userId), cancellationToken);
+        return Ok(stats);
+    }
+
+    /// <summary>
+    /// Today's enriched task list for the inspector mobile dashboard.
+    /// Returns vehicle, customer and scheduling data in a single projection.
+    /// </summary>
+    [HttpGet("tasks")]
+    [ProducesResponseType(typeof(IReadOnlyList<InspectorTaskDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<InspectorTaskDto>>> GetTodayTasks(
+        CancellationToken cancellationToken = default)
+    {
+        if (!TryGetCurrentUserId(out var userId)) return Unauthorized();
+        var tasks = await _mediator.Send(new GetInspectorTasksQuery(userId), cancellationToken);
+        return Ok(tasks);
     }
 
     /// <summary>Full details for one of my inspections.</summary>

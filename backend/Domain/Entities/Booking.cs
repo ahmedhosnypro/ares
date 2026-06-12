@@ -89,6 +89,16 @@ namespace Backend.Domain.Entities
         public DateTime? HoldStartedAt { get; set; }
         public DateTime? HoldExpiresAt { get; set; }
 
+        // ── Revenue & Commission ─────────────────────────────────────────────
+        [Column(TypeName = "decimal(5,2)")]
+        public decimal? CommissionPercentage { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? CommissionAmount { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? SupplierAmount { get; set; }
+
         [Timestamp]
         public byte[]? RowVersion { get; set; }
     }

@@ -50,6 +50,7 @@ export default function CreateSupplierVehiclePage() {
           seats: values.seats,
           pricePerDay: values.pricePerDay,
           locationCity: values.locationCity,
+          categoryId: values.categoryId,
           description: values.description?.trim() ? values.description : undefined,
           imageUrl: undefined, // Handled by separate upload
         };

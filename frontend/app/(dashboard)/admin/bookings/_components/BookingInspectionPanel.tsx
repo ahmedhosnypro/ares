@@ -31,6 +31,7 @@ interface Props {
   /** Optional pre-loaded inspection status info from the booking */
   readonly initialInspectorId?: string | null;
   readonly initialInspectionStatus?: string | null;
+  readonly onAssignSuccess?: (inspection: InspectionDetails) => void;
 }
 
 function statusChipProps(status: string | null | undefined, theme: Theme): { bg: string; color: string } {
@@ -53,6 +54,7 @@ export default function BookingInspectionPanel({
   bookingId,
   initialInspectorId,
   initialInspectionStatus,
+  onAssignSuccess,
 }: Props): JSX.Element {
   const theme = useTheme();
 
@@ -68,6 +70,10 @@ export default function BookingInspectionPanel({
   const inspectionStatus =
     inspection?.status ??
     (initialInspectionStatus && initialInspectionStatus !== "NotRequired" ? initialInspectionStatus : null);
+
+  useEffect(() => {
+    setSelectedInspectorUserId(initialInspectorId ?? "");
+  }, [initialInspectorId]);
 
   useEffect(() => {
     const loadInspectors = async (): Promise<void> => {
@@ -101,6 +107,9 @@ export default function BookingInspectionPanel({
         });
         setInspection(result);
         setSuccessMsg("Inspector assigned successfully. The inspector has been notified.");
+        if (onAssignSuccess) {
+          onAssignSuccess(result);
+        }
       } catch (err) {
         logger.error("Assign inspector failed", err);
         if (err instanceof ApiError) {

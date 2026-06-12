@@ -24,6 +24,7 @@ public record UpdateSupplierVehicleRequest(
     int? Seats,
     decimal? PricePerDay,
     [MaxLength(100)] string? LocationCity,
+    Guid? CategoryId,
     string? Description,
     string? ImageUrl,
     List<VehicleImageUpdateDto>? Images = null,

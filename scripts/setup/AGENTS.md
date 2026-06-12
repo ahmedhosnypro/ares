@@ -223,8 +223,7 @@ After completing each phase:
 2. ✅ Run `bun run lint` - must pass
 3. ✅ Run `bun run format:check` - must pass
 4. ✅ Test the script: `bun run setup.ts`
-5. ✅ Update SETUP_SCRIPT_PLAN_TYPESCRIPT.md - mark phase as `[x]`
-6. ✅ Commit changes with descriptive message
+5. ✅ Commit changes with descriptive message
 
 ## Common Pitfalls
 

@@ -28,11 +28,6 @@ public interface IInspectionService
 
     // ─── Inspector dashboard ─────────────────────────────────────────────
 
-    Task<IReadOnlyList<InspectionDto>> GetAssignedAsync(
-        Guid inspectorUserId,
-        bool? includeSubmitted = null,
-        CancellationToken cancellationToken = default);
-
     Task<InspectionDetailsDto?> GetByIdAsync(
         Guid inspectionId,
         Guid currentUserId,

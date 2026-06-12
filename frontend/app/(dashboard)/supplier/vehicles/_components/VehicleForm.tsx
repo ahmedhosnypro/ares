@@ -13,7 +13,7 @@
  * (admin approval and the row-level toggle, respectively).
  */
 
-import { ChangeEvent, useRef, useState } from "react";
+import { ChangeEvent, useRef, useState, useEffect } from "react";
 import {
   Alert,
   Box,
@@ -32,6 +32,7 @@ import {
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
+import { getCategories, Category } from "@/api-clients/categories/categories";
 
 import {
   DEFAULT_VEHICLE_FORM,
@@ -71,6 +72,16 @@ export default function VehicleForm({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(form.imageUrl || null);
   const [fileError, setFileError] = useState<string | null>(null);
+
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    getCategories()
+      .then(data => {
+        setCategories(data.filter(c => c.isActive));
+      })
+      .catch(() => {});
+  }, []);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -237,6 +248,25 @@ export default function VehicleForm({
             {FUEL_OPTIONS.map(opt => (
               <MenuItem key={opt} value={opt}>
                 {opt}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <TextField
+            select
+            fullWidth
+            label="Category"
+            name="categoryId"
+            value={form.categoryId}
+            onChange={handleChange}
+            error={!!fieldErrors.categoryId}
+            helperText={fieldErrors.categoryId}
+            disabled={fieldDisabled || categories.length === 0}
+          >
+            {categories.map(cat => (
+              <MenuItem key={cat.id} value={cat.id}>
+                {cat.name}
               </MenuItem>
             ))}
           </TextField>

@@ -31,6 +31,9 @@ public class VehicleServiceTests : IDisposable
         _bookingRepositoryMock = new Mock<IBookingRepository>();
         _contextMock = new Mock<IApplicationDbContext>();
 
+        var promotionsQueryable = new List<Promotion>().AsQueryable().BuildMockDbSet();
+        _contextMock.Setup(x => x.Promotions).Returns(promotionsQueryable.Object);
+
         _vehicleService = new VehicleService(
             _vehicleRepositoryMock.Object,
             _reviewRepositoryMock.Object,
@@ -1130,6 +1133,7 @@ public class VehicleServiceTests : IDisposable
             Seats: 5,
             PricePerDay: 100.00m,
             LocationCity: "Test City",
+            CategoryId: Guid.NewGuid(),
             Description: "Test vehicle description",
             Status: "Active",
             AvailabilityStatus: "Available"
@@ -1222,6 +1226,7 @@ public class VehicleServiceTests : IDisposable
             Seats: 5,
             PricePerDay: 100.00m,
             LocationCity: "Test City",
+            CategoryId: Guid.NewGuid(),
             Description: "Test vehicle description"
         );
 
@@ -1254,6 +1259,7 @@ public class VehicleServiceTests : IDisposable
             Seats: 5,
             PricePerDay: 100.00m,
             LocationCity: "Test City",
+            CategoryId: Guid.NewGuid(),
             Description: "Test vehicle description"
         );
 
@@ -1308,6 +1314,7 @@ public class VehicleServiceTests : IDisposable
             Seats: 5,
             PricePerDay: 120.00m,
             LocationCity: "New City",
+            CategoryId: null,
             Description: "Updated description",
             Status: "Active",
             AvailabilityStatus: "Available"
@@ -1384,6 +1391,7 @@ public class VehicleServiceTests : IDisposable
             Seats: null,
             PricePerDay: 120.00m,
             LocationCity: null,
+            CategoryId: null,
             Description: null,
             Status: null,
             AvailabilityStatus: null
@@ -1442,6 +1450,7 @@ public class VehicleServiceTests : IDisposable
             Seats: null,
             PricePerDay: null,
             LocationCity: null,
+            CategoryId: null,
             Description: null,
             Status: null,
             AvailabilityStatus: null
@@ -1489,6 +1498,7 @@ public class VehicleServiceTests : IDisposable
             Seats: null,
             PricePerDay: null,
             LocationCity: null,
+            CategoryId: null,
             Description: null,
             Status: null,
             AvailabilityStatus: null
@@ -1684,6 +1694,7 @@ public class VehicleServiceTests : IDisposable
             Seats: 5,
             PricePerDay: 100.00m,
             LocationCity: "Test City",
+            CategoryId: Guid.NewGuid(),
             Description: "Test vehicle"
         );
 
@@ -1735,6 +1746,7 @@ public class VehicleServiceTests : IDisposable
             Seats: null,
             PricePerDay: null,
             LocationCity: null,
+            CategoryId: null,
             Description: "New description", // Valid update
             Status: null,
             AvailabilityStatus: null

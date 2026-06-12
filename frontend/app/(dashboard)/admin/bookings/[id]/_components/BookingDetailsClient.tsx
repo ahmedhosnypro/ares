@@ -66,6 +66,7 @@ import { toImageUrl } from "@/utils/image-url";
 import { logger } from "@/utils/logger";
 import { toApiUrl } from "@/utils/api-client";
 import ChangeStatusModal from "../../_components/ChangeStatusModal";
+import BookingInspectionPanel from "../../_components/BookingInspectionPanel";
 
 /* ────────────────────────────────────────────────────────────────────────
  *  RefundSection Component
@@ -1154,23 +1155,35 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
           )}
         </SectionCard>
 
-        {/* 5. Pickup Inspection */}
-        <InspectionCard
-          title="Pickup Inspection"
-          icon={<InspectionIcon />}
-          inspection={booking.pickupInspection}
-          fallbackAssignedInspectorName={booking.inspection?.assignedInspectorName ?? null}
-          fallbackStatus={booking.inspection?.preInspectionStatus ?? null}
+        {/* 5. Inspection Management */}
+        <BookingInspectionPanel
+          bookingId={booking.id}
+          initialInspectorId={booking.inspection?.assignedInspectorId}
+          initialInspectionStatus={booking.inspectionStatus || booking.inspection?.preInspectionStatus}
+          onAssignSuccess={() => void loadBooking(false)}
         />
 
-        {/* 6. Return Inspection */}
-        <InspectionCard
-          title="Return Inspection"
-          icon={<InspectionIcon />}
-          inspection={booking.returnInspection}
-          fallbackAssignedInspectorName={booking.inspection?.assignedInspectorName ?? null}
-          fallbackStatus={booking.inspection?.postInspectionStatus ?? null}
-        />
+        {booking.inspection?.assignedInspectorId && (
+          <>
+            {/* 6. Pickup Inspection */}
+            <InspectionCard
+              title="Pickup Inspection"
+              icon={<InspectionIcon />}
+              inspection={booking.pickupInspection}
+              fallbackAssignedInspectorName={booking.inspection.assignedInspectorName ?? null}
+              fallbackStatus={booking.inspection.preInspectionStatus ?? null}
+            />
+
+            {/* 7. Return Inspection */}
+            <InspectionCard
+              title="Return Inspection"
+              icon={<InspectionIcon />}
+              inspection={booking.returnInspection}
+              fallbackAssignedInspectorName={booking.inspection.assignedInspectorName ?? null}
+              fallbackStatus={booking.inspection.postInspectionStatus ?? null}
+            />
+          </>
+        )}
 
         {/* 7. Activity Timeline */}
         <SectionCard icon={<HistoryIcon />} title="Activity Timeline" subtitle="Real events recorded for this booking">

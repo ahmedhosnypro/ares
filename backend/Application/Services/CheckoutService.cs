@@ -32,6 +32,7 @@ namespace Backend.Application.Services
         private readonly IDriverReviewRepository _driverReviewRepository;
         private readonly IDriverPricingService _driverPricingService;
         private readonly IVerificationService _verificationService;
+        private readonly ICommissionService _commissionService;
         private readonly INotificationService? _notificationService;
         private readonly IApplicationDbContext _context;
         private readonly IConfiguration _configuration;
@@ -47,6 +48,7 @@ namespace Backend.Application.Services
             IDriverReviewRepository driverReviewRepository,
             IDriverPricingService driverPricingService,
             IVerificationService verificationService,
+            ICommissionService commissionService,
             IApplicationDbContext context,
             IConfiguration configuration,
             INotificationService? notificationService = null)
@@ -58,6 +60,7 @@ namespace Backend.Application.Services
             _driverReviewRepository = driverReviewRepository;
             _driverPricingService = driverPricingService;
             _verificationService = verificationService;
+            _commissionService = commissionService;
             _context = context;
             _configuration = configuration;
             _notificationService = notificationService;
@@ -253,6 +256,9 @@ namespace Backend.Application.Services
                 throw new BadRequestException("Payment processing failed. Please try again.");
             }
 
+            var commissionPercentage = await _commissionService.GetEffectiveCommissionAsync(vehicle.Id, cancellationToken);
+            var (commissionAmount, supplierAmount) = _commissionService.CalculateCommission(grandTotal, commissionPercentage);
+
             // ── Create booking (Confirmed — payment captured) ────────────────
             var booking = new Booking
             {
@@ -273,7 +279,10 @@ namespace Backend.Application.Services
                 AssignedDriverProfileId = effectiveNeedDriver ? driverProfile!.Id : (Guid?)null,
                 DriverLockedUntil = effectiveNeedDriver ? request.ReturnDate : (DateTime?)null,
                 // Legacy customer-license Driver FK is never set here.
-                Status = BookingStatus.Confirmed
+                Status = BookingStatus.Confirmed,
+                CommissionPercentage = commissionPercentage,
+                CommissionAmount = commissionAmount,
+                SupplierAmount = supplierAmount
             };
             await _bookingRepository.AddAsync(booking, cancellationToken);
 
@@ -568,6 +577,12 @@ namespace Backend.Application.Services
                 }
 
                 var grandTotal = booking.GrandTotal ?? booking.TotalPrice ?? 0m;
+
+                var commissionPercentage = await _commissionService.GetEffectiveCommissionAsync(booking.VehicleId, cancellationToken);
+                var (commissionAmount, supplierAmount) = _commissionService.CalculateCommission(grandTotal, commissionPercentage);
+                booking.CommissionPercentage = commissionPercentage;
+                booking.CommissionAmount = commissionAmount;
+                booking.SupplierAmount = supplierAmount;
 
                 // Stage the payment row…
                 var payment = new BookingPayment

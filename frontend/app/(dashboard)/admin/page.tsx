@@ -93,6 +93,22 @@ async function getSummary(
         iconName: "BuildCircle",
         color: "error",
       },
+      {
+        title: "Total Categories",
+        value: safeNum(data.totalCategories).toLocaleString(),
+        change: "",
+        isUp: true,
+        iconName: "Category",
+        color: "secondary",
+      },
+      {
+        title: "Active Promotions",
+        value: safeNum(data.activePromotions).toLocaleString(),
+        change: "",
+        isUp: true,
+        iconName: "LocalOffer",
+        color: "success",
+      },
     ];
     return { summary, rawData: data };
   } catch (error) {
@@ -103,6 +119,8 @@ async function getSummary(
       { title: "Pending Verifications", value: "0", change: "0%", isUp: false, iconName: "GppMaybe", color: "warning" },
       { title: "Available Vehicles", value: "0", change: "0%", isUp: true, iconName: "DirectionsCar", color: "info" },
       { title: "Pending Inspections", value: "0", change: "0%", isUp: false, iconName: "BuildCircle", color: "error" },
+      { title: "Total Categories", value: "0", change: "", isUp: true, iconName: "Category", color: "secondary" },
+      { title: "Active Promotions", value: "0", change: "", isUp: true, iconName: "LocalOffer", color: "success" },
     ];
     return { summary: defaultSummary, rawData: null };
   }

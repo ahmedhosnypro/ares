@@ -10,8 +10,10 @@ import { BookingListItem } from "./RecentBookingsTable";
 import RecentBookings from "./RecentBookings";
 import AlertsCenter from "./AlertsCenter";
 import LiveActivity from "./LiveActivity";
+import VehiclesPerCategoryCard from "./VehiclesPerCategoryCard";
 import { QuickAction, TopVehicle, DashboardAlert } from "./mockData";
 import { logger } from "@/utils/logger";
+import { DashboardSummary } from "../types";
 
 export interface AdminDashboardViewProps {
   readonly summary: readonly SummaryItem[];
@@ -59,17 +61,21 @@ export default function AdminDashboardView({
           <QuickActions actions={quickActions} />
         </Grid>
       </Grid>
-      <Grid size={{ xs: 12, lg: 6 }} sx={{ mt: 5 }}>
-        {/* الـ Grid ده بيشتغل كحاوية (Container) للعنصرين اللي جواه */}
-        <Grid container spacing={3}>
-          {/* المكون الأول */}
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <AlertsCenter alerts={alerts} />
-          </Grid>
 
-          {/* المكون الثاني */}
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <LiveActivity activities={activities} />
+      <Grid container spacing={3} sx={{ mt: 2 }}>
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <VehiclesPerCategoryCard
+            data={rawSummaryData ? (rawSummaryData as DashboardSummary).vehiclesPerCategory : undefined}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <Grid container spacing={3}>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <AlertsCenter alerts={alerts} />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <LiveActivity activities={activities} />
+            </Grid>
           </Grid>
         </Grid>
       </Grid>

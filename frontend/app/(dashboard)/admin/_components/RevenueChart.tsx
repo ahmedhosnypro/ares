@@ -22,15 +22,21 @@ import { toApiUrl } from "@/utils/api-client";
 
 export interface ChartDataPointDto {
   date: string;
-  revenue: number; // Represents Net Revenue
+  revenue: number; // Represents Gross Revenue
+  platformRevenue: number;
+  supplierRevenue: number;
   bookings: number;
   refunds: number;
+  netRevenue: number;
 }
 
 export interface RevenueOverviewDto {
   totalRevenue: number;
+  platformRevenue: number;
+  supplierRevenue: number;
   totalBookings: number;
   totalRefunds: number;
+  netRevenue: number;
   chartData: ChartDataPointDto[];
 }
 
@@ -78,7 +84,7 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
               borderTop: `1px dashed ${theme.palette.border.light}`,
             }}
           >
-            ◆ Net Revenue: ${payload.find(p => p.dataKey === "revenue")?.value.toLocaleString() || 0}
+            ◆ Net Revenue: ${payload.find(p => p.dataKey === "netRevenue")?.value.toLocaleString() || 0}
           </Typography>
         </Stack>
       </Box>
@@ -213,10 +219,10 @@ export default function RevenueChart() {
             }}
           >
             <Typography variant="body2" sx={{ color: theme.palette.text.secondary, mb: 1, fontWeight: 500 }}>
-              Total Revenue
+              Net Revenue
             </Typography>
             <Typography variant="h4" sx={{ color: theme.palette.primary.main, fontWeight: 800 }}>
-              {loading ? <Skeleton width={120} /> : `$${(data?.totalRevenue || 0).toLocaleString()}`}
+              {loading ? <Skeleton width={120} /> : `$${(data?.netRevenue || 0).toLocaleString()}`}
             </Typography>
           </Box>
 
@@ -315,7 +321,7 @@ export default function RevenueChart() {
                   <Area
                     yAxisId="left"
                     type="monotone"
-                    dataKey="revenue"
+                    dataKey="netRevenue"
                     stroke={theme.palette.primary.main}
                     strokeWidth={4}
                     fillOpacity={1}

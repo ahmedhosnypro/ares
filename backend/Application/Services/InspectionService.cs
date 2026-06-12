@@ -151,27 +151,6 @@ public class InspectionService : IInspectionService
             ?? throw new InvalidOperationException("Failed to load just-created inspection.");
     }
 
-    // ─── Inspector dashboard ─────────────────────────────────────────────
-    public async Task<IReadOnlyList<InspectionDto>> GetAssignedAsync(
-        Guid inspectorUserId,
-        bool? includeSubmitted = null,
-        CancellationToken cancellationToken = default)
-    {
-        var all = await _inspectionRepository.GetAllAsync(cancellationToken);
-        var query = all.Where(i => i.InspectorId == inspectorUserId);
-
-        // By default the dashboard shows open work only.
-        if (includeSubmitted != true)
-        {
-            query = query.Where(i => !i.IsSubmitted);
-        }
-
-        var ordered = query
-            .OrderByDescending(i => i.CreatedAt)
-            .ToList();
-
-        return await ToDtoListAsync(ordered, cancellationToken);
-    }
 
     public async Task<InspectionDetailsDto?> GetByIdAsync(
         Guid inspectionId,

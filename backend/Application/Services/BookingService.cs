@@ -478,6 +478,10 @@ public class BookingService : IBookingService
             fee = refundResult.CancellationFee;
         }
 
+        var commissionPercentage = booking.CommissionPercentage ?? 0m;
+        var refundCommissionAmount = fee * (commissionPercentage / 100m);
+        var refundSupplierAmount = fee - refundCommissionAmount;
+
         var cancellation = new BookingCancellation
         {
             Id = Guid.NewGuid(),
@@ -487,6 +491,8 @@ public class BookingService : IBookingService
             RefundPercentage = refundPct,
             OriginalAmount = totalAmount,
             CancellationFee = fee,
+            RefundCommissionAmount = Math.Round(refundCommissionAmount, 2),
+            RefundSupplierAmount = Math.Round(refundSupplierAmount, 2),
             Currency = "EGP",
             RefundStatus = refundPct > 0 ? Domain.Entities.Enums.RefundStatus.Processing : Domain.Entities.Enums.RefundStatus.Completed,
             Reason = "Customer requested cancellation",

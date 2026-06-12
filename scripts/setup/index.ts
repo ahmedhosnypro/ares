@@ -110,7 +110,7 @@ Full Setup:
   5. Install dependencies and start the frontend
   6. Verify all services are running
 
-For more information, see: SETUP_QUICK_START.md
+For more information, see: README.md
 `);
 }
 

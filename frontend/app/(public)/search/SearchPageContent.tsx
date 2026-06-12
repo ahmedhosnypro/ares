@@ -25,11 +25,12 @@ import MapRoundedIcon from "@mui/icons-material/MapRounded";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import SearchFormFilter from "./SearchFormFilter";
-import { formatCurrency, type PublicLocation, type PublicVehicleCard } from "@/utils/public-data";
+import { formatCurrency, type PublicCategory, type PublicLocation, type PublicVehicleCard } from "@/utils/public-data";
 import { toImageUrl } from "@/utils/image-url";
 
 interface SearchPageContentProps {
   readonly locations: readonly PublicLocation[];
+  readonly categories: readonly PublicCategory[];
   readonly vehicles: readonly PublicVehicleCard[];
   readonly pickupLocationId: string;
   readonly pickupDate: string;
@@ -313,6 +314,7 @@ function SearchResults({ vehicles, idle }: Readonly<{ vehicles: readonly PublicV
 
 export default function SearchPageContent({
   locations,
+  categories,
   vehicles,
   pickupLocationId,
   pickupDate,
@@ -324,12 +326,10 @@ export default function SearchPageContent({
 }: SearchPageContentProps) {
   const theme = useTheme();
 
-  // Map category to display name
   const getCategoryDisplayName = (cat?: string): string | undefined => {
-    if (cat === "Compact") return "Compact & Mini";
-    if (cat === "Standard") return "Mid-Size & Standard";
-    if (cat === "Premium") return "SUVs & Maxi";
-    return undefined;
+    if (!cat) return undefined;
+    const matched = categories.find(c => c.name === cat);
+    return matched ? matched.name : cat;
   };
 
   const getSortDisplayName = (s?: string): string | undefined => {
@@ -387,6 +387,7 @@ export default function SearchPageContent({
             <Container maxWidth="xl" sx={{ width: "100%" }}>
               <SearchFormFilter
                 locations={locations}
+                categories={categories}
                 defaultLocationId={pickupLocationId}
                 defaultPickupDate={pickupDate}
                 defaultReturnDate={returnDate}

@@ -229,6 +229,12 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime?>("CancelledAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<decimal?>("CommissionAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("CommissionPercentage")
+                        .HasColumnType("decimal(5,2)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -293,6 +299,9 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal?>("SupplierAmount")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int?>("TotalDays")
                         .HasColumnType("int");
@@ -381,6 +390,9 @@ namespace Infrastructure.Migrations
                     b.Property<int?>("ReasonCategory")
                         .HasColumnType("int");
 
+                    b.Property<decimal>("RefundCommissionAmount")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("RefundMethod")
                         .HasColumnType("nvarchar(max)");
 
@@ -392,6 +404,9 @@ namespace Infrastructure.Migrations
 
                     b.Property<int>("RefundStatus")
                         .HasColumnType("int");
+
+                    b.Property<decimal>("RefundSupplierAmount")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<Guid?>("RefundTransactionId")
                         .HasColumnType("uniqueidentifier");
@@ -480,6 +495,47 @@ namespace Infrastructure.Migrations
                     b.HasIndex("BookingId");
 
                     b.ToTable("Payments");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.Category", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("CommissionPercentage")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<decimal>("DiscountPercentage")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Categories");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.CompanyProfile", b =>
@@ -693,89 +749,6 @@ namespace Infrastructure.Migrations
                     b.ToTable("driver_profiles", (string)null);
                 });
 
-            modelBuilder.Entity("Backend.Domain.Entities.DriverRequest", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("BookingId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("FulfilledAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("FulfilledByDriverProfileId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("PickupLocationText")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<Guid?>("PickupServiceAreaId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("rowversion");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BookingId")
-                        .IsUnique()
-                        .HasFilter("[Status] = 'Open'");
-
-                    b.HasIndex("FulfilledByDriverProfileId");
-
-                    b.HasIndex("PickupServiceAreaId");
-
-                    b.HasIndex("Status", "ExpiresAt");
-
-                    b.ToTable("driver_requests");
-                });
-
-            modelBuilder.Entity("Backend.Domain.Entities.DriverRequestResponse", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Action")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<Guid>("DriverProfileId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("DriverRequestId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("RespondedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DriverProfileId");
-
-                    b.HasIndex("DriverRequestId", "DriverProfileId")
-                        .IsUnique();
-
-                    b.ToTable("driver_request_responses");
-                });
-
             modelBuilder.Entity("Backend.Domain.Entities.DriverReview", b =>
                 {
                     b.Property<Guid>("Id")
@@ -973,6 +946,10 @@ namespace Infrastructure.Migrations
                     b.Property<bool>("IsAvailable")
                         .HasColumnType("bit");
 
+                    b.Property<string>("Region")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
@@ -1108,6 +1085,53 @@ namespace Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("PaymentMethods");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.Promotion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("DiscountPercentage")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.ToTable("Promotions");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.RefreshToken", b =>
@@ -1386,6 +1410,9 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<Guid?>("CategoryId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Color")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
@@ -1449,6 +1476,8 @@ namespace Infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
 
                     b.HasIndex("UserId");
 
@@ -1615,7 +1644,7 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<Guid>("InspectorId")
+                    b.Property<Guid?>("InspectorId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsSubmitted")
@@ -1954,50 +1983,6 @@ namespace Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Backend.Domain.Entities.DriverRequest", b =>
-                {
-                    b.HasOne("Backend.Domain.Entities.Booking", "Booking")
-                        .WithMany()
-                        .HasForeignKey("BookingId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Backend.Domain.Entities.DriverProfile", "FulfilledByDriverProfile")
-                        .WithMany()
-                        .HasForeignKey("FulfilledByDriverProfileId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Backend.Domain.Entities.ServiceArea", "PickupServiceArea")
-                        .WithMany()
-                        .HasForeignKey("PickupServiceAreaId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Booking");
-
-                    b.Navigation("FulfilledByDriverProfile");
-
-                    b.Navigation("PickupServiceArea");
-                });
-
-            modelBuilder.Entity("Backend.Domain.Entities.DriverRequestResponse", b =>
-                {
-                    b.HasOne("Backend.Domain.Entities.DriverProfile", "DriverProfile")
-                        .WithMany()
-                        .HasForeignKey("DriverProfileId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Backend.Domain.Entities.DriverRequest", "DriverRequest")
-                        .WithMany("Responses")
-                        .HasForeignKey("DriverRequestId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("DriverProfile");
-
-                    b.Navigation("DriverRequest");
-                });
-
             modelBuilder.Entity("Backend.Domain.Entities.DriverReview", b =>
                 {
                     b.HasOne("Backend.Domain.Entities.Booking", "Booking")
@@ -2125,6 +2110,17 @@ namespace Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Backend.Domain.Entities.Promotion", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.Category", "Category")
+                        .WithMany("Promotions")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+                });
+
             modelBuilder.Entity("Backend.Domain.Entities.RefreshToken", b =>
                 {
                     b.HasOne("Backend.Domain.Entities.ApplicationUser", "User")
@@ -2176,11 +2172,17 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Backend.Domain.Entities.Vehicle", b =>
                 {
+                    b.HasOne("Backend.Domain.Entities.Category", "Category")
+                        .WithMany("Vehicles")
+                        .HasForeignKey("CategoryId");
+
                     b.HasOne("Backend.Domain.Entities.ApplicationUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Category");
 
                     b.Navigation("User");
                 });
@@ -2236,8 +2238,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("Backend.Domain.Entities.ApplicationUser", "Inspector")
                         .WithMany()
                         .HasForeignKey("InspectorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Backend.Domain.Entities.Vehicle", "Vehicle")
                         .WithMany()
@@ -2328,14 +2329,16 @@ namespace Infrastructure.Migrations
                     b.Navigation("Review");
                 });
 
+            modelBuilder.Entity("Backend.Domain.Entities.Category", b =>
+                {
+                    b.Navigation("Promotions");
+
+                    b.Navigation("Vehicles");
+                });
+
             modelBuilder.Entity("Backend.Domain.Entities.DriverProfile", b =>
                 {
                     b.Navigation("WorkAreas");
-                });
-
-            modelBuilder.Entity("Backend.Domain.Entities.DriverRequest", b =>
-                {
-                    b.Navigation("Responses");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.Vehicle", b =>
