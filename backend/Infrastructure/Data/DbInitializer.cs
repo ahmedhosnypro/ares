@@ -92,6 +92,44 @@ public static class DbInitializer
             
             await EnsureCategoriesAndCategorizeVehiclesAsync(context, logger);
 
+            // Fix any existing bookings with null or zero commission
+            var bookingsToFix = await context.Bookings
+                .Where(b => b.CommissionPercentage == null || b.CommissionPercentage == 0m)
+                .ToListAsync();
+
+            if (bookingsToFix.Any())
+            {
+                logger.LogInformation("Fixing {Count} bookings with null/zero commission...", bookingsToFix.Count);
+                foreach (var booking in bookingsToFix)
+                {
+                    var vehicle = await context.Vehicles
+                        .Include(v => v.Category)
+                        .FirstOrDefaultAsync(v => v.Id == booking.VehicleId);
+                    decimal commissionPercentage = 10.0m;
+                    if (vehicle?.Category != null && vehicle.Category.IsActive)
+                    {
+                        commissionPercentage = vehicle.Category.CommissionPercentage;
+                    }
+                    else
+                    {
+                        var globalSetting = await context.SystemSettings
+                            .FirstOrDefaultAsync(s => s.Key == "GlobalCommissionPercentage");
+                        if (globalSetting != null && decimal.TryParse(globalSetting.Value, out var globalCommission))
+                        {
+                            commissionPercentage = globalCommission;
+                        }
+                    }
+                    var commissionAmount = Math.Round((booking.TotalPrice ?? 0m) * (commissionPercentage / 100m), 2);
+                    var supplierAmount = (booking.TotalPrice ?? 0m) - commissionAmount;
+
+                    booking.CommissionPercentage = commissionPercentage;
+                    booking.CommissionAmount = commissionAmount;
+                    booking.SupplierAmount = supplierAmount;
+                }
+                await context.SaveChangesAsync();
+                logger.LogInformation("Successfully updated existing bookings' commission details.");
+            }
+
             logger.LogInformation("Database initialization completed successfully");
         }
         catch (Exception ex)
@@ -722,6 +760,26 @@ public static class DbInitializer
              x.PickupDate == pickupDate &&
              x.ReturnDate == returnDate));
 
+        var vehicle = await context.Vehicles
+            .Include(v => v.Category)
+            .FirstOrDefaultAsync(v => v.Id == vehicleId);
+        decimal commissionPercentage = 10.0m;
+        if (vehicle?.Category != null && vehicle.Category.IsActive)
+        {
+            commissionPercentage = vehicle.Category.CommissionPercentage;
+        }
+        else
+        {
+            var globalSetting = await context.SystemSettings
+                .FirstOrDefaultAsync(s => s.Key == "GlobalCommissionPercentage");
+            if (globalSetting != null && decimal.TryParse(globalSetting.Value, out var globalCommission))
+            {
+                commissionPercentage = globalCommission;
+            }
+        }
+        var commissionAmount = Math.Round(totalPrice * (commissionPercentage / 100m), 2);
+        var supplierAmount = totalPrice - commissionAmount;
+
         if (existing != null)
         {
             existing.BookingNumber = bookingNumber;
@@ -737,6 +795,12 @@ public static class DbInitializer
             existing.Status = Enum.Parse<BookingStatus>(status);
             existing.CancelledAt = null;
             existing.CancellationReason = null;
+            if (existing.CommissionPercentage == null || existing.CommissionPercentage == 0m)
+            {
+                existing.CommissionPercentage = commissionPercentage;
+                existing.CommissionAmount = commissionAmount;
+                existing.SupplierAmount = supplierAmount;
+            }
             return existing;
         }
 
@@ -755,7 +819,10 @@ public static class DbInitializer
             TotalPrice = totalPrice,
             Status = Enum.Parse<BookingStatus>(status),
             CancelledAt = null,
-            CancellationReason = null
+            CancellationReason = null,
+            CommissionPercentage = commissionPercentage,
+            CommissionAmount = commissionAmount,
+            SupplierAmount = supplierAmount
         };
 
         await context.Bookings.AddAsync(booking);

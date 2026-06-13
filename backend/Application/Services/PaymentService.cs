@@ -22,6 +22,7 @@ public class PaymentService : IPaymentService
     private readonly IRefundCalculator _refundCalculator;
     private readonly PaymobSettings _paymobSettings;
     private readonly ILogger<PaymentService> _logger;
+    private readonly ICommissionService? _commissionService;
 
     public PaymentService(
         IPaymentRepository paymentRepository,
@@ -30,7 +31,8 @@ public class PaymentService : IPaymentService
         IPaymobClient paymob,
         IRefundCalculator refundCalculator,
         IOptions<PaymobSettings> paymobSettings,
-        ILogger<PaymentService> logger)
+        ILogger<PaymentService> logger,
+        ICommissionService? commissionService = null)
     {
         _paymentRepository = paymentRepository;
         _bookingRepository = bookingRepository;
@@ -39,6 +41,7 @@ public class PaymentService : IPaymentService
         _refundCalculator = refundCalculator;
         _paymobSettings = paymobSettings.Value;
         _logger = logger;
+        _commissionService = commissionService;
     }
 
     public async Task<PaymentResponse> ProcessPaymentAsync(
@@ -115,6 +118,7 @@ public class PaymentService : IPaymentService
 
             // Requirement 7.12: Update booking status after successful payment
             booking.Status = Backend.Domain.Entities.Enums.BookingStatus.Confirmed;
+            await PopulateCommissionFieldsAsync(booking, cancellationToken);
             await _bookingRepository.UpdateAsync(booking, cancellationToken);
         }
         else
@@ -491,7 +495,10 @@ Thank you for your business!
             payment.FailureReason = reason;
 
         if (success && payment.Booking != null)
+        {
             payment.Booking.Status = BookingStatus.Confirmed;
+            await PopulateCommissionFieldsAsync(payment.Booking, ct);
+        }
 
         await _context.SaveChangesAsync(ct);
         return (success, payment.BookingId);
@@ -609,9 +616,39 @@ Thank you for your business!
             payment.FailureReason = tx.Reason;
 
         if (tx.Success && payment.Booking != null)
+        {
             payment.Booking.Status = BookingStatus.Confirmed;
+            await PopulateCommissionFieldsAsync(payment.Booking, ct);
+        }
 
         await _context.SaveChangesAsync(ct);
         return tx.Success;
+    }
+
+    private async Task PopulateCommissionFieldsAsync(Booking booking, CancellationToken cancellationToken)
+    {
+        if (booking.CommissionPercentage == null || booking.CommissionPercentage == 0m)
+        {
+            decimal commissionPercentage = 10.0m;
+            decimal commissionAmount;
+            decimal supplierAmount;
+
+            if (_commissionService != null)
+            {
+                commissionPercentage = await _commissionService.GetEffectiveCommissionAsync(booking.VehicleId, cancellationToken);
+                var result = _commissionService.CalculateCommission(booking.TotalPrice ?? 0m, commissionPercentage);
+                commissionAmount = result.CommissionAmount;
+                supplierAmount = result.SupplierAmount;
+            }
+            else
+            {
+                commissionAmount = Math.Round((booking.TotalPrice ?? 0m) * (commissionPercentage / 100m), 2);
+                supplierAmount = (booking.TotalPrice ?? 0m) - commissionAmount;
+            }
+
+            booking.CommissionPercentage = commissionPercentage;
+            booking.CommissionAmount = commissionAmount;
+            booking.SupplierAmount = supplierAmount;
+        }
     }
 }

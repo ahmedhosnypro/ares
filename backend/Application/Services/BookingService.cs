@@ -34,9 +34,9 @@ public class BookingService : IBookingService
     // changes. Production DI always provides a real implementation, so the
     // identity-verification gate below is enforced for real customers.
     private readonly IVerificationService? _verificationService;
-    // IDriverRequestService removed — DriverRequest system replaced by inspector auto-assignment
     private readonly IDriverPricingService? _driverPricingService;
     private readonly IDriverProfileRepository? _driverProfileRepository;
+    private readonly ICommissionService? _commissionService;
 
     public BookingService(
         IBookingRepository bookingRepository,
@@ -46,7 +46,8 @@ public class BookingService : IBookingService
         INotificationService? notificationService = null,
         IVerificationService? verificationService = null,
         IDriverPricingService? driverPricingService = null,
-        IDriverProfileRepository? driverProfileRepository = null)
+        IDriverProfileRepository? driverProfileRepository = null,
+        ICommissionService? commissionService = null)
     {
         _bookingRepository = bookingRepository;
         _vehicleRepository = vehicleRepository;
@@ -56,6 +57,7 @@ public class BookingService : IBookingService
         _verificationService = verificationService;
         _driverPricingService = driverPricingService;
         _driverProfileRepository = driverProfileRepository;
+        _commissionService = commissionService;
     }
 
     public async Task<BookingResponse> CreateBookingAsync(
@@ -222,6 +224,22 @@ public class BookingService : IBookingService
             await _driverPricingService.CalculateBookingDriverFeesAsync(booking, totalDays, cancellationToken);
             booking.Vehicle = null; // Detach before save
         }
+
+        decimal commissionPercentage = 10.0m;
+        decimal commissionAmount = Math.Round((booking.TotalPrice ?? 0m) * (commissionPercentage / 100m), 2);
+        decimal supplierAmount = (booking.TotalPrice ?? 0m) - commissionAmount;
+
+        if (_commissionService != null)
+        {
+            commissionPercentage = await _commissionService.GetEffectiveCommissionAsync(booking.VehicleId, cancellationToken);
+            var result = _commissionService.CalculateCommission(booking.TotalPrice ?? 0m, commissionPercentage);
+            commissionAmount = result.CommissionAmount;
+            supplierAmount = result.SupplierAmount;
+        }
+
+        booking.CommissionPercentage = commissionPercentage;
+        booking.CommissionAmount = commissionAmount;
+        booking.SupplierAmount = supplierAmount;
 
         // ── Race-safe persistence (P0: double-booking fix) ───────────────
         // Previously this method inserted the booking with a bare

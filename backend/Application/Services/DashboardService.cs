@@ -414,7 +414,7 @@ public class DashboardService : IDashboardService
 
         // We use join to include BookingPayment, although we sum TotalPrice from Bookings 
         // to match the exact requirement from the prompt while ensuring single optimized query.
-        var dataPoints = await _context.Bookings
+        var rawData = await _context.Bookings
             .Where(b => b.CreatedAt >= startDate && b.CreatedAt <= endDate)
             .GroupJoin(
                 _context.BookingCancellations,
@@ -426,24 +426,23 @@ public class DashboardService : IDashboardService
                 x => x.Cancellations.DefaultIfEmpty(),
                 (x, c) => new { x.Booking, Cancellation = c }
             )
+            .ToListAsync(cancellationToken);
+
+        var dataPoints = rawData
             .GroupBy(x => x.Booking.CreatedAt.Date)
             .Select(g => new
             {
                 Date = g.Key,
-                Revenue = g.Sum(x => x.Booking.TotalPrice ?? 0),
-                PlatformRevenue = g.Sum(x => x.Booking.Status == BookingStatus.Cancelled && x.Cancellation != null 
-                    ? x.Cancellation.RefundCommissionAmount 
-                    : (x.Booking.CommissionAmount ?? 0)),
-                SupplierRevenue = g.Sum(x => x.Booking.Status == BookingStatus.Cancelled && x.Cancellation != null 
-                    ? x.Cancellation.RefundSupplierAmount 
-                    : (x.Booking.SupplierAmount ?? x.Booking.TotalPrice ?? 0)),
-                Bookings = g.Sum(x => x.Booking.Status == BookingStatus.Active || x.Booking.Status == BookingStatus.Completed || x.Booking.Status == BookingStatus.Confirmed ? (x.Booking.TotalPrice ?? 0) : 0),
+                Revenue = g.Sum(x => (x.Booking.Status == BookingStatus.Confirmed || x.Booking.Status == BookingStatus.Active || x.Booking.Status == BookingStatus.Completed) ? (x.Booking.TotalPrice ?? 0) : 0),
+                PlatformRevenue = g.Sum(x => (x.Booking.Status == BookingStatus.Confirmed || x.Booking.Status == BookingStatus.Active || x.Booking.Status == BookingStatus.Completed) ? (x.Booking.CommissionAmount ?? 0) : 0),
+                SupplierRevenue = g.Sum(x => (x.Booking.Status == BookingStatus.Confirmed || x.Booking.Status == BookingStatus.Active || x.Booking.Status == BookingStatus.Completed) ? (x.Booking.SupplierAmount ?? x.Booking.TotalPrice ?? 0) : 0),
+                Bookings = g.Sum(x => (x.Booking.Status == BookingStatus.Confirmed || x.Booking.Status == BookingStatus.Active || x.Booking.Status == BookingStatus.Completed) ? (x.Booking.TotalPrice ?? 0) : 0),
                 Refunds = g.Sum(x => x.Booking.Status == BookingStatus.Cancelled && x.Cancellation != null 
                     ? x.Cancellation.RefundAmount 
                     : 0)
             })
             .OrderBy(x => x.Date)
-            .ToListAsync(cancellationToken);
+            .ToList();
 
         var totalRevenue = dataPoints.Sum(x => x.Revenue);
         var totalPlatformRevenue = dataPoints.Sum(x => x.PlatformRevenue);

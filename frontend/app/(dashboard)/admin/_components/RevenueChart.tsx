@@ -69,22 +69,11 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
       >
         <Typography sx={{ fontWeight: 700, mb: 1.5, color: theme.palette.text.primary }}>Date: {label}</Typography>
         <Stack sx={{ gap: 1 }}>
+          <Typography sx={{ color: theme.palette.primary.main, fontSize: "0.875rem" }}>
+            ● Gross Revenue: ${payload.find(p => p.dataKey === "revenue")?.value.toLocaleString() || 0}
+          </Typography>
           <Typography sx={{ color: theme.palette.status.active.main, fontSize: "0.875rem" }}>
-            ● Gross Bookings: ${payload.find(p => p.dataKey === "bookings")?.value.toLocaleString() || 0}
-          </Typography>
-          <Typography sx={{ color: theme.palette.status.cancelled.main, fontSize: "0.875rem" }}>
-            ■ Refunds: ${payload.find(p => p.dataKey === "refunds")?.value.toLocaleString() || 0}
-          </Typography>
-          <Typography
-            sx={{
-              color: theme.palette.primary.main,
-              fontSize: "0.875rem",
-              fontWeight: 600,
-              pt: 0.5,
-              borderTop: `1px dashed ${theme.palette.border.light}`,
-            }}
-          >
-            ◆ Net Revenue: ${payload.find(p => p.dataKey === "netRevenue")?.value.toLocaleString() || 0}
+            ■ Platform Revenue: ${payload.find(p => p.dataKey === "platformRevenue")?.value.toLocaleString() || 0}
           </Typography>
         </Stack>
       </Box>
@@ -204,9 +193,9 @@ export default function RevenueChart() {
           </Alert>
         )}
 
-        {/* 3 Metric Cards Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          {/* Total Revenue (Net) - Blue Theme */}
+        {/* 4 Metric Cards Section */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {/* Gross Revenue - Blue Theme */}
           <Box
             className="rounded-xl flex flex-col justify-center transition-transform hover:-translate-y-1"
             sx={{
@@ -219,14 +208,14 @@ export default function RevenueChart() {
             }}
           >
             <Typography variant="body2" sx={{ color: theme.palette.text.secondary, mb: 1, fontWeight: 500 }}>
-              Net Revenue
+              Gross Revenue
             </Typography>
             <Typography variant="h4" sx={{ color: theme.palette.primary.main, fontWeight: 800 }}>
-              {loading ? <Skeleton width={120} /> : `$${(data?.netRevenue || 0).toLocaleString()}`}
+              {loading ? <Skeleton width={120} /> : `$${(data?.totalRevenue || 0).toLocaleString()}`}
             </Typography>
           </Box>
 
-          {/* Gross Bookings - Green Theme */}
+          {/* Platform Revenue - Green Theme */}
           <Box
             className="rounded-xl flex flex-col justify-center transition-transform hover:-translate-y-1"
             sx={{
@@ -239,10 +228,30 @@ export default function RevenueChart() {
             }}
           >
             <Typography variant="body2" sx={{ color: theme.palette.text.secondary, mb: 1, fontWeight: 500 }}>
-              Gross Bookings
+              Platform Revenue
             </Typography>
             <Typography variant="h4" sx={{ color: theme.palette.status.active.main, fontWeight: 800 }}>
-              {loading ? <Skeleton width={120} /> : `$${(data?.totalBookings || 0).toLocaleString()}`}
+              {loading ? <Skeleton width={120} /> : `$${(data?.platformRevenue || 0).toLocaleString()}`}
+            </Typography>
+          </Box>
+
+          {/* Supplier Revenue - Info Theme */}
+          <Box
+            className="rounded-xl flex flex-col justify-center transition-transform hover:-translate-y-1"
+            sx={{
+              p: 3,
+              backgroundColor: theme.palette.background.default,
+              borderLeft: `4px solid ${theme.palette.info.main}`,
+              borderTop: `1px solid ${theme.palette.border.light}`,
+              borderRight: `1px solid ${theme.palette.border.light}`,
+              borderBottom: `1px solid ${theme.palette.border.light}`,
+            }}
+          >
+            <Typography variant="body2" sx={{ color: theme.palette.text.secondary, mb: 1, fontWeight: 500 }}>
+              Supplier Revenue
+            </Typography>
+            <Typography variant="h4" sx={{ color: theme.palette.info.main, fontWeight: 800 }}>
+              {loading ? <Skeleton width={120} /> : `$${(data?.supplierRevenue || 0).toLocaleString()}`}
             </Typography>
           </Box>
 
@@ -277,9 +286,9 @@ export default function RevenueChart() {
               <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <ComposedChart data={data.chartData} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
                   <defs>
-                    <linearGradient id="colorNet" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={theme.palette.primary.main} stopOpacity={0.4} />
-                      <stop offset="95%" stopColor={theme.palette.primary.main} stopOpacity={0} />
+                    <linearGradient id="colorPlatform" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={theme.palette.status.active.main} stopOpacity={0.4} />
+                      <stop offset="95%" stopColor={theme.palette.status.active.main} stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme.palette.border.light} />
@@ -300,32 +309,23 @@ export default function RevenueChart() {
                   />
                   <Tooltip content={<CustomTooltip />} cursor={{ fill: theme.palette.border.light, opacity: 0.4 }} />
 
-                  {/* Bookings Bar (Base) */}
+                  {/* Gross Revenue Bar */}
                   <Bar
                     yAxisId="left"
-                    dataKey="bookings"
-                    stackId="a"
-                    fill={theme.palette.status.active.main}
-                    radius={[0, 0, 4, 4]}
+                    dataKey="revenue"
+                    fill={theme.palette.primary.main}
+                    radius={[4, 4, 0, 0]}
                     barSize={40}
                   />
-                  {/* Refunds Bar (Stacked on top) */}
-                  <Bar
-                    yAxisId="left"
-                    dataKey="refunds"
-                    stackId="a"
-                    fill={theme.palette.status.cancelled.main}
-                    radius={[4, 4, 0, 0]}
-                  />
-                  {/* Net Revenue Area Chart (Smooth overlay) */}
+                  {/* Platform Revenue Area Chart */}
                   <Area
                     yAxisId="left"
                     type="monotone"
-                    dataKey="netRevenue"
-                    stroke={theme.palette.primary.main}
+                    dataKey="platformRevenue"
+                    stroke={theme.palette.status.active.main}
                     strokeWidth={4}
                     fillOpacity={1}
-                    fill="url(#colorNet)"
+                    fill="url(#colorPlatform)"
                   />
                 </ComposedChart>
               </ResponsiveContainer>

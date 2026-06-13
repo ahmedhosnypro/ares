@@ -195,7 +195,7 @@ public static class OperationalDataSeeder
         await context.SaveChangesAsync();
 
         // 4. Use Existing Vehicles
-        var vehicles = await context.Vehicles.Where(v => v.IsActive).Take(10).ToListAsync();
+        var vehicles = await context.Vehicles.Include(v => v.Category).Where(v => v.IsActive).Take(10).ToListAsync();
         if (!vehicles.Any())
         {
             logger.LogWarning("No vehicles found to assign bookings.");
@@ -240,6 +240,23 @@ public static class OperationalDataSeeder
             var totalPrice = pricePerDay * totalDays;
             if (driverProfile != null) totalPrice += 500m * totalDays;
 
+            decimal commissionPercentage = 10.0m;
+            if (vehicle.Category != null && vehicle.Category.IsActive)
+            {
+                commissionPercentage = vehicle.Category.CommissionPercentage;
+            }
+            else
+            {
+                var globalSetting = await context.SystemSettings
+                    .FirstOrDefaultAsync(s => s.Key == "GlobalCommissionPercentage");
+                if (globalSetting != null && decimal.TryParse(globalSetting.Value, out var globalCommission))
+                {
+                    commissionPercentage = globalCommission;
+                }
+            }
+            var commissionAmount = Math.Round(totalPrice * (commissionPercentage / 100m), 2);
+            var supplierAmount = totalPrice - commissionAmount;
+
             var booking = new Booking
             {
                 Id = Guid.NewGuid(),
@@ -259,7 +276,10 @@ public static class OperationalDataSeeder
                 CancellationReason = status == BookingStatus.Cancelled ? "Customer request" : null,
                 AssignedInspectorId = inspector.Id,
                 InspectionStatus = status == BookingStatus.Completed || status == BookingStatus.Active ? InspectionStatus.Approved : InspectionStatus.Pending,
-                DriverAssignmentStatus = driverProfile != null ? DriverAssignmentStatus.Assigned : DriverAssignmentStatus.NotRequired
+                DriverAssignmentStatus = driverProfile != null ? DriverAssignmentStatus.Assigned : DriverAssignmentStatus.NotRequired,
+                CommissionPercentage = commissionPercentage,
+                CommissionAmount = commissionAmount,
+                SupplierAmount = supplierAmount
             };
 
             await context.Bookings.AddAsync(booking);
