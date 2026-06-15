@@ -22,6 +22,8 @@ interface OrderSummaryProps {
     readonly from: string;
     readonly to: string;
     readonly price: number;
+    readonly originalPrice?: number;
+    readonly discountAmount?: number;
   };
 }
 
@@ -143,9 +145,21 @@ export default function OrderSummary({ booking }: OrderSummaryProps) {
               Rental ({days} {days === 1 ? "Day" : "Days"})
             </Typography>
             <Typography variant="body2" sx={{ fontFamily: "monospace", fontWeight: 500 }}>
-              {formatCurrency(booking.price)}
+              {booking.originalPrice 
+                ? formatCurrency(booking.originalPrice)
+                : formatCurrency(booking.price)}
             </Typography>
           </Box>
+          {booking.discountAmount ? (
+            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+              <Typography variant="body2" color="error.main">
+                Discount
+              </Typography>
+              <Typography variant="body2" color="error.main" sx={{ fontFamily: "monospace", fontWeight: 500 }}>
+                -{formatCurrency(booking.discountAmount)}
+              </Typography>
+            </Box>
+          ) : null}
           {/* Note: Mocking taxes/fees display as requested by the mockup, but keeping total correct based on booking.price */}
           <Box
             sx={{

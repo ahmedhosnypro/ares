@@ -40,6 +40,8 @@ export interface BookingDetailsDto {
   readonly from: string;
   readonly to: string;
   readonly price: number;
+  readonly originalPrice?: number;
+  readonly discountAmount?: number;
   readonly status: string;
   readonly assignedDriverProfile?: { readonly driverProfileId: string } | null;
 }
