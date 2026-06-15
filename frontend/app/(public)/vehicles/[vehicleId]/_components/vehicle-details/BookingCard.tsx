@@ -228,9 +228,20 @@ export default function BookingCard({ vehicle, locationOptions, vehicleId, baseP
           <Typography variant="h6" sx={{ fontWeight: 800 }}>
             Reserve this vehicle
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {formatCurrency(resolvedVehicle.pricePerDay)} / day
-          </Typography>
+          {resolvedVehicle.discountPercentage ? (
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+              <Typography variant="body2" color="text.secondary" sx={{ textDecoration: "line-through", fontWeight: 500 }}>
+                {formatCurrency(resolvedVehicle.originalPricePerDay ?? 0)}
+              </Typography>
+              <Typography variant="body2" color="primary.main" sx={{ fontWeight: 700 }}>
+                {formatCurrency(resolvedVehicle.pricePerDay)} / day
+              </Typography>
+            </Stack>
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              {formatCurrency(resolvedVehicle.pricePerDay)} / day
+            </Typography>
+          )}
         </Stack>
 
         {resolvedLocations.length > 0 ? (

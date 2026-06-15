@@ -18,6 +18,8 @@ export interface PublicVehicleCard {
   make: string;
   model: string;
   dailyRate: number;
+  originalDailyRate?: number;
+  discountPercentage?: number;
   currency: string;
   imageUrl: string;
   rating: number;
@@ -115,6 +117,10 @@ interface ApiVehicleListDto {
   Model?: string | null;
   dailyRate?: ApiValue;
   DailyRate?: ApiValue;
+  originalDailyRate?: ApiValue;
+  OriginalDailyRate?: ApiValue;
+  discountPercentage?: ApiValue;
+  DiscountPercentage?: ApiValue;
   currency?: string | null;
   Currency?: string | null;
   imageUrl?: string | null;
@@ -314,6 +320,8 @@ function normalizeVehicle(vehicle: ApiVehicleListDto): PublicVehicleCard {
     make: asString(vehicle.make ?? vehicle.Make),
     model: asString(vehicle.model ?? vehicle.Model),
     dailyRate: asNumber(vehicle.dailyRate ?? vehicle.DailyRate),
+    originalDailyRate: asOptionalNumber(vehicle.originalDailyRate ?? vehicle.OriginalDailyRate),
+    discountPercentage: asOptionalNumber(vehicle.discountPercentage ?? vehicle.DiscountPercentage),
     currency: asString(vehicle.currency ?? vehicle.Currency, "USD"),
     imageUrl,
     rating: asNumber(vehicle.rating ?? vehicle.Rating),

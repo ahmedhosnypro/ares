@@ -38,6 +38,8 @@ interface ApiVehicleDto {
   readonly fuelType?: string;
   readonly seats?: number;
   readonly pricePerDay?: number;
+  readonly originalPricePerDay?: number;
+  readonly discountPercentage?: number;
   readonly locationCity?: string;
   readonly description?: string;
   readonly status?: string;
@@ -95,6 +97,8 @@ function normalizeVehicle(vehicle: ApiVehicleDto): VehicleDetailsViewModel {
     fuelType: asString(vehicle.fuelType),
     seats: asNumber(vehicle.seats),
     pricePerDay: asNumber(vehicle.pricePerDay),
+    originalPricePerDay: asNumber(vehicle.originalPricePerDay) || undefined,
+    discountPercentage: asNumber(vehicle.discountPercentage) || undefined,
     locationCity: asString(vehicle.locationCity),
     description: asString(vehicle.description),
     status: asString(vehicle.status),

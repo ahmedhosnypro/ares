@@ -21,6 +21,8 @@ export interface VehicleDetailsViewModel {
   readonly fuelType: string;
   readonly seats: number;
   readonly pricePerDay: number;
+  readonly originalPricePerDay?: number;
+  readonly discountPercentage?: number;
   readonly locationCity: string;
   readonly description: string;
   readonly status: string;

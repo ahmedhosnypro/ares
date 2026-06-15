@@ -160,6 +160,23 @@ function VehicleCard({ vehicle }: Readonly<{ vehicle: PublicVehicleCard }>) {
                   >
                     From
                   </Typography>
+                  {vehicle.discountPercentage ? (
+                    <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ textDecoration: "line-through", fontWeight: 600 }}
+                      >
+                        {formatCurrency(vehicle.originalDailyRate ?? 0, vehicle.currency)}
+                      </Typography>
+                      <Chip
+                        label={`-${vehicle.discountPercentage}%`}
+                        color="error"
+                        size="small"
+                        sx={{ height: 20, fontSize: "0.65rem", fontWeight: 700 }}
+                      />
+                    </Stack>
+                  ) : null}
                   <Typography
                     variant="h5"
                     color="primary.main"
