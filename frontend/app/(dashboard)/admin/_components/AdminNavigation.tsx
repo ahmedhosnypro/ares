@@ -32,7 +32,6 @@ import {
   Storefront as SupplierIcon,
   Settings as SettingsIcon,
   Notifications as NotificationsIcon,
-  MonetizationOn as PricingIcon,
   Logout as LogoutIcon,
   Public as CountriesIcon,
   Place as LocationsIcon,
@@ -52,7 +51,6 @@ const menuItems = [
   { text: "Users", icon: <UsersIcon />, path: "/admin/users" },
   { text: "Locations", icon: <LocationsIcon />, path: "/admin/locations" },
   { text: "Countries", icon: <CountriesIcon />, path: "/admin/countries" },
-  { text: "Pricing", icon: <PricingIcon />, path: "/admin/pricing" },
   { text: "Settings", icon: <SettingsIcon />, path: "/admin/settings" },
 ];
 

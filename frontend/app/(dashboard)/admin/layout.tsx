@@ -10,7 +10,6 @@ import {
   Category as CategoryIcon,
   Settings as SettingsIcon,
   Notifications as NotificationsIcon,
-  MonetizationOn as PricingIcon,
   Public as CountriesIcon,
   Place as LocationsIcon,
   VerifiedUser as VerifiedUserIcon,
@@ -31,7 +30,6 @@ const menuItems: DashboardMenuItem[] = [
   { text: "Verifications", icon: <VerifiedUserIcon />, path: "/admin/verifications" },
   { text: "Locations", icon: <LocationsIcon />, path: "/admin/locations" },
   { text: "Countries", icon: <CountriesIcon />, path: "/admin/countries" },
-  { text: "Pricing", icon: <PricingIcon />, path: "/admin/pricing" },
   { text: "Notifications", icon: <NotificationsIcon />, path: "/admin/notifications" },
   { text: "Settings", icon: <SettingsIcon />, path: "/admin/settings" },
 ];
