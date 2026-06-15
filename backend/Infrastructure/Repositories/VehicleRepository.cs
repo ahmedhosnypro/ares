@@ -107,7 +107,9 @@ public class VehicleRepository : PaginatedRepository<Vehicle>, IVehicleRepositor
             return true;
         }
 
-        var status = vehicle.Status?.Trim().ToLowerInvariant() ?? string.Empty;
+        var status = vehicle.Category?.Name?.Trim().ToLowerInvariant() 
+                     ?? vehicle.Status?.Trim().ToLowerInvariant() 
+                     ?? string.Empty;
         if (status == requested)
         {
             return true;
