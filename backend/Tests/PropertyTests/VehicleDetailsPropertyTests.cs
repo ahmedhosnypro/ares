@@ -36,7 +36,8 @@ public class VehicleDetailsPropertyTests : IDisposable
         _vehicleRepository = new VehicleRepository(_context);
         _reviewRepository = new ReviewRepository(_context);
         _bookingRepository = new BookingRepository(_context);
-        _vehicleService = new VehicleService(_vehicleRepository, _reviewRepository, _bookingRepository, _context);
+        var pricingService = new PricingService(_context);
+        _vehicleService = new VehicleService(_vehicleRepository, _reviewRepository, _bookingRepository, _context, pricingService);
 
         // Ensure database is created
         _context.Database.EnsureCreated();

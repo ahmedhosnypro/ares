@@ -24,6 +24,8 @@ export interface Vehicle {
   available?: boolean;
   imageUrl?: string;
   category?: string;
+  categoryId?: string;
+  categoryName?: string;
   hasActiveBookings?: boolean;
   // ── Admin table extras (backed by VehicleListDto) ──────────────────────────
   /** Backend `IsOnRental` — true when at least one Active booking is open. */

@@ -259,7 +259,7 @@ const VehicleMobileCard = memo(function VehicleMobileCard({
             {v.make} {v.model}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            {v.category || "General"}
+            {v.categoryName || v.category || "General"}
           </Typography>
           <Box sx={{ mt: 0.5 }}>
             <Chip
@@ -736,7 +736,7 @@ function VehicleTableRow({
               sx={{ alignItems: "center", display: { xs: "flex", sm: "none" }, mt: 0.3 }}
             >
               <Typography variant="caption" color="text.secondary">
-                {v.category}
+                {v.categoryName || v.category || "General"}
               </Typography>
               <Typography variant="caption" color="text.disabled">
                 ·
@@ -751,7 +751,7 @@ function VehicleTableRow({
 
       <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>
         <Chip
-          label={v.category || "General"}
+          label={v.categoryName || v.category || "General"}
           size="small"
           sx={{
             fontWeight: 600,

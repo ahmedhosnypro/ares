@@ -21,6 +21,7 @@ public class VehicleService : IVehicleService
     private readonly IReviewRepository _reviewRepository;
     private readonly IBookingRepository _bookingRepository;
     private readonly IApplicationDbContext _context;
+    private readonly IPricingService _pricingService;
     // Nullable + optional so existing unit-test wiring that doesn't pass a
     // notification service keeps compiling; supplier-notification firing is
     // therefore best-effort, not required.
@@ -31,12 +32,14 @@ public class VehicleService : IVehicleService
         IReviewRepository reviewRepository,
         IBookingRepository bookingRepository,
         IApplicationDbContext context,
+        IPricingService pricingService,
         INotificationService? notificationService = null)
     {
         _vehicleRepository = vehicleRepository;
         _reviewRepository = reviewRepository;
         _bookingRepository = bookingRepository;
         _context = context;
+        _pricingService = pricingService;
         _notificationService = notificationService;
     }
 
@@ -63,9 +66,9 @@ public class VehicleService : IVehicleService
                 .ToList();
         }
 
-        var activePromotions = await _context.Promotions
-            .Where(p => p.Status == "Active" && p.StartDate <= DateTime.UtcNow && p.EndDate >= DateTime.UtcNow)
-            .ToDictionaryAsync(p => p.CategoryId, p => p.DiscountPercentage, cancellationToken);
+        var activeOffers = await _context.CategoryOffers
+            .Where(o => o.IsActive && o.StartDate <= DateTime.UtcNow && o.EndDate >= DateTime.UtcNow)
+            .ToDictionaryAsync(o => o.CategoryId, o => o.DiscountPercentage, cancellationToken);
 
         var vehicleDtos = new List<VehicleListDto>();
         foreach (var vehicle in vehicleList)
@@ -78,25 +81,40 @@ public class VehicleService : IVehicleService
 
             var baseRate = vehicle.PricePerDay ?? 0;
             var dailyRate = baseRate;
-            if (vehicle.CategoryId.HasValue && activePromotions.TryGetValue(vehicle.CategoryId.Value, out var discount))
+            decimal? originalDailyRate = null;
+            decimal? discountPercentage = null;
+
+            if (vehicle.CategoryId.HasValue && activeOffers.TryGetValue(vehicle.CategoryId.Value, out var discount))
             {
+                originalDailyRate = baseRate;
+                discountPercentage = discount;
                 dailyRate = baseRate * (1 - (discount / 100m));
             }
 
             vehicleDtos.Add(new VehicleListDto(
-                vehicle.Id,
-                vehicle.Make ?? string.Empty,
-                vehicle.Model ?? string.Empty,
-                vehicle.Status ?? string.Empty,
-                dailyRate,
-                "USD",
-                primaryImage,
-                averageRating,
-                reviewCount,
-                null,
-                vehicle.AvailabilityStatus == "Available",
-                vehicle.LocationCity,
-                vehicle.CreatedAt
+                VehicleId: vehicle.Id,
+                Make: vehicle.Make ?? string.Empty,
+                Model: vehicle.Model ?? string.Empty,
+                Category: vehicle.Category?.Name ?? "General",
+                DailyRate: dailyRate,
+                OriginalDailyRate: originalDailyRate,
+                DiscountPercentage: discountPercentage,
+                Currency: "USD",
+                ImageUrl: primaryImage,
+                Rating: averageRating,
+                ReviewCount: reviewCount,
+                Distance: null,
+                Available: vehicle.AvailabilityStatus == "Available",
+                LocationCity: vehicle.LocationCity,
+                CreatedAt: vehicle.CreatedAt,
+                Year: vehicle.Year,
+                Transmission: vehicle.Transmission,
+                SupplierName: null,
+                IsOnRental: false,
+                AvailabilityStatus: vehicle.AvailabilityStatus,
+                LicensePlate: vehicle.LicensePlate,
+                CategoryId: vehicle.CategoryId,
+                CategoryName: vehicle.Category?.Name
             ));
         }
 
@@ -162,6 +180,26 @@ public class VehicleService : IVehicleService
             vehicle.User?.Email
         );
 
+        decimal baseRate = vehicle.PricePerDay ?? 0;
+        decimal dailyRate = baseRate;
+        decimal? originalPricePerDay = null;
+        decimal? discountPercentage = null;
+
+        if (vehicle.CategoryId.HasValue)
+        {
+            var activeOffer = await _context.CategoryOffers
+                .Where(o => o.CategoryId == vehicle.CategoryId.Value && o.IsActive && o.StartDate <= DateTime.UtcNow && o.EndDate >= DateTime.UtcNow)
+                .OrderByDescending(o => o.CreatedAt)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (activeOffer != null)
+            {
+                originalPricePerDay = baseRate;
+                discountPercentage = activeOffer.DiscountPercentage;
+                dailyRate = baseRate * (1 - (activeOffer.DiscountPercentage / 100m));
+            }
+        }
+
         return new VehicleDetailsDto(
             vehicle.Id,
             vehicle.Make ?? string.Empty,
@@ -172,7 +210,9 @@ public class VehicleService : IVehicleService
             vehicle.Transmission ?? string.Empty,
             vehicle.FuelType ?? string.Empty,
             vehicle.Seats ?? 0,
-            vehicle.PricePerDay ?? 0,
+            dailyRate,
+            originalPricePerDay,
+            discountPercentage,
             vehicle.LocationCity ?? string.Empty,
             vehicle.Description ?? string.Empty,
             vehicle.Status ?? string.Empty,
@@ -225,14 +265,12 @@ public class VehicleService : IVehicleService
             throw new ValidationException("DateRange", "Return date must be after pickup date");
         }
 
-        var vehicle = await _vehicleRepository.GetByIdAsync(vehicleId, cancellationToken);
-        if (vehicle == null)
-        {
-            throw new NotFoundException($"Vehicle with ID {vehicleId} not found");
-        }
+        var pricingResult = await _pricingService.CalculateBookingPricingAsync(vehicleId, request.PickupDate, request.ReturnDate, cancellationToken);
 
         var totalDays = (request.ReturnDate - request.PickupDate).Days;
-        var basePrice = (vehicle.PricePerDay ?? 0) * totalDays;
+        if (totalDays == 0) totalDays = 1; // Minimum 1 day
+
+        var basePrice = pricingResult.OriginalPrice;
 
         decimal insuranceCost = 0;
         if (!string.IsNullOrWhiteSpace(request.InsuranceOptions))
@@ -246,7 +284,7 @@ public class VehicleService : IVehicleService
             additionalServicesCost = CalculateAdditionalServicesCost(request.AdditionalServices, totalDays);
         }
 
-        var totalPrice = basePrice + insuranceCost + additionalServicesCost;
+        var totalPrice = pricingResult.FinalPrice + insuranceCost + additionalServicesCost;
 
         return new VehiclePricingDto(
             basePrice,
@@ -442,6 +480,7 @@ public class VehicleService : IVehicleService
             .AsNoTracking()
             .Include(v => v.Images)
             .Include(v => v.User)
+            .Include(v => v.Category)
             .AsQueryable();
 
         // Security/Isolation: Suppliers only see their own vehicles
@@ -554,9 +593,9 @@ public class VehicleService : IVehicleService
             .ToListAsync(cancellationToken);
         var onRentalIds = new HashSet<Guid>(onRentalIdSet);
 
-        var activePromotions = await _context.Promotions
-            .Where(p => p.Status == "Active" && p.StartDate <= DateTime.UtcNow && p.EndDate >= DateTime.UtcNow)
-            .ToDictionaryAsync(p => p.CategoryId, p => p.DiscountPercentage, cancellationToken);
+        var activeOffers = await _context.CategoryOffers
+            .Where(o => o.IsActive && o.StartDate <= DateTime.UtcNow && o.EndDate >= DateTime.UtcNow)
+            .ToDictionaryAsync(o => o.CategoryId, o => o.DiscountPercentage, cancellationToken);
 
         var vehicleDtos = new List<VehicleListDto>();
         foreach (var vehicle in vehicles)
@@ -573,8 +612,13 @@ public class VehicleService : IVehicleService
 
             var baseRate = vehicle.PricePerDay ?? 0;
             var dailyRate = baseRate;
-            if (vehicle.CategoryId.HasValue && activePromotions.TryGetValue(vehicle.CategoryId.Value, out var discount))
+            decimal? originalDailyRate = null;
+            decimal? discountPercentage = null;
+
+            if (vehicle.CategoryId.HasValue && activeOffers.TryGetValue(vehicle.CategoryId.Value, out var discount))
             {
+                originalDailyRate = baseRate;
+                discountPercentage = discount;
                 dailyRate = baseRate * (1 - (discount / 100m));
             }
 
@@ -582,8 +626,10 @@ public class VehicleService : IVehicleService
                 VehicleId: vehicle.Id,
                 Make: vehicle.Make ?? string.Empty,
                 Model: vehicle.Model ?? string.Empty,
-                Category: vehicle.Status ?? string.Empty,
+                Category: vehicle.Category?.Name ?? "General",
                 DailyRate: dailyRate,
+                OriginalDailyRate: originalDailyRate,
+                DiscountPercentage: discountPercentage,
                 Currency: "USD",
                 ImageUrl: primaryImage,
                 Rating: averageRating,
@@ -597,7 +643,9 @@ public class VehicleService : IVehicleService
                 SupplierName: string.IsNullOrWhiteSpace(supplierName) ? null : supplierName,
                 IsOnRental: onRentalIds.Contains(vehicle.Id),
                 AvailabilityStatus: vehicle.AvailabilityStatus,
-                LicensePlate: vehicle.LicensePlate
+                LicensePlate: vehicle.LicensePlate,
+                CategoryId: vehicle.CategoryId,
+                CategoryName: vehicle.Category?.Name
             ));
         }
 

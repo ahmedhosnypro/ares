@@ -16,6 +16,8 @@ public record VehicleDetailsDto(
     string FuelType,
     int Seats,
     decimal PricePerDay,
+    decimal? OriginalPricePerDay,
+    decimal? DiscountPercentage,
     string LocationCity,
     string Description,
     string Status,

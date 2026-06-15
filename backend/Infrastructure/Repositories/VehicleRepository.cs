@@ -55,6 +55,7 @@ public class VehicleRepository : PaginatedRepository<Vehicle>, IVehicleRepositor
         var query = _dbSet
             .Include(v => v.Images)
             .Include(v => v.User)
+            .Include(v => v.Category)
             .Where(v => v.IsActive && v.AvailabilityStatus == "Available")
             .Where(v =>
                 v.LocationCity != null &&

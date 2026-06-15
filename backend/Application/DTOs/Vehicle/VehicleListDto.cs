@@ -14,6 +14,8 @@ public record VehicleListDto(
     string Model,
     string Category,
     decimal DailyRate,
+    decimal? OriginalDailyRate,
+    decimal? DiscountPercentage,
     string Currency,
     string ImageUrl,
     double Rating,
@@ -27,4 +29,6 @@ public record VehicleListDto(
     string? SupplierName = null,
     bool IsOnRental = false,
     string? AvailabilityStatus = null,
-    string? LicensePlate = null);
+    string? LicensePlate = null,
+    Guid? CategoryId = null,
+    string? CategoryName = null);
