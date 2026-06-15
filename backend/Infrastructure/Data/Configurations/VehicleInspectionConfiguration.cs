@@ -31,7 +31,8 @@ namespace Backend.Infrastructure.Data.Configurations
                 .Property(i => i.Status)
                 .HasConversion<string>()
                 .HasMaxLength(20)
-                .HasDefaultValue(Backend.Domain.Entities.Enums.InspectionStatus.Pending);
+                .HasDefaultValue(Backend.Domain.Entities.Enums.InspectionStatus.Pending)
+                .HasSentinel(Backend.Domain.Entities.Enums.InspectionStatus.Pending);
 
             builder
                 .Property(i => i.IsSubmitted)

@@ -28,5 +28,6 @@ namespace Backend.Domain.Entities
 
         public ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
         public ICollection<Promotion> Promotions { get; set; } = new List<Promotion>();
+        public ICollection<CategoryOffer> Offers { get; set; } = new List<CategoryOffer>();
     }
 }

@@ -24,6 +24,7 @@ namespace Backend.Infrastructure.Data
         public DbSet<Verification> Verifications { get; set; }
         public DbSet<CompanyProfile> CompanyProfiles { get; set; }
         public DbSet<Category> Categories { get; set; }
+        public DbSet<CategoryOffer> CategoryOffers { get; set; }
         public DbSet<Promotion> Promotions { get; set; }
         public DbSet<Vehicle> Vehicles { get; set; }
         public DbSet<VehicleImage> VehicleImages { get; set; }
@@ -57,6 +58,7 @@ namespace Backend.Infrastructure.Data
         public DbSet<VehicleAvailability> VehicleAvailabilities { get; set; }
         // Explicit interface implementation for IApplicationDbContext
         IQueryable<Category> IApplicationDbContext.Categories => Categories;
+        IQueryable<CategoryOffer> IApplicationDbContext.CategoryOffers => CategoryOffers;
         IQueryable<Promotion> IApplicationDbContext.Promotions => Promotions;
         IQueryable<Vehicle> IApplicationDbContext.Vehicles => Vehicles;
         IQueryable<VehicleImage> IApplicationDbContext.VehicleImages => VehicleImages;
@@ -164,6 +166,16 @@ namespace Backend.Infrastructure.Data
         public void RemovePromotion(Promotion promotion)
         {
             Promotions.Remove(promotion);
+        }
+
+        public void AddCategoryOffer(CategoryOffer offer)
+        {
+            CategoryOffers.Add(offer);
+        }
+
+        public void RemoveCategoryOffer(CategoryOffer offer)
+        {
+            CategoryOffers.Remove(offer);
         }
 
         protected override void OnModelCreating(ModelBuilder builder)

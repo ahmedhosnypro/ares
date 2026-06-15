@@ -8,6 +8,7 @@ namespace Backend.Application.Interfaces;
 public interface IApplicationDbContext
 {
     IQueryable<Category> Categories { get; }
+    IQueryable<CategoryOffer> CategoryOffers { get; }
     IQueryable<Promotion> Promotions { get; }
     IQueryable<Vehicle> Vehicles { get; }
     IQueryable<VehicleImage> VehicleImages { get; }
@@ -49,5 +50,7 @@ public interface IApplicationDbContext
     void RemoveCategory(Category category);
     void AddPromotion(Promotion promotion);
     void RemovePromotion(Promotion promotion);
+    void AddCategoryOffer(CategoryOffer offer);
+    void RemoveCategoryOffer(CategoryOffer offer);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
