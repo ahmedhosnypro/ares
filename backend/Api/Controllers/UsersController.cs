@@ -411,9 +411,13 @@ public class AdminUsersController : ControllerBase
 
         await _userManagementService.UpdateUserAsync(id, request, cancellationToken);
 
-        _logger.LogInformation("Successfully toggled status for user {UserId} to {NewStatus}", id, newStatus);
+        // Fetch user again to get the final status determined by restriction workflow
+        var updatedUser = await _userManagementService.GetUserByIdAsync(id, cancellationToken);
+        var finalStatus = updatedUser?.Status ?? newStatus;
 
-        return Ok(new { Message = $"User status changed to {newStatus}", Status = newStatus });
+        _logger.LogInformation("Successfully toggled status for user {UserId} to {FinalStatus}", id, finalStatus);
+
+        return Ok(new { Message = $"User status changed to {finalStatus}", Status = finalStatus });
     }
 
     /// <summary>

@@ -123,6 +123,7 @@ try
     builder.Services.AddScoped<IUserManagementService, UserManagementService>();
     builder.Services.AddScoped<IUserDeletionService, Backend.Infrastructure.Services.UserDeletionService>();
     builder.Services.AddScoped<ISupplierService, SupplierService>();
+    builder.Services.AddScoped<ISupplierRestrictionService, SupplierRestrictionService>();
     builder.Services.AddScoped<IPaymentService, PaymentService>();
     builder.Services.AddScoped<IReviewService, ReviewService>();
     builder.Services.AddScoped<INotificationService, NotificationService>();
@@ -162,6 +163,9 @@ try
     builder.Services.Configure<Backend.Application.Settings.PaymobSettings>(builder.Configuration.GetSection("Paymob"));
     builder.Services.AddHttpClient<Backend.Application.Interfaces.IPaymobClient, Backend.Infrastructure.Services.PaymobClient>();
     builder.Services.AddSingleton<Backend.Application.Interfaces.IRefundCalculator, Backend.Application.Services.RefundCalculator>();
+
+    // Add HttpContextAccessor
+    builder.Services.AddHttpContextAccessor();
 
     // Register FluentValidation
     builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
@@ -302,7 +306,10 @@ Example: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'",
         options.OperationFilter<RateLimitOperationFilter>();
     });
 
-    builder.Services.AddControllers();
+    builder.Services.AddControllers(options =>
+    {
+        options.Filters.Add<Backend.Api.Filters.RestrictedSupplierActionFilter>();
+    });
 
     var app = builder.Build();
 
