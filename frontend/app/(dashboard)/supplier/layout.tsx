@@ -23,7 +23,7 @@ import { Alert, Box, AlertTitle } from "@mui/material";
 
 export default function SupplierLayout({ children }: { readonly children: React.ReactNode }) {
   const { data: session } = useSession();
-  const isRestricted = session?.user?.status.toLowerCase() === "restricted";
+  const isRestricted = session?.user.status?.toLowerCase() === "restricted";
 
   return (
     <DashboardShell

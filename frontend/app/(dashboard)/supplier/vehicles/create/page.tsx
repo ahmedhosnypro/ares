@@ -102,7 +102,7 @@ export default function CreateSupplierVehiclePage() {
         </Box>
       </Stack>
 
-      {session?.user?.status.toLowerCase() === "restricted" ? (
+      {session?.user.status?.toLowerCase() === "restricted" ? (
         <Alert severity="error" sx={{ mt: 3, borderRadius: 2 }}>
           Your account is restricted. You cannot add new vehicles.
         </Alert>
