@@ -6,8 +6,7 @@ namespace Backend.Domain.Entities
 {
     public class Promotion : AuditableEntity
     {
-        [Key]
-        public Guid Id { get; set; }
+
 
         public Guid CategoryId { get; set; }
 

@@ -8,8 +8,7 @@ namespace Backend.Domain.Entities
 {
     public class Category : AuditableEntity
     {
-        [Key]
-        public Guid Id { get; set; }
+
 
         [Required]
         [MaxLength(100)]

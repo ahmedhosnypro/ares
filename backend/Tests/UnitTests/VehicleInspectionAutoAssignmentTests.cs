@@ -116,6 +116,7 @@ namespace Backend.Tests.UnitTests
 
             // Check Booking fields
             var updatedBooking = await context.Bookings.FindAsync(booking.Id);
+            Assert.NotNull(updatedBooking);
             Assert.Equal(inspector.UserId, updatedBooking.AssignedInspectorId);
             Assert.Equal(InspectionStatus.Pending, updatedBooking.InspectionStatus);
 
@@ -165,6 +166,7 @@ namespace Backend.Tests.UnitTests
 
             // Check Booking fields
             var updatedBooking = await context.Bookings.FindAsync(booking.Id);
+            Assert.NotNull(updatedBooking);
             Assert.Null(updatedBooking.AssignedInspectorId);
             Assert.Equal(InspectionStatus.Pending, updatedBooking.InspectionStatus);
 
@@ -206,6 +208,7 @@ namespace Backend.Tests.UnitTests
 
             // Verify inspector2 was selected (least workload)
             var updatedBooking = await context.Bookings.FindAsync(booking.Id);
+            Assert.NotNull(updatedBooking);
             Assert.Equal(inspector2.UserId, updatedBooking.AssignedInspectorId);
         }
     }

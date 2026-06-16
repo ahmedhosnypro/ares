@@ -9,7 +9,7 @@ namespace Backend.Domain.Entities
     {
         [Key]
         [Column("id")]
-        public Guid Id { get; set; }
+        public new Guid Id { get; set; }
 
         [Column("category_id")]
         public Guid CategoryId { get; set; }
