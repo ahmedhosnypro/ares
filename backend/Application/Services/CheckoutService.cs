@@ -472,9 +472,9 @@ namespace Backend.Application.Services
                 booking.GrandTotal = vehicleFee + (booking.DriverFee ?? 0m);
                 booking.TotalPrice = booking.GrandTotal;
                 booking.Status = BookingStatus.Draft;
-                
+
                 // Keep assignment status in sync for filtering.
-                booking.DriverAssignmentStatus = effectiveNeedDriver 
+                booking.DriverAssignmentStatus = effectiveNeedDriver
                     ? (booking.AssignedDriverProfileId.HasValue ? DriverAssignmentStatus.Assigned : DriverAssignmentStatus.Waiting)
                     : DriverAssignmentStatus.NotRequired;
 

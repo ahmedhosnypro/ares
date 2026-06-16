@@ -149,7 +149,7 @@ namespace Backend.Api.Controllers
             var category = await _context.Categories
                 .Include(c => c.Vehicles)
                 .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
-            
+
             if (category == null) return NotFound();
 
             if (category.Vehicles.Any())
@@ -265,7 +265,7 @@ namespace Backend.Api.Controllers
         public string? Description { get; set; }
         public decimal CommissionPercentage { get; set; }
         public bool IsActive { get; set; } = true;
-        
+
         // Offer Fields
         public string? OfferName { get; set; }
         public decimal? OfferDiscountPercentage { get; set; }

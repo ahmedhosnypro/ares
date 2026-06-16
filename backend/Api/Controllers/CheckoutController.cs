@@ -25,7 +25,7 @@ namespace Backend.Api.Controllers
         private readonly ILogger<CheckoutController> _logger;
 
         public CheckoutController(
-            ICheckoutService checkoutService, 
+            ICheckoutService checkoutService,
             IPaymentService paymentService,
             ILogger<CheckoutController> logger)
         {
@@ -222,10 +222,10 @@ namespace Backend.Api.Controllers
         {
             var userId = TryGetUserId();
             if (userId is null) return Unauthorized();
-            
+
             // Sync payment status with Paymob in case a webhook was missed
             await _paymentService.SyncPaymentStatusAsync(bookingId, userId.Value, cancellationToken);
-            
+
             var state = await _checkoutService.GetStateAsync(bookingId, userId.Value, cancellationToken);
             return state is null ? NotFound() : Ok(state);
         }

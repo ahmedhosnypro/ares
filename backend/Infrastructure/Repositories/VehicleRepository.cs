@@ -107,8 +107,8 @@ public class VehicleRepository : PaginatedRepository<Vehicle>, IVehicleRepositor
             return true;
         }
 
-        var status = vehicle.Category?.Name?.Trim().ToLowerInvariant() 
-                     ?? vehicle.Status?.Trim().ToLowerInvariant() 
+        var status = vehicle.Category?.Name?.Trim().ToLowerInvariant()
+                     ?? vehicle.Status?.Trim().ToLowerInvariant()
                      ?? string.Empty;
         if (status == requested)
         {
@@ -147,10 +147,10 @@ public class VehicleRepository : PaginatedRepository<Vehicle>, IVehicleRepositor
         var description = vehicle.Description?.Trim().ToLowerInvariant() ?? string.Empty;
 
         // Conduct focused checks to resolve confusion around large 4-passenger vehicles and SUVs.
-        var isSuvKeyword = model.Contains("suv") || model.Contains("crossover") || 
+        var isSuvKeyword = model.Contains("suv") || model.Contains("crossover") ||
                            description.Contains("suv") || description.Contains("crossover");
 
-        var isLargeKeyword = model.Contains("large") || description.Contains("large") || 
+        var isLargeKeyword = model.Contains("large") || description.Contains("large") ||
                              model.Contains("wagon") || description.Contains("wagon") ||
                              model.Contains("truck") || description.Contains("truck") ||
                              model.Contains("pickup") || description.Contains("pickup") ||
@@ -216,7 +216,7 @@ public class VehicleRepository : PaginatedRepository<Vehicle>, IVehicleRepositor
             _logger.LogInformation(
                 "Vehicle availability check: VehicleId={VehicleId}, StartDate={StartDate}, EndDate={EndDate}, Decision={Available}, ExcludeUserId={ExcludeUserId}, ExcludeBookingId={ExcludeBookingId}",
                 vehicleId, startDate, endDate, !hasOverlappingBooking, excludeUserId, excludeBookingId);
-            
+
             foreach (var conflict in conflicts)
             {
                 _logger.LogWarning(

@@ -273,12 +273,12 @@ namespace Backend.Application.Services
             var booking = await _bookingRepository.GetByIdAsync(bookingId, cancellationToken);
             if (booking == null) throw new NotFoundException("Booking not found.");
             if (booking.AssignedDriverProfileId != driverProfileId) throw new ForbiddenException("You are not assigned to this booking.");
-            
+
             if (booking.PickupDate.HasValue && DateTime.UtcNow > booking.PickupDate.Value.AddHours(-24))
             {
                 throw new BadRequestException("Cannot cancel assignment within 24 hours of pickup.");
             }
-            
+
             booking.AssignedDriverProfileId = null;
             booking.DriverLockedUntil = null;
             booking.DriverAssignmentStatus = DriverAssignmentStatus.Waiting;

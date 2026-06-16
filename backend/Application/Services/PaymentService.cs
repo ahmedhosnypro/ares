@@ -412,7 +412,7 @@ Thank you for your business!
         var amountCents = (long)(amount * 100);
 
         var authToken = await _paymob.GetAuthTokenAsync(ct);
-        
+
         // Ensure merchant_order_id is unique across retries
         var merchantOrderId = $"{bookingId}_{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var orderId = await _paymob.CreateOrderAsync(authToken, amountCents, "EGP", merchantOrderId, ct);
@@ -463,7 +463,7 @@ Thank you for your business!
 
         if (!queryParams.TryGetValue("hmac", out var receivedHmac) || !VerifyHmac(_paymobSettings.HmacSecret, queryParams, receivedHmac))
         {
-            _logger.LogWarning("Paymob HMAC verification failed for order {OrderId}. Received: {Hmac}", 
+            _logger.LogWarning("Paymob HMAC verification failed for order {OrderId}. Received: {Hmac}",
                 queryParams.GetValueOrDefault("order"), receivedHmac);
             return (false, extractedBookingId);
         }
@@ -604,14 +604,14 @@ Thank you for your business!
 
         var authToken = await _paymob.GetAuthTokenAsync(ct);
         var tx = await _paymob.GetTransactionsByOrderIdAsync(authToken, payment.PaymobOrderId, ct);
-        
+
         if (tx == null)
             return false;
 
         payment.Status = tx.Success ? "Captured" : "Failed";
         payment.ProcessedAt = DateTime.UtcNow;
         payment.PaymobTransactionId = tx.Id;
-        
+
         if (!tx.Success && !string.IsNullOrEmpty(tx.Reason))
             payment.FailureReason = tx.Reason;
 

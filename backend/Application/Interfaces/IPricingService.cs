@@ -15,9 +15,9 @@ namespace Backend.Application.Interfaces
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>A tuple with OriginalPrice, DiscountAmount, and FinalPrice.</returns>
         Task<(decimal OriginalPrice, decimal DiscountAmount, decimal FinalPrice)> CalculateBookingPricingAsync(
-            Guid vehicleId, 
-            DateTime pickupDate, 
-            DateTime returnDate, 
+            Guid vehicleId,
+            DateTime pickupDate,
+            DateTime returnDate,
             CancellationToken cancellationToken = default);
     }
 }

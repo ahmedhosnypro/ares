@@ -60,9 +60,9 @@ public class SupplierRestrictionService : ISupplierRestrictionService
         {
             booking.Status = BookingStatus.CancelledByAdmin;
             booking.CancelledAt = now;
-            
+
             var totalAmount = booking.TotalPrice ?? 0m;
-            
+
             // Full refund because admin cancelled due to restriction
             var cancellation = new BookingCancellation
             {
@@ -115,7 +115,7 @@ public class SupplierRestrictionService : ISupplierRestrictionService
                 .CountAsync(cancellationToken);
 
             var newStatus = activeBookingsCount > 0 ? "Restricted" : "Blocked";
-            
+
             if (supplier.Status != newStatus)
             {
                 _logger.LogInformation("Setting supplier {SupplierId} status to {NewStatus} based on active bookings count: {ActiveCount}", supplierId, newStatus, activeBookingsCount);

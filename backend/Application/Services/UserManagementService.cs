@@ -339,16 +339,16 @@ public class UserManagementService : IUserManagementService
         {
             var adminIdString = _httpContextAccessor.HttpContext?.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             var adminId = Guid.TryParse(adminIdString, out var parsedId) ? parsedId : Guid.Empty;
-            
+
             if (await _userManager.IsInRoleAsync(user, "Supplier"))
             {
-                if (request.Status.Equals("Restricted", StringComparison.OrdinalIgnoreCase) || 
+                if (request.Status.Equals("Restricted", StringComparison.OrdinalIgnoreCase) ||
                     request.Status.Equals("Blocked", StringComparison.OrdinalIgnoreCase))
                 {
                     await _supplierRestrictionService.ApplyRestrictionAsync(user.Id, adminId, cancellationToken);
                 }
-                else if (request.Status.Equals("Active", StringComparison.OrdinalIgnoreCase) && 
-                         (previousStatus == "Restricted" || previousStatus == "Blocked" || 
+                else if (request.Status.Equals("Active", StringComparison.OrdinalIgnoreCase) &&
+                         (previousStatus == "Restricted" || previousStatus == "Blocked" ||
                           previousStatus == "RESTRICTED" || previousStatus == "BLOCKED"))
                 {
                     await _supplierRestrictionService.RemoveRestrictionAsync(user.Id, adminId, cancellationToken);

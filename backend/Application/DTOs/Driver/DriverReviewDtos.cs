@@ -11,7 +11,7 @@ namespace Backend.Application.DTOs.Driver
 
         public string? Comment { get; set; }
     }
-    
+
     public class DriverReviewDto
     {
         public Guid Id { get; set; }

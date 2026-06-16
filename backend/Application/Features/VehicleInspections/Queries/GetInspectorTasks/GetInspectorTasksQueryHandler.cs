@@ -32,7 +32,7 @@ public sealed class GetInspectorTasksQueryHandler
         GetInspectorTasksQuery request,
         CancellationToken cancellationToken)
     {
-        var todayStart    = DateTime.UtcNow.Date;
+        var todayStart = DateTime.UtcNow.Date;
         var tomorrowStart = todayStart.AddDays(1);
 
         var results = await _context.VehicleInspections
@@ -40,7 +40,7 @@ public sealed class GetInspectorTasksQueryHandler
                 i.InspectorId == request.InspectorId &&
                 !i.IsSubmitted &&
                 i.InspectionDate >= todayStart &&
-                i.InspectionDate <  tomorrowStart)
+                i.InspectionDate < tomorrowStart)
             .Select(i => new
             {
                 i.InspectionId,
@@ -48,18 +48,18 @@ public sealed class GetInspectorTasksQueryHandler
                 i.InspectionDate,
 
                 // Vehicle fields
-                VehicleMake    = i.Vehicle != null ? i.Vehicle.Make    : null,
-                VehicleModel   = i.Vehicle != null ? i.Vehicle.Model   : null,
-                VehicleYear    = i.Vehicle != null ? i.Vehicle.Year    : null,
-                PlateNumber    = i.Vehicle != null ? i.Vehicle.LicensePlate : null,
+                VehicleMake = i.Vehicle != null ? i.Vehicle.Make : null,
+                VehicleModel = i.Vehicle != null ? i.Vehicle.Model : null,
+                VehicleYear = i.Vehicle != null ? i.Vehicle.Year : null,
+                PlateNumber = i.Vehicle != null ? i.Vehicle.LicensePlate : null,
 
                 // Customer fields (via Booking → User)
-                CustomerFirst  = i.Booking != null && i.Booking.User != null ? i.Booking.User.FirstName : null,
-                CustomerLast   = i.Booking != null && i.Booking.User != null ? i.Booking.User.LastName  : null,
-                CustomerPhone  = i.Booking != null && i.Booking.User != null ? i.Booking.User.PhoneNumber : null,
+                CustomerFirst = i.Booking != null && i.Booking.User != null ? i.Booking.User.FirstName : null,
+                CustomerLast = i.Booking != null && i.Booking.User != null ? i.Booking.User.LastName : null,
+                CustomerPhone = i.Booking != null && i.Booking.User != null ? i.Booking.User.PhoneNumber : null,
 
                 // Address: use pickup location for CheckOut, dropoff for CheckIn
-                PickupAddress  = i.Booking != null ? i.Booking.PickupLocation  : null,
+                PickupAddress = i.Booking != null ? i.Booking.PickupLocation : null,
                 DropoffAddress = i.Booking != null ? i.Booking.DropoffLocation : null,
             })
             .OrderBy(i => i.InspectionDate)
@@ -67,14 +67,14 @@ public sealed class GetInspectorTasksQueryHandler
 
         return results
             .Select(i => new InspectorTaskDto(
-                InspectionId:   i.InspectionId,
+                InspectionId: i.InspectionId,
                 InspectionType: MapInspectionType(i.InspectionType),
-                VehicleName:    BuildVehicleName(i.VehicleMake, i.VehicleModel, i.VehicleYear),
-                PlateNumber:    i.PlateNumber ?? string.Empty,
-                CustomerName:   BuildCustomerName(i.CustomerFirst, i.CustomerLast),
-                CustomerPhone:  i.CustomerPhone ?? string.Empty,
-                ScheduledTime:  i.InspectionDate,
-                Address:        ResolveAddress(i.InspectionType, i.PickupAddress, i.DropoffAddress)))
+                VehicleName: BuildVehicleName(i.VehicleMake, i.VehicleModel, i.VehicleYear),
+                PlateNumber: i.PlateNumber ?? string.Empty,
+                CustomerName: BuildCustomerName(i.CustomerFirst, i.CustomerLast),
+                CustomerPhone: i.CustomerPhone ?? string.Empty,
+                ScheduledTime: i.InspectionDate,
+                Address: ResolveAddress(i.InspectionType, i.PickupAddress, i.DropoffAddress)))
             .ToList()
             .AsReadOnly();
     }
@@ -85,7 +85,7 @@ public sealed class GetInspectorTasksQueryHandler
     {
         "Pickup" => "CheckOut",
         "Return" => "CheckIn",
-        _        => rawType,
+        _ => rawType,
     };
 
     private static string BuildVehicleName(string? make, string? model, int? year)

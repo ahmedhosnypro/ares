@@ -42,7 +42,7 @@ namespace Backend.Domain.Entities
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal? OriginalPrice { get; set; }
-        
+
         [Column(TypeName = "decimal(18,2)")]
         public decimal? DiscountAmount { get; set; }
 

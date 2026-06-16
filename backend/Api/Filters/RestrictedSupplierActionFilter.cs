@@ -46,7 +46,7 @@ public class RestrictedSupplierActionFilter : IAsyncActionFilter
                             Message = "Your account is restricted. You are not allowed to perform this action.",
                             ErrorCode = "ACCOUNT_RESTRICTED"
                         };
-                        
+
                         context.Result = new ObjectResult(response)
                         {
                             StatusCode = 403

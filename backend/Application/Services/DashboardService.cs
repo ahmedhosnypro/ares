@@ -41,8 +41,8 @@ public class DashboardService : IDashboardService
             .ToListAsync(cancellationToken);
 
         var availableVehicles = await _context.Vehicles
-            .CountAsync(v => v.IsActive && 
-                             v.AvailabilityStatus == "Available" && 
+            .CountAsync(v => v.IsActive &&
+                             v.AvailabilityStatus == "Available" &&
                              !activeBookedVehicleIds.Contains(v.Id), cancellationToken);
 
         var pendingInspections = await _context.Bookings
@@ -293,7 +293,7 @@ public class DashboardService : IDashboardService
     public async Task<IReadOnlyList<RevenueDataPointDto>> GetRevenueWeekAsync(Guid? supplierId, CancellationToken cancellationToken = default)
     {
         var startDate = DateTime.UtcNow.Date.AddDays(-6);
-        
+
         var query = _context.Bookings
             .Where(b => b.CreatedAt >= startDate && (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Completed));
 
@@ -329,7 +329,7 @@ public class DashboardService : IDashboardService
         }
 
         var totalActiveRentals = await query.CountAsync(b => b.Status == BookingStatus.Active, cancellationToken);
-        
+
         // Mock the connected phones based on active rentals for now
         var connectedPhones = (int)Math.Round(totalActiveRentals * 0.9);
 
@@ -437,8 +437,8 @@ public class DashboardService : IDashboardService
                 PlatformRevenue = g.Sum(x => (x.Booking.Status == BookingStatus.Confirmed || x.Booking.Status == BookingStatus.Active || x.Booking.Status == BookingStatus.Completed) ? (x.Booking.CommissionAmount ?? 0) : 0),
                 SupplierRevenue = g.Sum(x => (x.Booking.Status == BookingStatus.Confirmed || x.Booking.Status == BookingStatus.Active || x.Booking.Status == BookingStatus.Completed) ? (x.Booking.SupplierAmount ?? x.Booking.TotalPrice ?? 0) : 0),
                 Bookings = g.Sum(x => (x.Booking.Status == BookingStatus.Confirmed || x.Booking.Status == BookingStatus.Active || x.Booking.Status == BookingStatus.Completed) ? (x.Booking.TotalPrice ?? 0) : 0),
-                Refunds = g.Sum(x => x.Booking.Status == BookingStatus.Cancelled && x.Cancellation != null 
-                    ? x.Cancellation.RefundAmount 
+                Refunds = g.Sum(x => x.Booking.Status == BookingStatus.Cancelled && x.Cancellation != null
+                    ? x.Cancellation.RefundAmount
                     : 0)
             })
             .OrderBy(x => x.Date)

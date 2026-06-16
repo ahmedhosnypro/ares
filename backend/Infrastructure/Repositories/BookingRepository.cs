@@ -78,7 +78,7 @@ public class BookingRepository : PaginatedRepository<Booking>, IBookingRepositor
                     _logger.LogWarning(
                         "ReserveVehicleAtomicAsync conflict detected (InMemory): VehicleId={VehicleId}, AttemptedBookingId={BookingId}, CustomerId={CustomerId}",
                         booking.VehicleId, booking.Id, booking.UserId);
-                    
+
                     foreach (var conflict in conflictDetails)
                     {
                         _logger.LogWarning(
@@ -182,7 +182,7 @@ public class BookingRepository : PaginatedRepository<Booking>, IBookingRepositor
                     _logger.LogWarning(
                         "ReserveVehicleAtomicAsync conflict detected: VehicleId={VehicleId}, AttemptedBookingId={BookingId}, CustomerId={CustomerId}",
                         booking.VehicleId, booking.Id, booking.UserId);
-                    
+
                     foreach (var conflict in conflictDetails)
                     {
                         _logger.LogWarning(

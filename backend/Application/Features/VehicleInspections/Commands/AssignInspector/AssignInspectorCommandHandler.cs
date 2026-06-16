@@ -22,8 +22,8 @@ namespace Backend.Application.Features.VehicleInspections.Commands.AssignInspect
         private readonly ILogger<AssignInspectorCommandHandler> _logger;
 
         public AssignInspectorCommandHandler(
-            IApplicationDbContext context, 
-            IMediator mediator, 
+            IApplicationDbContext context,
+            IMediator mediator,
             INotificationService notificationService,
             ILogger<AssignInspectorCommandHandler> logger)
         {
@@ -68,7 +68,8 @@ namespace Backend.Application.Features.VehicleInspections.Commands.AssignInspect
                     .ToDictionaryAsync(x => x.InspectorId ?? Guid.Empty, x => x.Count, cancellationToken);
 
                 var bestInspector = availableInspectors
-                    .Select(i => new {
+                    .Select(i => new
+                    {
                         Inspector = i,
                         PendingCount = pendingCounts.ContainsKey(i.UserId) ? pendingCounts[i.UserId] : 0
                     })

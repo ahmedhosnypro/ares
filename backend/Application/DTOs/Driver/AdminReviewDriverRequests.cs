@@ -6,7 +6,7 @@ namespace Backend.Application.DTOs.Driver
     {
         // Placeholder for any specific approval parameters
     }
-    
+
     public class AdminRejectDriverRequest
     {
         [Required]

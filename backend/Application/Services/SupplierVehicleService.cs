@@ -363,7 +363,7 @@ public class SupplierVehicleService : ISupplierVehicleService
             // Remove existing images
             _context.RemoveVehicleImages(vehicle.Images.ToList());
             vehicle.Images.Clear();
-            
+
             // Add new ones
             foreach (var img in request.Images)
             {

@@ -30,7 +30,7 @@ namespace Backend.Application.Services
 
             if (vehicle?.Category != null && vehicle.Category.IsActive)
             {
-                _logger.LogInformation("Using category commission {Percentage}% for Vehicle {VehicleId}", 
+                _logger.LogInformation("Using category commission {Percentage}% for Vehicle {VehicleId}",
                     vehicle.Category.CommissionPercentage, vehicleId);
                 return vehicle.Category.CommissionPercentage;
             }
@@ -43,7 +43,7 @@ namespace Backend.Application.Services
                 return globalCommission;
             }
 
-            _logger.LogInformation("No category override or global setting found. Using default commission {Percentage}% for Vehicle {VehicleId}", 
+            _logger.LogInformation("No category override or global setting found. Using default commission {Percentage}% for Vehicle {VehicleId}",
                 DefaultGlobalCommission, vehicleId);
             return DefaultGlobalCommission;
         }

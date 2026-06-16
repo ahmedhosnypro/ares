@@ -6,16 +6,16 @@ namespace Backend.Application.DTOs.Inspection;
 /// inspector can act (call, navigate, open form) from a single card.
 /// </summary>
 public sealed record InspectorTaskDto(
-    Guid     InspectionId,
+    Guid InspectionId,
 
     /// <summary>"CheckOut" (Pickup) or "CheckIn" (Return).</summary>
-    string   InspectionType,
+    string InspectionType,
 
-    string   VehicleName,
-    string   PlateNumber,
+    string VehicleName,
+    string PlateNumber,
 
-    string   CustomerName,
-    string   CustomerPhone,
+    string CustomerName,
+    string CustomerPhone,
 
     DateTime ScheduledTime,
 
@@ -23,5 +23,5 @@ public sealed record InspectorTaskDto(
     /// Human-readable address for the pickup or drop-off location.
     /// Used to build the Google Maps link on the client.
     /// </summary>
-    string   Address
+    string Address
 );

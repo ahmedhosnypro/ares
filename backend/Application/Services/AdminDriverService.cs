@@ -119,10 +119,10 @@ namespace Backend.Application.Services
             profile.Status = DriverProfileStatus.Verified;
             profile.ReviewedBy = adminId;
             profile.ReviewedAt = DateTime.UtcNow;
-            
+
             await _profileRepository.UpdateAsync(profile, cancellationToken);
             await _profileRepository.SaveChangesAsync(cancellationToken);
-            
+
             await _notificationService.NotifyDriverApprovedAsync(profile.UserId, cancellationToken);
         }
 
@@ -138,7 +138,7 @@ namespace Backend.Application.Services
 
             await _profileRepository.UpdateAsync(profile, cancellationToken);
             await _profileRepository.SaveChangesAsync(cancellationToken);
-            
+
             await _notificationService.NotifyDriverRejectedAsync(profile.UserId, request.RejectionReason, cancellationToken);
         }
 
@@ -160,7 +160,7 @@ namespace Backend.Application.Services
             profile.IsActive = false;
             // Optionally flip status to suspended
             profile.Status = DriverProfileStatus.Suspended;
-            
+
             await _profileRepository.UpdateAsync(profile, cancellationToken);
             await _profileRepository.SaveChangesAsync(cancellationToken);
         }

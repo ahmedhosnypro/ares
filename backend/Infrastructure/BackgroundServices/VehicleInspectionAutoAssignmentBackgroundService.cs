@@ -78,10 +78,10 @@ namespace Backend.Infrastructure.BackgroundServices
                 try
                 {
                     _logger.LogInformation("Auto-assigning inspector for Booking {BookingId}", booking.Id);
-                    
+
                     var command = new AssignInspectorCommand(booking.Id);
                     await mediator.Send(command, cancellationToken);
-                    
+
                     _logger.LogInformation("Assignment Success: Successfully assigned inspector for Booking {BookingId}", booking.Id);
                     successCount++;
                 }

@@ -48,13 +48,13 @@ namespace Backend.Application.Services
             {
                 var dailyRate = await GetDailyRateAsync(cancellationToken);
                 booking.DriverFee = dailyRate * totalDays;
-                
+
                 // Assuming Vehicle.PricePerDay logic is handled elsewhere, we compute GrandTotal based on existing properties
                 if (booking.Vehicle != null)
                 {
                     booking.VehicleFee = booking.Vehicle.PricePerDay * totalDays;
                 }
-                
+
                 booking.GrandTotal = (booking.VehicleFee ?? 0) + booking.DriverFee;
                 booking.TotalPrice = booking.GrandTotal; // Retro-compatibility
             }

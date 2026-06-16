@@ -19,7 +19,7 @@ namespace Backend.Application.Handlers.Bookings
         {
             var subject = "Booking Confirmation - Ares Car Rental";
             var title = $"Thank you for your booking, {notification.CustomerName}!";
-            
+
             var body = $@"
                 <p>Your booking for the vehicle <strong>{notification.VehicleName}</strong> has been successfully confirmed.</p>
                 <p><strong>Booking Details:</strong></p>

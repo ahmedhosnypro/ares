@@ -107,17 +107,17 @@ public class BookingStatusUpdateService : BackgroundService
             booking.CancellationReason = "Automatic cancellation: Pickup date passed without confirmation.";
             booking.CancelledAt = now;
             booking.UpdatedAt = now;
-            
+
             if (booking.DriverAssignmentStatus == DriverAssignmentStatus.Waiting)
                 booking.DriverAssignmentStatus = DriverAssignmentStatus.Expired;
-                
+
             _logger.LogInformation($"Booking {booking.Id} (Num: {booking.BookingNumber}) automatically Cancelled (was Draft after pickup date).");
         }
 
         // 3b. Confirmed -> Cancelled (Failed workflows: Driver Expired or Inspection Rejected)
         var workflowFailedToCancel = await context.Bookings
             .Where(b => b.Status == BookingStatus.Confirmed &&
-                        (b.DriverAssignmentStatus == DriverAssignmentStatus.Expired || 
+                        (b.DriverAssignmentStatus == DriverAssignmentStatus.Expired ||
                          b.InspectionStatus == InspectionStatus.Rejected))
             .ToListAsync(cancellationToken);
 
@@ -186,7 +186,7 @@ public class BookingStatusUpdateService : BackgroundService
             await context.SaveChangesAsync(cancellationToken);
             _logger.LogInformation(
                 $"Saved {bookingsToActivate.Count + bookingsToComplete.Count + pendingToCancel.Count + holdsToExpire.Count + abandonedDrafts.Count + workflowFailedToCancel.Count + driversToExpire.Count} status transitions.");
-            
+
             if (suppliersToCheck != null && suppliersToCheck.Any())
             {
                 foreach (var supplierId in suppliersToCheck)

@@ -42,7 +42,7 @@ public class BookingCreationPropertyTests : IDisposable
         var store = new Mock<IUserStore<ApplicationUser>>();
         var userManagerMock = new Mock<UserManager<ApplicationUser>>(
             store.Object, null!, null!, null!, null!, null!, null!, null!, null!);
-        
+
         userManagerMock.Setup(x => x.FindByIdAsync(It.IsAny<string>()))
             .ReturnsAsync((string id) => new ApplicationUser { Id = Guid.Parse(id) });
         userManagerMock.Setup(x => x.IsInRoleAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
@@ -312,7 +312,7 @@ public class BookingCreationPropertyTests : IDisposable
     {
         var customerId = Guid.NewGuid();
         var supplierId = Guid.NewGuid();
-        
+
         _context.Users.Add(new ApplicationUser { Id = customerId, UserName = customerId.ToString(), Email = customerId + "@test.com" });
         _context.Users.Add(new ApplicationUser { Id = supplierId, UserName = supplierId.ToString(), Email = supplierId + "@test.com" });
 

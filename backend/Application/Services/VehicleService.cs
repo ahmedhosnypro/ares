@@ -788,7 +788,7 @@ public class VehicleService : IVehicleService
             // Instead of wholesale RemoveRange + Add (which breaks EF tracking and causes Concurrency Exceptions),
             // we synchronize the list based on the URL (which is our unique identifier here).
             var incomingUrls = request.Images.Select(i => i.Url).ToHashSet();
-            
+
             // 1. Remove images not in the new list
             var imagesToRemove = vehicle.Images.Where(i => !incomingUrls.Contains(i.ImageUrl)).ToList();
             foreach (var img in imagesToRemove)
@@ -843,7 +843,7 @@ public class VehicleService : IVehicleService
                 }
                 else
                 {
-                    _context.AddVehicleFeatures(new List<Domain.Entities.VehicleFeature> 
+                    _context.AddVehicleFeatures(new List<Domain.Entities.VehicleFeature>
                     {
                         new Domain.Entities.VehicleFeature
                         {

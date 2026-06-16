@@ -423,13 +423,13 @@ public class AuthService : IAuthService
         }
 
         var refreshToken = user.RefreshTokens.Single(x => x.Token == request.RefreshToken);
-        _logger.LogInformation("Found refresh token for user {UserId}. ExpiresAt: {ExpiresAt}, CreatedAt: {CreatedAt}, IsExpired: {IsExpired}, IsRevoked: {IsRevoked}, CurrentUtc: {CurrentUtc}", 
+        _logger.LogInformation("Found refresh token for user {UserId}. ExpiresAt: {ExpiresAt}, CreatedAt: {CreatedAt}, IsExpired: {IsExpired}, IsRevoked: {IsRevoked}, CurrentUtc: {CurrentUtc}",
             user.Id, refreshToken.ExpiresAt, refreshToken.CreatedAt, refreshToken.IsExpired, refreshToken.IsRevoked, DateTime.UtcNow);
 
         if (!refreshToken.IsActive)
         {
             var reason = refreshToken.IsExpired ? "expired" : "revoked";
-            _logger.LogWarning("Refresh token failed: Token {Reason} for user {UserId}. IsExpired: {IsExpired}, IsRevoked: {IsRevoked}, ExpiresAt: {ExpiresAt}, RevokedAt: {RevokedAt}", 
+            _logger.LogWarning("Refresh token failed: Token {Reason} for user {UserId}. IsExpired: {IsExpired}, IsRevoked: {IsRevoked}, ExpiresAt: {ExpiresAt}, RevokedAt: {RevokedAt}",
                 reason, user.Id, refreshToken.IsExpired, refreshToken.IsRevoked, refreshToken.ExpiresAt, refreshToken.RevokedAt);
             throw new UnauthorizedException($"Refresh token {reason}. Please login again.");
         }

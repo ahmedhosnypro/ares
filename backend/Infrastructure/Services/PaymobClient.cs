@@ -90,11 +90,11 @@ public class PaymobClient : IPaymobClient
     {
         var request = new HttpRequestMessage(HttpMethod.Get, $"/api/acceptance/transactions?order_id={orderId}");
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
-        
+
         var response = await _http.SendAsync(request, ct);
         if (!response.IsSuccessStatusCode)
             return null;
-            
+
         var result = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: ct);
         if (!result.TryGetProperty("results", out var results) || results.ValueKind != JsonValueKind.Array || results.GetArrayLength() == 0)
             return null;

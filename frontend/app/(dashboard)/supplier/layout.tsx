@@ -23,7 +23,7 @@ import { Alert, Box, AlertTitle } from "@mui/material";
 
 export default function SupplierLayout({ children }: { readonly children: React.ReactNode }) {
   const { data: session } = useSession();
-  const isRestricted = session?.user?.status?.toLowerCase() === "restricted";
+  const isRestricted = session?.user?.status.toLowerCase() === "restricted";
 
   return (
     <DashboardShell
@@ -38,7 +38,8 @@ export default function SupplierLayout({ children }: { readonly children: React.
         <Box sx={{ p: 3, pb: 0 }}>
           <Alert severity="error" variant="filled" sx={{ borderRadius: 2 }}>
             <AlertTitle sx={{ fontWeight: 700 }}>Account Restricted</AlertTitle>
-            Your account has been restricted by administration. You may continue viewing your bookings, vehicles, reports and earnings, but you cannot perform any actions until the restriction is removed.
+            Your account has been restricted by administration. You may continue viewing your bookings, vehicles,
+            reports and earnings, but you cannot perform any actions until the restriction is removed.
           </Alert>
         </Box>
       )}

@@ -348,7 +348,7 @@ public class InspectionService : IInspectionService
         if (inspection == null) return null;
 
         var booking = await _bookingRepository.GetBookingWithDetailsAsync(inspection.BookingId, cancellationToken);
-        var inspectorUser = inspection.InspectorId.HasValue 
+        var inspectorUser = inspection.InspectorId.HasValue
             ? await _userManager.FindByIdAsync(inspection.InspectorId.Value.ToString())
             : null;
 

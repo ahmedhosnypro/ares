@@ -89,7 +89,7 @@ public static class DbInitializer
                     await context.SaveChangesAsync();
                 }
             }
-            
+
             await EnsureCategoriesAndCategorizeVehiclesAsync(context, logger);
 
             // Fix any existing bookings with null or zero commission
@@ -144,48 +144,48 @@ public static class DbInitializer
         try
         {
             var contentRoot = env.ContentRootPath;
-        var webRoot = env.WebRootPath;
+            var webRoot = env.WebRootPath;
 
-        if (string.IsNullOrEmpty(webRoot))
-        {
-            webRoot = Path.Combine(contentRoot, "wwwroot");
-        }
-
-        var sourcePath = Path.GetFullPath(Path.Combine(contentRoot, "..", "Infrastructure", "Data", "SeedData", "Assets", "seed"));
-        var targetRoot = Path.Combine(webRoot, "uploads", "seed");
-
-        if (!Directory.Exists(sourcePath))
-        {
-            logger.LogWarning("Seeder assets source directory not found: {SourcePath}", sourcePath);
-            return;
-        }
-
-        logger.LogInformation("Syncing seeder assets from {Source} to {Target}", sourcePath, targetRoot);
-
-        if (!Directory.Exists(targetRoot))
-        {
-            Directory.CreateDirectory(targetRoot);
-        }
-
-        foreach (string dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
-        {
-            Directory.CreateDirectory(Path.Combine(targetRoot, Path.GetRelativePath(sourcePath, dirPath)));
-        }
-
-        foreach (string newPath in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
-        {
-            var targetPath = Path.Combine(targetRoot, Path.GetRelativePath(sourcePath, newPath));
-            if (!File.Exists(targetPath))
+            if (string.IsNullOrEmpty(webRoot))
             {
-                File.Copy(newPath, targetPath, true);
+                webRoot = Path.Combine(contentRoot, "wwwroot");
+            }
+
+            var sourcePath = Path.GetFullPath(Path.Combine(contentRoot, "..", "Infrastructure", "Data", "SeedData", "Assets", "seed"));
+            var targetRoot = Path.Combine(webRoot, "uploads", "seed");
+
+            if (!Directory.Exists(sourcePath))
+            {
+                logger.LogWarning("Seeder assets source directory not found: {SourcePath}", sourcePath);
+                return;
+            }
+
+            logger.LogInformation("Syncing seeder assets from {Source} to {Target}", sourcePath, targetRoot);
+
+            if (!Directory.Exists(targetRoot))
+            {
+                Directory.CreateDirectory(targetRoot);
+            }
+
+            foreach (string dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
+            {
+                Directory.CreateDirectory(Path.Combine(targetRoot, Path.GetRelativePath(sourcePath, dirPath)));
+            }
+
+            foreach (string newPath in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
+            {
+                var targetPath = Path.Combine(targetRoot, Path.GetRelativePath(sourcePath, newPath));
+                if (!File.Exists(targetPath))
+                {
+                    File.Copy(newPath, targetPath, true);
+                }
             }
         }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to sync seeder assets");
+        }
     }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "Failed to sync seeder assets");
-    }
-}
 
     private static async Task SeedRolesAsync(
         RoleManager<IdentityRole<Guid>> roleManager,
@@ -891,13 +891,13 @@ public static class DbInitializer
         }
 
         // 2. Recent vehicle added (8 days ago)
-        
+
 
         // 3. Recent booking - Pending (3 days ago)
-        
+
 
         // 4. Recent payment - a Confirmed booking updated 3 hours ago
-        
+
 
         // 5. Recent verification (5 days ago)
         var recentVerificationId = Guid.Parse("a5a5a5a5-a5a5-a5a5-a5a5-a5a5a5a5a5a5");
@@ -929,7 +929,7 @@ public static class DbInitializer
             {
                 existingVerification.Status = "Pending";
             }
-            
+
             if (existingVerification.CreatedAt > now.AddDays(-4))
             {
                 existingVerification.CreatedAt = now.AddDays(-5);
@@ -1214,7 +1214,7 @@ public static class DbInitializer
             Category targetCategory;
 
             // 1. Electric
-            if (fuelType.Contains("electric", StringComparison.OrdinalIgnoreCase) || 
+            if (fuelType.Contains("electric", StringComparison.OrdinalIgnoreCase) ||
                 model.Contains("electric", StringComparison.OrdinalIgnoreCase) ||
                 description.Contains("electric", StringComparison.OrdinalIgnoreCase))
             {
@@ -1228,25 +1228,25 @@ public static class DbInitializer
                 targetCategory = hybridCategory;
             }
             // 3. Van
-            else if (model.Contains("van", StringComparison.OrdinalIgnoreCase) || 
+            else if (model.Contains("van", StringComparison.OrdinalIgnoreCase) ||
                      model.Contains("transit", StringComparison.OrdinalIgnoreCase) ||
-                     description.Contains("van", StringComparison.OrdinalIgnoreCase) || 
+                     description.Contains("van", StringComparison.OrdinalIgnoreCase) ||
                      description.Contains("transit", StringComparison.OrdinalIgnoreCase) ||
                      seats >= 7)
             {
                 targetCategory = vanCategory;
             }
             // 4. SUV
-            else if (model.Contains("suv", StringComparison.OrdinalIgnoreCase) || 
+            else if (model.Contains("suv", StringComparison.OrdinalIgnoreCase) ||
                      model.Contains("crossover", StringComparison.OrdinalIgnoreCase) ||
-                     description.Contains("suv", StringComparison.OrdinalIgnoreCase) || 
+                     description.Contains("suv", StringComparison.OrdinalIgnoreCase) ||
                      description.Contains("crossover", StringComparison.OrdinalIgnoreCase) ||
                      new[] { "rav4", "tucson", "cherokee", "cx-5", "sportage", "santa fe", "qashqai" }.Any(m => model.Contains(m, StringComparison.OrdinalIgnoreCase)))
             {
                 targetCategory = suvCategory;
             }
             // 5. Luxury
-            else if (price >= 150m || 
+            else if (price >= 150m ||
                      new[] { "bmw", "mercedes", "audi", "lexus", "porsche", "tesla", "volvo" }.Any(brand => make.Contains(brand, StringComparison.OrdinalIgnoreCase)))
             {
                 targetCategory = luxuryCategory;

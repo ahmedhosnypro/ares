@@ -18,9 +18,9 @@ namespace Backend.Application.Services
         }
 
         public async Task<(decimal OriginalPrice, decimal DiscountAmount, decimal FinalPrice)> CalculateBookingPricingAsync(
-            Guid vehicleId, 
-            DateTime pickupDate, 
-            DateTime returnDate, 
+            Guid vehicleId,
+            DateTime pickupDate,
+            DateTime returnDate,
             CancellationToken cancellationToken = default)
         {
             var vehicle = await _context.Vehicles
@@ -34,7 +34,7 @@ namespace Backend.Application.Services
 
             var pricePerDay = vehicle.PricePerDay ?? 0m;
             int totalDays = (returnDate - pickupDate).Days;
-            
+
             // If the booking is less than a day but has hours, we usually charge 1 day.
             // But we will follow the existing totalDays logic.
             if (totalDays <= 0) totalDays = 1;
@@ -43,7 +43,7 @@ namespace Backend.Application.Services
             decimal discountAmount = 0m;
 
             // Fetch active category offer if available
-            var offer = vehicle.CategoryId.HasValue 
+            var offer = vehicle.CategoryId.HasValue
                 ? await _context.CategoryOffers
                     .Where(o => o.CategoryId == vehicle.CategoryId.Value && o.IsActive)
                     .OrderByDescending(o => o.CreatedAt)

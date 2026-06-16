@@ -59,7 +59,7 @@ namespace Backend.Tests.UnitTests
 
             // Act
             var result = await _controller.Update(categoryId, request, CancellationToken.None);
-            
+
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var updatedCategory = Assert.IsType<CategoryResponseDto>(okResult.Value);

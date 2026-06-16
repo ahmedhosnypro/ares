@@ -112,7 +112,7 @@ export default function SupplierVehiclesClient() {
   const router = useRouter();
   const { data: session, status: sessionStatus } = useSession();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const isRestricted = session?.user?.status?.toLowerCase() === "restricted";
+  const isRestricted = session?.user?.status.toLowerCase() === "restricted";
 
   // ── Filter state ──────────────────────────────────────────────────────────
   const [searchInput, setSearchInput] = useState("");
@@ -263,7 +263,7 @@ export default function SupplierVehiclesClient() {
         setTogglingId(null);
       }
     },
-    [session?.accessToken, showToast]
+    [session?.accessToken, showToast, isRestricted]
   );
 
   // ── Derived helpers ───────────────────────────────────────────────────────

@@ -166,7 +166,7 @@ public class BookingService : IBookingService
             request.PickupDate,
             request.ReturnDate,
             cancellationToken);
-            
+
         var originalPrice = pricingResult.OriginalPrice;
         var discountAmount = pricingResult.DiscountAmount;
         var totalPrice = pricingResult.FinalPrice;
@@ -478,7 +478,7 @@ public class BookingService : IBookingService
                 driverProfile.LockedUntil = null;
                 driverProfile.Availability = DriverAvailability.Available;
                 await _driverProfileRepository.UpdateAsync(driverProfile, cancellationToken);
-                
+
                 if (_notificationService != null)
                 {
                     await _notificationService.CreateNotificationAsync(
@@ -715,8 +715,8 @@ public class BookingService : IBookingService
         await NotifyBookingStatusChangeAsync(booking, parsedStatus, cancellationToken);
 
         // Check for auto-conversion if the supplier is restricted
-        if ((parsedStatus == BookingStatus.Completed || parsedStatus == BookingStatus.Cancelled) 
-            && booking.Vehicle?.UserId != null 
+        if ((parsedStatus == BookingStatus.Completed || parsedStatus == BookingStatus.Cancelled)
+            && booking.Vehicle?.UserId != null
             && _supplierRestrictionService != null)
         {
             await _supplierRestrictionService.CheckAndConvertToBlockedAsync(booking.Vehicle.UserId, cancellationToken);
@@ -810,7 +810,7 @@ public class BookingService : IBookingService
             {
                 throw new ConflictException("The assigned driver is not available for the new dates.");
             }
-            
+
             var driverProfile = await _driverProfileRepository.GetByIdAsync(booking.AssignedDriverProfileId.Value, cancellationToken);
             if (driverProfile != null)
             {
