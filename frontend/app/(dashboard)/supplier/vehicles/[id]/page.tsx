@@ -212,7 +212,8 @@ export default async function SupplierVehicleDetailsPage({ params }: PageProps) 
 
   const isAdmin = session?.user.roles.includes("Admin") ?? false;
   const isOwner = session?.user.id === vehicle.supplierId;
-  const canEdit = isAdmin || isOwner;
+  const isRestricted = session?.user.status?.toLowerCase() === "restricted";
+  const canEdit = (isAdmin || isOwner) && !isRestricted;
 
   return (
     <Box sx={{ pb: 4 }}>

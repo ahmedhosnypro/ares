@@ -112,6 +112,7 @@ export default function SupplierVehiclesClient() {
   const router = useRouter();
   const { data: session, status: sessionStatus } = useSession();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isRestricted = session?.user?.status?.toLowerCase() === "restricted";
 
   // ── Filter state ──────────────────────────────────────────────────────────
   const [searchInput, setSearchInput] = useState("");
@@ -216,7 +217,7 @@ export default function SupplierVehiclesClient() {
 
   const handleAvailabilityToggle = useCallback(
     async (row: SupplierVehicleListItem) => {
-      if (!session?.accessToken) return;
+      if (!session?.accessToken || isRestricted) return;
 
       // Block client-side: only approved vehicles can become available.
       const currentlyAvailable = row.availabilityStatus.toLowerCase() === "available";
@@ -297,27 +298,29 @@ export default function SupplierVehiclesClient() {
           </Typography>
         </Box>
 
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => {
-            handleNavigate("/supplier/vehicles/create");
-          }}
-          sx={{
-            px: 2.5,
-            py: 1.2,
-            borderRadius: 2,
-            fontWeight: 700,
-            textTransform: "none",
-            background: t => `linear-gradient(135deg, ${t.palette.primary.main}, ${t.palette.primary.dark})`,
-            boxShadow: 3,
-            whiteSpace: "nowrap",
-            alignSelf: { xs: "stretch", sm: "auto" },
-            "&:hover": { transform: "translateY(-2px)", boxShadow: 6 },
-          }}
-        >
-          Add New Vehicle
-        </Button>
+        {!isRestricted && (
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => {
+              handleNavigate("/supplier/vehicles/create");
+            }}
+            sx={{
+              px: 2.5,
+              py: 1.2,
+              borderRadius: 2,
+              fontWeight: 700,
+              textTransform: "none",
+              background: t => `linear-gradient(135deg, ${t.palette.primary.main}, ${t.palette.primary.dark})`,
+              boxShadow: 3,
+              whiteSpace: "nowrap",
+              alignSelf: { xs: "stretch", sm: "auto" },
+              "&:hover": { transform: "translateY(-2px)", boxShadow: 6 },
+            }}
+          >
+            Add New Vehicle
+          </Button>
+        )}
       </Stack>
 
       {/* FILTERS */}
@@ -481,6 +484,7 @@ export default function SupplierVehiclesClient() {
                       key={v.vehicleId}
                       vehicle={v}
                       togglingId={togglingId}
+                      isRestricted={isRestricted}
                       onNavigate={handleNavigate}
                       onDelete={setDeleteTarget}
                       onToggleAvailability={handleAvailabilityToggle}
@@ -593,12 +597,14 @@ export default function SupplierVehiclesClient() {
 function VehicleTableRow({
   vehicle: v,
   togglingId,
+  isRestricted,
   onNavigate,
   onDelete,
   onToggleAvailability,
 }: {
   readonly vehicle: SupplierVehicleListItem;
   readonly togglingId: string | null;
+  readonly isRestricted?: boolean;
   readonly onNavigate: (path: string) => void;
   readonly onDelete: (v: SupplierVehicleListItem) => void;
   readonly onToggleAvailability: (v: SupplierVehicleListItem) => Promise<void>;
@@ -613,6 +619,7 @@ function VehicleTableRow({
   };
 
   const switchTooltip = (() => {
+    if (isRestricted) return "Account restricted";
     if (!canBeAvailable) return "Only approved vehicles can be made available";
     return isAvailable ? "Set unavailable" : "Set available";
   })();
@@ -685,7 +692,7 @@ function VehicleTableRow({
               <Switch
                 size="small"
                 checked={isAvailable}
-                disabled={isToggling || (!canBeAvailable && !isAvailable)}
+                disabled={isToggling || (!canBeAvailable && !isAvailable) || isRestricted}
                 onChange={() => {
                   void onToggleAvailability(v);
                 }}
@@ -728,34 +735,38 @@ function VehicleTableRow({
               <ViewIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Edit">
-            <IconButton
-              size="small"
-              sx={{ borderRadius: 2 }}
-              onClick={() => {
-                onNavigate(`/supplier/vehicles/${v.vehicleId}`);
-              }}
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Delete">
-            <IconButton
-              size="small"
-              sx={{
-                borderRadius: 2,
-                "&:hover": {
-                  bgcolor: t => alpha(t.palette.error.main, 0.1),
-                  color: "error.main",
-                },
-              }}
-              onClick={() => {
-                onDelete(v);
-              }}
-            >
-              <DeleteIcon fontSize="small" color="error" />
-            </IconButton>
-          </Tooltip>
+          {!isRestricted && (
+            <>
+              <Tooltip title="Edit">
+                <IconButton
+                  size="small"
+                  sx={{ borderRadius: 2 }}
+                  onClick={() => {
+                    onNavigate(`/supplier/vehicles/${v.vehicleId}`);
+                  }}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Delete">
+                <IconButton
+                  size="small"
+                  sx={{
+                    borderRadius: 2,
+                    "&:hover": {
+                      bgcolor: t => alpha(t.palette.error.main, 0.1),
+                      color: "error.main",
+                    },
+                  }}
+                  onClick={() => {
+                    onDelete(v);
+                  }}
+                >
+                  <DeleteIcon fontSize="small" color="error" />
+                </IconButton>
+              </Tooltip>
+            </>
+          )}
         </Stack>
       </TableCell>
     </TableRow>

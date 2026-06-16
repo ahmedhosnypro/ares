@@ -102,13 +102,19 @@ export default function CreateSupplierVehiclePage() {
         </Box>
       </Stack>
 
-      <VehicleForm
-        submitLabel="Submit for review"
-        submitting={submitting}
-        apiError={apiError}
-        onSubmit={handleSubmit}
-        onCancel={handleCancel}
-      />
+      {session?.user?.status?.toLowerCase() === "restricted" ? (
+        <Alert severity="error" sx={{ mt: 3, borderRadius: 2 }}>
+          Your account is restricted. You cannot add new vehicles.
+        </Alert>
+      ) : (
+        <VehicleForm
+          submitLabel="Submit for review"
+          submitting={submitting}
+          apiError={apiError}
+          onSubmit={handleSubmit}
+          onCancel={handleCancel}
+        />
+      )}
 
       <Snackbar
         open={toastOpen}
