@@ -58,10 +58,7 @@ interface SupplierMobileCardProps {
 function SupplierMobileCard({ s, theme, onDeleteClick }: SupplierMobileCardProps) {
   const isActive = s.status === "active";
   return (
-    <Paper
-      elevation={0}
-      sx={{ p: 2, mb: 2, borderRadius: 2, border: "1px solid", borderColor: "divider" }}
-    >
+    <Paper elevation={0} sx={{ p: 2, mb: 2, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
       <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
         <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
           <Avatar sx={{ bgcolor: theme.palette.secondary.light, fontWeight: 700, width: 40, height: 40 }}>

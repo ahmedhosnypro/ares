@@ -638,7 +638,10 @@ export default function UsersTab() {
         fullWidth
         aria-labelledby="delete-user-dialog-title"
       >
-        <DialogTitle id="delete-user-dialog-title" sx={{ display: "flex", alignItems: "center", gap: 1, fontWeight: 700 }}>
+        <DialogTitle
+          id="delete-user-dialog-title"
+          sx={{ display: "flex", alignItems: "center", gap: 1, fontWeight: 700 }}
+        >
           <WarningAmberIcon color="error" />
           Delete User
         </DialogTitle>
@@ -681,10 +684,7 @@ export default function UsersTab() {
                   <Typography variant="caption" color="text.secondary">
                     Role
                   </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{ fontWeight: 600, textAlign: "right", textTransform: "capitalize" }}
-                  >
+                  <Typography variant="body2" sx={{ fontWeight: 600, textAlign: "right", textTransform: "capitalize" }}>
                     {deleteTarget.roles.join(", ") || "—"}
                   </Typography>
                 </Box>
