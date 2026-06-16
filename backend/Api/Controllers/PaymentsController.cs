@@ -227,8 +227,9 @@ public class PaymentCreationController : ControllerBase
 
     [AllowAnonymous]
     [HttpGet("callback")]
-    public async Task<IActionResult> PaymobCallback([FromQuery] Dictionary<string, string> queryParams, CancellationToken ct)
+    public async Task<IActionResult> PaymobCallback(CancellationToken ct)
     {
+        var queryParams = Request.Query.ToDictionary(q => q.Key, q => q.Value.ToString());
         var (success, bookingId) = await _paymentService.ProcessPaymobCallbackAsync(queryParams, ct);
         if (success && bookingId != Guid.Empty)
             return Redirect($"http://localhost:3000/bookings/confirmation/{bookingId}");
