@@ -7,6 +7,8 @@ using Backend.Application.Interfaces;
 using Backend.Application.Settings;
 using Backend.Domain.Entities;
 using Backend.Domain.Entities.Enums;
+using Backend.Domain.Events;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -22,6 +24,8 @@ public class PaymentService : IPaymentService
     private readonly IRefundCalculator _refundCalculator;
     private readonly PaymobSettings _paymobSettings;
     private readonly ILogger<PaymentService> _logger;
+    private readonly IMediator _mediator;
+    private readonly INotificationService? _notificationService;
     private readonly ICommissionService? _commissionService;
 
     public PaymentService(
@@ -32,6 +36,8 @@ public class PaymentService : IPaymentService
         IRefundCalculator refundCalculator,
         IOptions<PaymobSettings> paymobSettings,
         ILogger<PaymentService> logger,
+        IMediator mediator,
+        INotificationService? notificationService = null,
         ICommissionService? commissionService = null)
     {
         _paymentRepository = paymentRepository;
@@ -41,6 +47,8 @@ public class PaymentService : IPaymentService
         _refundCalculator = refundCalculator;
         _paymobSettings = paymobSettings.Value;
         _logger = logger;
+        _mediator = mediator;
+        _notificationService = notificationService;
         _commissionService = commissionService;
     }
 
@@ -476,7 +484,10 @@ Thank you for your business!
             return (false, extractedBookingId);
 
         var payment = await _context.Payments
-            .Include(p => p.Booking)
+            .Include(p => p.Booking!)
+                .ThenInclude(b => b.User)
+            .Include(p => p.Booking!)
+                .ThenInclude(b => b.Vehicle)
             .FirstOrDefaultAsync(p => p.PaymobOrderId == orderId, ct);
 
         if (payment == null)
@@ -496,8 +507,12 @@ Thank you for your business!
 
         if (success && payment.Booking != null)
         {
-            payment.Booking.Status = BookingStatus.Confirmed;
-            await PopulateCommissionFieldsAsync(payment.Booking, ct);
+            if (payment.Booking.Status != BookingStatus.Confirmed)
+            {
+                payment.Booking.Status = BookingStatus.Confirmed;
+                await PopulateCommissionFieldsAsync(payment.Booking, ct);
+                await OnPaymentSuccessAsync(payment.Booking, ct);
+            }
         }
 
         await _context.SaveChangesAsync(ct);
@@ -596,7 +611,10 @@ Thank you for your business!
     public async Task<bool> SyncPaymentStatusAsync(Guid bookingId, Guid userId, CancellationToken ct = default)
     {
         var payment = await _context.Payments
-            .Include(p => p.Booking)
+            .Include(p => p.Booking!)
+                .ThenInclude(b => b.User)
+            .Include(p => p.Booking!)
+                .ThenInclude(b => b.Vehicle)
             .FirstOrDefaultAsync(p => p.BookingId == bookingId && p.Status == "Pending" && p.Booking!.UserId == userId, ct);
 
         if (payment == null || string.IsNullOrEmpty(payment.PaymobOrderId))
@@ -617,8 +635,12 @@ Thank you for your business!
 
         if (tx.Success && payment.Booking != null)
         {
-            payment.Booking.Status = BookingStatus.Confirmed;
-            await PopulateCommissionFieldsAsync(payment.Booking, ct);
+            if (payment.Booking.Status != BookingStatus.Confirmed)
+            {
+                payment.Booking.Status = BookingStatus.Confirmed;
+                await PopulateCommissionFieldsAsync(payment.Booking, ct);
+                await OnPaymentSuccessAsync(payment.Booking, ct);
+            }
         }
 
         await _context.SaveChangesAsync(ct);
@@ -649,6 +671,82 @@ Thank you for your business!
             booking.CommissionPercentage = commissionPercentage;
             booking.CommissionAmount = commissionAmount;
             booking.SupplierAmount = supplierAmount;
+        }
+    }
+
+    private async Task OnPaymentSuccessAsync(Booking booking, CancellationToken ct)
+    {
+        if (_mediator != null)
+        {
+            try
+            {
+                var customerEmail = booking.User?.Email ?? "";
+                var customerName = booking.User != null ? $"{booking.User.FirstName} {booking.User.LastName}".Trim() : "Customer";
+                var vehicleName = booking.Vehicle != null ? $"{booking.Vehicle.Make} {booking.Vehicle.Model}".Trim() : "Vehicle";
+                var supplierEmail = "";
+                
+                if (booking.Vehicle != null && booking.Vehicle.UserId != Guid.Empty)
+                {
+                    var supplierUser = await _context.Users.FirstOrDefaultAsync(u => u.Id == booking.Vehicle.UserId, ct);
+                    supplierEmail = supplierUser?.Email ?? "";
+                }
+
+                var bookingCompletedEvent = new BookingCompletedEvent(
+                    booking.Id,
+                    customerEmail,
+                    customerName,
+                    supplierEmail,
+                    vehicleName,
+                    booking.PickupDate ?? DateTime.UtcNow,
+                    booking.ReturnDate ?? DateTime.UtcNow,
+                    booking.TotalPrice ?? 0m
+                );
+
+                await _mediator.Publish(bookingCompletedEvent, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error publishing BookingCompletedEvent for booking {BookingId}", booking.Id);
+            }
+        }
+
+        if (_notificationService != null)
+        {
+            try
+            {
+                var bookingLabel = string.IsNullOrWhiteSpace(booking.BookingNumber)
+                    ? booking.Id.ToString()
+                    : booking.BookingNumber!;
+
+                await _notificationService.CreateNotificationAsync(
+                    booking.UserId,
+                    "Booking Confirmed",
+                    $"Your booking {bookingLabel} is confirmed and payment was received.",
+                    $"BookingConfirmed:{booking.Id}",
+                    ct);
+
+                // Notify supplier best-effort
+                if (booking.Vehicle != null && booking.Vehicle.UserId != Guid.Empty)
+                {
+                    await _notificationService.CreateNotificationAsync(
+                        booking.Vehicle.UserId,
+                        "New booking received",
+                        $"You received a new booking ({bookingLabel}).",
+                        SupplierNotificationTypes.Format(SupplierNotificationTypes.BookingReceived, booking.Id),
+                        ct);
+                }
+
+                // Notify admins best-effort
+                await _notificationService.NotifyAdminsAsync(
+                    "New booking confirmed",
+                    $"Booking {bookingLabel} was created and paid.",
+                    $"BookingConfirmed:{booking.Id}",
+                    ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending notifications for booking {BookingId}", booking.Id);
+            }
         }
     }
 }

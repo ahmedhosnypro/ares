@@ -4,8 +4,11 @@ using Backend.Application.Exceptions;
 using Backend.Application.Interfaces;
 using Backend.Domain.Entities;
 using Backend.Domain.Entities.Enums;
+using Backend.Domain.Events;
+using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace Backend.Application.Services;
 
@@ -37,12 +40,18 @@ public class BookingService : IBookingService
     private readonly IDriverPricingService? _driverPricingService;
     private readonly IDriverProfileRepository? _driverProfileRepository;
     private readonly ICommissionService? _commissionService;
+    private readonly IPricingService _pricingService;
+    private readonly IMediator _mediator;
+    private readonly IConfiguration _configuration;
 
     public BookingService(
         IBookingRepository bookingRepository,
         IVehicleRepository vehicleRepository,
         IApplicationDbContext context,
         UserManager<ApplicationUser> userManager,
+        IPricingService pricingService,
+        IMediator mediator,
+        IConfiguration configuration,
         INotificationService? notificationService = null,
         IVerificationService? verificationService = null,
         IDriverPricingService? driverPricingService = null,
@@ -53,6 +62,9 @@ public class BookingService : IBookingService
         _vehicleRepository = vehicleRepository;
         _context = context;
         _userManager = userManager;
+        _pricingService = pricingService;
+        _mediator = mediator;
+        _configuration = configuration;
         _notificationService = notificationService;
         _verificationService = verificationService;
         _driverPricingService = driverPricingService;
@@ -155,7 +167,12 @@ public class BookingService : IBookingService
         // Requirement 4.2: Calculate total price (days * pricePerDay) — always
         // server-side, never trust a client-provided total.
         var totalDays = (request.ReturnDate - request.PickupDate).Days;
-        var totalPrice = (vehicle.PricePerDay ?? 0) * totalDays;
+        if (totalDays <= 0) totalDays = 1;
+
+        var pricingResult = await _pricingService.CalculateBookingPricingAsync(request.VehicleId, request.PickupDate, request.ReturnDate, cancellationToken);
+        var originalPrice = pricingResult.OriginalPrice;
+        var discountAmount = pricingResult.DiscountAmount;
+        var totalPrice = pricingResult.FinalPrice;
 
         // Requirement 4.5: Generate unique booking number
         var bookingNumber = GenerateUniqueBookingNumber();
@@ -196,6 +213,18 @@ public class BookingService : IBookingService
 
         // Requirement 4.10: Create booking with status "Pending". Payment is
         // a separate flow — booking creation does NOT require payment.
+        var initialStatus = BookingStatus.Confirmed;
+        DateTime? holdStartedAt = null;
+        DateTime? holdExpiresAt = null;
+
+        if (string.Equals(request.PaymentMethod, "Online", StringComparison.OrdinalIgnoreCase))
+        {
+            initialStatus = BookingStatus.PaymentPending;
+            holdStartedAt = DateTime.UtcNow;
+            var holdMinutes = _configuration.GetValue<int?>("Booking:HoldMinutes") ?? 10;
+            holdExpiresAt = holdStartedAt.Value.AddMinutes(holdMinutes);
+        }
+
         var booking = new Booking
         {
             Id = Guid.NewGuid(),
@@ -207,22 +236,34 @@ public class BookingService : IBookingService
             PickupLocation = pickupLabel,
             DropoffLocation = dropoffLabel,
             TotalDays = totalDays,
+            OriginalPrice = originalPrice,
+            DiscountAmount = discountAmount,
+            VehicleFee = totalPrice,
             TotalPrice = totalPrice,
+            GrandTotal = totalPrice,
             // The driver-module assignment is NEVER set here. A driver is only
             // attached through the request → accept → select workflow, which
             // populates AssignedDriverProfileId (a driver_profiles FK). The
             // legacy Booking.DriverId column is a FK to the customer-license
             // Driver entity and must not be conflated with a DriverProfile.
-            Status = BookingStatus.Confirmed,
+            Status = initialStatus,
             DriverId = request.DriverId, // legacy customer-license Driver FK only
-            RequiresDriver = effectiveNeedDriver == true
+            RequiresDriver = effectiveNeedDriver == true,
+            HoldStartedAt = holdStartedAt,
+            HoldExpiresAt = holdExpiresAt
         };
-
+        
         if (_driverPricingService != null && booking.RequiresDriver)
         {
             booking.Vehicle = vehicle; // Attach for calculation
             await _driverPricingService.CalculateBookingDriverFeesAsync(booking, totalDays, cancellationToken);
             booking.Vehicle = null; // Detach before save
+            if (discountAmount > 0)
+            {
+                booking.VehicleFee = totalPrice; // restore discounted vehicle price
+                booking.GrandTotal = (booking.VehicleFee ?? 0) + booking.DriverFee;
+                booking.TotalPrice = booking.GrandTotal;
+            }
         }
 
         decimal commissionPercentage = 10.0m;
@@ -274,20 +315,73 @@ public class BookingService : IBookingService
         await _bookingRepository.ReserveVehicleAtomicAsync(
             booking,
             targetStatus,
-            holdStartedAt: null,
-            holdExpiresAt: null,
+            holdStartedAt: booking.HoldStartedAt,
+            holdExpiresAt: booking.HoldExpiresAt,
             cancellationToken);
 
         // Driver auto-assignment is now handled by VehicleInspectionAutoAssignmentBackgroundService
 
-        // Requirement 4.8: Create notification for the booking owner (customer).
-        if (request.CustomerUserId.HasValue && request.CustomerUserId.Value != userId)
+        // Requirement 4.8: Create notification for the booking owner (customer) & publish email event.
+        if (targetStatus == BookingStatus.Confirmed)
         {
-            await CreateBookingNotificationForAdminCreatedAsync(ownerUserId, booking.Id, bookingNumber, cancellationToken);
+            if (_notificationService != null)
+            {
+                try
+                {
+                    await _notificationService.CreateNotificationAsync(
+                        ownerUserId,
+                        "Booking Confirmed",
+                        $"Your booking {bookingNumber} has been successfully confirmed.",
+                        $"BookingConfirmed:{booking.Id}",
+                        cancellationToken);
+                }
+                catch { /* best effort */ }
+            }
+
+            if (_mediator != null && _userManager != null)
+            {
+                try
+                {
+                    var customerUser = await _userManager.FindByIdAsync(ownerUserId.ToString());
+                    var customerEmail = customerUser?.Email ?? "";
+                    var customerName = customerUser != null ? $"{customerUser.FirstName} {customerUser.LastName}".Trim() : "Customer";
+                    var vehicleName = $"{vehicle.Make} {vehicle.Model}".Trim();
+                    var supplierEmail = "";
+                    if (vehicle.UserId != Guid.Empty)
+                    {
+                        var supplierUser = await _userManager.FindByIdAsync(vehicle.UserId.ToString());
+                        supplierEmail = supplierUser?.Email ?? "";
+                    }
+
+                    var bookingCompletedEvent = new BookingCompletedEvent(
+                        booking.Id,
+                        customerEmail,
+                        customerName,
+                        supplierEmail,
+                        vehicleName,
+                        booking.PickupDate ?? DateTime.UtcNow,
+                        booking.ReturnDate ?? DateTime.UtcNow,
+                        booking.TotalPrice ?? 0m
+                    );
+
+                    await _mediator.Publish(bookingCompletedEvent, cancellationToken);
+                }
+                catch
+                {
+                    // Log but do not block booking completion
+                }
+            }
         }
         else
         {
-            await CreateBookingNotificationAsync(ownerUserId, booking.Id, bookingNumber, cancellationToken);
+            if (request.CustomerUserId.HasValue && request.CustomerUserId.Value != userId)
+            {
+                await CreateBookingNotificationForAdminCreatedAsync(ownerUserId, booking.Id, bookingNumber, cancellationToken);
+            }
+            else
+            {
+                await CreateBookingNotificationAsync(ownerUserId, booking.Id, bookingNumber, cancellationToken);
+            }
         }
 
         // Supplier-facing notification — "new booking received" — fired

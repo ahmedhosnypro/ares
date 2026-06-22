@@ -14,6 +14,9 @@ using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
 
+using MediatR;
+using Microsoft.Extensions.Configuration;
+
 namespace Backend.Tests.PropertyTests;
 
 /// <summary>
@@ -48,7 +51,28 @@ public class BookingCreationPropertyTests : IDisposable
         userManagerMock.Setup(x => x.IsInRoleAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
             .ReturnsAsync(false);
 
-        _bookingService = new BookingService(_bookingRepository, _vehicleRepository, _context, userManagerMock.Object, null!);
+        var pricingServiceMock = new Mock<IPricingService>();
+        pricingServiceMock.Setup(x => x.CalculateBookingPricingAsync(It.IsAny<Guid>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid vId, DateTime pickup, DateTime ret, CancellationToken ct) => {
+                var vehicle = _context.Vehicles.Find(vId);
+                var rate = vehicle?.PricePerDay ?? 100m;
+                var days = (ret - pickup).Days;
+                if (days <= 0) days = 1;
+                var price = rate * days;
+                return (price, 0m, price);
+            });
+
+        var mediatorMock = new Mock<IMediator>();
+        var configurationMock = new Mock<IConfiguration>();
+
+        _bookingService = new BookingService(
+            _bookingRepository,
+            _vehicleRepository,
+            _context,
+            userManagerMock.Object,
+            pricingServiceMock.Object,
+            mediatorMock.Object,
+            configurationMock.Object);
 
         // Ensure database is created
         _context.Database.EnsureCreated();

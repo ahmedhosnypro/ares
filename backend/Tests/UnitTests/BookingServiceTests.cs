@@ -11,6 +11,9 @@ using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
 
+using MediatR;
+using Microsoft.Extensions.Configuration;
+
 namespace Backend.Tests.UnitTests;
 
 public class BookingServiceTests
@@ -19,6 +22,9 @@ public class BookingServiceTests
     private readonly Mock<IVehicleRepository> _vehicleRepositoryMock;
     private readonly Mock<IApplicationDbContext> _contextMock;
     private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;
+    private readonly Mock<IPricingService> _pricingServiceMock;
+    private readonly Mock<IMediator> _mediatorMock;
+    private readonly Mock<IConfiguration> _configurationMock;
     private readonly BookingService _bookingService;
 
     public BookingServiceTests()
@@ -27,6 +33,13 @@ public class BookingServiceTests
         _vehicleRepositoryMock = new Mock<IVehicleRepository>();
         _contextMock = new Mock<IApplicationDbContext>();
         _userManagerMock = MockUserManager();
+        _pricingServiceMock = new Mock<IPricingService>();
+        _mediatorMock = new Mock<IMediator>();
+        _configurationMock = new Mock<IConfiguration>();
+
+        // Set up default pricing behavior to return 100 for any calculate call
+        _pricingServiceMock.Setup(x => x.CalculateBookingPricingAsync(It.IsAny<Guid>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((100m, 0m, 100m));
 
         var emptyUserAddresses = new List<UserAddress>().AsQueryable();
         var userAddressesDbSet = emptyUserAddresses.BuildMockDbSet();
@@ -41,7 +54,9 @@ public class BookingServiceTests
             _vehicleRepositoryMock.Object,
             _contextMock.Object,
             _userManagerMock.Object,
-            null!);
+            _pricingServiceMock.Object,
+            _mediatorMock.Object,
+            _configurationMock.Object);
     }
 
     private static Mock<UserManager<ApplicationUser>> MockUserManager()
