@@ -2,6 +2,7 @@ using Backend.Application.DTOs.Booking;
 using Backend.Application.Interfaces;
 using Backend.Domain.Entities;
 using FluentValidation;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
@@ -28,6 +29,25 @@ public class CreateBookingRequestValidator : AbstractValidator<CreateBookingRequ
         Guid userId)
         : this(vehicleRepository, userManager, userId, null)
     {
+    }
+
+    public CreateBookingRequestValidator(
+        IVehicleRepository vehicleRepository,
+        UserManager<ApplicationUser>? userManager,
+        IHttpContextAccessor httpContextAccessor,
+        ILocationRepository? locationRepository = null)
+        : this(vehicleRepository, userManager, GetUserIdFromHttpContext(httpContextAccessor), locationRepository)
+    {
+    }
+
+    private static Guid GetUserIdFromHttpContext(IHttpContextAccessor httpContextAccessor)
+    {
+        var userIdClaim = httpContextAccessor?.HttpContext?.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        if (userIdClaim != null && Guid.TryParse(userIdClaim.Value, out var parsedId))
+        {
+            return parsedId;
+        }
+        return Guid.Empty;
     }
 
     public CreateBookingRequestValidator(

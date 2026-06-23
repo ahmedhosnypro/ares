@@ -25,6 +25,7 @@ namespace Backend.Tests.UnitTests
         private readonly ApplicationDbContext _context;
         private readonly Mock<IBookingService> _bookingServiceMock;
         private readonly Mock<IVehicleRepository> _vehicleRepositoryMock;
+        private readonly Mock<ILocationRepository> _locationRepositoryMock;
         private readonly Mock<ILogger<BookingsController>> _loggerMock;
         private readonly Mock<ILogger<AdminBookingsController>> _adminLoggerMock;
         private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;
@@ -42,6 +43,7 @@ namespace Backend.Tests.UnitTests
 
             _bookingServiceMock = new Mock<IBookingService>();
             _vehicleRepositoryMock = new Mock<IVehicleRepository>();
+            _locationRepositoryMock = new Mock<ILocationRepository>();
             _loggerMock = new Mock<ILogger<BookingsController>>();
             _adminLoggerMock = new Mock<ILogger<AdminBookingsController>>();
             _userManagerMock = MockUserManager();
@@ -49,6 +51,7 @@ namespace Backend.Tests.UnitTests
             _controller = new BookingsController(
                 _bookingServiceMock.Object,
                 _vehicleRepositoryMock.Object,
+                _locationRepositoryMock.Object,
                 _loggerMock.Object,
                 _userManagerMock.Object);
 
