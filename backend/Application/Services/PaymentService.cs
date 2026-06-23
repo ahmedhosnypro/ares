@@ -70,10 +70,20 @@ public class PaymentService : IPaymentService
             throw new NotFoundException($"Booking with ID {request.BookingId} not found");
         }
 
-        // Verify booking belongs to the user
+        // Verify booking belongs to the user or the user is an admin
         if (booking.UserId != userId)
         {
-            throw new ForbiddenException("You do not have permission to pay for this booking");
+            var dbContext = _context as Microsoft.EntityFrameworkCore.DbContext;
+            bool isAdmin = false;
+            if (dbContext != null)
+            {
+                var adminRoleId = await dbContext.Set<Microsoft.AspNetCore.Identity.IdentityRole<Guid>>().Where(r => r.Name == "Admin").Select(r => r.Id).FirstOrDefaultAsync(cancellationToken);
+                isAdmin = await dbContext.Set<Microsoft.AspNetCore.Identity.IdentityUserRole<Guid>>().AnyAsync(ur => ur.UserId == userId && ur.RoleId == adminRoleId, cancellationToken);
+            }
+            if (!isAdmin)
+            {
+                throw new ForbiddenException("You do not have permission to pay for this booking");
+            }
         }
 
         // Verify booking is in a payable status
@@ -411,7 +421,19 @@ Thank you for your business!
             ?? throw new NotFoundException($"Booking {bookingId} not found");
 
         if (booking.UserId != userId)
-            throw new ForbiddenException("You do not have permission to pay for this booking");
+        {
+            var dbContext = _context as Microsoft.EntityFrameworkCore.DbContext;
+            bool isAdmin = false;
+            if (dbContext != null)
+            {
+                var adminRoleId = await dbContext.Set<Microsoft.AspNetCore.Identity.IdentityRole<Guid>>().Where(r => r.Name == "Admin").Select(r => r.Id).FirstOrDefaultAsync(ct);
+                isAdmin = await dbContext.Set<Microsoft.AspNetCore.Identity.IdentityUserRole<Guid>>().AnyAsync(ur => ur.UserId == userId && ur.RoleId == adminRoleId, ct);
+            }
+            if (!isAdmin)
+            {
+                throw new ForbiddenException("You do not have permission to pay for this booking");
+            }
+        }
 
         if (booking.Status == BookingStatus.Cancelled || booking.Status == BookingStatus.Completed || booking.Status == BookingStatus.Active)
             throw new ValidationException("Status", "This booking cannot be paid");

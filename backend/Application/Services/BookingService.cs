@@ -97,24 +97,14 @@ public class BookingService : IBookingService
         // honours the gate — an admin must not be able to side-step the
         // requirement on behalf of an unverified customer.
         //
-        // ⚡ OVERRIDE: System administrators can manually create bookings even
-        // for unverified customers (e.g. walk-in customers verified offline).
-        // Regular users and suppliers must still be/select a verified customer.
-        //
         // The exception is mapped to HTTP 403 by GlobalExceptionHandlerMiddleware.
         if (_verificationService is not null && _userManager is not null)
         {
-            var initiator = await _userManager.FindByIdAsync(userId.ToString());
-            var isAdminInitiator = initiator != null && await _userManager.IsInRoleAsync(initiator, "Admin");
-
-            if (!isAdminInitiator)
+            var bookingOwnerId = request.CustomerUserId ?? userId;
+            var isApproved = await _verificationService.IsApprovedAsync(bookingOwnerId, cancellationToken);
+            if (!isApproved)
             {
-                var bookingOwnerId = request.CustomerUserId ?? userId;
-                var isApproved = await _verificationService.IsApprovedAsync(bookingOwnerId, cancellationToken);
-                if (!isApproved)
-                {
-                    throw new ForbiddenException(IdentityVerificationRequiredMessage);
-                }
+                throw new ForbiddenException(IdentityVerificationRequiredMessage);
             }
         }
 
@@ -311,6 +301,22 @@ public class BookingService : IBookingService
         // required) — both are reserving statuses, so they participate in the
         // overlap check.
         var targetStatus = booking.Status;
+        if (string.Equals(request.PaymentMethod, "Cash", StringComparison.OrdinalIgnoreCase))
+        {
+            var payment = new BookingPayment
+            {
+                PaymentId = Guid.NewGuid(),
+                BookingId = booking.Id,
+                TransactionId = Guid.NewGuid(),
+                PaymentMethod = "Cash",
+                Amount = booking.TotalPrice ?? 0m,
+                Currency = "USD",
+                Status = "Captured",
+                ProcessedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.AddPayment(payment);
+        }
         await _bookingRepository.AddAsync(booking, cancellationToken);
         await _bookingRepository.ReserveVehicleAtomicAsync(
             booking,

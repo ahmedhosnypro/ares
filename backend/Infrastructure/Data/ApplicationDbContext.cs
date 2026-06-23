@@ -99,6 +99,11 @@ namespace Backend.Infrastructure.Data
             BookingCancellations.Add(cancellation);
         }
 
+        public void AddPayment(BookingPayment payment)
+        {
+            Payments.Add(payment);
+        }
+
         public void AddUserAddress(UserAddress userAddress)
         {
             UserAddresses.Add(userAddress);

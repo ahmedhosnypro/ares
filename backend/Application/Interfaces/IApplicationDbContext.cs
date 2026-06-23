@@ -36,6 +36,7 @@ public interface IApplicationDbContext
     IQueryable<Inspector> Inspectors { get; }
     void AddFavorite(Favorite favorite);
     void AddBookingCancellation(BookingCancellation cancellation);
+    void AddPayment(BookingPayment payment);
     void AddUserAddress(UserAddress userAddress);
     void AddVerification(Verification verification);
     void AddDriver(Driver driver);

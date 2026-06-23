@@ -430,7 +430,7 @@ namespace Backend.Application.Services
                 var vehicleFee = booking.VehicleFee
                     ?? ((booking.Vehicle?.PricePerDay ?? (await _vehicleRepository.GetByIdAsync(booking.VehicleId, cancellationToken))?.PricePerDay ?? 0) * totalDays);
 
-                var hasApprovedLicense = await HasApprovedLicenseAsync(userId, cancellationToken);
+                var hasApprovedLicense = await HasApprovedLicenseAsync(booking.UserId, cancellationToken);
                 var effectiveNeedDriver = request.NeedDriver;
                 if (!hasApprovedLicense)
                 {
@@ -506,8 +506,8 @@ namespace Backend.Application.Services
                 }
 
                 // Identity-verification gate (same rule as express checkout) — applied
-                // before we reserve the vehicle.
-                if (!await _verificationService.IsApprovedAsync(userId, cancellationToken))
+                // before we reserve the vehicle. Evaluated against the booking owner.
+                if (!await _verificationService.IsApprovedAsync(booking.UserId, cancellationToken))
                 {
                     throw new ForbiddenException(BookingService.IdentityVerificationRequiredMessage);
                 }
@@ -692,7 +692,17 @@ namespace Backend.Application.Services
                 ?? throw new NotFoundException("Booking", bookingId);
             if (booking.UserId != userId)
             {
-                throw new ForbiddenException("This booking does not belong to you.");
+                var dbContext = _context as Microsoft.EntityFrameworkCore.DbContext;
+                bool isAdmin = false;
+                if (dbContext != null)
+                {
+                    var adminRoleId = await dbContext.Set<Microsoft.AspNetCore.Identity.IdentityRole<Guid>>().Where(r => r.Name == "Admin").Select(r => r.Id).FirstOrDefaultAsync(cancellationToken);
+                    isAdmin = await dbContext.Set<Microsoft.AspNetCore.Identity.IdentityUserRole<Guid>>().AnyAsync(ur => ur.UserId == userId && ur.RoleId == adminRoleId, cancellationToken);
+                }
+                if (!isAdmin)
+                {
+                    throw new ForbiddenException("This booking does not belong to you.");
+                }
             }
             return booking;
         }
