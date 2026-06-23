@@ -22,6 +22,7 @@ public class VehicleServiceTests : IDisposable
     private readonly Mock<IReviewRepository> _reviewRepositoryMock;
     private readonly Mock<IBookingRepository> _bookingRepositoryMock;
     private readonly Mock<IApplicationDbContext> _contextMock;
+    private readonly Mock<IPricingService> _pricingServiceMock;
     private readonly VehicleService _vehicleService;
 
     public VehicleServiceTests()
@@ -30,16 +31,35 @@ public class VehicleServiceTests : IDisposable
         _reviewRepositoryMock = new Mock<IReviewRepository>();
         _bookingRepositoryMock = new Mock<IBookingRepository>();
         _contextMock = new Mock<IApplicationDbContext>();
+        _pricingServiceMock = new Mock<IPricingService>();
 
         var promotionsQueryable = new List<Promotion>().AsQueryable().BuildMockDbSet();
         _contextMock.Setup(x => x.Promotions).Returns(promotionsQueryable.Object);
+
+        var categoryOffersQueryable = new List<CategoryOffer>().AsQueryable().BuildMockDbSet();
+        _contextMock.Setup(x => x.CategoryOffers).Returns(categoryOffersQueryable.Object);
+
+        _pricingServiceMock.Setup(x => x.CalculateBookingPricingAsync(It.IsAny<Guid>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid vId, DateTime start, DateTime end, CancellationToken ct) =>
+            {
+                var days = (end - start).Days;
+                if (days <= 0) days = 1;
+
+                var vehicle = _vehicleRepositoryMock.Object.GetByIdAsync(vId, ct).Result;
+                if (vehicle == null)
+                {
+                    throw new NotFoundException($"Vehicle with ID {vId} not found");
+                }
+                var rate = vehicle.PricePerDay ?? 100m;
+                return (rate * days, 0m, rate * days);
+            });
 
         _vehicleService = new VehicleService(
             _vehicleRepositoryMock.Object,
             _reviewRepositoryMock.Object,
             _bookingRepositoryMock.Object,
             _contextMock.Object,
-            new Mock<IPricingService>().Object,
+            _pricingServiceMock.Object,
             new Mock<INotificationService>().Object);
     }
 
