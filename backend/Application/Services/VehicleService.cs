@@ -95,7 +95,7 @@ public class VehicleService : IVehicleService
                 VehicleId: vehicle.Id,
                 Make: vehicle.Make ?? string.Empty,
                 Model: vehicle.Model ?? string.Empty,
-                Category: vehicle.Category?.Name ?? "General",
+                Category: vehicle.Category?.Name ?? vehicle.Status ?? "General",
                 DailyRate: dailyRate,
                 OriginalDailyRate: originalDailyRate,
                 DiscountPercentage: discountPercentage,
