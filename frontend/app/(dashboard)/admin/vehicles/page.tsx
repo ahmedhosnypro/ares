@@ -42,8 +42,11 @@ import {
   DeleteOutlineRounded as DeleteIcon,
   DirectionsCarFilledTwoTone as CarIcon,
   SearchRounded as SearchIcon,
+  CheckCircleOutlineRounded as AvailableIcon,
+  BuildOutlined as MaintenanceIcon,
+  TrendingUp as TrendingUpIcon,
+  TrendingDown as TrendingDownIcon,
 } from "@mui/icons-material";
-import VehicleStats from "@/app/(dashboard)/_components/VehicleStats";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
@@ -58,6 +61,301 @@ import {
 } from "@/api-clients/cars/cars";
 import { getSuppliers, type Supplier } from "@/api-clients/suppliers/suppliers";
 import { getCategories, bulkAssignVehicles, type Category } from "@/api-clients/categories/categories";
+import VisibilityOutlinedIcon from "@mui/icons-material/LaunchOutlined";
+import { toImageUrl } from "@/utils/image-url";
+import { logger } from "@/utils/logger";
+
+// ── Types ──
+interface FleetOverviewProps {
+  /** Total vehicles in the fleet */
+  readonly total: number;
+  /** Currently available vehicles */
+  readonly availableCount: number;
+  /** Vehicles currently on rental / fully booked */
+  readonly rentalCount: number;
+  /** Vehicles in maintenance */
+  readonly maintenanceCount: number;
+  /** Optional trend percentages (positive = up, negative = down) */
+  readonly trends?: {
+    totalAssets?: number;
+    available?: number;
+    maintenance?: number;
+  };
+}
+
+// ── Donut chart drawn with SVG ──
+function DonutChart({
+  available,
+  booked,
+  maintenance,
+  total,
+}: Readonly<{
+  available: number;
+  booked: number;
+  maintenance: number;
+  total: number;
+}>): JSX.Element {
+  const theme = useTheme();
+
+  // Compute percentages
+  const safeTotal = total || 1;
+  const availPct = (available / safeTotal) * 100;
+  const bookedPct = (booked / safeTotal) * 100;
+  const maintenancePct = (maintenance / safeTotal) * 100;
+
+  // SVG donut via stroke-dasharray on a circle
+  const radius = 42;
+  const circumference = 2 * Math.PI * radius;
+
+  interface Segment {
+    pct: number;
+    color: string;
+    offset: number;
+  }
+
+  const segments: Segment[] = useMemo(() => {
+    const segmentsData: { pct: number; color: string }[] = [
+      { pct: availPct, color: theme.palette.success.main },
+      { pct: bookedPct, color: theme.palette.primary.main },
+      { pct: maintenancePct, color: theme.palette.warning.main },
+    ];
+    let cumulative = 0;
+    return segmentsData.map(s => {
+      const offset = (cumulative / 100) * circumference;
+      cumulative += s.pct;
+      return { ...s, offset };
+    });
+  }, [availPct, bookedPct, maintenancePct, circumference, theme]);
+
+  return (
+    <Box sx={{ position: "relative", width: 110, height: 110, flexShrink: 0 }}>
+      <svg width="110" height="110" viewBox="0 0 110 110">
+        {/* Background track */}
+        <circle cx="55" cy="55" r={radius} fill="none" stroke={alpha(theme.palette.divider, 0.4)} strokeWidth="10" />
+        {/* Segments — rotate so first segment starts at top */}
+        <g transform="rotate(-90 55 55)">
+          {segments.map((seg, i) => (
+            <circle
+              key={i}
+              cx="55"
+              cy="55"
+              r={radius}
+              fill="none"
+              stroke={seg.color}
+              strokeWidth="10"
+              strokeDasharray={`${(seg.pct / 100) * circumference} ${circumference}`}
+              strokeDashoffset={-seg.offset}
+              strokeLinecap="butt"
+            />
+          ))}
+        </g>
+      </svg>
+
+      {/* Center label */}
+      <Box
+        sx={{
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Typography sx={{ fontWeight: 800, fontSize: 22, lineHeight: 1 }}>{total}</Typography>
+      </Box>
+    </Box>
+  );
+}
+
+// ── Trend badge ──
+function TrendBadge({ value }: Readonly<{ value?: number }>): JSX.Element | null {
+  if (value === undefined) return null;
+  const isUp = value >= 0;
+  return (
+    <Stack direction="row" spacing={0.3} sx={{ alignItems: "center" }}>
+      {isUp ? (
+        <TrendingUpIcon sx={{ fontSize: 13, color: "success.main" }} />
+      ) : (
+        <TrendingDownIcon sx={{ fontSize: 13, color: "error.main" }} />
+      )}
+      <Typography
+        variant="caption"
+        sx={{
+          fontWeight: 700,
+          fontSize: 11,
+          color: isUp ? "success.main" : "error.main",
+        }}
+      >
+        {isUp ? "+" : ""}
+        {value}%
+      </Typography>
+    </Stack>
+  );
+}
+
+// ── Stat card ──
+function StatCard({
+  icon,
+  label,
+  value,
+  trend,
+  iconColor,
+}: Readonly<{
+  icon: JSX.Element;
+  label: string;
+  value: number;
+  trend?: number;
+  iconColor: string;
+}>): JSX.Element {
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        p: { xs: 2, sm: 2.5 },
+        borderRadius: 2,
+        border: "1px solid",
+        borderColor: "divider",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        gap: 0.5,
+      }}
+    >
+      <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "flex-start" }}>
+        <Box
+          sx={{
+            width: 34,
+            height: 34,
+            borderRadius: 2,
+            bgcolor: alpha(iconColor, 0.12),
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {icon}
+        </Box>
+        <TrendBadge value={trend} />
+      </Stack>
+
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ fontWeight: 600, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", mt: 1 }}
+      >
+        {label}
+      </Typography>
+      <Typography sx={{ fontWeight: 800, fontSize: { xs: 26, sm: 32 }, lineHeight: 1.1 }}>
+        {value.toLocaleString()}
+      </Typography>
+    </Paper>
+  );
+}
+
+// ── Legend item ──
+function LegendItem({ color, label, pct }: Readonly<{ color: string; label: string; pct: number }>): JSX.Element {
+  return (
+    <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}>
+      <Stack direction="row" spacing={0.8} sx={{ alignItems: "center" }}>
+        <Box
+          sx={{
+            width: 9,
+            height: 9,
+            borderRadius: "50%",
+            bgcolor: color,
+            flexShrink: 0,
+          }}
+        />
+        <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
+          {label}
+        </Typography>
+      </Stack>
+      <Typography variant="caption" sx={{ fontWeight: 700, fontSize: 12, minWidth: 32, textAlign: "right" }}>
+        {pct}%
+      </Typography>
+    </Stack>
+  );
+}
+
+// ── FLEET OVERVIEW COMPONENT ──
+function FleetOverview({
+  total,
+  availableCount,
+  rentalCount,
+  maintenanceCount,
+  trends,
+}: FleetOverviewProps): JSX.Element {
+  const theme = useTheme();
+
+  const safeTotal = total || 1;
+  const availPct = Math.round((availableCount / safeTotal) * 100);
+  const bookedPct = Math.round((rentalCount / safeTotal) * 100);
+  const maintenancePct = Math.round((maintenanceCount / safeTotal) * 100);
+
+  return (
+    <Grid container spacing={2} sx={{ mb: 3 }}>
+      {/* Donut chart card */}
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 2, sm: 2.5 },
+            borderRadius: 2,
+            border: "1px solid",
+            borderColor: "divider",
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+          }}
+        >
+          <Stack direction="row" spacing={2.5} sx={{ alignItems: "center" }}>
+            <DonutChart available={availableCount} booked={rentalCount} maintenance={maintenanceCount} total={total} />
+            <Stack spacing={1} sx={{ flex: 1 }}>
+              <LegendItem color={theme.palette.success.main} label="Available" pct={availPct} />
+              <LegendItem color={theme.palette.primary.main} label="Booked" pct={bookedPct} />
+              <LegendItem color={theme.palette.warning.main} label="Maintenance" pct={maintenancePct} />
+            </Stack>
+          </Stack>
+        </Paper>
+      </Grid>
+
+      {/* Total Assets */}
+      <Grid size={{ xs: 6, sm: 3, md: 3 }}>
+        <StatCard
+          icon={<CarIcon sx={{ fontSize: 18, color: theme.palette.primary.main }} />}
+          label="Total Assets"
+          value={total}
+          trend={trends?.totalAssets}
+          iconColor={theme.palette.primary.main}
+        />
+      </Grid>
+
+      {/* Available Now */}
+      <Grid size={{ xs: 6, sm: 3, md: 3 }}>
+        <StatCard
+          icon={<AvailableIcon sx={{ fontSize: 18, color: theme.palette.success.main }} />}
+          label="Available Now"
+          value={availableCount}
+          trend={trends?.available}
+          iconColor={theme.palette.success.main}
+        />
+      </Grid>
+
+      {/* In Maintenance */}
+      <Grid size={{ xs: 6, sm: 3, md: 3 }}>
+        <StatCard
+          icon={<MaintenanceIcon sx={{ fontSize: 18, color: theme.palette.warning.main }} />}
+          label="In Maintenance"
+          value={maintenanceCount}
+          trend={trends?.maintenance}
+          iconColor={theme.palette.warning.main}
+        />
+      </Grid>
+    </Grid>
+  );
+}
 
 // ── Static filter option lists. Defined as module-level constants so the
 //    dropdowns don't re-create their option arrays on every render and so
@@ -84,9 +382,6 @@ const SORT_OPTIONS: readonly { value: VehicleSortBy; label: string }[] = [
   { value: "priceHigh", label: "Price: High → Low" },
   { value: "priceLow", label: "Price: Low → High" },
 ];
-import VisibilityOutlinedIcon from "@mui/icons-material/LaunchOutlined";
-import { toImageUrl } from "@/utils/image-url";
-import { logger } from "@/utils/logger";
 
 // ── CONSTANTS ──
 const ERROR_MESSAGES: Record<string, string> = {
@@ -925,6 +1220,8 @@ export default function AdminCarsPage() {
   const total = vehicleStats?.totalVehicles ?? 0;
   const availableCount = vehicleStats?.availableVehicles ?? 0;
   const rentalCount = vehicleStats?.onRentalVehicles ?? 0;
+  // Added fallback logic to retrieve maintenance count or default to 0
+  const maintenanceCount = vehicleStats?.maintenanceVehicles ?? 0;
 
   // ── HANDLERS ──
   const handleDelete = useCallback((id: string, isAvailable: boolean, hasBookings?: boolean) => {
@@ -1102,8 +1399,13 @@ export default function AdminCarsPage() {
         </Alert>
       )}
 
-      {/* STATS */}
-      <VehicleStats total={total} availableCount={availableCount} rentalCount={rentalCount} />
+      {/* STATS (Replaced VehicleStats with FleetOverview) */}
+      <FleetOverview
+        total={total}
+        availableCount={availableCount}
+        rentalCount={rentalCount}
+        maintenanceCount={maintenanceCount}
+      />
 
       {/* FILTER ROW — search + four dropdowns. All four flow through `vehicleFilter`
           into the backend; the search input is debounced inside the hook so each
