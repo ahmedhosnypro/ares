@@ -99,6 +99,11 @@ public interface IBookingService
         bool isAdmin,
         CancellationToken cancellationToken = default);
 
+    Task<AdminBookingAnalyticsDto> GetAdminBookingAnalyticsAsync(
+        Guid currentUserId,
+        bool isAdmin,
+        CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Gets detailed information about a specific booking for admin/supplier
     /// </summary>

@@ -719,6 +719,91 @@ public class BookingService : IBookingService
         return new AdminBookingStatsDto(activeBookings, pendingBookings, totalCompletedBookings);
     }
 
+    public async Task<AdminBookingAnalyticsDto> GetAdminBookingAnalyticsAsync(
+        Guid currentUserId,
+        bool isAdmin,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _context.Bookings.AsQueryable();
+
+        if (!isAdmin)
+        {
+            query = query.Where(b => b.Vehicle != null && b.Vehicle.UserId == currentUserId);
+        }
+
+        // 1. Status Distribution (Donut Chart)
+        var statusesToInclude = new[]
+        {
+            BookingStatus.Draft,
+            BookingStatus.PaymentPending,
+            BookingStatus.Confirmed,
+            BookingStatus.Active,
+            BookingStatus.Completed,
+            BookingStatus.Cancelled
+        };
+
+        var statusGroups = await query
+            .Where(b => statusesToInclude.Contains(b.Status))
+            .GroupBy(b => b.Status)
+            .Select(g => new { Status = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+
+        var statusCounts = statusGroups.ToDictionary(g => g.Status.ToString(), g => g.Count);
+
+        // Map Cancelled By Admin
+        // A simple heuristic to avoid hitting Identity Role tables: 
+        // If the cancellation was done by someone other than the booking owner, it was an Admin/Supplier.
+        var cancelledByAdminCount = await _context.BookingCancellations
+            .Include(c => c.Booking)
+            .Where(c => query.Select(b => b.Id).Contains(c.BookingId))
+            .Where(c => c.Booking != null && c.CancelledBy != c.Booking.UserId)
+            .CountAsync(cancellationToken);
+
+        var totalCancelled = statusCounts.GetValueOrDefault(BookingStatus.Cancelled.ToString(), 0);
+        var regularCancelled = Math.Max(0, totalCancelled - cancelledByAdminCount);
+
+        var statusDistribution = new List<BookingStatusAnalyticsDto>
+        {
+            new BookingStatusAnalyticsDto { Status = "Draft", Count = statusCounts.GetValueOrDefault(BookingStatus.Draft.ToString(), 0) },
+            new BookingStatusAnalyticsDto { Status = "Payment Pending", Count = statusCounts.GetValueOrDefault(BookingStatus.PaymentPending.ToString(), 0) },
+            new BookingStatusAnalyticsDto { Status = "Confirmed", Count = statusCounts.GetValueOrDefault(BookingStatus.Confirmed.ToString(), 0) },
+            new BookingStatusAnalyticsDto { Status = "Active", Count = statusCounts.GetValueOrDefault(BookingStatus.Active.ToString(), 0) },
+            new BookingStatusAnalyticsDto { Status = "Completed", Count = statusCounts.GetValueOrDefault(BookingStatus.Completed.ToString(), 0) },
+            new BookingStatusAnalyticsDto { Status = "Cancelled", Count = regularCancelled },
+            new BookingStatusAnalyticsDto { Status = "Cancelled By Admin", Count = cancelledByAdminCount }
+        };
+
+        // 2. Active Bookings
+        var activeBookings = await query.CountAsync(b => b.Status == BookingStatus.Active, cancellationToken);
+
+        // 3. Pickup Queue
+        var pickupQueue = await query
+            .Where(b => b.Status == BookingStatus.Confirmed)
+            .Where(b => !_context.VehicleInspections.Any(vi => vi.BookingId == b.Id && vi.InspectionType == "Pickup" && vi.InspectorId != null))
+            .CountAsync(cancellationToken);
+
+        // 4. Return Queue
+        var returnQueue = await query
+            .Where(b => b.Status == BookingStatus.Active)
+            .Where(b => !_context.VehicleInspections.Any(vi => vi.BookingId == b.Id && vi.InspectionType == "Return" && vi.InspectorId != null))
+            .CountAsync(cancellationToken);
+
+        // 5. Upcoming Pickups
+        var cutoffTime = DateTime.UtcNow.AddHours(48);
+        var upcomingPickups = await query
+            .Where(b => b.Status == BookingStatus.Confirmed && b.PickupDate != null && b.PickupDate <= cutoffTime)
+            .CountAsync(cancellationToken);
+
+        return new AdminBookingAnalyticsDto
+        {
+            StatusDistribution = statusDistribution,
+            ActiveBookings = activeBookings,
+            PickupQueue = pickupQueue,
+            ReturnQueue = returnQueue,
+            UpcomingPickups = upcomingPickups
+        };
+    }
+
     public async Task<BookingDetailsDto> GetAdminBookingByIdAsync(
         Guid bookingId,
         Guid currentUserId,
