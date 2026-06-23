@@ -166,7 +166,6 @@ export default function SuppliersTab() {
 
   useEffect(() => {
     void fetchSuppliers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleDeleteConfirm = async () => {
