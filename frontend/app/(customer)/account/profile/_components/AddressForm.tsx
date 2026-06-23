@@ -140,7 +140,7 @@ export default function AddressForm({
           validationErrors?: { field?: string; message: string }[];
           message?: string;
         } | null;
-        
+
         if (body?.validationErrors && body.validationErrors.length > 0) {
           // If the error is about a field not in this form (like the main phone), show it as a server error
           const firstError = body.validationErrors[0];
@@ -151,7 +151,7 @@ export default function AddressForm({
           setServerError(msg);
           return;
         }
-        
+
         const msg = body?.message ?? "Failed to update address.";
         setServerError(msg);
         return;

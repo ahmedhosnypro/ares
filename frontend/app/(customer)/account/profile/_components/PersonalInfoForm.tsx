@@ -131,13 +131,13 @@ export default function PersonalInfoForm({
           validationErrors?: { field?: string; message: string }[];
           message?: string;
         } | null;
-        
+
         if (body?.validationErrors && body.validationErrors.length > 0) {
           const msg = body.validationErrors[0].message;
           setServerError(msg);
           return;
         }
-        
+
         const msg = body?.message ?? "Failed to update.";
         setServerError(msg);
         return;
