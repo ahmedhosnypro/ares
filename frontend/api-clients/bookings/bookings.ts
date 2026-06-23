@@ -420,3 +420,52 @@ export const useAdminBookingStats = (
 
   return { stats, loading, refetch };
 };
+
+export interface BookingStatusAnalytics {
+  status: string;
+  count: number;
+}
+
+export interface AdminBookingAnalytics {
+  statusDistribution: BookingStatusAnalytics[];
+  activeBookings: number;
+  pickupQueue: number;
+  returnQueue: number;
+  upcomingPickups: number;
+}
+
+export const useAdminBookingAnalytics = (
+  accessToken: string | undefined,
+  user: { id: string; role: string } | undefined
+) => {
+  const [analytics, setAnalytics] = useState<AdminBookingAnalytics | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const refetch = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      if (!accessToken || !user) return;
+
+      setLoading(true);
+      try {
+        const responseData = await apiFetchJson<AdminBookingAnalytics>(`/api/admin/bookings/analytics`, {
+          method: "GET",
+          accessToken: accessToken,
+        });
+        setAnalytics(responseData);
+      } catch (error) {
+        logger.error("Error fetching admin booking analytics", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void fetchAnalytics();
+  }, [accessToken, user, refreshTrigger]);
+
+  return { analytics, loading, refetch };
+};

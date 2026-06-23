@@ -48,15 +48,12 @@ import {
   EditOutlined as EditIcon,
   SyncAltOutlined as ChangeStatusIcon,
   DeleteOutlined as DeleteIcon,
-  PlayCircleTwoTone as ActiveIcon,
-  HourglassEmptyTwoTone as PendingIcon,
-  CheckCircleTwoTone as CompletedIcon,
 } from "@mui/icons-material";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
   useBookings,
-  useAdminBookingStats,
+  useAdminBookingAnalytics,
   type Booking,
   deleteBookings as deleteBookingsApi,
 } from "@/api-clients/bookings/bookings";
@@ -64,7 +61,7 @@ import { toImageUrl } from "@/utils/image-url";
 import { logger } from "@/utils/logger";
 import Link from "next/link";
 import ChangeStatusModal from "./ChangeStatusModal";
-import VehicleStats from "@/app/(dashboard)/_components/VehicleStats";
+import BookingsAnalytics from "./BookingsAnalytics";
 
 // ── CONSTANTS & HELPERS ─────────────────────────────────────────────────
 const getStatusConfig = (status?: string) => {
@@ -154,33 +151,7 @@ export default function BookingsClient() {
     toDate ? new Date(toDate).toISOString() : null
   );
 
-  const { stats, loading: statsLoading, refetch: refetchStats } = useAdminBookingStats(session?.accessToken, user);
-
-  const bookingItems = useMemo(
-    () => [
-      {
-        label: "Active Bookings",
-        value: statsLoading ? "—" : (stats?.activeBookings ?? 0),
-        color: "success",
-        icon: <ActiveIcon fontSize="small" />,
-      },
-      {
-        label: "Pending Bookings",
-        value: statsLoading ? "—" : (stats?.pendingBookings ?? 0),
-        color: "warning",
-        icon: <PendingIcon fontSize="small" />,
-      },
-      {
-        label: "Completed Bookings",
-        value: statsLoading
-          ? "—"
-          : (stats?.totalCompletedBookings ?? stats?.completedBookings ?? stats?.completedToday ?? 0),
-        color: "info",
-        icon: <CompletedIcon fontSize="small" />,
-      },
-    ],
-    [stats, statsLoading]
-  );
+  const { analytics, loading: analyticsLoading, refetch: refetchAnalytics } = useAdminBookingAnalytics(session?.accessToken, user);
 
   // ── Handlers ─────────────────────────────────────────────────────────
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -240,7 +211,7 @@ export default function BookingsClient() {
 
         // Refetch updated bookings list & stats
         refetch();
-        refetchStats();
+        refetchAnalytics();
 
         setSnackbar({
           open: true,
@@ -451,7 +422,7 @@ export default function BookingsClient() {
           alignItems: { xs: "flex-start", sm: "center" },
           gap: 2,
           justifyContent: "space-between",
-          mb: 4,
+          mb: 2,
         }}
       >
         <Box>
@@ -496,8 +467,8 @@ export default function BookingsClient() {
         </Alert>
       )}
 
-      {/* ── OPERATIONAL CARDS ── */}
-      <VehicleStats items={bookingItems} />
+      {/* ── ANALYTICS SECTION ── */}
+      <BookingsAnalytics analytics={analytics} loading={analyticsLoading} />
 
       {/* ── SEARCH & TABLE SECTION ── */}
       <Paper elevation={0} sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>

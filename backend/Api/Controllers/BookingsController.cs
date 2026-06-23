@@ -346,6 +346,34 @@ public class AdminBookingsController : ControllerBase
     }
 
     /// <summary>
+    /// Get complex analytics and queues for Bookings Management dashboard
+    /// </summary>
+    [HttpGet("analytics")]
+    [ProducesResponseType(typeof(AdminBookingAnalyticsDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<AdminBookingAnalyticsDto>> GetAnalytics(
+        CancellationToken cancellationToken = default)
+    {
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        if (userIdClaim == null)
+        {
+            return Unauthorized(new { Message = "User not authenticated" });
+        }
+
+        var currentUserId = Guid.Parse(userIdClaim.Value);
+        var isAdmin = User.IsInRole("Admin");
+
+        _logger.LogInformation("Admin/Supplier {UserId} requesting booking analytics", currentUserId);
+
+        var result = await _bookingService.GetAdminBookingAnalyticsAsync(
+            currentUserId,
+            isAdmin,
+            cancellationToken);
+
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Search bookings for Admin/Supplier dashboard
     /// </summary>
     [HttpPost("search/{page}/{size}")]
