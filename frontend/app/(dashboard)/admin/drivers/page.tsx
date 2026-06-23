@@ -1,11 +1,23 @@
-import { Metadata } from "next";
-import AdminDriversClient from "./AdminDriversClient";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Driver Management | ARES Car Rental",
-  description: "Review, verify, approve, reject, enable and disable platform drivers.",
-};
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Box, CircularProgress } from "@mui/material";
 
-export default function AdminDriversPage() {
-  return <AdminDriversClient />;
+/**
+ * /admin/drivers is now consolidated into /admin/users?tab=drivers.
+ * This stub silently redirects any direct/bookmarked links.
+ */
+export default function DriversRedirectPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace("/admin/users?tab=drivers");
+  }, [router]);
+
+  return (
+    <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
+      <CircularProgress />
+    </Box>
+  );
 }
