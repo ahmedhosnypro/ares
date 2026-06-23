@@ -15,7 +15,21 @@ export class ApiError extends Error {
     public readonly statusText: string,
     public readonly body: string
   ) {
-    super(`API Error ${String(status)}: ${statusText}`);
+    let errorMessage = `API Error ${String(status)}: ${statusText}`;
+    try {
+      if (body) {
+        const parsed = JSON.parse(body);
+        if (parsed.validationErrors && Array.isArray(parsed.validationErrors) && parsed.validationErrors.length > 0) {
+          errorMessage = parsed.validationErrors.map((e: any) => e.message).join(" ");
+        } else if (parsed.message) {
+          errorMessage = parsed.message;
+        }
+      }
+    } catch (e) {
+      // Ignore JSON parse error
+    }
+
+    super(errorMessage);
     this.name = "ApiError";
   }
 }

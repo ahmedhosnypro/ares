@@ -852,13 +852,8 @@ public class BookingService : IBookingService
             throw new ForbiddenException("You do not have permission to update this booking");
         }
 
-        // Terminal-status guard. Completed / Cancelled bookings are frozen.
-        if (booking.Status == BookingStatus.Cancelled || booking.Status == BookingStatus.Completed)
-        {
-            throw new ValidationException("Status", $"Cannot update status from {booking.Status}");
-        }
-
         var parsedStatus = ParseOperationalStatus(newStatus);
+        ValidateBookingStatusTransition(booking.Status, parsedStatus);
 
         booking.Status = parsedStatus;
         if (parsedStatus == BookingStatus.Cancelled)
@@ -1049,6 +1044,61 @@ public class BookingService : IBookingService
         }
 
         return parsed;
+    }
+
+    private static void ValidateBookingStatusTransition(BookingStatus currentStatus, BookingStatus newStatus)
+    {
+        if (currentStatus == newStatus) return;
+
+        var allowedNextStatuses = currentStatus switch
+        {
+            BookingStatus.Draft => new[] { BookingStatus.PaymentPending, BookingStatus.Cancelled },
+            BookingStatus.PaymentPending => new[] { BookingStatus.Confirmed, BookingStatus.Cancelled, BookingStatus.Expired },
+            BookingStatus.Confirmed => new[] { BookingStatus.Active, BookingStatus.Cancelled },
+            BookingStatus.Active => new[] { BookingStatus.Completed, BookingStatus.Cancelled },
+            BookingStatus.Completed => Array.Empty<BookingStatus>(),
+            BookingStatus.Cancelled => Array.Empty<BookingStatus>(),
+            BookingStatus.CancelledByAdmin => Array.Empty<BookingStatus>(),
+            BookingStatus.Expired => Array.Empty<BookingStatus>(),
+            _ => Array.Empty<BookingStatus>()
+        };
+
+        if (!allowedNextStatuses.Contains(newStatus))
+        {
+            if (currentStatus == BookingStatus.Completed || currentStatus == BookingStatus.Cancelled || currentStatus == BookingStatus.CancelledByAdmin)
+            {
+                throw new ValidationException("Status", $"Cannot change booking status from {currentStatus} to {newStatus}. {currentStatus} bookings are final.");
+            }
+            if (currentStatus == BookingStatus.Expired)
+            {
+                throw new ValidationException("Status", $"Cannot change booking status from {currentStatus} to {newStatus}. A new booking must be created.");
+            }
+            if (currentStatus == BookingStatus.Confirmed && newStatus == BookingStatus.Completed)
+            {
+                throw new ValidationException("Status", $"Cannot change booking status from {currentStatus} to {newStatus}. The booking must first become Active.");
+            }
+
+            string allowedMessage;
+            if (allowedNextStatuses.Length == 0)
+            {
+                allowedMessage = "No further status changes are allowed.";
+            }
+            else if (allowedNextStatuses.Length == 1)
+            {
+                allowedMessage = $"Allowed status is {allowedNextStatuses[0]}.";
+            }
+            else if (allowedNextStatuses.Length == 2)
+            {
+                allowedMessage = $"Allowed statuses are {allowedNextStatuses[0]} and {allowedNextStatuses[1]}.";
+            }
+            else
+            {
+                var allButLast = string.Join(", ", allowedNextStatuses.Take(allowedNextStatuses.Length - 1));
+                allowedMessage = $"Allowed statuses are {allButLast}, and {allowedNextStatuses.Last()}.";
+            }
+
+            throw new ValidationException("Status", $"Cannot change booking status from {currentStatus} to {newStatus}. {allowedMessage}");
+        }
     }
 
     /// <summary>
