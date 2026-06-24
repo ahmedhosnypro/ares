@@ -35,7 +35,7 @@ export default function SupplierVehicleDetailsClient({
 
     // 1. Upload new files if any
     const updatedImages = await Promise.all(
-      values.images.map(async (img) => {
+      values.images.map(async img => {
         if (img.file) {
           try {
             // isAdminFlow is false for supplier edit
@@ -54,7 +54,7 @@ export default function SupplierVehicleDetailsClient({
     );
 
     // 2. Clean up features (remove internal 'id' from useFieldArray)
-    const cleanFeatures = values.features.map((f) => ({
+    const cleanFeatures = values.features.map(f => ({
       featureName: f.featureName,
       featureDescription: f.featureDescription,
       featureCategory: f.featureCategory,
