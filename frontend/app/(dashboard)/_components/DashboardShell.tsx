@@ -548,7 +548,8 @@ export default function DashboardShell({
           minWidth: 0,
           overflowX: "hidden",
           width: { md: `calc(100% - ${drawerWidth.toString()}px)` },
-          mt: `${APP_BAR_HEIGHT.toString()}px`,
+          pt: { xs: 11, md: 12 },
+          px: { xs: 2, md: 10 },
           transition: theme =>
             theme.transitions.create(["width", "margin"], {
               easing: theme.transitions.easing.sharp,

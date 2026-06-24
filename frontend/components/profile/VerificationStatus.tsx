@@ -1,4 +1,4 @@
-import { Box, Chip, Divider, List, ListItem, ListItemIcon, ListItemText, Typography } from "@mui/material";
+import { Box, Chip, Divider, List, ListItem, Typography } from "@mui/material";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 import EmailRoundedIcon from "@mui/icons-material/EmailRounded";
@@ -13,6 +13,7 @@ interface VerificationStatusProps {
   readonly kycStatus?: string;
   readonly onVerifyIdentity?: () => void;
   readonly onUploadLicense?: () => void;
+  readonly isInspector?: boolean;
 }
 
 interface VerificationItemProps {
@@ -28,70 +29,76 @@ interface VerificationItemProps {
 function VerificationItem({ label, isVerified, isPending, actionText, icon, isLast, onClick }: VerificationItemProps) {
   return (
     <>
-      <ListItem
-        sx={{ px: 0, py: 1.5 }}
-        secondaryAction={
-          isPending ? (
-            <Chip
-              label="Pending Approval"
-              size="small"
-              color="warning"
-              variant="outlined"
-              sx={{ fontWeight: 700, fontSize: "0.7rem" }}
-            />
-          ) : !isVerified ? (
-            <Chip
-              label={actionText}
-              size="small"
-              color="warning"
-              variant="outlined"
-              clickable={!!onClick}
-              onClick={onClick}
-              sx={{ fontWeight: 700, fontSize: "0.7rem" }}
-            />
-          ) : (
-            <Chip
-              label="Verified"
-              size="small"
-              color="success"
-              variant="outlined"
-              sx={{ fontWeight: 700, fontSize: "0.7rem" }}
-            />
-          )
-        }
-      >
-        <ListItemIcon sx={{ minWidth: 36 }}>
-          <Box
-            sx={{
-              width: 28,
-              height: 28,
-              borderRadius: "50%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              bgcolor: isPending ? "warning.light" : isVerified ? "success.light" : "error.light",
-              color: isPending ? "warning.dark" : isVerified ? "success.dark" : "error.dark",
-            }}
-          >
-            {isPending ? (
-              <WarningAmberRoundedIcon sx={{ fontSize: 16 }} />
-            ) : isVerified ? (
-              <CheckCircleRoundedIcon sx={{ fontSize: 16 }} />
-            ) : (
-              <WarningAmberRoundedIcon sx={{ fontSize: 16 }} />
-            )}
-          </Box>
-        </ListItemIcon>
-        <ListItemText
-          primary={
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center" }}>{icon}</Box>
+      <ListItem sx={{ px: 0, py: 1.5 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            width: "100%",
+            flexWrap: "wrap",
+            gap: 1,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0 }}>
+            <Box
+              sx={{
+                width: 28,
+                height: 28,
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                bgcolor: isPending ? "warning.light" : isVerified ? "success.light" : "error.light",
+                color: isPending ? "warning.dark" : isVerified ? "success.dark" : "error.dark",
+                flexShrink: 0,
+              }}
+            >
+              {isPending ? (
+                <WarningAmberRoundedIcon sx={{ fontSize: 16 }} />
+              ) : isVerified ? (
+                <CheckCircleRoundedIcon sx={{ fontSize: 16 }} />
+              ) : (
+                <WarningAmberRoundedIcon sx={{ fontSize: 16 }} />
+              )}
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0 }}>
+              <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", flexShrink: 0 }}>{icon}</Box>
               <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
                 {label}
               </Typography>
             </Box>
-          }
-        />
+          </Box>
+          <Box sx={{ flexShrink: 0 }}>
+            {isPending ? (
+              <Chip
+                label="Pending"
+                size="small"
+                color="warning"
+                variant="outlined"
+                sx={{ fontWeight: 700, fontSize: "0.7rem" }}
+              />
+            ) : !isVerified ? (
+              <Chip
+                label={actionText}
+                size="small"
+                color="warning"
+                variant="outlined"
+                clickable={!!onClick}
+                onClick={onClick}
+                sx={{ fontWeight: 700, fontSize: "0.7rem" }}
+              />
+            ) : (
+              <Chip
+                label="Verified"
+                size="small"
+                color="success"
+                variant="outlined"
+                sx={{ fontWeight: 700, fontSize: "0.7rem" }}
+              />
+            )}
+          </Box>
+        </Box>
       </ListItem>
       {!isLast && <Divider sx={{ borderColor: "border.light" }} />}
     </>
@@ -106,6 +113,7 @@ export default function VerificationStatus({
   kycStatus,
   onVerifyIdentity,
   onUploadLicense,
+  isInspector = false,
 }: VerificationStatusProps) {
   const isKycVerified =
     kycStatus?.toLowerCase() === "approved" ||
@@ -138,14 +146,18 @@ export default function VerificationStatus({
       icon: <BadgeRoundedIcon sx={{ fontSize: 15 }} />,
       onClick: onVerifyIdentity,
     },
-    {
-      label: "Driver's License",
-      isVerified: licenseVerified,
-      isPending: licensePending,
-      actionText: "Upload",
-      icon: <BadgeRoundedIcon sx={{ fontSize: 15 }} />,
-      onClick: onUploadLicense,
-    },
+    ...(!isInspector
+      ? [
+          {
+            label: "Driver's License",
+            isVerified: licenseVerified,
+            isPending: licensePending,
+            actionText: "Upload",
+            icon: <BadgeRoundedIcon sx={{ fontSize: 15 }} />,
+            onClick: onUploadLicense,
+          },
+        ]
+      : []),
   ];
 
   return (

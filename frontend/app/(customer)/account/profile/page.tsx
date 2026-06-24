@@ -3,14 +3,9 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { toApiUrl } from "@/utils/api-client";
 import { type ProfileData } from "./types";
 import { logger } from "@/utils/logger";
-import ProfileHeader from "./_components/ProfileHeader";
-import PersonalInfoForm from "./_components/PersonalInfoForm";
-import AddressForm from "./_components/AddressForm";
-import PreferencesSection from "./_components/PreferencesSection";
-import VerificationSection from "./_components/VerificationSection";
-import ChangePasswordForm from "./_components/ChangePasswordForm";
-import ProfileCard from "./_components/ProfileCard";
-import { Alert, Box, Button, CardContent, Container, Grid, Typography } from "@mui/material";
+import SharedProfileContainer from "@/components/profile/SharedProfileContainer";
+import ProfileCard from "@/components/profile/ProfileCard";
+import { Alert, Box, Button, CardContent, Container, Typography } from "@mui/material";
 import Link from "next/link";
 
 export default async function ProfilePage() {
@@ -112,151 +107,14 @@ export default async function ProfilePage() {
     );
   }
 
-  const {
-    userId,
-    firstName,
-    lastName,
-    email,
-    phone,
-    profilePhotoUrl,
-    profileCompleteness,
-    dateOfBirth,
-    languagePreference,
-    currencyPreference,
-  } = profileData;
-
-  const address = profileData.address;
-  const emergencyContact = profileData.emergencyContact;
-  const verificationStatus = profileData.verificationStatus;
-  const addressStreet: string = address.street;
-  const addressCity: string = address.city;
-  const addressState: string = address.state;
-  const addressPostalCode: string = address.postalCode;
-  const addressCountry: string = address.country;
-  const emergencyName: string = emergencyContact.name;
-  const emergencyPhone: string = emergencyContact.phone;
-  const emergencyRelationship: string = emergencyContact.relationship;
-
   const isAdmin = session.user.roles.includes("Admin");
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "background.default", py: { xs: 4, md: 6 } }}>
-      <Container maxWidth="lg">
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" color="text.primary" gutterBottom sx={{ fontWeight: 800 }}>
-            Account Settings
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Manage your personal information, security, and preferences.
-          </Typography>
-        </Box>
-
-        <Grid container spacing={3}>
-          <Grid size={{ xs: 12, lg: 4 }}>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              <ProfileCard>
-                <ProfileHeader
-                  userId={userId}
-                  accessToken={session.accessToken}
-                  photoUrl={profilePhotoUrl}
-                  firstName={firstName}
-                  lastName={lastName}
-                  email={email}
-                  completeness={profileCompleteness}
-                />
-              </ProfileCard>
-
-              {!isAdmin && (
-                <VerificationSection
-                  accessToken={session.accessToken}
-                  initialEmailVerified={verificationStatus.email}
-                  initialPhoneVerified={verificationStatus.phone}
-                  initialLicenseVerified={verificationStatus.driverLicense}
-                  initialKycStatus={verificationStatus.kyc}
-                />
-              )}
-
-              <ProfileCard>
-                <PreferencesSection
-                  userId={userId}
-                  accessToken={session.accessToken}
-                  languagePreference={languagePreference}
-                  currencyPreference={currencyPreference}
-                  firstName={firstName}
-                  lastName={lastName}
-                  phone={phone}
-                  dateOfBirth={dateOfBirth}
-                  addressStreet={addressStreet}
-                  addressCity={addressCity}
-                  addressState={addressState}
-                  addressPostalCode={addressPostalCode}
-                  addressCountry={addressCountry}
-                  emergencyName={emergencyName}
-                  emergencyPhone={emergencyPhone}
-                  emergencyRelationship={emergencyRelationship}
-                />
-              </ProfileCard>
-            </Box>
-          </Grid>
-
-          <Grid size={{ xs: 12, lg: 8 }}>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              <ProfileCard>
-                <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
-                  <PersonalInfoForm
-                    userId={userId}
-                    accessToken={session.accessToken}
-                    firstName={firstName}
-                    lastName={lastName}
-                    email={email}
-                    phone={phone}
-                    dateOfBirth={dateOfBirth}
-                    addressStreet={addressStreet}
-                    addressCity={addressCity}
-                    addressState={addressState}
-                    addressPostalCode={addressPostalCode}
-                    addressCountry={addressCountry}
-                    emergencyName={emergencyName}
-                    emergencyPhone={emergencyPhone}
-                    emergencyRelationship={emergencyRelationship}
-                    languagePreference={languagePreference}
-                    currencyPreference={currencyPreference}
-                  />
-                </CardContent>
-              </ProfileCard>
-
-              <ProfileCard>
-                <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
-                  <AddressForm
-                    userId={userId}
-                    accessToken={session.accessToken}
-                    addressStreet={addressStreet}
-                    addressCity={addressCity}
-                    addressState={addressState}
-                    addressPostalCode={addressPostalCode}
-                    addressCountry={addressCountry}
-                    emergencyName={emergencyName}
-                    emergencyPhone={emergencyPhone}
-                    emergencyRelationship={emergencyRelationship}
-                    firstName={firstName}
-                    lastName={lastName}
-                    phone={phone}
-                    dateOfBirth={dateOfBirth}
-                    languagePreference={languagePreference}
-                    currencyPreference={currencyPreference}
-                  />
-                </CardContent>
-              </ProfileCard>
-
-              <ProfileCard>
-                <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
-                  <ChangePasswordForm userId={userId} accessToken={session.accessToken} />
-                </CardContent>
-              </ProfileCard>
-            </Box>
-          </Grid>
-        </Grid>
-      </Container>
-    </Box>
+    <SharedProfileContainer
+      session={session}
+      profileData={profileData}
+      showVerification={!isAdmin}
+      showPreferences={true}
+    />
   );
 }

@@ -2,31 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import {
-  Alert,
-  Box,
-  CircularProgress,
-  Container,
-  Typography,
-  Chip,
-  Stack,
-  Divider,
-  Paper,
-  Avatar,
-  Grid,
-} from "@mui/material";
-import { useTheme } from "@mui/material/styles";
-import {
-  LocationOn as LocationIcon,
-  Phone as PhoneIcon,
-  Email as EmailIcon,
-  Badge as BadgeIcon,
-  DirectionsCar as DirectionsCarIcon,
-} from "@mui/icons-material";
+import { Alert, Box, CircularProgress, Container, Typography, Chip, Stack, Grid, CardContent } from "@mui/material";
+import { Badge as BadgeIcon, DirectionsCar as DirectionsCarIcon } from "@mui/icons-material";
 import { toApiUrl } from "@/utils/api-client";
-import { toImageUrl } from "@/utils/image-url";
 import { logger } from "@/utils/logger";
 import { format } from "date-fns";
+import SharedProfileContainer from "@/components/profile/SharedProfileContainer";
+import ProfileCard from "@/components/profile/ProfileCard";
+import { type ProfileData } from "@/app/(customer)/account/profile/types";
 
 interface ServiceAreaDto {
   id: string;
@@ -56,7 +39,6 @@ interface DriverProfileDetails {
 
 export default function DriverProfileClient() {
   const { data: session } = useSession();
-  const theme = useTheme();
 
   const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState<DriverProfileDetails | null>(null);
@@ -94,7 +76,7 @@ export default function DriverProfileClient() {
     );
   }
 
-  if (error || !profile) {
+  if (error || !profile || !session) {
     return (
       <Container maxWidth="md" sx={{ py: 4 }}>
         <Alert severity="error">{error || "Profile not found."}</Alert>
@@ -102,153 +84,102 @@ export default function DriverProfileClient() {
     );
   }
 
-  const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(" ") || "Driver";
-  const initials = profile.firstName?.charAt(0).toUpperCase() || "D";
-  const resolvedPhoto = profile.profilePictureUrl ? toImageUrl(profile.profilePictureUrl) : null;
+  // Parse address fields from flat address string
+  const addressParts = profile.address ? profile.address.split(",").map(p => p.trim()) : [];
+  const mappedAddress = {
+    street: addressParts[0] || "",
+    city: addressParts[1] || "",
+    state: addressParts[2] || "",
+    postalCode: addressParts[3] || "",
+    country: addressParts[4] || "",
+  };
+
+  // Map to the shared ProfileData interface
+  const profileData: ProfileData = {
+    userId: session.user.id || "",
+    firstName: profile.firstName ?? "",
+    lastName: profile.lastName ?? "",
+    email: profile.email ?? "",
+    emailVerified: profile.status === "Verified",
+    phone: profile.phoneNumber ?? "",
+    phoneVerified: profile.status === "Verified",
+    profileCompleteness: profile.status === "Verified" ? 100 : profile.licenseNumber ? 80 : 40,
+    profilePhotoUrl: profile.profilePictureUrl,
+    address: mappedAddress,
+    emergencyContact: {
+      name: profile.emergencyContactName ?? "",
+      phone: profile.emergencyContactPhone ?? "",
+      relationship: "Emergency",
+    },
+    verificationStatus: {
+      email: profile.status === "Verified",
+      phone: profile.status === "Verified",
+      driverLicense: profile.status === "Verified",
+      kyc: profile.status === "Verified" ? "Approved" : "Pending",
+    },
+    dateOfBirth: "",
+    languagePreference: "en",
+    currencyPreference: "USD",
+  };
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Typography variant="h4" component="h1" sx={{ fontWeight: 800, mb: 4 }}>
-        My Profile
-      </Typography>
+    <SharedProfileContainer session={session} profileData={profileData} showVerification={true} showPreferences={false}>
+      <ProfileCard>
+        <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
+          <Grid container spacing={4}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 3, display: "flex", alignItems: "center", gap: 1 }}>
+                <BadgeIcon color="primary" /> License Details
+              </Typography>
+              <Stack spacing={2}>
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ textTransform: "uppercase", fontWeight: 700 }}
+                  >
+                    License Number
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                    {profile.licenseNumber || "N/A"}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ textTransform: "uppercase", fontWeight: 700 }}
+                  >
+                    Expiry Date
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                    {profile.licenseExpiryDate ? format(new Date(profile.licenseExpiryDate), "MMMM d, yyyy") : "N/A"}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Grid>
 
-      <Paper
-        elevation={0}
-        sx={{
-          p: 4,
-          borderRadius: 2,
-          boxShadow: theme.palette.shadow.card,
-          mb: 4,
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "flex-start", gap: 3, mb: 4, flexWrap: "wrap" }}>
-          <Avatar
-            src={resolvedPhoto || undefined}
-            sx={{
-              width: 100,
-              height: 100,
-              bgcolor: "primary.main",
-              fontSize: "2.5rem",
-              fontWeight: 800,
-              boxShadow: `0 0 0 4px ${theme.palette.background.paper}, 0 0 0 6px ${theme.palette.primary.main}`,
-            }}
-          >
-            {!resolvedPhoto && initials}
-          </Avatar>
-
-          <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="h5" sx={{ fontWeight: 800, mb: 0.5 }}>
-              {fullName}
-            </Typography>
-            <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
-              <Chip label={`Status: ${profile.status}`} color="primary" size="small" sx={{ fontWeight: 700 }} />
-              <Chip label={`Availability: ${profile.availability}`} variant="outlined" size="small" />
-            </Box>
-
-            <Stack spacing={1}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, color: "text.secondary" }}>
-                <EmailIcon fontSize="small" />
-                <Typography variant="body2">{profile.email}</Typography>
-              </Box>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, color: "text.secondary" }}>
-                <PhoneIcon fontSize="small" />
-                <Typography variant="body2">{profile.phoneNumber || "No phone provided"}</Typography>
-              </Box>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, color: "text.secondary" }}>
-                <LocationIcon fontSize="small" />
-                <Typography variant="body2">{profile.address || "No address provided"}</Typography>
-              </Box>
-            </Stack>
-          </Box>
-        </Box>
-
-        <Divider sx={{ my: 4 }} />
-
-        <Grid container spacing={4}>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 3, display: "flex", alignItems: "center", gap: 1 }}>
-              <BadgeIcon color="primary" /> License Details
-            </Typography>
-            <Stack spacing={2}>
-              <Box>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ textTransform: "uppercase", fontWeight: 700 }}
-                >
-                  License Number
-                </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                  {profile.licenseNumber || "N/A"}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ textTransform: "uppercase", fontWeight: 700 }}
-                >
-                  Expiry Date
-                </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                  {profile.licenseExpiryDate ? format(new Date(profile.licenseExpiryDate), "MMMM d, yyyy") : "N/A"}
-                </Typography>
-              </Box>
-            </Stack>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 3, display: "flex", alignItems: "center", gap: 1 }}>
+                <DirectionsCarIcon color="primary" /> Approved Work Areas
+              </Typography>
+              {profile.workAreas.length === 0 ? (
+                <Typography color="text.secondary">No work areas assigned.</Typography>
+              ) : (
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                  {profile.workAreas.map(area => (
+                    <Chip
+                      key={area.id}
+                      label={`${area.name} (${area.governorate})`}
+                      sx={{ borderRadius: 2, fontWeight: 500, bgcolor: "background.default" }}
+                    />
+                  ))}
+                </Box>
+              )}
+            </Grid>
           </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 3, display: "flex", alignItems: "center", gap: 1 }}>
-              <PhoneIcon color="primary" /> Emergency Contact
-            </Typography>
-            <Stack spacing={2}>
-              <Box>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ textTransform: "uppercase", fontWeight: 700 }}
-                >
-                  Contact Name
-                </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                  {profile.emergencyContactName || "N/A"}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ textTransform: "uppercase", fontWeight: 700 }}
-                >
-                  Contact Phone
-                </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                  {profile.emergencyContactPhone || "N/A"}
-                </Typography>
-              </Box>
-            </Stack>
-          </Grid>
-
-          <Grid size={{ xs: 12 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 3, display: "flex", alignItems: "center", gap: 1 }}>
-              <DirectionsCarIcon color="primary" /> Approved Work Areas
-            </Typography>
-            {profile.workAreas.length === 0 ? (
-              <Typography color="text.secondary">No work areas assigned.</Typography>
-            ) : (
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                {profile.workAreas.map(area => (
-                  <Chip
-                    key={area.id}
-                    label={`${area.name} (${area.governorate})`}
-                    sx={{ borderRadius: 2, fontWeight: 500, bgcolor: "background.default" }}
-                  />
-                ))}
-              </Box>
-            )}
-          </Grid>
-        </Grid>
-      </Paper>
-    </Container>
+        </CardContent>
+      </ProfileCard>
+    </SharedProfileContainer>
   );
 }
