@@ -1,12 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import {
-  Box,
-  CircularProgress,
-  Alert,
-  Button,
-} from "@mui/material";
+import { Box, CircularProgress, Alert, Button } from "@mui/material";
 import { useRouter } from "next/navigation";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { getInspectorDetails, updateInspectorStatus, type InspectorDetails } from "@/api-clients/inspectors/inspectors";

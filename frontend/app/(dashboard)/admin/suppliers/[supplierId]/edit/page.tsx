@@ -124,7 +124,7 @@ export default function EditSupplierPage() {
       } catch (err) {
         logger.error("Failed to load supplier from API, utilizing mock data", err);
         setError("Failed to load supplier from API. Showing mock data for testing.");
-        
+
         // Mock data fallback matching create supplier
         setForm({
           email: "supplier@company.com",
@@ -171,8 +171,16 @@ export default function EditSupplierPage() {
   const completenessItems: { label: string; done: boolean; missingLabel?: string }[] = [
     { label: "Status selected", done: Boolean(form.status) },
     { label: "Email valid", done: Boolean(form.email) },
-    { label: "Company profile full", done: Boolean(form.companyName && form.commercialRegistrationNumber && form.taxId), missingLabel: "Company profile incomplete" },
-    { label: "Representative details full", done: Boolean(form.firstName && form.lastName && form.phoneNumber), missingLabel: "Representative details incomplete" },
+    {
+      label: "Company profile full",
+      done: Boolean(form.companyName && form.commercialRegistrationNumber && form.taxId),
+      missingLabel: "Company profile incomplete",
+    },
+    {
+      label: "Representative details full",
+      done: Boolean(form.firstName && form.lastName && form.phoneNumber),
+      missingLabel: "Representative details incomplete",
+    },
   ];
   const completenessScore = Math.round((completenessItems.filter(i => i.done).length / completenessItems.length) * 100);
 
@@ -379,7 +387,13 @@ export default function EditSupplierPage() {
             }}
           >
             <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 3 }}>
-              <Box sx={{ ...sectionIconSx, bgcolor: alpha(theme.palette.primary.main, 0.1), color: theme.palette.primary.main }}>
+              <Box
+                sx={{
+                  ...sectionIconSx,
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  color: theme.palette.primary.main,
+                }}
+              >
                 <LockOutlinedIcon />
               </Box>
               <Box sx={{ minWidth: 0 }}>
@@ -426,7 +440,13 @@ export default function EditSupplierPage() {
             }}
           >
             <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 3 }}>
-              <Box sx={{ ...sectionIconSx, bgcolor: alpha(theme.palette.secondary.main, 0.1), color: theme.palette.secondary.main }}>
+              <Box
+                sx={{
+                  ...sectionIconSx,
+                  bgcolor: alpha(theme.palette.secondary.main, 0.1),
+                  color: theme.palette.secondary.main,
+                }}
+              >
                 <BusinessCenterOutlinedIcon />
               </Box>
               <Box sx={{ minWidth: 0 }}>
@@ -518,7 +538,9 @@ export default function EditSupplierPage() {
             }}
           >
             <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 3 }}>
-              <Box sx={{ ...sectionIconSx, bgcolor: alpha(theme.palette.info.main, 0.1), color: theme.palette.info.main }}>
+              <Box
+                sx={{ ...sectionIconSx, bgcolor: alpha(theme.palette.info.main, 0.1), color: theme.palette.info.main }}
+              >
                 <PersonOutlineIcon />
               </Box>
               <Box sx={{ minWidth: 0 }}>
@@ -914,7 +936,13 @@ export default function EditSupplierPage() {
               <Chip
                 label="Update mode"
                 size="small"
-                sx={{ fontSize: 10, fontWeight: 600, height: 20, bgcolor: theme.palette.action.hover, color: theme.palette.text.secondary }}
+                sx={{
+                  fontSize: 10,
+                  fontWeight: 600,
+                  height: 20,
+                  bgcolor: theme.palette.action.hover,
+                  color: theme.palette.text.secondary,
+                }}
               />
             </Stack>
 
@@ -941,7 +969,10 @@ export default function EditSupplierPage() {
                   ) : (
                     <RadioButtonUncheckedIcon sx={{ fontSize: 14, color: theme.palette.divider, flexShrink: 0 }} />
                   )}
-                  <Typography variant="caption" sx={{ color: item.done ? theme.palette.status.active.main : theme.palette.text.disabled }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: item.done ? theme.palette.status.active.main : theme.palette.text.disabled }}
+                  >
                     {item.done ? item.label : (item.missingLabel ?? item.label)}
                   </Typography>
                 </Stack>

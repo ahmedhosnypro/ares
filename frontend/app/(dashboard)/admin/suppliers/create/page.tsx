@@ -106,7 +106,11 @@ export default function CreateSupplierPage() {
     { label: "Company missing", done: Boolean(form.companyName), missingLabel: "Company name missing" },
     { label: "CRN missing", done: Boolean(form.commercialRegistrationNumber), missingLabel: "CRN missing" },
     { label: "Tax ID missing", done: Boolean(form.taxId), missingLabel: "Tax ID missing" },
-    { label: "Rep name missing", done: Boolean(form.firstName && form.lastName), missingLabel: "Representative name missing" },
+    {
+      label: "Rep name missing",
+      done: Boolean(form.firstName && form.lastName),
+      missingLabel: "Representative name missing",
+    },
     { label: "Phone missing", done: Boolean(form.phoneNumber), missingLabel: "Phone number missing" },
   ];
   const completenessScore = Math.round((completenessItems.filter(i => i.done).length / completenessItems.length) * 100);
@@ -454,7 +458,9 @@ export default function CreateSupplierPage() {
             }}
           >
             <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 3 }}>
-              <Box sx={{ ...sectionIconSx, bgcolor: alpha(theme.palette.secondary.main, 0.1), color: "secondary.main" }}>
+              <Box
+                sx={{ ...sectionIconSx, bgcolor: alpha(theme.palette.secondary.main, 0.1), color: "secondary.main" }}
+              >
                 <BusinessCenterOutlinedIcon />
               </Box>
               <Box sx={{ minWidth: 0 }}>

@@ -2,12 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import {
-  Box,
-  Typography,
-  CircularProgress,
-  Alert,
-} from "@mui/material";
+import { Box, Typography, CircularProgress, Alert } from "@mui/material";
 
 import { getUserById, type User } from "@/api-clients/users/users";
 import { logger } from "@/utils/logger";
@@ -54,7 +49,16 @@ export default function UserDetailsPage() {
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minHeight: "60vh", gap: 2 }}>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "60vh",
+          gap: 2,
+        }}
+      >
         <CircularProgress size={36} thickness={3} />
         <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
           Loading user profile…
@@ -66,7 +70,9 @@ export default function UserDetailsPage() {
   if (!user || !id) {
     return (
       <Box sx={{ p: 4 }}>
-        <Alert severity="error" sx={{ borderRadius: 2 }}>User not found.</Alert>
+        <Alert severity="error" sx={{ borderRadius: 2 }}>
+          User not found.
+        </Alert>
       </Box>
     );
   }
@@ -85,4 +91,3 @@ export default function UserDetailsPage() {
     />
   );
 }
-

@@ -29,7 +29,6 @@ import { useRouter } from "next/navigation";
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
 
-
 interface DriverListItem {
   driverProfileId: string;
   userId: string;
@@ -44,7 +43,6 @@ interface DriverListItem {
   totalTrips: number;
   createdAt: string;
 }
-
 
 const STATUS_FILTERS = ["All", "Incomplete", "PendingVerification", "Verified", "Rejected", "Suspended"];
 
@@ -77,7 +75,6 @@ export default function AdminDriversClient() {
   const [drivers, setDrivers] = useState<DriverListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-
 
   const fetchDrivers = useCallback(async () => {
     if (!token) return;
@@ -112,7 +109,6 @@ export default function AdminDriversClient() {
       [d.firstName, d.lastName, d.email, d.phoneNumber].filter(Boolean).join(" ").toLowerCase().includes(q)
     );
   }, [drivers, search]);
-
 
   const fullName = (d: { firstName?: string; lastName?: string }) =>
     [d.firstName, d.lastName].filter(Boolean).join(" ") || "—";
@@ -233,7 +229,11 @@ export default function AdminDriversClient() {
                     />
                   </TableCell>
                   <TableCell align="right">
-                    <Button size="small" variant="outlined" onClick={() => router.push(`/admin/drivers/${d.driverProfileId}`)}>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => router.push(`/admin/drivers/${d.driverProfileId}`)}
+                    >
                       View
                     </Button>
                   </TableCell>

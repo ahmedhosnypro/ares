@@ -3,13 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import {
-  Box,
-  CircularProgress,
-  Alert,
-  Button,
-  Snackbar,
-} from "@mui/material";
+import { Box, CircularProgress, Alert, Button, Snackbar } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { format } from "date-fns";
 import { toApiUrl } from "@/utils/api-client";
@@ -117,7 +111,7 @@ export default function DriverDetailsPage() {
         severity: "success",
         message: `Driver account successfully updated: ${action}`,
       });
-      
+
       await fetchDetails();
     } catch (err) {
       logger.error(`Driver action ${action} failed`, err);
@@ -180,7 +174,9 @@ export default function DriverDetailsPage() {
     isActive: details.isActive,
     profilePictureUrl: details.profilePictureUrl ? toImageUrl(details.profilePictureUrl) : undefined,
     licenseNumber: details.licenseNumber,
-    licenseExpiryDate: details.licenseExpiryDate ? format(new Date(details.licenseExpiryDate), "MMM d, yyyy") : undefined,
+    licenseExpiryDate: details.licenseExpiryDate
+      ? format(new Date(details.licenseExpiryDate), "MMM d, yyyy")
+      : undefined,
     licenseImage: details.licenseImage ? toImageUrl(details.licenseImage) : undefined,
     nationalIdFrontImage: details.nationalIdFrontImage ? toImageUrl(details.nationalIdFrontImage) : undefined,
     nationalIdBackImage: details.nationalIdBackImage ? toImageUrl(details.nationalIdBackImage) : undefined,
@@ -188,7 +184,9 @@ export default function DriverDetailsPage() {
     emergencyContactName: details.emergencyContactName,
     emergencyContactPhone: details.emergencyContactPhone,
     rejectionReason: details.rejectionReason,
-    workAreas: details.workAreas ? details.workAreas.map(w => ({ id: w.id, name: w.name, governorate: w.governorate, isActive: w.isActive })) : undefined,
+    workAreas: details.workAreas
+      ? details.workAreas.map(w => ({ id: w.id, name: w.name, governorate: w.governorate, isActive: w.isActive }))
+      : undefined,
     totalTrips: details.totalTrips,
     averageRating: details.averageRating,
     availability: details.availability,
@@ -212,7 +210,7 @@ export default function DriverDetailsPage() {
         open={toast.open}
         autoHideDuration={3500}
         onClose={() => {
-          setToast((t) => ({ ...t, open: false }));
+          setToast(t => ({ ...t, open: false }));
         }}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
       >

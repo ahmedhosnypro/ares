@@ -88,7 +88,7 @@ export default function EditUserPage() {
       } catch (err) {
         logger.error("Failed to load user from API, utilizing mock data", err);
         setError("Failed to load user from API. Showing mock data for testing.");
-        
+
         // Mock data fallback matching create user
         setForm({
           email: "alex.mercer@ares.nexus",
@@ -317,7 +317,13 @@ export default function EditUserPage() {
             }}
           >
             <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 3 }}>
-              <Box sx={{ ...sectionIconSx, bgcolor: alpha(theme.palette.primary.main, 0.1), color: theme.palette.primary.main }}>
+              <Box
+                sx={{
+                  ...sectionIconSx,
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  color: theme.palette.primary.main,
+                }}
+              >
                 <LockOutlinedIcon />
               </Box>
               <Box sx={{ minWidth: 0 }}>
@@ -363,7 +369,9 @@ export default function EditUserPage() {
             }}
           >
             <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 3 }}>
-              <Box sx={{ ...sectionIconSx, bgcolor: alpha(theme.palette.info.main, 0.1), color: theme.palette.info.main }}>
+              <Box
+                sx={{ ...sectionIconSx, bgcolor: alpha(theme.palette.info.main, 0.1), color: theme.palette.info.main }}
+              >
                 <PersonOutlineIcon />
               </Box>
               <Box sx={{ minWidth: 0 }}>
@@ -668,7 +676,13 @@ export default function EditUserPage() {
               <Chip
                 label="Update mode"
                 size="small"
-                sx={{ fontSize: 10, fontWeight: 600, height: 20, bgcolor: theme.palette.action.hover, color: theme.palette.text.secondary }}
+                sx={{
+                  fontSize: 10,
+                  fontWeight: 600,
+                  height: 20,
+                  bgcolor: theme.palette.action.hover,
+                  color: theme.palette.text.secondary,
+                }}
               />
             </Stack>
 
@@ -695,7 +709,10 @@ export default function EditUserPage() {
                   ) : (
                     <RadioButtonUncheckedIcon sx={{ fontSize: 14, color: theme.palette.divider, flexShrink: 0 }} />
                   )}
-                  <Typography variant="caption" sx={{ color: item.done ? theme.palette.status.active.main : theme.palette.text.disabled }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: item.done ? theme.palette.status.active.main : theme.palette.text.disabled }}
+                  >
                     {item.done ? item.label : (item.missingLabel ?? item.label)}
                   </Typography>
                 </Stack>

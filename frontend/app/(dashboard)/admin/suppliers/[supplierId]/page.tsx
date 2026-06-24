@@ -2,12 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import {
-  Box,
-  Typography,
-  CircularProgress,
-  Button,
-} from "@mui/material";
+import { Box, Typography, CircularProgress, Button } from "@mui/material";
 
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { getSupplierById, type Supplier } from "@/api-clients/suppliers/suppliers";
