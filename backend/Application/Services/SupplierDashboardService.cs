@@ -69,22 +69,54 @@ public class SupplierDashboardService : ISupplierDashboardService
                             || b.Status == BookingStatus.Confirmed))
             .CountAsync(cancellationToken);
 
-        // ── 4. Total earnings = sum of TotalPrice on Completed bookings only ─
-        // Cancelled and Pending bookings are excluded per spec. We use the
+        // ── 4. Total earnings = sum of SupplierAmount on Completed and non-refunded bookings only ─
+        // Cancelled, Pending, and Refunded bookings are excluded per spec. We use the
         // null-coalesce on the SQL side via `?? 0m` so a single SUM is
         // returned even when no rows match.
         var totalEarnings = await _context.Bookings
             .AsNoTracking()
             .Where(b => b.Vehicle != null
                         && b.Vehicle.UserId == supplierId
-                        && b.Status == BookingStatus.Completed)
-            .SumAsync(b => b.TotalPrice ?? 0m, cancellationToken);
+                        && b.Status == BookingStatus.Completed
+                        && !_context.Payments.Any(p =>
+                            p.BookingId == b.Id
+                            && p.Status == "Refunded"))
+            .SumAsync(b => b.SupplierAmount ?? 0m, cancellationToken);
 
         return new SupplierDashboardStatsDto(
             TotalVehicles: totalVehicles,
             PendingVehicles: pendingVehicles,
             ActiveBookings: activeBookings,
             TotalEarnings: totalEarnings
+        );
+    }
+
+    /// <inheritdoc />
+    public async Task<BookingsByStatusDto> GetBookingsByStatusAsync(
+        Guid supplierId,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Computing supplier bookings by status for {SupplierId}", supplierId);
+
+        // Group bookings by their actual enum status and count them up.
+        // Doing the GroupBy in SQL ensures we don't materialise any booking rows.
+        var countsByStatus = await _context.Bookings
+            .AsNoTracking()
+            .Where(b => b.Vehicle != null && b.Vehicle.UserId == supplierId)
+            .GroupBy(b => b.Status)
+            .Select(g => new { Status = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Status, x => x.Count, cancellationToken);
+
+        // Local helper to sum counts for any given list of internal statuses.
+        int GetCount(params BookingStatus[] targetStatuses)
+            => targetStatuses.Sum(s => countsByStatus.TryGetValue(s, out var count) ? count : 0);
+
+        return new BookingsByStatusDto(
+            Pending: GetCount(BookingStatus.Draft, BookingStatus.PaymentPending),
+            Confirmed: GetCount(BookingStatus.Confirmed),
+            Active: GetCount(BookingStatus.Active),
+            Completed: GetCount(BookingStatus.Completed),
+            Cancelled: GetCount(BookingStatus.Cancelled, BookingStatus.CancelledByAdmin, BookingStatus.Expired)
         );
     }
 }

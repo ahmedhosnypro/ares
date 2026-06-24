@@ -60,4 +60,32 @@ public class SupplierDashboardController : ControllerBase
         var stats = await _supplierDashboardService.GetStatsAsync(supplierId, cancellationToken);
         return Ok(stats);
     }
+
+    /// <summary>
+    /// Returns booking counts grouped by business-friendly categories for the
+    /// authenticated supplier. All counts are scoped to vehicles where
+    /// <c>UserId</c> matches the caller.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>
+    /// <see cref="BookingsByStatusDto"/> with counts for pending, confirmed,
+    /// active, completed, and cancelled bookings.
+    /// </returns>
+    [HttpGet("bookings-by-status")]
+    [ProducesResponseType(typeof(BookingsByStatusDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<BookingsByStatusDto>> GetBookingsByStatus(CancellationToken cancellationToken = default)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var supplierId))
+        {
+            return Unauthorized(new { Message = "User not authenticated" });
+        }
+
+        _logger.LogInformation("Fetching supplier dashboard bookings by status for supplier {SupplierId}", supplierId);
+
+        var counts = await _supplierDashboardService.GetBookingsByStatusAsync(supplierId, cancellationToken);
+        return Ok(counts);
+    }
 }

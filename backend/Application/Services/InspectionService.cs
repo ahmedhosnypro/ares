@@ -58,14 +58,20 @@ public class InspectionService : IInspectionService
         var booking = await _bookingRepository.GetBookingWithDetailsAsync(bookingId, cancellationToken)
             ?? throw new NotFoundException("Booking", bookingId);
 
-        // Workflow gate: only bookings that are confirmed/approved can be
-        // routed for inspection. Cancelled/Completed bookings are dead
-        // ends, and bookings already past inspection should not be
-        // reassigned through this endpoint.
-        if (booking.Status == BookingStatus.Cancelled || booking.Status == BookingStatus.Completed)
+        string targetInspectionType;
+        if (booking.Status == BookingStatus.Confirmed)
         {
-            throw new ConflictException(
-                $"Cannot assign an inspector to a booking in status '{booking.Status}'.");
+            targetInspectionType = "Pickup";
+        }
+        else if (booking.Status == BookingStatus.Active)
+        {
+            targetInspectionType = "Return";
+        }
+        else
+        {
+            throw new ValidationException(
+                "BookingStatus",
+                "Inspector assignment is only allowed:\n- For Pickup Inspection when booking status is Confirmed.\n- For Return Inspection when booking status is Active.");
         }
 
         // Resolve inspector. Spec mandates inactive inspectors must be
@@ -85,7 +91,7 @@ public class InspectionService : IInspectionService
 
         // Ensure we never create a second inspection of the same type for the same booking.
         var allInspections = await _inspectionRepository.GetAllAsync(cancellationToken);
-        var inspection = allInspections.FirstOrDefault(i => i.BookingId == bookingId && string.Equals(i.InspectionType, request.InspectionType, StringComparison.OrdinalIgnoreCase));
+        var inspection = allInspections.FirstOrDefault(i => i.BookingId == bookingId && string.Equals(i.InspectionType, targetInspectionType, StringComparison.OrdinalIgnoreCase));
 
         Guid? previousInspectorId = null;
 
@@ -97,8 +103,8 @@ public class InspectionService : IInspectionService
                 VehicleId = booking.VehicleId,
                 BookingId = booking.Id,
                 InspectorId = inspector.UserId,
-                InspectionType = request.InspectionType,
-                InspectionDate = request.InspectionType.Equals("Pickup", StringComparison.OrdinalIgnoreCase)
+                InspectionType = targetInspectionType,
+                InspectionDate = targetInspectionType.Equals("Pickup", StringComparison.OrdinalIgnoreCase)
                     ? (booking.PickupDate ?? DateTime.UtcNow)
                     : (booking.ReturnDate ?? booking.PickupDate?.AddDays(1) ?? DateTime.UtcNow),
                 Status = InspectionStatus.Pending,
@@ -126,7 +132,7 @@ public class InspectionService : IInspectionService
         }
 
         // Mirror onto booking.
-        if (string.Equals(request.InspectionType, "Pickup", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(targetInspectionType, "Pickup", StringComparison.OrdinalIgnoreCase))
         {
             booking.AssignedInspectorId = inspector.UserId;
         }
@@ -144,7 +150,7 @@ public class InspectionService : IInspectionService
                 await _notificationService.CreateNotificationAsync(
                     inspector.UserId,
                     "New inspection assigned",
-                    $"You have been assigned to inspect booking {booking.BookingNumber ?? booking.Id.ToString()} ({request.InspectionType}).",
+                    $"You have been assigned to inspect booking {booking.BookingNumber ?? booking.Id.ToString()} ({targetInspectionType}).",
                     NotificationTypeInspectionAssigned,
                     cancellationToken);
             }
@@ -155,7 +161,7 @@ public class InspectionService : IInspectionService
                 await _notificationService.CreateNotificationAsync(
                     previousInspectorId.Value,
                     "Inspection Reassigned",
-                    $"Your assignment for booking {booking.BookingNumber ?? booking.Id.ToString()} ({request.InspectionType}) has been reassigned to another inspector.",
+                    $"Your assignment for booking {booking.BookingNumber ?? booking.Id.ToString()} ({targetInspectionType}) has been reassigned to another inspector.",
                     "InspectionReassigned",
                     cancellationToken);
             }

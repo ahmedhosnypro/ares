@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Box,
   Container,
@@ -38,6 +38,7 @@ import {
   type UpdateSupplierVehiclePayload,
 } from "@/api-clients/supplier-vehicles/supplier-vehicles";
 import { createCar, uploadCarImage, type CarPayload } from "@/api-clients/cars/cars";
+import { getCategories, type Category } from "@/api-clients/categories/categories";
 import { logger } from "@/utils/logger";
 import { ApiError } from "@/utils/api-client";
 import type { VehicleDetailsViewModel, VehicleReviewViewModel, BookingLocationOption } from "./types";
@@ -74,9 +75,10 @@ const schema = z.object({
   ),
   status: z.string().optional(),
   availabilityStatus: z.string().optional(),
+  categoryId: z.string().min(1, "Category is required"),
 });
 
-type FormValues = z.infer<typeof schema>;
+export type FormValues = z.infer<typeof schema>;
 
 interface VehicleDetailsClientProps {
   readonly vehicle: VehicleDetailsViewModel;
@@ -84,6 +86,7 @@ interface VehicleDetailsClientProps {
   readonly locations: readonly BookingLocationOption[];
   readonly canEdit: boolean;
   readonly isCreateMode?: boolean;
+  readonly onSave?: (values: FormValues) => Promise<void>;
 }
 
 export default function VehicleDetailsClient({
@@ -92,6 +95,7 @@ export default function VehicleDetailsClient({
   locations,
   canEdit,
   isCreateMode = false,
+  onSave,
 }: VehicleDetailsClientProps) {
   const theme = useTheme();
   const router = useRouter();
@@ -101,6 +105,25 @@ export default function VehicleDetailsClient({
   const [successToastOpen, setSuccessToastOpen] = useState(false);
 
   const isAdmin = session?.user.roles.includes("Admin") ?? false;
+
+  const [categories, setCategories] = useState<readonly Category[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      try {
+        const data = await getCategories();
+        if (active) {
+          setCategories(data.filter(c => c.isActive));
+        }
+      } catch (err) {
+        logger.error("Failed to load categories", err);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const initialValues: FormValues = {
     make: vehicle.make,
@@ -122,12 +145,31 @@ export default function VehicleDetailsClient({
     })),
     status: vehicle.status,
     availabilityStatus: vehicle.availabilityStatus,
+    categoryId: "",
   };
 
   const methods = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: initialValues,
   });
+
+  useEffect(() => {
+    if (categories.length > 0) {
+      const matched = categories.find(
+        c => c.name.toLowerCase() === vehicle.status?.toLowerCase() || c.id === vehicle.status
+      );
+      if (matched) {
+        methods.setValue("categoryId", matched.id);
+      } else if (isCreateMode && !methods.getValues("categoryId")) {
+        const sedan = categories.find(c => c.name.toLowerCase() === "sedan");
+        if (sedan) {
+          methods.setValue("categoryId", sedan.id);
+        } else if (categories[0]) {
+          methods.setValue("categoryId", categories[0].id);
+        }
+      }
+    }
+  }, [categories, vehicle.status, isCreateMode, methods]);
 
   const { undo, redo, canUndo, canRedo } = useFormUndoRedo(methods, initialValues);
 
@@ -142,99 +184,108 @@ export default function VehicleDetailsClient({
     setSaveError(null);
 
     try {
-      if (isCreateMode) {
-        // Create mode: Create the vehicle first
-        const payload: CarPayload = {
-          userId: session.user.id,
-          make: values.make,
-          model: values.model,
-          year: values.year,
-          color: values.color,
-          licensePlate: values.licensePlate,
-          transmission: values.transmission,
-          fuelType: values.fuelType,
-          seats: values.seats,
-          pricePerDay: values.pricePerDay,
-          locationCity: values.locationCity,
-          description: values.description || "",
-          status: values.status || "Sedan",
-          availabilityStatus: values.availabilityStatus || "Available",
-        };
-
-        const resText = await createCar(session.accessToken, payload);
-
-        // Extract vehicle ID from response
-        const vehicleIdRegex = /[0-9a-fA-F-]{36}/;
-        const vehicleIdMatch = vehicleIdRegex.exec(resText);
-        const vehicleId = vehicleIdMatch ? vehicleIdMatch[0] : null;
-
-        if (!vehicleId) {
-          throw new Error("Failed to get vehicle ID from response");
+      if (onSave) {
+        await onSave(values);
+        if (!isCreateMode) {
+          // Reset form fields state to clear dirty state
+          methods.reset(values);
         }
+        setSuccessToastOpen(true);
+      } else {
+        if (isCreateMode) {
+          // Create mode: Create the vehicle first
+          const payload: CarPayload = {
+            userId: session.user.id,
+            make: values.make,
+            model: values.model,
+            year: values.year,
+            color: values.color,
+            licensePlate: values.licensePlate,
+            transmission: values.transmission,
+            fuelType: values.fuelType,
+            seats: values.seats,
+            pricePerDay: values.pricePerDay,
+            locationCity: values.locationCity,
+            description: values.description || "",
+            status: values.status || "Sedan",
+            availabilityStatus: values.availabilityStatus || "Available",
+          };
 
-        // Upload images if any
-        if (values.images.length > 0) {
-          for (const img of values.images) {
-            if (img.file) {
-              try {
-                await uploadCarImage(session.accessToken, vehicleId, img.file);
-              } catch (uploadErr) {
-                logger.error("Failed to upload image during creation", uploadErr);
+          const resText = await createCar(session.accessToken, payload);
+
+          // Extract vehicle ID from response
+          const vehicleIdRegex = /[0-9a-fA-F-]{36}/;
+          const vehicleIdMatch = vehicleIdRegex.exec(resText);
+          const vehicleId = vehicleIdMatch ? vehicleIdMatch[0] : null;
+
+          if (!vehicleId) {
+            throw new Error("Failed to get vehicle ID from response");
+          }
+
+          // Upload images if any
+          if (values.images.length > 0) {
+            for (const img of values.images) {
+              if (img.file) {
+                try {
+                  await uploadCarImage(session.accessToken, vehicleId, img.file);
+                } catch (uploadErr) {
+                  logger.error("Failed to upload image during creation", uploadErr);
+                }
               }
             }
           }
-        }
 
-        setSuccessToastOpen(true);
-        setTimeout(() => {
-          router.push("/admin/vehicles");
-        }, 800);
-      } else {
-        // Update mode: existing logic
-        // 1. Upload new files if any
-        const updatedImages = await Promise.all(
-          values.images.map(async img => {
-            if (img.file) {
-              try {
-                const res = await uploadVehicleImage(session.accessToken, vehicle.vehicleId, img.file, isAdmin);
-                // Revoke the temp blob URL
-                if (img.url.startsWith("blob:")) {
-                  URL.revokeObjectURL(img.url);
-                }
-                // Return in camelCase to match standard JSON serialization
-                return { url: res.url, isPrimary: img.isPrimary };
-              } catch (uploadErr) {
-                logger.error("Failed to upload image during update", uploadErr);
-                throw new Error("Failed to upload one or more images. Please try again.", { cause: uploadErr });
-              }
-            }
-            return { url: img.url, isPrimary: img.isPrimary };
-          })
-        );
-
-        // 2. Clean up features (remove internal 'id' from useFieldArray)
-        const cleanFeatures = values.features.map(f => ({
-          featureName: f.featureName,
-          featureDescription: f.featureDescription,
-          featureCategory: f.featureCategory,
-        }));
-
-        const finalValues: UpdateSupplierVehiclePayload = {
-          ...values,
-          images: updatedImages,
-          features: cleanFeatures,
-        };
-
-        if (isAdmin) {
-          await updateVehicle(session.accessToken, vehicle.vehicleId, finalValues);
+          setSuccessToastOpen(true);
+          setTimeout(() => {
+            router.push("/admin/vehicles");
+          }, 800);
         } else {
-          await updateSupplierVehicle(session.accessToken, vehicle.vehicleId, finalValues);
-        }
+          // Update mode: existing logic
+          // 1. Upload new files if any
+          const updatedImages = await Promise.all(
+            values.images.map(async img => {
+              if (img.file) {
+                try {
+                  const res = await uploadVehicleImage(session.accessToken, vehicle.vehicleId, img.file, isAdmin);
+                  // Revoke the temp blob URL
+                  if (img.url.startsWith("blob:")) {
+                    URL.revokeObjectURL(img.url);
+                  }
+                  // Return in camelCase to match standard JSON serialization
+                  return { url: res.url, isPrimary: img.isPrimary };
+                } catch (uploadErr) {
+                  logger.error("Failed to upload image during update", uploadErr);
+                  throw new Error("Failed to upload one or more images. Please try again.", { cause: uploadErr });
+                }
+              }
+              return { url: img.url, isPrimary: img.isPrimary };
+            })
+          );
 
-        // Update the form's initial values to match what was just saved
-        // so that isDirty becomes false and the "Save All Changes" bar disappears
-        methods.reset(finalValues);
-        setSuccessToastOpen(true);
+          // 2. Clean up features (remove internal 'id' from useFieldArray)
+          const cleanFeatures = values.features.map(f => ({
+            featureName: f.featureName,
+            featureDescription: f.featureDescription,
+            featureCategory: f.featureCategory,
+          }));
+
+          const finalValues: UpdateSupplierVehiclePayload = {
+            ...values,
+            images: updatedImages,
+            features: cleanFeatures,
+          };
+
+          if (isAdmin) {
+            await updateVehicle(session.accessToken, vehicle.vehicleId, finalValues);
+          } else {
+            await updateSupplierVehicle(session.accessToken, vehicle.vehicleId, finalValues);
+          }
+
+          // Update the form's initial values to match what was just saved
+          // so that isDirty becomes false and the "Save All Changes" bar disappears
+          methods.reset(finalValues);
+          setSuccessToastOpen(true);
+        }
       }
     } catch (err: unknown) {
       handleOnSubmitError(err);
@@ -311,7 +362,11 @@ export default function VehicleDetailsClient({
                   elevation={0}
                   sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: { xs: 2, md: 3 } }}
                 >
-                  {canEdit ? <VehicleInfoEditor isAdmin={isAdmin} /> : <VehicleInfo vehicle={vehicle} />}
+                  {canEdit ? (
+                    <VehicleInfoEditor isAdmin={isAdmin} categories={categories} />
+                  ) : (
+                    <VehicleInfo vehicle={vehicle} />
+                  )}
                 </Paper>
 
                 <Paper

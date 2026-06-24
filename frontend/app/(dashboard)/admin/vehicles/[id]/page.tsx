@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { Box, Typography, Container, IconButton, Stack } from "@mui/material";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
-import VehicleDetailsClient from "@/app/(public)/vehicles/[vehicleId]/_components/vehicle-details/VehicleDetailsClient";
+import AdminVehicleDetailsClient from "./AdminVehicleDetailsClient";
 import {
   type BookingLocationOption,
   type VehicleDetailsViewModel,
@@ -234,7 +234,7 @@ export default async function AdminVehicleDetailsPage({ params }: PageProps) {
           </Typography>
         </Stack>
       </Container>
-      <VehicleDetailsClient vehicle={vehicle} reviews={reviews} locations={locations} canEdit={canEdit} />
+      <AdminVehicleDetailsClient vehicle={vehicle} reviews={reviews} locations={locations} canEdit={canEdit} />
     </Box>
   );
 }

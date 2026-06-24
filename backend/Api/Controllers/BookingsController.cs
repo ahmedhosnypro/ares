@@ -7,6 +7,7 @@ using Backend.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Api.Controllers;
 
@@ -21,17 +22,20 @@ public class BookingsController : ControllerBase
 {
     private readonly IBookingService _bookingService;
     private readonly IVehicleRepository _vehicleRepository;
+    private readonly ILocationRepository _locationRepository;
     private readonly ILogger<BookingsController> _logger;
     private readonly UserManager<ApplicationUser> _userManager;
 
     public BookingsController(
         IBookingService bookingService,
         IVehicleRepository vehicleRepository,
+        ILocationRepository locationRepository,
         ILogger<BookingsController> logger,
         UserManager<ApplicationUser> userManager)
     {
         _bookingService = bookingService;
         _vehicleRepository = vehicleRepository;
+        _locationRepository = locationRepository;
         _logger = logger;
         _userManager = userManager;
     }
@@ -61,6 +65,21 @@ public class BookingsController : ControllerBase
 
         var userId = Guid.Parse(userIdClaim.Value);
 
+        // Server-side validation of customer user role and active status
+        var customerUserId = request.CustomerUserId ?? userId;
+        var customerUser = await _userManager.FindByIdAsync(customerUserId.ToString());
+        if (customerUser == null || 
+            customerUser.Status != "Active" || 
+            !await _userManager.IsInRoleAsync(customerUser, "Customer") || 
+            (await _userManager.GetRolesAsync(customerUser)).Any(r => r != "Customer"))
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message = "Selected user is not a customer."
+            });
+        }
+
         // Admins/Suppliers can only create bookings for customers, not for themselves.
         var isSelfBooking = !request.CustomerUserId.HasValue || request.CustomerUserId.Value == userId;
         if (isSelfBooking && User.IsInRole("Admin"))
@@ -76,20 +95,15 @@ public class BookingsController : ControllerBase
         }
 
         // Validate request
-        var validator = new CreateBookingRequestValidator(_vehicleRepository, _userManager, userId);
+        var validator = new CreateBookingRequestValidator(_vehicleRepository, _userManager, userId, _locationRepository);
         var validationResult = await validator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)
         {
             return BadRequest(new
             {
-                StatusCode = 400,
-                Message = "Validation failed",
-                ValidationErrors = validationResult.Errors.Select(e => new
-                {
-                    Field = e.PropertyName,
-                    Message = e.ErrorMessage
-                })
+                success = false,
+                message = validationResult.Errors.First().ErrorMessage
             });
         }
 
@@ -560,11 +574,11 @@ public class AdminBookingsController : ControllerBase
         if (limit < 1) limit = 1;
         if (limit > 50) limit = 50;
 
-        // Efficiently exclude only Admins from the picker. Suppliers ARE allowed to be customers.
-        var admins = await _userManager.GetUsersInRoleAsync("Admin");
-        var excludedIds = admins.Select(u => u.Id).ToList();
+        // Efficiently fetch only users in the Customer role whose account is Active.
+        var customers = await _userManager.GetUsersInRoleAsync("Customer");
+        var customerIds = customers.Select(u => u.Id).ToList();
 
-        var query = _context.Users.Where(u => !excludedIds.Contains(u.Id));
+        var query = _context.Users.Where(u => customerIds.Contains(u.Id) && u.Status == "Active");
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -606,13 +620,43 @@ public class AdminBookingsController : ControllerBase
         [FromQuery] DateTime? pickupDate,
         [FromQuery] DateTime? returnDate,
         [FromQuery] Guid? customerUserId,
+        [FromQuery] Guid? pickupLocationId,
         [FromQuery] int limit = 20,
         CancellationToken cancellationToken = default)
     {
         if (limit < 1) limit = 1;
         if (limit > 50) limit = 50;
 
-        var query = _context.Vehicles.Where(v => v.IsActive && v.AvailabilityStatus == "Available");
+        var query = _context.Vehicles.Where(v => v.IsActive 
+            && v.AvailabilityStatus == "Available"
+            && v.Status != "Retired"
+            && v.Status != "Maintenance"
+            && v.Status != "Blocked");
+
+        if (pickupLocationId.HasValue && pickupLocationId.Value != Guid.Empty)
+        {
+            var locationQuery = _context.UserAddresses.Where(address => address.Id == pickupLocationId.Value);
+            var locationRecords = await locationQuery
+                .Select(address => new { address.City, address.Governorate, address.Country })
+                .ToListAsync(cancellationToken);
+            var locationTerms = locationRecords
+                .SelectMany(address => new[] { address.City, address.Governorate, address.Country })
+                .Where(term => !string.IsNullOrWhiteSpace(term))
+                .Select(term => term!.Trim().ToLowerInvariant())
+                .Distinct()
+                .ToList();
+
+            if (locationTerms.Count > 0)
+            {
+                query = query.Where(v =>
+                    v.LocationCity != null &&
+                    locationTerms.Contains(v.LocationCity.Trim().ToLower()));
+            }
+            else
+            {
+                return Ok(Enumerable.Empty<VehiclePickerItemDto>());
+            }
+        }
 
         // If a customer is selected, exclude their own vehicles (suppliers cannot book their own cars).
         if (customerUserId.HasValue)
