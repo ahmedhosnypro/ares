@@ -1,0 +1,395 @@
+﻿
+E:\New folder (2)\ares\frontend\app\(dashboard)\admin\_components\UserDetailsView.tsx
+    84:24  error    "Pending" is overridden by string in this union type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-redundant-type-constituents
+    84:36  error    "Approved" is overridden by string in this union type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-redundant-type-constituents
+    84:49  error    "Rejected" is overridden by string in this union type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-redundant-type-constituents
+   172:25  error    Refactor this function to reduce its Cognitive Complexity from 16 to the 15 allowed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           sonarjs/cognitive-complexity
+   222:45  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+   222:53  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+   234:35  warning  Unknown word: "pendingverification"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @cspell/spellchecker
+   235:45  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+   235:54  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+   248:45  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+   248:54  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+   315:28  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+   316:25  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+   316:34  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+   317:25  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+   317:33  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+   319:48  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+   472:30  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+   472:35  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+   707:25  error    Promise-returning function provided to attribute where a void return was expected                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-misused-promises
+   728:29  error    Promise-returning function provided to attribute where a void return was expected                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-misused-promises
+   752:29  error    Promise-returning function provided to attribute where a void return was expected                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-misused-promises
+   814:16  error    Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+E:\New folder (2)\ares\frontend\app\(dashboard)\admin\_components\UserDetailsView.tsx:814:16
+  812 |             </Box>
+  813 |             <Box sx={{ px: 1, py: 1 }}>
+> 814 |               <FieldRow
+      |                ^^^^^^^^ This component is created during render
+  815 |                 icon={<EmailOutlinedIcon sx={{ fontSize: 17 }} />}
+  816 |                 label="Email Address"
+  817 |                 value={data.email || "No email assigned"}
+
+E:\New folder (2)\ares\frontend\app\(dashboard)\admin\_components\UserDetailsView.tsx:322:20
+  320 |
+  321 |   // ΓöÇΓöÇ Row field component (borderless, accent-line style) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+> 322 |   const FieldRow = ({
+      |                    ^^
+> 323 |     icon,
+      | ^^^^^^^^^
+> 324 |     label,
+      ΓÇª
+      | ^^^^^^^^^
+> 380 |     </Box>
+      | ^^^^^^^^^
+> 381 |   );
+      | ^^^^ The component is created during render here
+  382 |
+  383 |   const handleConfirmReject = () => {
+  384 |     if (onReject && rejectReason.trim()) {                                                                                                                react-hooks/static-components
+   845:57  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+   853:59  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+   854:51  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+   872:22  error    Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+E:\New folder (2)\ares\frontend\app\(dashboard)\admin\_components\UserDetailsView.tsx:872:22
+  870 |                 <Grid container spacing={1}>
+  871 |                   <Grid size={12}>
+> 872 |                     <FieldRow
+      |                      ^^^^^^^^ This component is created during render
+  873 |                       icon={<BusinessIcon sx={{ fontSize: 17 }} />}
+  874 |                       label="Company Name"
+  875 |                       value={data.companyProfile?.companyName || "No company name"}
+
+E:\New folder (2)\ares\frontend\app\(dashboard)\admin\_components\UserDetailsView.tsx:322:20
+  320 |
+  321 |   // ΓöÇΓöÇ Row field component (borderless, accent-line style) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+> 322 |   const FieldRow = ({
+      |                    ^^
+> 323 |     icon,
+      | ^^^^^^^^^
+> 324 |     label,
+      ΓÇª
+      | ^^^^^^^^^
+> 380 |     </Box>
+      | ^^^^^^^^^
+> 381 |   );
+      | ^^^^ The component is created during render here
+  382 |
+  383 |   const handleConfirmReject = () => {
+  384 |     if (onReject && rejectReason.trim()) {                                               react-hooks/static-components
+   876:59  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+   880:22  error    Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+E:\New folder (2)\ares\frontend\app\(dashboard)\admin\_components\UserDetailsView.tsx:880:22
+  878 |                   </Grid>
+  879 |                   <Grid size={{ xs: 12, sm: 6 }}>
+> 880 |                     <FieldRow
+      |                      ^^^^^^^^ This component is created during render
+  881 |                       icon={<ReceiptLongIcon sx={{ fontSize: 17 }} />}
+  882 |                       label="Commercial Registration Number"
+  883 |                       value={data.companyProfile?.commercialRegistrationNumber || "ΓÇö"}
+
+E:\New folder (2)\ares\frontend\app\(dashboard)\admin\_components\UserDetailsView.tsx:322:20
+  320 |
+  321 |   // ΓöÇΓöÇ Row field component (borderless, accent-line style) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+> 322 |   const FieldRow = ({
+      |                    ^^
+> 323 |     icon,
+      | ^^^^^^^^^
+> 324 |     label,
+      ΓÇª
+      | ^^^^^^^^^
+> 380 |     </Box>
+      | ^^^^^^^^^
+> 381 |   );
+      | ^^^^ The component is created during render here
+  382 |
+  383 |   const handleConfirmReject = () => {
+  384 |     if (onReject && rejectReason.trim()) {                           react-hooks/static-components
+   884:59  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+   888:22  error    Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+E:\New folder (2)\ares\frontend\app\(dashboard)\admin\_components\UserDetailsView.tsx:888:22
+  886 |                   </Grid>
+  887 |                   <Grid size={{ xs: 12, sm: 6 }}>
+> 888 |                     <FieldRow
+      |                      ^^^^^^^^ This component is created during render
+  889 |                       icon={<AssignmentOutlinedIcon sx={{ fontSize: 17 }} />}
+  890 |                       label="Tax ID"
+  891 |                       value={data.companyProfile?.taxId || "ΓÇö"}
+
+E:\New folder (2)\ares\frontend\app\(dashboard)\admin\_components\UserDetailsView.tsx:322:20
+  320 |
+  321 |   // ΓöÇΓöÇ Row field component (borderless, accent-line style) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+> 322 |   const FieldRow = ({
+      |                    ^^
+> 323 |     icon,
+      | ^^^^^^^^^
+> 324 |     label,
+      ΓÇª
+      | ^^^^^^^^^
+> 380 |     </Box>
+      | ^^^^^^^^^
+> 381 |   );
+      | ^^^^ The component is created during render here
+  382 |
+  383 |   const handleConfirmReject = () => {
+  384 |     if (onReject && rejectReason.trim()) {                                                                   react-hooks/static-components
+   892:59  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+   948:20  error    Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+E:\New folder (2)\ares\frontend\app\(dashboard)\admin\_components\UserDetailsView.tsx:948:20
+  946 |               <Grid container spacing={1}>
+  947 |                 <Grid size={{ xs: 12, sm: 6 }}>
+> 948 |                   <FieldRow
+      |                    ^^^^^^^^ This component is created during render
+  949 |                     icon={<PersonOutlineIcon sx={{ fontSize: 17 }} />}
+  950 |                     label="First Name"
+  951 |                     value={data.firstName || ""}
+
+E:\New folder (2)\ares\frontend\app\(dashboard)\admin\_components\UserDetailsView.tsx:322:20
+  320 |
+  321 |   // ΓöÇΓöÇ Row field component (borderless, accent-line style) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+> 322 |   const FieldRow = ({
+      |                    ^^
+> 323 |     icon,
+      | ^^^^^^^^^
+> 324 |     label,
+      ΓÇª
+      | ^^^^^^^^^
+> 380 |     </Box>
+      | ^^^^^^^^^
+> 381 |   );
+      | ^^^^ The component is created during render here
+  382 |
+  383 |   const handleConfirmReject = () => {
+  384 |     if (onReject && rejectReason.trim()) {                                                                            react-hooks/static-components
+   956:20  error    Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+E:\New folder (2)\ares\frontend\app\(dashboard)\admin\_components\UserDetailsView.tsx:956:20
+  954 |                 </Grid>
+  955 |                 <Grid size={{ xs: 12, sm: 6 }}>
+> 956 |                   <FieldRow
+      |                    ^^^^^^^^ This component is created during render
+  957 |                     icon={<PersonOutlineIcon sx={{ fontSize: 17 }} />}
+  958 |                     label="Last Name"
+  959 |                     value={data.lastName || ""}
+
+E:\New folder (2)\ares\frontend\app\(dashboard)\admin\_components\UserDetailsView.tsx:322:20
+  320 |
+  321 |   // ΓöÇΓöÇ Row field component (borderless, accent-line style) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+> 322 |   const FieldRow = ({
+      |                    ^^
+> 323 |     icon,
+      | ^^^^^^^^^
+> 324 |     label,
+      ΓÇª
+      | ^^^^^^^^^
+> 380 |     </Box>
+      | ^^^^^^^^^
+> 381 |   );
+      | ^^^^ The component is created during render here
+  382 |
+  383 |   const handleConfirmReject = () => {
+  384 |     if (onReject && rejectReason.trim()) {                                                                                                 react-hooks/static-components
+   964:20  error    Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+E:\New folder (2)\ares\frontend\app\(dashboard)\admin\_components\UserDetailsView.tsx:964:20
+  962 |                 </Grid>
+  963 |                 <Grid size={{ xs: 12, sm: 6 }}>
+> 964 |                   <FieldRow
+      |                    ^^^^^^^^ This component is created during render
+  965 |                     icon={<PhoneIcon sx={{ fontSize: 17 }} />}
+  966 |                     label="Phone Number"
+  967 |                     value={data.phoneNumber || "No phone number registered"}
+
+E:\New folder (2)\ares\frontend\app\(dashboard)\admin\_components\UserDetailsView.tsx:322:20
+  320 |
+  321 |   // ΓöÇΓöÇ Row field component (borderless, accent-line style) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+> 322 |   const FieldRow = ({
+      |                    ^^
+> 323 |     icon,
+      | ^^^^^^^^^
+> 324 |     label,
+      ΓÇª
+      | ^^^^^^^^^
+> 380 |     </Box>
+      | ^^^^^^^^^
+> 381 |   );
+      | ^^^^ The component is created during render here
+  382 |
+  383 |   const handleConfirmReject = () => {
+  384 |     if (onReject && rejectReason.trim()) {                                                                         react-hooks/static-components
+   972:20  error    Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+E:\New folder (2)\ares\frontend\app\(dashboard)\admin\_components\UserDetailsView.tsx:972:20
+  970 |                 </Grid>
+  971 |                 <Grid size={{ xs: 12, sm: 6 }}>
+> 972 |                   <FieldRow
+      |                    ^^^^^^^^ This component is created during render
+  973 |                     icon={<DateRangeIcon sx={{ fontSize: 17 }} />}
+  974 |                     label="Date of Birth"
+  975 |                     value={data.dateOfBirth || "ΓÇö"}
+
+E:\New folder (2)\ares\frontend\app\(dashboard)\admin\_components\UserDetailsView.tsx:322:20
+  320 |
+  321 |   // ΓöÇΓöÇ Row field component (borderless, accent-line style) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+> 322 |   const FieldRow = ({
+      |                    ^^
+> 323 |     icon,
+      | ^^^^^^^^^
+> 324 |     label,
+      ΓÇª
+      | ^^^^^^^^^
+> 380 |     </Box>
+      | ^^^^^^^^^
+> 381 |   );
+      | ^^^^ The component is created during render here
+  382 |
+  383 |   const handleConfirmReject = () => {
+  384 |     if (onReject && rejectReason.trim()) {                                                                                             react-hooks/static-components
+   981:22  error    Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+E:\New folder (2)\ares\frontend\app\(dashboard)\admin\_components\UserDetailsView.tsx:981:22
+  979 |                 {userType === "driver" && data.address && (
+  980 |                   <Grid size={12}>
+> 981 |                     <FieldRow
+      |                      ^^^^^^^^ This component is created during render
+  982 |                       icon={<HomeOutlinedIcon sx={{ fontSize: 17 }} />}
+  983 |                       label="Address"
+  984 |                       value={data.address}
+
+E:\New folder (2)\ares\frontend\app\(dashboard)\admin\_components\UserDetailsView.tsx:322:20
+  320 |
+  321 |   // ΓöÇΓöÇ Row field component (borderless, accent-line style) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+> 322 |   const FieldRow = ({
+      |                    ^^
+> 323 |     icon,
+      | ^^^^^^^^^
+> 324 |     label,
+      ΓÇª
+      | ^^^^^^^^^
+> 380 |     </Box>
+      | ^^^^^^^^^
+> 381 |   );
+      | ^^^^ The component is created during render here
+  382 |
+  383 |   const handleConfirmReject = () => {
+  384 |     if (onReject && rejectReason.trim()) {                                                                          react-hooks/static-components
+  1045:26  error    Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+E:\New folder (2)\ares\frontend\app\(dashboard)\admin\_components\UserDetailsView.tsx:1045:26
+  1043 |                     <Grid container spacing={1}>
+  1044 |                       <Grid size={{ xs: 12, sm: 6 }}>
+> 1045 |                         <FieldRow
+       |                          ^^^^^^^^ This component is created during render
+  1046 |                           icon={<PersonOutlineIcon sx={{ fontSize: 17 }} />}
+  1047 |                           label="Emergency Contact Name"
+  1048 |                           value={data.emergencyContactName || "ΓÇö"}
+
+E:\New folder (2)\ares\frontend\app\(dashboard)\admin\_components\UserDetailsView.tsx:322:20
+  320 |
+  321 |   // ΓöÇΓöÇ Row field component (borderless, accent-line style) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+> 322 |   const FieldRow = ({
+      |                    ^^
+> 323 |     icon,
+      | ^^^^^^^^^
+> 324 |     label,
+      ΓÇª
+      | ^^^^^^^^^
+> 380 |     </Box>
+      | ^^^^^^^^^
+> 381 |   );
+      | ^^^^ The component is created during render here
+  382 |
+  383 |   const handleConfirmReject = () => {
+  384 |     if (onReject && rejectReason.trim()) {  react-hooks/static-components
+  1053:26  error    Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+E:\New folder (2)\ares\frontend\app\(dashboard)\admin\_components\UserDetailsView.tsx:1053:26
+  1051 |                       </Grid>
+  1052 |                       <Grid size={{ xs: 12, sm: 6 }}>
+> 1053 |                         <FieldRow
+       |                          ^^^^^^^^ This component is created during render
+  1054 |                           icon={<PhoneIcon sx={{ fontSize: 17 }} />}
+  1055 |                           label="Emergency Phone"
+  1056 |                           value={data.emergencyContactPhone || "ΓÇö"}
+
+E:\New folder (2)\ares\frontend\app\(dashboard)\admin\_components\UserDetailsView.tsx:322:20
+  320 |
+  321 |   // ΓöÇΓöÇ Row field component (borderless, accent-line style) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+> 322 |   const FieldRow = ({
+      |                    ^^
+> 323 |     icon,
+      | ^^^^^^^^^
+> 324 |     label,
+      ΓÇª
+      | ^^^^^^^^^
+> 380 |     </Box>
+      | ^^^^^^^^^
+> 381 |   );
+      | ^^^^ The component is created during render here
+  382 |
+  383 |   const handleConfirmReject = () => {
+  384 |     if (onReject && rejectReason.trim()) {                                   react-hooks/static-components
+  1179:48  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+  1179:57  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+  1186:48  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+  1186:56  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+  1193:48  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+  1193:57  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+  1277:52  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+  1277:61  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+  1285:54  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+  1285:63  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+  1286:46  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+  1286:55  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+  1403:49  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+  1403:57  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+  1426:75  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+  1426:83  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+  1440:56  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+  1440:64  error    Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unnecessary-condition
+
+E:\New folder (2)\ares\frontend\app\(dashboard)\admin\suppliers\[supplierId]\edit\page.tsx
+  279:39  error  Unnecessary optional chain on a non-nullish value  @typescript-eslint/no-unnecessary-condition
+  776:54  error  Unsafe assignment of an `any` value                @typescript-eslint/no-unsafe-assignment
+
+E:\New folder (2)\ares\frontend\app\(dashboard)\admin\suppliers\create\page.tsx
+  120:25  error  '(params?: string | { abort?: boolean | undefined; pattern?: RegExp | undefined; error?: string | $ZodErrorMap<$ZodIssueInvalidStringFormat> | undefined; message?: string | undefined; } | undefined): ZodString' is deprecated  sonarjs/deprecation
+  120:25  error  `email` is deprecated. Use `z.email()` instead                                                                                                                                                                                    @typescript-eslint/no-deprecated
+  792:54  error  Unsafe assignment of an `any` value                                                                                                                                                                                               @typescript-eslint/no-unsafe-assignment
+
+E:\New folder (2)\ares\frontend\app\(dashboard)\admin\users\[id]\edit\page.tsx
+   84:27  error  Unnecessary optional chain on a non-nullish value  @typescript-eslint/no-unnecessary-condition
+  248:33  error  Unnecessary optional chain on a non-nullish value  @typescript-eslint/no-unnecessary-condition
+  609:54  error  Unsafe assignment of an `any` value                @typescript-eslint/no-unsafe-assignment
+
+Γ£û 65 problems (64 errors, 1 warning)
+

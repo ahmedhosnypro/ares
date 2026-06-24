@@ -639,9 +639,11 @@ export default function CreateUserPage() {
                 <MenuItem value="" disabled>
                   <em style={{ color: "var(--mui-palette-text-disabled)" }}>Select a role...</em>
                 </MenuItem>
-                <MenuItem value="Supplier">Supplier</MenuItem>
                 <MenuItem value="Admin">Admin</MenuItem>
-                <MenuItem value="User">User</MenuItem>
+                <MenuItem value="Customer">Customer</MenuItem>
+                <MenuItem value="Supplier">Supplier</MenuItem>
+                <MenuItem value="Driver">Driver</MenuItem>
+                <MenuItem value="Inspector">Inspector</MenuItem>
               </TextField>
             </Box>
 
