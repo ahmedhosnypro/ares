@@ -69,15 +69,18 @@ public class SupplierDashboardService : ISupplierDashboardService
                             || b.Status == BookingStatus.Confirmed))
             .CountAsync(cancellationToken);
 
-        // ── 4. Total earnings = sum of SupplierAmount on Completed bookings only ─
-        // Cancelled and Pending bookings are excluded per spec. We use the
+        // ── 4. Total earnings = sum of SupplierAmount on Completed and non-refunded bookings only ─
+        // Cancelled, Pending, and Refunded bookings are excluded per spec. We use the
         // null-coalesce on the SQL side via `?? 0m` so a single SUM is
         // returned even when no rows match.
         var totalEarnings = await _context.Bookings
             .AsNoTracking()
             .Where(b => b.Vehicle != null
                         && b.Vehicle.UserId == supplierId
-                        && b.Status == BookingStatus.Completed)
+                        && b.Status == BookingStatus.Completed
+                        && !_context.Payments.Any(p =>
+                            p.BookingId == b.Id
+                            && p.Status == "Refunded"))
             .SumAsync(b => b.SupplierAmount ?? 0m, cancellationToken);
 
         return new SupplierDashboardStatsDto(
