@@ -739,8 +739,8 @@ export default function CreateBookingClient() {
                 getOptionLabel={option => option.name}
                 filterOptions={x => x}
                 noOptionsText={
-                  !selectedPickupLocation 
-                    ? "Please select a pickup location first." 
+                  !selectedPickupLocation
+                    ? "Please select a pickup location first."
                     : "No available vehicles found for the selected location and dates."
                 }
                 slotProps={{

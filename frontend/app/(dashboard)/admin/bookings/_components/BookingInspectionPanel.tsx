@@ -73,7 +73,11 @@ export default function BookingInspectionPanel({
   const isValidStatus = isConfirmed || isActive;
 
   const targetName = isConfirmed ? "Pickup Inspection" : isActive ? "Return Inspection" : "Invalid Target";
-  const buttonText = isConfirmed ? "Assign Pickup Inspector" : isActive ? "Assign Return Inspector" : "Assign Inspector";
+  const buttonText = isConfirmed
+    ? "Assign Pickup Inspector"
+    : isActive
+      ? "Assign Return Inspector"
+      : "Assign Inspector";
 
   // Initial label for the badge — kept in sync with the assignment.
   const inspectionStatus =
@@ -153,7 +157,9 @@ export default function BookingInspectionPanel({
             Booking Status
           </Typography>
           <Box sx={{ mt: 0.5 }}>
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>{bookingStatus ?? "Unknown"}</Typography>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              {bookingStatus ?? "Unknown"}
+            </Typography>
           </Box>
         </Box>
         {isValidStatus && (
@@ -162,7 +168,9 @@ export default function BookingInspectionPanel({
               Assignment Target
             </Typography>
             <Box sx={{ mt: 0.5 }}>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>{targetName}</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                {targetName}
+              </Typography>
             </Box>
           </Box>
         )}
@@ -220,9 +228,7 @@ export default function BookingInspectionPanel({
       {inspection?.isSubmitted ? (
         <Alert severity="info">Inspection has been submitted and is locked. Cannot reassign at this stage.</Alert>
       ) : !isValidStatus ? (
-        <Alert severity="info">
-          Inspector assignment is unavailable for the current booking status.
-        </Alert>
+        <Alert severity="info">Inspector assignment is unavailable for the current booking status.</Alert>
       ) : (
         <>
           <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>

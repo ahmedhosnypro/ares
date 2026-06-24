@@ -1176,27 +1176,21 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
               fallbackAssignedInspectorName={
                 booking.pickupInspection?.inspectorName ?? booking.inspection?.assignedInspectorName ?? null
               }
-              fallbackStatus={
-                booking.pickupInspection?.status ?? booking.inspection?.preInspectionStatus ?? null
-              }
+              fallbackStatus={booking.pickupInspection?.status ?? booking.inspection?.preInspectionStatus ?? null}
             />
-        )}
+          )}
 
         {/* 7. Return Inspection */}
-        {(booking.status === "Active" || booking.status === "Completed") && 
+        {(booking.status === "Active" || booking.status === "Completed") &&
           (booking.returnInspection || booking.inspection?.assignedInspectorId) && (
             <InspectionCard
               title="Return Inspection"
               icon={<InspectionIcon />}
               inspection={booking.returnInspection}
-              fallbackAssignedInspectorName={
-                booking.returnInspection?.inspectorName ?? null
-              }
-              fallbackStatus={
-                booking.returnInspection?.status ?? booking.inspection?.postInspectionStatus ?? null
-              }
+              fallbackAssignedInspectorName={booking.returnInspection?.inspectorName ?? null}
+              fallbackStatus={booking.returnInspection?.status ?? booking.inspection?.postInspectionStatus ?? null}
             />
-        )}
+          )}
 
         {/* 7. Activity Timeline */}
         <SectionCard icon={<HistoryIcon />} title="Activity Timeline" subtitle="Real events recorded for this booking">

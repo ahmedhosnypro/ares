@@ -362,7 +362,11 @@ export default function VehicleDetailsClient({
                   elevation={0}
                   sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: { xs: 2, md: 3 } }}
                 >
-                  {canEdit ? <VehicleInfoEditor isAdmin={isAdmin} categories={categories} /> : <VehicleInfo vehicle={vehicle} />}
+                  {canEdit ? (
+                    <VehicleInfoEditor isAdmin={isAdmin} categories={categories} />
+                  ) : (
+                    <VehicleInfo vehicle={vehicle} />
+                  )}
                 </Paper>
 
                 <Paper

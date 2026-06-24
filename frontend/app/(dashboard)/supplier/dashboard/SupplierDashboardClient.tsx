@@ -207,7 +207,7 @@ export default function SupplierDashboardClient() {
         if (cancelled) return;
         setStats(statsData);
         setEarningsChartData(earningsData);
-        
+
         // Map backend DTO to chart format
         setBookingsChartData([
           { status: "Pending", count: bookingsData.pending },
