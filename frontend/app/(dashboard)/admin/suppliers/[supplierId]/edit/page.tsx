@@ -289,7 +289,9 @@ export default function EditSupplierPage() {
         <Typography
           variant="caption"
           sx={{ cursor: "pointer", "&:hover": { color: theme.palette.primary.main } }}
-          onClick={() => { router.push("/admin/suppliers"); }}
+          onClick={() => {
+            router.push("/admin/suppliers");
+          }}
         >
           Suppliers
         </Typography>
@@ -334,7 +336,9 @@ export default function EditSupplierPage() {
         <Stack direction="row" spacing={1.5} sx={{ width: { xs: "100%", sm: "auto" }, flexShrink: 0 }}>
           <Button
             variant="outlined"
-            onClick={() => { router.back(); }}
+            onClick={() => {
+              router.back();
+            }}
             sx={{
               flex: { xs: 1, sm: "unset" },
               borderRadius: 2,
@@ -751,7 +755,9 @@ export default function EditSupplierPage() {
               <TextField
                 select
                 value={form.platformRole}
-                onChange={e => { setForm(prev => ({ ...prev, platformRole: e.target.value })); }}
+                onChange={e => {
+                  setForm(prev => ({ ...prev, platformRole: e.target.value }));
+                }}
                 fullWidth
                 size="small"
                 slotProps={{
@@ -869,7 +875,9 @@ export default function EditSupplierPage() {
                 <TextField
                   select
                   value={form.country}
-                  onChange={e => { setForm(prev => ({ ...prev, country: e.target.value })); }}
+                  onChange={e => {
+                    setForm(prev => ({ ...prev, country: e.target.value }));
+                  }}
                   fullWidth
                   size="small"
                   slotProps={{
@@ -893,7 +901,9 @@ export default function EditSupplierPage() {
                 <TextField
                   placeholder="e.g. Dubai"
                   value={form.city}
-                  onChange={e => { setForm(prev => ({ ...prev, city: e.target.value })); }}
+                  onChange={e => {
+                    setForm(prev => ({ ...prev, city: e.target.value }));
+                  }}
                   fullWidth
                   size="small"
                   slotProps={{
@@ -907,7 +917,9 @@ export default function EditSupplierPage() {
                 <TextField
                   placeholder="Building, Floor, Street..."
                   value={form.streetAddress}
-                  onChange={e => { setForm(prev => ({ ...prev, streetAddress: e.target.value })); }}
+                  onChange={e => {
+                    setForm(prev => ({ ...prev, streetAddress: e.target.value }));
+                  }}
                   fullWidth
                   multiline
                   rows={2}
