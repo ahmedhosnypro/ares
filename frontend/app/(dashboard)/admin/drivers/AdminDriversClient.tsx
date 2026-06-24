@@ -4,18 +4,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import {
   Alert,
-  Avatar,
   Box,
   Button,
   Chip,
   CircularProgress,
   Container,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  Grid,
   MenuItem,
   Paper,
   Rating,
@@ -32,17 +25,10 @@ import {
   Typography,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import { useRouter } from "next/navigation";
 import { toApiUrl } from "@/utils/api-client";
-import { toImageUrl } from "@/utils/image-url";
 import { logger } from "@/utils/logger";
-import { format } from "date-fns";
 
-interface ServiceAreaDto {
-  id: string;
-  name: string;
-  governorate: string;
-  isActive: boolean;
-}
 
 interface DriverListItem {
   driverProfileId: string;
@@ -59,31 +45,6 @@ interface DriverListItem {
   createdAt: string;
 }
 
-interface DriverDetails {
-  userId: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  phoneNumber?: string;
-  profilePictureUrl?: string;
-  licenseNumber?: string;
-  licenseExpiryDate?: string;
-  licenseImage?: string;
-  nationalIdFrontImage?: string;
-  nationalIdBackImage?: string;
-  address?: string;
-  emergencyContactName?: string;
-  emergencyContactPhone?: string;
-  status: string;
-  availability: string;
-  isActive: boolean;
-  rejectionReason?: string;
-  workAreas: ServiceAreaDto[];
-  totalTrips: number;
-  averageRating: number;
-  createdAt: string;
-  updatedAt: string;
-}
 
 const STATUS_FILTERS = ["All", "Incomplete", "PendingVerification", "Verified", "Rejected", "Suspended"];
 
@@ -106,6 +67,7 @@ function statusColor(status: string): "default" | "warning" | "success" | "error
 export default function AdminDriversClient() {
   const { data: session } = useSession();
   const theme = useTheme();
+  const router = useRouter();
   const token = session?.accessToken;
 
   const [tab, setTab] = useState(0); // 0 = All, 1 = Pending
@@ -116,15 +78,6 @@ export default function AdminDriversClient() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Details dialog
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [details, setDetails] = useState<DriverDetails | null>(null);
-  const [detailsLoading, setDetailsLoading] = useState(false);
-  const [actionError, setActionError] = useState("");
-  const [actionBusy, setActionBusy] = useState(false);
-  const [rejectReason, setRejectReason] = useState("");
-  const [showRejectField, setShowRejectField] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const fetchDrivers = useCallback(async () => {
     if (!token) return;
@@ -160,64 +113,6 @@ export default function AdminDriversClient() {
     );
   }, [drivers, search]);
 
-  const openDetails = useCallback(
-    async (id: string) => {
-      if (!token) return;
-      setSelectedId(id);
-      setDetailsOpen(true);
-      setDetails(null);
-      setActionError("");
-      setShowRejectField(false);
-      setRejectReason("");
-      setDetailsLoading(true);
-      try {
-        const res = await fetch(toApiUrl(`/api/admin/drivers/${id}`), {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error("Failed to load driver details");
-        setDetails(await res.json());
-      } catch (err) {
-        logger.error("Error loading driver details", err);
-        setActionError("Could not load driver details.");
-      } finally {
-        setDetailsLoading(false);
-      }
-    },
-    [token]
-  );
-
-  const runAction = useCallback(
-    async (action: "approve" | "reject" | "enable" | "disable") => {
-      if (!token || !selectedId) return;
-      if (action === "reject" && !showRejectField) {
-        setShowRejectField(true);
-        return;
-      }
-      setActionBusy(true);
-      setActionError("");
-      try {
-        const res = await fetch(toApiUrl(`/api/admin/drivers/${selectedId}/${action}`), {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            ...(action === "reject" ? { "Content-Type": "application/json" } : {}),
-          },
-          body: action === "reject" ? JSON.stringify({ rejectionReason: rejectReason.trim() }) : undefined,
-        });
-        if (!res.ok) {
-          const d = await res.json().catch(() => ({}));
-          throw new Error(d.message || `Failed to ${action} driver`);
-        }
-        setDetailsOpen(false);
-        await fetchDrivers();
-      } catch (err) {
-        setActionError(err instanceof Error ? err.message : `Failed to ${action} driver`);
-      } finally {
-        setActionBusy(false);
-      }
-    },
-    [token, selectedId, showRejectField, rejectReason, fetchDrivers]
-  );
 
   const fullName = (d: { firstName?: string; lastName?: string }) =>
     [d.firstName, d.lastName].filter(Boolean).join(" ") || "—";
@@ -338,7 +233,7 @@ export default function AdminDriversClient() {
                     />
                   </TableCell>
                   <TableCell align="right">
-                    <Button size="small" variant="outlined" onClick={() => openDetails(d.driverProfileId)}>
+                    <Button size="small" variant="outlined" onClick={() => router.push(`/admin/drivers/${d.driverProfileId}`)}>
                       View
                     </Button>
                   </TableCell>
@@ -348,220 +243,6 @@ export default function AdminDriversClient() {
           </Table>
         </TableContainer>
       )}
-
-      {/* Details dialog */}
-      <Dialog open={detailsOpen} onClose={() => !actionBusy && setDetailsOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle sx={{ fontWeight: 800 }}>Driver Details</DialogTitle>
-        <DialogContent dividers>
-          {detailsLoading ? (
-            <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
-              <CircularProgress />
-            </Box>
-          ) : details ? (
-            <Stack spacing={3}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
-                <Avatar
-                  src={details.profilePictureUrl ? toImageUrl(details.profilePictureUrl) : undefined}
-                  sx={{ width: 64, height: 64 }}
-                >
-                  {details.firstName?.[0] ?? "D"}
-                </Avatar>
-                <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                    {fullName(details)}
-                  </Typography>
-                  <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 0.5 }}>
-                    <Chip label={details.status} color={statusColor(details.status)} size="small" />
-                    <Chip label={`Availability: ${details.availability}`} size="small" variant="outlined" />
-                    <Chip
-                      label={details.isActive ? "Active" : "Disabled"}
-                      color={details.isActive ? "success" : "default"}
-                      size="small"
-                    />
-                  </Box>
-                </Box>
-                <Box sx={{ ml: "auto", textAlign: "right" }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, justifyContent: "flex-end" }}>
-                    <Rating value={details.averageRating} readOnly size="small" precision={0.5} />
-                    <Typography variant="caption" color="text.secondary">
-                      ({details.totalTrips} trips)
-                    </Typography>
-                  </Box>
-                </Box>
-              </Box>
-
-              <Divider />
-
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
-                    EMAIL
-                  </Typography>
-                  <Typography variant="body2">{details.email || "—"}</Typography>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
-                    PHONE
-                  </Typography>
-                  <Typography variant="body2">{details.phoneNumber || "—"}</Typography>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
-                    LICENSE NUMBER
-                  </Typography>
-                  <Typography variant="body2">{details.licenseNumber || "—"}</Typography>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
-                    LICENSE EXPIRY
-                  </Typography>
-                  <Typography variant="body2">
-                    {details.licenseExpiryDate ? format(new Date(details.licenseExpiryDate), "MMM d, yyyy") : "—"}
-                  </Typography>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
-                    ADDRESS
-                  </Typography>
-                  <Typography variant="body2">{details.address || "—"}</Typography>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
-                    EMERGENCY CONTACT
-                  </Typography>
-                  <Typography variant="body2">
-                    {details.emergencyContactName || "—"}
-                    {details.emergencyContactPhone ? ` (${details.emergencyContactPhone})` : ""}
-                  </Typography>
-                </Grid>
-              </Grid>
-
-              <Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
-                  Work Areas
-                </Typography>
-                {details.workAreas.length === 0 ? (
-                  <Typography variant="body2" color="text.secondary">
-                    No work areas selected.
-                  </Typography>
-                ) : (
-                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                    {details.workAreas.map(a => (
-                      <Chip key={a.id} label={`${a.name} (${a.governorate})`} size="small" />
-                    ))}
-                  </Box>
-                )}
-              </Box>
-
-              <Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
-                  Documents
-                </Typography>
-                <Grid container spacing={2}>
-                  {[
-                    { label: "Driver License", url: details.licenseImage },
-                    { label: "National ID (Front)", url: details.nationalIdFrontImage },
-                    { label: "National ID (Back)", url: details.nationalIdBackImage },
-                  ].map(doc => (
-                    <Grid size={{ xs: 12, sm: 4 }} key={doc.label}>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
-                        {doc.label}
-                      </Typography>
-                      {doc.url ? (
-                        <Box
-                          component="a"
-                          href={toImageUrl(doc.url)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          sx={{ display: "block", mt: 0.5 }}
-                        >
-                          <Box
-                            component="img"
-                            src={toImageUrl(doc.url)}
-                            alt={doc.label}
-                            sx={{
-                              width: "100%",
-                              height: 130,
-                              objectFit: "cover",
-                              borderRadius: 2,
-                              border: `1px solid ${theme.palette.divider}`,
-                            }}
-                          />
-                        </Box>
-                      ) : (
-                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                          Not uploaded
-                        </Typography>
-                      )}
-                    </Grid>
-                  ))}
-                </Grid>
-              </Box>
-
-              {details.status === "Rejected" && details.rejectionReason && (
-                <Alert severity="error" variant="outlined">
-                  <strong>Rejection reason:</strong> {details.rejectionReason}
-                </Alert>
-              )}
-
-              {showRejectField && (
-                <TextField
-                  fullWidth
-                  multiline
-                  minRows={2}
-                  label="Rejection reason"
-                  value={rejectReason}
-                  onChange={e => {
-                    setRejectReason(e.target.value);
-                  }}
-                />
-              )}
-
-              {actionError && <Alert severity="error">{actionError}</Alert>}
-            </Stack>
-          ) : (
-            <Alert severity="error">{actionError || "No details available."}</Alert>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2, flexWrap: "wrap", gap: 1 }}>
-          <Button
-            onClick={() => {
-              setDetailsOpen(false);
-            }}
-            color="inherit"
-            disabled={actionBusy}
-          >
-            Close
-          </Button>
-          <Box sx={{ flex: 1 }} />
-          {details && details.status !== "Verified" && (
-            <Button variant="contained" color="success" disabled={actionBusy} onClick={() => runAction("approve")}>
-              Approve
-            </Button>
-          )}
-          {details && details.status !== "Rejected" && (
-            <Button
-              variant="outlined"
-              color="error"
-              disabled={actionBusy || (showRejectField && !rejectReason.trim())}
-              onClick={() => runAction("reject")}
-            >
-              {showRejectField ? "Confirm Reject" : "Reject"}
-            </Button>
-          )}
-          {details &&
-            (details.isActive ? (
-              <Button variant="outlined" color="warning" disabled={actionBusy} onClick={() => runAction("disable")}>
-                Disable
-              </Button>
-            ) : (
-              <Button variant="outlined" color="primary" disabled={actionBusy} onClick={() => runAction("enable")}>
-                Enable
-              </Button>
-            ))}
-          {actionBusy && <CircularProgress size={22} sx={{ ml: 1 }} />}
-        </DialogActions>
-      </Dialog>
     </Container>
   );
 }
