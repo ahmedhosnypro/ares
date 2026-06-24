@@ -548,7 +548,10 @@ export default function DashboardShell({
           minWidth: 0,
           overflowX: "hidden",
           width: { md: `calc(100% - ${drawerWidth.toString()}px)` },
-          mt: `${APP_BAR_HEIGHT.toString()}px`,
+          // مسحنا الـ mt وحطينا pt خفيف عشان يدي مساحة تنفس من جوه بدل الفراغ البني
+          pt: 1,
+          pr: 10,
+          pl: 10,
           transition: theme =>
             theme.transitions.create(["width", "margin"], {
               easing: theme.transitions.easing.sharp,

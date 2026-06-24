@@ -123,14 +123,7 @@ export default function DriverProfileClient() {
   };
 
   return (
-    <SharedProfileContainer
-      session={session}
-      profileData={profileData}
-      showVerification={true}
-      showPreferences={false}
-      title="Driver Settings"
-      subtitle="Manage your driver profile, vehicle details, and documents."
-    >
+    <SharedProfileContainer session={session} profileData={profileData} showVerification={true} showPreferences={false}>
       <ProfileCard>
         <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
           <Grid container spacing={4}>

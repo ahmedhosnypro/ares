@@ -119,6 +119,12 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
     return "/";
   };
 
+  const getProfileHref = () => {
+    if (isDriver) return "/driver/profile";
+    if (isInspector) return "/inspector/profile";
+    return "/account/profile";
+  };
+
   const pathname = usePathname();
   const isDashboardRoute =
     pathname.startsWith("/admin") || pathname.startsWith("/supplier") || pathname.startsWith("/inspector");
@@ -337,7 +343,7 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
                     {/* Menu Items */}
                     <MenuItem
                       component={Link}
-                      href="/account/profile"
+                      href={getProfileHref()}
                       onClick={() => {
                         setUserMenuAnchor(null);
                       }}
@@ -533,7 +539,7 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
                 <ListItem disablePadding>
                   <ListItemButton
                     component={Link}
-                    href="/profile"
+                    href={getProfileHref()}
                     onClick={() => {
                       setMobileMenuOpen(false);
                     }}

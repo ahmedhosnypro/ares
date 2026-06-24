@@ -35,14 +35,7 @@ export default function InspectorProfilePage() {
   };
 
   return (
-    <SharedProfileContainer
-      session={session}
-      profileData={profileData}
-      showVerification={false}
-      showPreferences={false}
-      title="Inspector Profile"
-      subtitle="Your personal and employee information."
-    >
+    <SharedProfileContainer session={session} profileData={profileData} showVerification={true} showPreferences={false}>
       <ProfileCard>
         <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
           <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>
