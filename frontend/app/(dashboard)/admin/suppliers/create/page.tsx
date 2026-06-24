@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Box,
@@ -12,28 +12,38 @@ import {
   CircularProgress,
   MenuItem,
   Alert,
-  Divider,
+  Grid,
+  FormControlLabel,
+  Checkbox,
+  LinearProgress,
   InputAdornment,
-  useMediaQuery,
-  useTheme,
+  IconButton,
+  ToggleButtonGroup,
+  ToggleButton,
   Chip,
+  useTheme,
 } from "@mui/material";
-import {
-  BusinessCenter as BusinessCenterIcon,
-  AccountCircle as AccountCircleIcon,
-  Person as PersonIcon,
-  ImageOutlined as ImageIcon,
-  LocationOn as LocationOnIcon,
-  CloudUpload as CloudUploadIcon,
-  CheckCircle as CheckCircleIcon,
-  ArrowBack as ArrowBackIcon,
-  AutoAwesome as AutoAwesomeIcon,
-} from "@mui/icons-material";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import PersonOutlineIcon from "@mui/icons-material/PersonOutlined";
+import ShieldOutlinedIcon from "@mui/icons-material/ShieldOutlined";
+import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlined";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import BlockIcon from "@mui/icons-material/Block";
+import AddBoxOutlinedIcon from "@mui/icons-material/AddBoxOutlined";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
+import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import BusinessCenterOutlinedIcon from "@mui/icons-material/BusinessCenterOutlined";
+import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import { z } from "zod";
-import { passwordSchema, emailSchema } from "@/lib/validation/schemas";
+import { passwordSchema } from "@/lib/validation/schemas";
 import { createSupplier } from "@/api-clients/suppliers/suppliers";
+import { alpha } from "@mui/material/styles";
 
-// ─── MOCK DATA (replace with API fields when available) ───────────────────────
 const MOCK_PLATFORM_ROLES = ["Supplier Admin", "Supplier Staff", "Supplier Viewer"];
 const MOCK_COUNTRIES = ["United Arab Emirates", "Saudi Arabia", "Egypt", "Kuwait", "Qatar", "Bahrain", "Oman"];
 const PHONE_COUNTRY_CODES = [
@@ -43,407 +53,45 @@ const PHONE_COUNTRY_CODES = [
   { code: "+966", label: "+966" },
   { code: "+20", label: "+20" },
 ];
-// ─────────────────────────────────────────────────────────────────────────────
-
-// ─── MODULE-LEVEL CONSTANTS ───────────────────────────────────────────────────
-const createSupplierSchema = z.object({
-  email: emailSchema,
-  password: passwordSchema,
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  phoneNumber: z
-    .string()
-    .min(1, "Phone number is required")
-    .refine(v => /^[0-9+\s-]{8,15}$/.test(v), {
-      message: "Invalid phone number",
-    }),
-  status: z.string(),
-  companyName: z.string().min(1, "Company name is required"),
-  commercialRegistrationNumber: z.string().min(1, "Commercial registration is required"),
-  taxId: z.string().min(1, "Tax ID is required"),
-});
-
-const inputSx = {
-  "& .MuiOutlinedInput-root": {
-    borderRadius: 1.5,
-    bgcolor: "background.default",
-    transition: "box-shadow 0.2s",
-    "&:hover": {
-      "& .MuiOutlinedInput-notchedOutline": { borderColor: "primary.main" },
-    },
-    "&.Mui-focused": {
-      boxShadow: "0 0 0 3px rgba(var(--mui-palette-primary-mainChannel) / 0.12)",
-    },
-  },
-  "& .MuiInputLabel-root": { fontWeight: 500 },
-};
-
-const cardSx = {
-  p: { xs: 2, sm: 2.5 },
-  borderRadius: 2.5,
-  border: "1px solid",
-  borderColor: "divider",
-  bgcolor: "background.paper",
-  boxShadow: "var(--mui-shadows-1)",
-  transition: "box-shadow 0.2s",
-  "&:hover": { boxShadow: "var(--mui-shadows-3)" },
-};
-// ─────────────────────────────────────────────────────────────────────────────
-
-function SectionHeader({
-  icon,
-  title,
-  subtitle,
-}: Readonly<{ icon: React.ReactNode; title: string; subtitle: string }>) {
-  return (
-    <Stack direction="row" spacing={1.5} sx={{ alignItems: "flex-start", mb: 2.5 }}>
-      <Box
-        sx={{
-          width: 34,
-          height: 34,
-          borderRadius: 1.5,
-          background:
-            "linear-gradient(135deg, rgba(var(--mui-palette-primary-mainChannel) / 0.12), rgba(var(--mui-palette-primary-mainChannel) / 0.06))",
-          border: "1px solid",
-          borderColor: "primary.light",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "primary.main",
-          flexShrink: 0,
-          mt: 0.25,
-        }}
-      >
-        {icon}
-      </Box>
-      <Box>
-        <Typography variant="subtitle2" sx={{ fontWeight: 700, lineHeight: 1.3, letterSpacing: "-0.01em" }}>
-          {title}
-        </Typography>
-        <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.4 }}>
-          {subtitle}
-        </Typography>
-      </Box>
-    </Stack>
-  );
-}
-
-// ─── ACTION PANEL ─────────────────────────────────────────────────────────────
-interface ActionPanelProps {
-  readonly inSidebar?: boolean;
-  readonly allMandatoryFilled: boolean;
-  readonly filledCount: number;
-  readonly totalCount: number;
-  readonly mandatoryFields: ReadonlyArray<{ readonly key: string; readonly label: string; readonly filled: boolean }>;
-  readonly saving: boolean;
-  readonly onSubmit: () => void;
-  readonly onBack: () => void;
-}
-
-function ActionPanel({
-  inSidebar = false,
-  allMandatoryFilled,
-  filledCount,
-  totalCount,
-  mandatoryFields,
-  saving,
-  onSubmit,
-  onBack,
-}: Readonly<ActionPanelProps>) {
-  return (
-    <Paper
-      elevation={0}
-      sx={
-        inSidebar
-          ? {
-              ...cardSx,
-              border: "1.5px solid",
-              borderColor: allMandatoryFilled ? "success.light" : "divider",
-              bgcolor: allMandatoryFilled ? "rgba(var(--mui-palette-success-mainChannel) / 0.03)" : "background.paper",
-              transition: "border-color 0.3s, background-color 0.3s",
-            }
-          : {}
-      }
-    >
-      {inSidebar && (
-        <>
-          {/* Progress indicator */}
-          <Stack spacing={1} sx={{ mb: 2 }}>
-            <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.8 }}
-              >
-                Form Progress
-              </Typography>
-              <Typography
-                variant="caption"
-                color={allMandatoryFilled ? "success.main" : "text.secondary"}
-                sx={{ fontWeight: 700 }}
-              >
-                {filledCount}/{totalCount}
-              </Typography>
-            </Stack>
-            {/* Progress bar */}
-            <Box sx={{ height: 4, bgcolor: "divider", borderRadius: 99, overflow: "hidden" }}>
-              <Box
-                sx={{
-                  height: "100%",
-                  width: `${(filledCount / totalCount) * 100}%`,
-                  bgcolor: allMandatoryFilled ? "success.main" : "primary.main",
-                  borderRadius: 99,
-                  transition: "width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.3s",
-                }}
-              />
-            </Box>
-            {/* Field chips */}
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.5 }}>
-              {mandatoryFields.map(f => (
-                <Chip
-                  key={f.key}
-                  label={f.label}
-                  size="small"
-                  icon={f.filled ? <CheckCircleIcon style={{ fontSize: 12 }} /> : undefined}
-                  sx={{
-                    fontSize: 10,
-                    height: 20,
-                    fontWeight: f.filled ? 600 : 400,
-                    bgcolor: f.filled ? "rgba(var(--mui-palette-success-mainChannel) / 0.1)" : "action.hover",
-                    color: f.filled ? "success.dark" : "text.disabled",
-                    border: "1px solid",
-                    borderColor: f.filled ? "success.light" : "transparent",
-                    "& .MuiChip-icon": { color: "success.main", ml: "4px" },
-                    transition: "all 0.2s",
-                  }}
-                />
-              ))}
-            </Box>
-          </Stack>
-          <Divider sx={{ mb: 2 }} />
-        </>
-      )}
-
-      <Stack spacing={1.5}>
-        <Button
-          variant="contained"
-          fullWidth
-          onClick={() => {
-            onSubmit();
-          }}
-          disabled={saving}
-          startIcon={saving ? undefined : <BusinessCenterIcon fontSize="small" />}
-          sx={{
-            borderRadius: 2,
-            fontWeight: 700,
-            fontSize: 13,
-            letterSpacing: 0.5,
-            py: inSidebar ? 1.25 : 0.9,
-            textTransform: "uppercase",
-            boxShadow: "0 2px 8px rgba(var(--mui-palette-primary-mainChannel) / 0.35)",
-            "&:hover": {
-              boxShadow: "0 4px 16px rgba(var(--mui-palette-primary-mainChannel) / 0.45)",
-              transform: "translateY(-1px)",
-            },
-            "&:active": { transform: "translateY(0)" },
-            transition: "transform 0.15s, box-shadow 0.15s",
-          }}
-        >
-          {saving ? <CircularProgress size={18} color="inherit" /> : "Create Supplier"}
-        </Button>
-        <Button
-          variant="outlined"
-          fullWidth
-          onClick={() => {
-            onBack();
-          }}
-          sx={{
-            borderRadius: 2,
-            fontWeight: 600,
-            fontSize: 13,
-            letterSpacing: 0.5,
-            py: inSidebar ? 1 : 0.9,
-            textTransform: "uppercase",
-            color: "text.secondary",
-            borderColor: "divider",
-            "&:hover": { borderColor: "text.secondary", bgcolor: "action.hover" },
-          }}
-        >
-          Cancel
-        </Button>
-      </Stack>
-    </Paper>
-  );
-}
-// ─────────────────────────────────────────────────────────────────────────────
-
-// ── STICKY FOOTER FOR MOBILE/TABLET ──────────────────────────────────────────
-interface StickyFooterProps {
-  readonly isMobile: boolean;
-  readonly allMandatoryFilled: boolean;
-  readonly filledCount: number;
-  readonly totalCount: number;
-  readonly saving: boolean;
-  readonly onSubmit: () => void;
-  readonly onBack: () => void;
-}
-
-function StickyFooter({
-  isMobile,
-  allMandatoryFilled,
-  filledCount,
-  totalCount,
-  saving,
-  onSubmit,
-  onBack,
-}: StickyFooterProps) {
-  return isMobile ? (
-    <Stack spacing={1}>
-      <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
-        {allMandatoryFilled ? (
-          <>
-            <CheckCircleIcon sx={{ color: "success.main", fontSize: 15 }} />
-            <Typography variant="caption" color="success.main" sx={{ fontWeight: 500 }}>
-              All mandatory fields completed.
-            </Typography>
-          </>
-        ) : (
-          <Typography variant="caption" color="text.secondary">
-            {filledCount}/{totalCount} required fields filled.
-          </Typography>
-        )}
-      </Stack>
-      <Stack direction="row" spacing={1}>
-        <Button
-          variant="outlined"
-          fullWidth
-          onClick={onBack}
-          sx={{
-            borderRadius: 2,
-            fontWeight: 600,
-            fontSize: 12,
-            letterSpacing: 0.5,
-            py: 0.9,
-            textTransform: "uppercase",
-            color: "text.secondary",
-            borderColor: "divider",
-          }}
-        >
-          Cancel
-        </Button>
-        <Button
-          variant="contained"
-          fullWidth
-          onClick={onSubmit}
-          disabled={saving}
-          sx={{
-            borderRadius: 2,
-            fontWeight: 700,
-            fontSize: 12,
-            letterSpacing: 0.5,
-            py: 0.9,
-            textTransform: "uppercase",
-            boxShadow: "0 2px 8px rgba(var(--mui-palette-primary-mainChannel) / 0.35)",
-          }}
-        >
-          {saving ? <CircularProgress size={17} color="inherit" /> : "Create Supplier"}
-        </Button>
-      </Stack>
-    </Stack>
-  ) : (
-    <Stack
-      direction="row"
-      spacing={2}
-      sx={{ alignItems: "center", justifyContent: "space-between", flexWrap: "nowrap" }}
-    >
-      <Stack direction="row" spacing={1} sx={{ alignItems: "center", minWidth: 0, overflow: "hidden" }}>
-        {allMandatoryFilled ? (
-          <>
-            <CheckCircleIcon sx={{ color: "success.main", fontSize: 18, flexShrink: 0 }} />
-            <Typography variant="body2" color="success.main" sx={{ fontWeight: 500, whiteSpace: "nowrap" }}>
-              All mandatory fields completed.
-            </Typography>
-          </>
-        ) : (
-          <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: "nowrap" }}>
-            {filledCount}/{totalCount} required fields filled.
-          </Typography>
-        )}
-      </Stack>
-      <Stack direction="row" spacing={1.5} sx={{ flexShrink: 0 }}>
-        <Button
-          variant="outlined"
-          onClick={onBack}
-          sx={{
-            borderRadius: 2,
-            fontWeight: 600,
-            letterSpacing: 0.5,
-            whiteSpace: "nowrap",
-            textTransform: "uppercase",
-            px: { sm: 2, md: 3 },
-            color: "text.secondary",
-            borderColor: "divider",
-          }}
-        >
-          Cancel
-        </Button>
-        <Button
-          variant="contained"
-          onClick={onSubmit}
-          disabled={saving}
-          startIcon={saving ? undefined : <BusinessCenterIcon fontSize="small" />}
-          sx={{
-            borderRadius: 2,
-            fontWeight: 700,
-            letterSpacing: 0.5,
-            whiteSpace: "nowrap",
-            textTransform: "uppercase",
-            px: { sm: 2, md: 3 },
-            boxShadow: "0 2px 8px rgba(var(--mui-palette-primary-mainChannel) / 0.35)",
-          }}
-        >
-          {saving ? <CircularProgress size={20} color="inherit" /> : "Create Supplier"}
-        </Button>
-      </Stack>
-    </Stack>
-  );
-}
 
 export default function CreateSupplierPage() {
   const router = useRouter();
   const theme = useTheme();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string | undefined>>({});
-
-  // ── MOCK STATE (wire to API when fields are available) ──
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [platformRole, setPlatformRole] = useState("Supplier Admin");
-  const [country, setCountry] = useState("");
-  const [city, setCity] = useState("");
-  const [streetAddress, setStreetAddress] = useState("");
-  const [phoneCountryCode, setPhoneCountryCode] = useState("+1");
-  // ─────────────────────────────────────────────────────────────
 
   const [form, setForm] = useState({
     email: "",
     password: "",
+    confirmPassword: "",
     firstName: "",
     lastName: "",
     phoneNumber: "",
+    phoneCountryCode: "+971",
     status: "active",
     companyName: "",
     commercialRegistrationNumber: "",
     taxId: "",
+    platformRole: "Supplier Admin",
+    country: "",
+    city: "",
+    streetAddress: "",
+    requirePasswordChange: false,
+    logoPhoto: null as File | null,
   });
 
   const handleLogoChange = (file: File | null) => {
-    if (!file) return;
+    if (!file) {
+      setLogoPreview(null);
+      setForm(prev => ({ ...prev, logoPhoto: null }));
+      return;
+    }
+    setForm(prev => ({ ...prev, logoPhoto: file }));
     const reader = new FileReader();
     reader.onload = e => {
       setLogoPreview(e.target?.result as string);
@@ -451,584 +99,898 @@ export default function CreateSupplierPage() {
     reader.readAsDataURL(file);
   };
 
-  const mandatoryFields = [
-    { key: "email", label: "Email", filled: Boolean(form.email) },
-    { key: "password", label: "Password", filled: Boolean(form.password) },
-    { key: "firstName", label: "First Name", filled: Boolean(form.firstName) },
-    { key: "lastName", label: "Last Name", filled: Boolean(form.lastName) },
-    { key: "phoneNumber", label: "Phone", filled: Boolean(form.phoneNumber) },
-    { key: "companyName", label: "Company", filled: Boolean(form.companyName) },
-    { key: "crn", label: "CRN", filled: Boolean(form.commercialRegistrationNumber) },
-    { key: "taxId", label: "Tax ID", filled: Boolean(form.taxId) },
+  const completenessItems = [
+    { label: "Status selected", done: Boolean(form.status) },
+    { label: "Email missing", done: Boolean(form.email), missingLabel: "Email missing" },
+    { label: "Password missing", done: Boolean(form.password), missingLabel: "Password missing" },
+    { label: "Company missing", done: Boolean(form.companyName), missingLabel: "Company name missing" },
+    { label: "CRN missing", done: Boolean(form.commercialRegistrationNumber), missingLabel: "CRN missing" },
+    { label: "Tax ID missing", done: Boolean(form.taxId), missingLabel: "Tax ID missing" },
+    { label: "Rep name missing", done: Boolean(form.firstName && form.lastName), missingLabel: "Representative name missing" },
+    { label: "Phone missing", done: Boolean(form.phoneNumber), missingLabel: "Phone number missing" },
   ];
+  const completenessScore = Math.round((completenessItems.filter(i => i.done).length / completenessItems.length) * 100);
 
-  const filledCount = mandatoryFields.filter(f => f.filled).length;
-  const totalCount = mandatoryFields.length;
-  const allMandatoryFilled = filledCount === totalCount;
+  const createSupplierSchema = z
+    .object({
+      email: z.string().email({ message: "Invalid email" }),
+      password: passwordSchema,
+      confirmPassword: z.string(),
+      firstName: z.string().min(1, "First name is required"),
+      lastName: z.string().min(1, "Last name is required"),
+      phoneNumber: z
+        .string()
+        .min(1, "Phone number is required")
+        .refine(v => /^[0-9+\s\-().]{8,15}$/.test(v), {
+          message: "Invalid phone number",
+        }),
+      status: z.string(),
+      companyName: z.string().min(1, "Company name is required"),
+      commercialRegistrationNumber: z.string().min(1, "Commercial registration is required"),
+      taxId: z.string().min(1, "Tax ID is required"),
+    })
+    .refine(data => data.password === data.confirmPassword, {
+      message: "Passwords do not match",
+      path: ["confirmPassword"],
+    });
 
   const handleSubmit = async () => {
     try {
       setSaving(true);
       setError("");
       setFieldErrors({});
-
       const result = createSupplierSchema.safeParse(form);
       if (!result.success) {
-        const simplifiedErrors: Record<string, string | undefined> = {};
+        const simplified: Record<string, string | undefined> = {};
         result.error.issues.forEach(issue => {
           const key = issue.path[0] as string;
-          if (!simplifiedErrors[key]) {
-            simplifiedErrors[key] = issue.message;
-          }
+          if (!simplified[key]) simplified[key] = issue.message;
         });
-        setFieldErrors(simplifiedErrors);
+        setFieldErrors(simplified);
         return;
       }
-
       await createSupplier({
-        ...form,
         email: form.email.trim(),
+        password: form.password,
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
+        phoneNumber: `${form.phoneCountryCode}${form.phoneNumber}`,
+        status: form.status,
+        companyName: form.companyName.trim(),
+        commercialRegistrationNumber: form.commercialRegistrationNumber.trim(),
+        taxId: form.taxId.trim(),
       });
-
       router.push("/admin/suppliers");
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Create supplier failed";
-      setError(errorMessage);
+      setError(err instanceof Error ? err.message : "Create supplier failed");
     } finally {
       setSaving(false);
     }
   };
 
+  const fieldLabel = {
+    fontWeight: 600,
+    fontSize: "11px",
+    textTransform: "uppercase" as const,
+    letterSpacing: "0.5px",
+    color: "text.secondary",
+    mb: 0.75,
+  };
+
+  const bigInputSx = {
+    "& .MuiInputBase-root": { fontSize: 15, minHeight: 48 },
+    "& .MuiInputBase-input": { py: 1.5 },
+  };
+
+  const sectionIconSx = {
+    width: 40,
+    height: 40,
+    borderRadius: 2,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  };
+
   return (
-    <Box sx={{ pb: { xs: "108px", sm: "72px", lg: 4 } }}>
-      {/* ── TOP BAR ── */}
-      <Box
+    <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 }, width: "100%", boxSizing: "border-box", overflowX: "hidden" }}>
+      {/* Breadcrumb */}
+      <Stack
+        direction="row"
+        spacing={0.5}
+        sx={{ alignItems: "center", flexWrap: "wrap", mb: 2, color: "text.secondary", fontSize: 13 }}
+      >
+        <Typography
+          variant="caption"
+          sx={{ cursor: "pointer", "&:hover": { color: "primary.main" } }}
+          onClick={() => {
+            router.push("/admin/suppliers");
+          }}
+        >
+          Suppliers
+        </Typography>
+        <NavigateNextIcon sx={{ fontSize: 16 }} />
+        <Typography variant="caption" sx={{ color: "text.primary", fontWeight: 600 }}>
+          Create Supplier
+        </Typography>
+      </Stack>
+
+      {/* Page Header */}
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
         sx={{
-          px: { xs: 2, sm: 3, md: 4 },
-          pt: { xs: 2, sm: 3 },
-          pb: 0,
-          display: "flex",
-          alignItems: "flex-start",
           justifyContent: "space-between",
-          gap: 2,
+          alignItems: { xs: "flex-start", sm: "center" },
+          gap: { xs: 2, sm: 0 },
+          mb: 3,
         }}
       >
-        {/* Breadcrumb + Title */}
-        <Box>
-          <Stack direction="row" spacing={0.75} sx={{ alignItems: "center", mb: 0.75 }}>
-            <Box
-              onClick={() => {
-                router.push("/admin/suppliers");
-              }}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 0.5,
-                cursor: "pointer",
-                color: "text.secondary",
-                "&:hover": { color: "primary.main" },
-                transition: "color 0.15s",
-              }}
-            >
-              <ArrowBackIcon sx={{ fontSize: 14 }} />
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                Suppliers
-              </Typography>
-            </Box>
-            <Typography variant="body2" color="text.disabled">
-              ›
-            </Typography>
-            <Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>
-              Create New
-            </Typography>
-          </Stack>
-
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-            <Typography
-              variant={isMobile ? "h6" : "h5"}
-              sx={{ fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.1 }}
-            >
-              Onboard Supplier
-            </Typography>
-            <Chip
-              label="New"
-              size="small"
-              icon={<AutoAwesomeIcon style={{ fontSize: 11 }} />}
-              color="primary"
-              sx={{ fontSize: 10, height: 20, fontWeight: 700, letterSpacing: 0.5 }}
-            />
-          </Stack>
+        <Box sx={{ minWidth: 0, flex: 1 }}>
+          <Typography
+            variant="h5"
+            sx={{ fontWeight: 800, mb: 0.5, fontSize: { xs: "1.15rem", sm: "1.35rem", md: "1.5rem" } }}
+          >
+            Create New Supplier
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Provision a new supplier account within the ARES Nexus environment.
+          </Typography>
         </Box>
-      </Box>
+
+        <Stack direction="row" spacing={1.5} sx={{ width: { xs: "100%", sm: "auto" }, flexShrink: 0 }}>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              router.back();
+            }}
+            sx={{
+              flex: { xs: 1, sm: "unset" },
+              borderRadius: 2,
+              fontWeight: 500,
+              borderColor: "divider",
+              color: "text.primary",
+              whiteSpace: "nowrap",
+              "&:hover": { borderColor: "text.secondary" },
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={saving ? undefined : <AddBoxOutlinedIcon />}
+            onClick={() => {
+              void handleSubmit();
+            }}
+            disabled={saving}
+            sx={{
+              flex: { xs: 1, sm: "unset" },
+              borderRadius: 2,
+              px: { xs: 1.5, sm: 2.5 },
+              fontWeight: 600,
+              whiteSpace: "nowrap",
+              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+            }}
+          >
+            {saving ? <CircularProgress size={20} color="inherit" /> : "Create Supplier"}
+          </Button>
+        </Stack>
+      </Stack>
 
       {error && (
-        <Box sx={{ px: { xs: 2, sm: 3, md: 4 }, pt: 2 }}>
-          <Alert severity="error" sx={{ borderRadius: 2 }}>
-            {error}
-          </Alert>
-        </Box>
+        <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
+          {error}
+        </Alert>
       )}
 
-      {/* ── MAIN LAYOUT ── */}
-      <Box sx={{ px: { xs: 2, sm: 3, md: 4 }, pt: { xs: 2, sm: 2.5 } }}>
-        <Stack
-          direction={{ xs: "column", lg: "row" }}
-          spacing={{ xs: 2, sm: 2.5, lg: 3 }}
-          sx={{ alignItems: "flex-start" }}
-        >
-          {/* ── LEFT COLUMN ── */}
-          <Box sx={{ flex: 1, minWidth: 0, width: "100%" }}>
-            <Stack spacing={{ xs: 2, sm: 2.5 }}>
-              {/* Company Profile */}
-              <Paper elevation={0} sx={cardSx}>
-                <SectionHeader
-                  icon={<BusinessCenterIcon fontSize="small" />}
-                  title="Company Profile"
-                  subtitle="Official business registration details."
+      {/* Two-column layout */}
+      <Grid container spacing={{ xs: 2, md: 2.5 }} sx={{ alignItems: "flex-start" }}>
+        {/* LEFT: form cards */}
+        <Grid size={{ xs: 12, lg: 8.5 }}>
+          {/* Account Credentials */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 2, sm: 3, md: 4 },
+              borderRadius: 3,
+              border: "1px solid",
+              borderColor: "divider",
+              bgcolor: "background.paper",
+              mb: { xs: 2, md: 2.5 },
+            }}
+          >
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 3 }}>
+              <Box sx={{ ...sectionIconSx, bgcolor: alpha(theme.palette.primary.main, 0.1), color: "primary.main" }}>
+                <LockOutlinedIcon />
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>Account Credentials</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Primary authentication details.
+                </Typography>
+              </Box>
+            </Stack>
+
+            <Stack spacing={{ xs: 2, sm: 3 }}>
+              {/* Email */}
+              <Box>
+                <Typography sx={fieldLabel}>
+                  Email Address{" "}
+                  <Box component="span" sx={{ color: "error.main" }}>
+                    *
+                  </Box>
+                </Typography>
+                <TextField
+                  placeholder="supplier@company.com"
+                  value={form.email}
+                  onChange={e => {
+                    setForm({ ...form, email: e.target.value });
+                    if (fieldErrors.email) setFieldErrors(p => ({ ...p, email: undefined }));
+                  }}
+                  fullWidth
+                  error={Boolean(fieldErrors.email)}
+                  helperText={fieldErrors.email}
+                  sx={bigInputSx}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <EmailOutlinedIcon sx={{ fontSize: 18, color: "text.disabled" }} />
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
                 />
-                <Stack spacing={2}>
+              </Box>
+
+              {/* Password row */}
+              <Grid container spacing={{ xs: 2, sm: 2.5 }}>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography sx={fieldLabel}>
+                    Temporary Password{" "}
+                    <Box component="span" sx={{ color: "error.main" }}>
+                      *
+                    </Box>
+                  </Typography>
                   <TextField
-                    label="Company Name"
-                    fullWidth
-                    value={form.companyName}
-                    error={Boolean(fieldErrors.companyName)}
-                    helperText={fieldErrors.companyName}
-                    placeholder="e.g. Apex Logistics Rentals"
+                    type={showPassword ? "text" : "password"}
+                    value={form.password}
                     onChange={e => {
-                      setForm({ ...form, companyName: e.target.value });
+                      setForm({ ...form, password: e.target.value });
+                      if (fieldErrors.password) setFieldErrors(p => ({ ...p, password: undefined }));
                     }}
-                    sx={inputSx}
-                    required
-                  />
-                  <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                    <TextField
-                      label="Commercial Registration Number"
-                      fullWidth
-                      value={form.commercialRegistrationNumber}
-                      error={Boolean(fieldErrors.commercialRegistrationNumber)}
-                      helperText={fieldErrors.commercialRegistrationNumber}
-                      placeholder="CRN-0000-0000"
-                      onChange={e => {
-                        setForm({ ...form, commercialRegistrationNumber: e.target.value });
-                      }}
-                      sx={inputSx}
-                      required
-                    />
-                    <TextField
-                      label="Tax Identification Number"
-                      fullWidth
-                      value={form.taxId}
-                      error={Boolean(fieldErrors.taxId)}
-                      helperText={fieldErrors.taxId}
-                      placeholder="TAX-0000-0000"
-                      onChange={e => {
-                        setForm({ ...form, taxId: e.target.value });
-                      }}
-                      sx={inputSx}
-                      required
-                    />
-                  </Stack>
-                </Stack>
-              </Paper>
-
-              {/* Account Identity */}
-              <Paper elevation={0} sx={cardSx}>
-                <SectionHeader
-                  icon={<AccountCircleIcon fontSize="small" />}
-                  title="Account Identity"
-                  subtitle="System access credentials."
-                />
-                <Stack spacing={2}>
-                  {/* Row 1: Email + Password */}
-                  <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                    <TextField
-                      label="Primary Email Address"
-                      fullWidth
-                      value={form.email}
-                      error={Boolean(fieldErrors.email)}
-                      helperText={fieldErrors.email}
-                      placeholder="admin@company.com"
-                      slotProps={{
-                        input: {
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <Box component="span" sx={{ color: "text.disabled", fontSize: 18 }}>
-                                ✉
-                              </Box>
-                            </InputAdornment>
-                          ),
-                        },
-                      }}
-                      onChange={e => {
-                        setForm({ ...form, email: e.target.value });
-                      }}
-                      sx={inputSx}
-                      required
-                    />
-                    <TextField
-                      label="Temporary Password"
-                      type="password"
-                      fullWidth
-                      value={form.password}
-                      error={Boolean(fieldErrors.password)}
-                      helperText={fieldErrors.password}
-                      onChange={e => {
-                        setForm({ ...form, password: e.target.value });
-                      }}
-                      sx={inputSx}
-                      required
-                    />
-                  </Stack>
-
-                  {/* Row 2: Platform Role + Status */}
-                  <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                    <TextField
-                      select
-                      label="Platform Role"
-                      fullWidth
-                      value={platformRole}
-                      onChange={e => {
-                        setPlatformRole(e.target.value);
-                      }}
-                      sx={inputSx}
-                    >
-                      {MOCK_PLATFORM_ROLES.map(r => (
-                        <MenuItem key={r} value={r}>
-                          {r}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                    <TextField
-                      select
-                      label="Status"
-                      fullWidth
-                      value={form.status}
-                      error={Boolean(fieldErrors.status)}
-                      onChange={e => {
-                        setForm({ ...form, status: e.target.value });
-                      }}
-                      sx={inputSx}
-                    >
-                      <MenuItem value="active">Active</MenuItem>
-                      <MenuItem value="blocked">Blocked</MenuItem>
-                    </TextField>
-                  </Stack>
-                </Stack>
-              </Paper>
-
-              {/* Representative Info */}
-              <Paper elevation={0} sx={cardSx}>
-                <SectionHeader
-                  icon={<PersonIcon fontSize="small" />}
-                  title="Representative Info"
-                  subtitle="Primary contact person details."
-                />
-                <Stack spacing={2}>
-                  <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                    <TextField
-                      label="First Name"
-                      fullWidth
-                      value={form.firstName}
-                      error={Boolean(fieldErrors.firstName)}
-                      helperText={fieldErrors.firstName}
-                      placeholder="Jane"
-                      onChange={e => {
-                        setForm({ ...form, firstName: e.target.value });
-                      }}
-                      sx={inputSx}
-                      required
-                    />
-                    <TextField
-                      label="Last Name"
-                      fullWidth
-                      value={form.lastName}
-                      error={Boolean(fieldErrors.lastName)}
-                      helperText={fieldErrors.lastName}
-                      placeholder="Doe"
-                      onChange={e => {
-                        setForm({ ...form, lastName: e.target.value });
-                      }}
-                      sx={inputSx}
-                      required
-                    />
-                  </Stack>
-                  {/* MOCK: Phone with country code — wire country code to API when available */}
-                  <TextField
-                    label="Phone Number"
                     fullWidth
-                    value={form.phoneNumber}
-                    error={Boolean(fieldErrors.phoneNumber)}
-                    helperText={fieldErrors.phoneNumber}
-                    placeholder="(555) 123-4567"
+                    error={Boolean(fieldErrors.password)}
+                    helperText={fieldErrors.password}
+                    sx={bigInputSx}
                     slotProps={{
                       input: {
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <TextField
-                              select
-                              value={phoneCountryCode}
-                              onChange={e => {
-                                setPhoneCountryCode(e.target.value);
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              onClick={() => {
+                                setShowPassword(v => !v);
                               }}
-                              variant="standard"
-                              sx={{
-                                minWidth: isMobile ? 52 : 58,
-                                "& .MuiInput-underline:before": { borderBottom: "none" },
-                                "& .MuiInput-underline:after": { borderBottom: "none" },
-                                "& .MuiInput-underline:hover:before": { borderBottom: "none !important" },
-                                "& .MuiSelect-select": { fontSize: isMobile ? 13 : 14 },
-                              }}
+                              edge="end"
                             >
-                              {PHONE_COUNTRY_CODES.map(c => (
-                                <MenuItem key={c.code} value={c.code}>
-                                  {c.label}
-                                </MenuItem>
-                              ))}
-                            </TextField>
-                            <Divider orientation="vertical" flexItem sx={{ mx: 1, my: 0.5 }} />
+                              {showPassword ? <VisibilityOffOutlinedIcon /> : <VisibilityOutlinedIcon />}
+                            </IconButton>
                           </InputAdornment>
                         ),
                       },
                     }}
-                    onChange={e => {
-                      setForm({ ...form, phoneNumber: e.target.value });
-                    }}
-                    sx={inputSx}
-                    required
                   />
-                </Stack>
-              </Paper>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography sx={fieldLabel}>
+                    Confirm Password{" "}
+                    <Box component="span" sx={{ color: "error.main" }}>
+                      *
+                    </Box>
+                  </Typography>
+                  <TextField
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={form.confirmPassword}
+                    onChange={e => {
+                      setForm({ ...form, confirmPassword: e.target.value });
+                      if (fieldErrors.confirmPassword) setFieldErrors(p => ({ ...p, confirmPassword: undefined }));
+                    }}
+                    fullWidth
+                    error={Boolean(fieldErrors.confirmPassword)}
+                    helperText={fieldErrors.confirmPassword}
+                    sx={bigInputSx}
+                    slotProps={{
+                      input: {
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              onClick={() => {
+                                setShowConfirmPassword(v => !v);
+                              }}
+                              edge="end"
+                            >
+                              {showConfirmPassword ? <VisibilityOffOutlinedIcon /> : <VisibilityOutlinedIcon />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                  />
+                </Grid>
+              </Grid>
+
+              <Typography variant="caption" color="text.secondary" sx={{ mt: -1 }}>
+                Must be at least 12 characters.
+              </Typography>
+
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={form.requirePasswordChange}
+                    onChange={e => {
+                      setForm({ ...form, requirePasswordChange: e.target.checked });
+                    }}
+                  />
+                }
+                label={
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: 12, sm: 14 } }}>
+                    Require password change on first login
+                  </Typography>
+                }
+                sx={{ mt: -1 }}
+              />
             </Stack>
-          </Box>
+          </Paper>
 
-          {/* ── RIGHT SIDEBAR ── */}
-          <Box sx={{ width: { xs: "100%", lg: 292 }, flexShrink: 0 }}>
-            <Stack spacing={{ xs: 2, sm: 2.5 }}>
-              {/* ── ACTION PANEL — Desktop only (top of sidebar) ── */}
-              {isDesktop && (
-                <ActionPanel
-                  inSidebar
-                  allMandatoryFilled={allMandatoryFilled}
-                  filledCount={filledCount}
-                  totalCount={totalCount}
-                  mandatoryFields={mandatoryFields}
-                  saving={saving}
-                  onSubmit={() => {
-                    void handleSubmit();
-                  }}
-                  onBack={() => {
-                    router.back();
-                  }}
-                />
-              )}
-
-              {/* Branding — MOCK: Logo upload not yet in API */}
-              <Paper elevation={0} sx={cardSx}>
-                <SectionHeader
-                  icon={<ImageIcon fontSize="small" />}
-                  title="Branding"
-                  subtitle="Company visual identity."
-                />
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: 12, fontWeight: 500 }}>
-                  Company Logo
+          {/* Company Profile */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 2, sm: 3, md: 4 },
+              borderRadius: 3,
+              border: "1px solid",
+              borderColor: "divider",
+              bgcolor: "background.paper",
+              mb: { xs: 2, md: 2.5 },
+            }}
+          >
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 3 }}>
+              <Box sx={{ ...sectionIconSx, bgcolor: alpha(theme.palette.secondary.main, 0.1), color: "secondary.main" }}>
+                <BusinessCenterOutlinedIcon />
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>Company Profile</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Official business registration details.
                 </Typography>
-                <Box
-                  onClick={() => {
-                    fileInputRef.current?.click();
-                  }}
-                  onDragOver={e => {
-                    e.preventDefault();
-                  }}
-                  onDrop={e => {
-                    e.preventDefault();
-                    const { files } = e.dataTransfer;
-                    if (files.length > 0) {
-                      handleLogoChange(files[0]);
-                    }
-                  }}
-                  sx={{
-                    border: "1.5px dashed",
-                    borderColor: logoPreview ? "primary.light" : "divider",
-                    borderRadius: 2,
-                    height: { xs: 110, sm: 130 },
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    cursor: "pointer",
-                    bgcolor: logoPreview ? "transparent" : "action.hover",
-                    gap: 1,
-                    transition: "border-color 0.2s, box-shadow 0.2s",
-                    "&:hover": {
-                      borderColor: "primary.main",
-                      boxShadow: "0 0 0 3px rgba(var(--mui-palette-primary-mainChannel) / 0.08)",
-                    },
-                    overflow: "hidden",
-                    position: "relative",
-                  }}
-                >
-                  {logoPreview ? (
-                    <>
-                      <Box
-                        component="img"
-                        src={logoPreview}
-                        sx={{ width: "100%", height: "100%", objectFit: "contain", p: 1 }}
-                      />
-                      <Box
-                        sx={{
-                          position: "absolute",
-                          bottom: 6,
-                          right: 6,
-                          bgcolor: "background.paper",
-                          border: "1px solid",
-                          borderColor: "divider",
-                          borderRadius: 1,
-                          px: 0.75,
-                          py: 0.25,
-                        }}
-                      >
-                        <Typography variant="caption" color="primary" sx={{ fontWeight: 600, fontSize: 10 }}>
-                          Change
-                        </Typography>
-                      </Box>
-                    </>
-                  ) : (
-                    <>
-                      <Box
-                        sx={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: 1.5,
-                          bgcolor: "background.paper",
-                          border: "1px solid",
-                          borderColor: "divider",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <CloudUploadIcon sx={{ color: "text.disabled", fontSize: 22 }} />
-                      </Box>
-                      <Typography
-                        variant="caption"
-                        color="primary"
-                        sx={{ textAlign: "center", fontWeight: 600, px: 1 }}
-                      >
-                        Click to upload or drag &amp; drop
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        color="text.disabled"
-                        sx={{ textAlign: "center", px: 1, fontSize: 10 }}
-                      >
-                        SVG, PNG, JPG or GIF (max. 800×400px)
-                      </Typography>
-                    </>
-                  )}
-                </Box>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/svg+xml,image/png,image/jpeg,image/gif"
-                  style={{ display: "none" }}
-                  onChange={e => {
-                    handleLogoChange(e.target.files?.[0] ?? null);
-                  }}
-                />
-              </Paper>
+              </Box>
+            </Stack>
 
-              {/* Business Address — MOCK: country/city/street not in API yet */}
-              <Paper elevation={0} sx={cardSx}>
-                <SectionHeader
-                  icon={<LocationOnIcon fontSize="small" />}
-                  title="Business Address"
-                  subtitle="Headquarters location."
+            <Stack spacing={{ xs: 2, sm: 3 }}>
+              <Box>
+                <Typography sx={fieldLabel}>
+                  Company Name{" "}
+                  <Box component="span" sx={{ color: "error.main" }}>
+                    *
+                  </Box>
+                </Typography>
+                <TextField
+                  placeholder="e.g. Apex Logistics Rentals"
+                  value={form.companyName}
+                  onChange={e => {
+                    setForm({ ...form, companyName: e.target.value });
+                    if (fieldErrors.companyName) setFieldErrors(p => ({ ...p, companyName: undefined }));
+                  }}
+                  fullWidth
+                  error={Boolean(fieldErrors.companyName)}
+                  helperText={fieldErrors.companyName}
+                  sx={bigInputSx}
                 />
-                <Stack spacing={2}>
+              </Box>
+
+              <Grid container spacing={{ xs: 2, sm: 2.5 }}>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography sx={fieldLabel}>
+                    Commercial Registration Number{" "}
+                    <Box component="span" sx={{ color: "error.main" }}>
+                      *
+                    </Box>
+                  </Typography>
+                  <TextField
+                    placeholder="CRN-0000-0000"
+                    value={form.commercialRegistrationNumber}
+                    onChange={e => {
+                      setForm({ ...form, commercialRegistrationNumber: e.target.value });
+                      if (fieldErrors.commercialRegistrationNumber) {
+                        setFieldErrors(p => ({ ...p, commercialRegistrationNumber: undefined }));
+                      }
+                    }}
+                    fullWidth
+                    error={Boolean(fieldErrors.commercialRegistrationNumber)}
+                    helperText={fieldErrors.commercialRegistrationNumber}
+                    sx={bigInputSx}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography sx={fieldLabel}>
+                    Tax Identification Number{" "}
+                    <Box component="span" sx={{ color: "error.main" }}>
+                      *
+                    </Box>
+                  </Typography>
+                  <TextField
+                    placeholder="TAX-0000-0000"
+                    value={form.taxId}
+                    onChange={e => {
+                      setForm({ ...form, taxId: e.target.value });
+                      if (fieldErrors.taxId) setFieldErrors(p => ({ ...p, taxId: undefined }));
+                    }}
+                    fullWidth
+                    error={Boolean(fieldErrors.taxId)}
+                    helperText={fieldErrors.taxId}
+                    sx={bigInputSx}
+                  />
+                </Grid>
+              </Grid>
+            </Stack>
+          </Paper>
+
+          {/* Representative Info */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 2, sm: 3, md: 4 },
+              borderRadius: 3,
+              border: "1px solid",
+              borderColor: "divider",
+              bgcolor: "background.paper",
+            }}
+          >
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 3 }}>
+              <Box sx={{ ...sectionIconSx, bgcolor: alpha(theme.palette.info.main, 0.1), color: "info.main" }}>
+                <PersonOutlineIcon />
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>Representative Info</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Primary contact person details.
+                </Typography>
+              </Box>
+            </Stack>
+
+            <Stack spacing={{ xs: 2, sm: 3 }}>
+              <Grid container spacing={{ xs: 2, sm: 2.5 }}>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography sx={fieldLabel}>
+                    First Name{" "}
+                    <Box component="span" sx={{ color: "error.main" }}>
+                      *
+                    </Box>
+                  </Typography>
+                  <TextField
+                    placeholder="Jane"
+                    value={form.firstName}
+                    onChange={e => {
+                      setForm({ ...form, firstName: e.target.value });
+                      if (fieldErrors.firstName) setFieldErrors(p => ({ ...p, firstName: undefined }));
+                    }}
+                    fullWidth
+                    error={Boolean(fieldErrors.firstName)}
+                    helperText={fieldErrors.firstName}
+                    sx={bigInputSx}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography sx={fieldLabel}>
+                    Last Name{" "}
+                    <Box component="span" sx={{ color: "error.main" }}>
+                      *
+                    </Box>
+                  </Typography>
+                  <TextField
+                    placeholder="Doe"
+                    value={form.lastName}
+                    onChange={e => {
+                      setForm({ ...form, lastName: e.target.value });
+                      if (fieldErrors.lastName) setFieldErrors(p => ({ ...p, lastName: undefined }));
+                    }}
+                    fullWidth
+                    error={Boolean(fieldErrors.lastName)}
+                    helperText={fieldErrors.lastName}
+                    sx={bigInputSx}
+                  />
+                </Grid>
+              </Grid>
+
+              <Box>
+                <Typography sx={fieldLabel}>
+                  Phone Number{" "}
+                  <Box component="span" sx={{ color: "error.main" }}>
+                    *
+                  </Box>
+                </Typography>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
                   <TextField
                     select
-                    label="Country"
-                    fullWidth
-                    value={country}
+                    value={form.phoneCountryCode}
                     onChange={e => {
-                      setCountry(e.target.value);
+                      setForm(prev => ({ ...prev, phoneCountryCode: e.target.value }));
                     }}
-                    sx={inputSx}
-                    required
+                    sx={{
+                      width: { xs: "100%", sm: 100 },
+                      "& .MuiInputBase-root": { fontSize: 14, minHeight: 48 },
+                    }}
                   >
-                    <MenuItem value="" disabled>
-                      Select a country
-                    </MenuItem>
-                    {MOCK_COUNTRIES.map(c => (
-                      <MenuItem key={c} value={c}>
-                        {c}
+                    {PHONE_COUNTRY_CODES.map(c => (
+                      <MenuItem key={c.code} value={c.code}>
+                        {c.label}
                       </MenuItem>
                     ))}
                   </TextField>
                   <TextField
-                    label="City"
-                    fullWidth
-                    value={city}
+                    placeholder="(555) 000-0000"
+                    value={form.phoneNumber}
                     onChange={e => {
-                      setCity(e.target.value);
+                      setForm({ ...form, phoneNumber: e.target.value });
+                      if (fieldErrors.phoneNumber) setFieldErrors(p => ({ ...p, phoneNumber: undefined }));
                     }}
-                    placeholder="e.g. Dubai"
-                    sx={inputSx}
-                    required
-                  />
-                  <TextField
-                    label="Street Address"
                     fullWidth
-                    multiline
-                    rows={2}
-                    value={streetAddress}
-                    onChange={e => {
-                      setStreetAddress(e.target.value);
-                    }}
-                    placeholder="Building, Floor, Street..."
-                    sx={inputSx}
+                    error={Boolean(fieldErrors.phoneNumber)}
+                    helperText={fieldErrors.phoneNumber}
+                    sx={bigInputSx}
                   />
                 </Stack>
-              </Paper>
+              </Box>
             </Stack>
-          </Box>
-        </Stack>
-      </Box>
+          </Paper>
+        </Grid>
 
-      {/* ── STICKY FOOTER — Mobile & Tablet only (hidden on lg+) ── */}
-      {!isDesktop && (
-        <Box
-          sx={{
-            position: "fixed",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            zIndex: 1200,
-            bgcolor: "background.paper",
-            borderTop: "1px solid",
-            borderColor: "divider",
-            px: { xs: 2, sm: 3, md: 4 },
-            py: { xs: 1.5, sm: 1.5 },
-            backdropFilter: "blur(8px)",
-          }}
-        >
-          <StickyFooter
-            isMobile={isMobile}
-            allMandatoryFilled={allMandatoryFilled}
-            filledCount={filledCount}
-            totalCount={totalCount}
-            saving={saving}
-            onSubmit={() => {
-              void handleSubmit();
+        {/* RIGHT: sidebar */}
+        <Grid size={{ xs: 12, lg: 3.5 }}>
+          {/* Company Logo */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 2, sm: 2.5 },
+              borderRadius: 3,
+              border: "1px solid",
+              borderColor: "divider",
+              bgcolor: "background.paper",
+              mb: 2,
             }}
-            onBack={() => {
-              router.back();
+          >
+            <Typography sx={{ fontWeight: 700, fontSize: 14, mb: 1 }}>Company Logo</Typography>
+            <Box
+              component="label"
+              htmlFor="logo-photo-input"
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                border: "2px dashed",
+                borderColor: "divider",
+                borderRadius: 2.5,
+                height: { xs: 130, sm: 120 },
+                cursor: "pointer",
+                bgcolor: "background.neutral",
+                gap: 1,
+                transition: "border-color 0.2s",
+                "&:hover": { borderColor: "primary.main" },
+                overflow: "hidden",
+                position: "relative",
+              }}
+            >
+              {logoPreview ? (
+                <Box
+                  component="img"
+                  src={logoPreview}
+                  sx={{ width: "100%", height: "100%", objectFit: "contain", p: 1 }}
+                />
+              ) : (
+                <>
+                  <PhotoCameraOutlinedIcon sx={{ color: "text.disabled", fontSize: 30 }} />
+                  <Typography variant="caption" sx={{ color: "text.disabled", fontWeight: 500 }}>
+                    Upload Logo
+                  </Typography>
+                </>
+              )}
+              <input
+                id="logo-photo-input"
+                type="file"
+                accept=".jpeg,.jpg,.png,.gif"
+                hidden
+                onChange={e => {
+                  handleLogoChange(e.target.files?.[0] ?? null);
+                }}
+              />
+            </Box>
+            <Typography
+              variant="caption"
+              color="text.disabled"
+              sx={{ mt: 1.5, display: "block", textAlign: "center", lineHeight: 1.6 }}
+            >
+              Allowed *.jpeg, *.jpg, *.png, *.gif{"\n"}Max size of 3.1 MB
+            </Typography>
+          </Paper>
+
+          {/* Access Control */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 2, sm: 2.5 },
+              borderRadius: 3,
+              border: "1px solid",
+              borderColor: "divider",
+              bgcolor: "background.paper",
+              mb: 2,
             }}
-          />
-        </Box>
-      )}
+          >
+            <Stack direction="row" spacing={1.25} sx={{ alignItems: "center", mb: 2 }}>
+              <Box
+                sx={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 1.5,
+                  bgcolor: alpha(theme.palette.warning.main, 0.1),
+                  color: "warning.main",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <ShieldOutlinedIcon sx={{ fontSize: 18 }} />
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography sx={{ fontWeight: 700, fontSize: 14 }}>Access Control</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Permissions and status.
+                </Typography>
+              </Box>
+            </Stack>
+
+            <Box sx={{ mb: 2 }}>
+              <Typography sx={{ ...fieldLabel, mb: 1 }}>
+                System Role{" "}
+                <Box component="span" sx={{ color: "error.main" }}>
+                  *
+                </Box>
+              </Typography>
+              <TextField
+                select
+                value={form.platformRole}
+                onChange={e => {
+                  setForm(prev => ({ ...prev, platformRole: e.target.value }));
+                }}
+                fullWidth
+                size="small"
+                slotProps={{
+                  select: { displayEmpty: true },
+                  input: { style: { fontSize: 13 } },
+                }}
+              >
+                {MOCK_PLATFORM_ROLES.map(r => (
+                  <MenuItem key={r} value={r}>
+                    {r}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Box>
+
+            <Box>
+              <Typography sx={{ ...fieldLabel, mb: 1 }}>Account Status</Typography>
+              <ToggleButtonGroup
+                value={form.status}
+                exclusive
+                onChange={(_, v) => {
+                  if (v) setForm(prev => ({ ...prev, status: v }));
+                }}
+                fullWidth
+                size="small"
+                sx={{
+                  flexWrap: "nowrap",
+                  "& .MuiToggleButton-root": {
+                    flex: 1,
+                    minWidth: 0,
+                    fontSize: { xs: 10, sm: 11 },
+                    fontWeight: 600,
+                    textTransform: "none",
+                    border: "1.5px solid",
+                    borderColor: "divider",
+                    flexDirection: "column",
+                    gap: 0.25,
+                    py: 0.75,
+                    px: { xs: 0.5, sm: 1 },
+                    color: "text.secondary",
+                    "&.Mui-selected": { bgcolor: "transparent" },
+                  },
+                  "& .MuiToggleButton-root[value='active'].Mui-selected": {
+                    borderColor: "success.main",
+                    color: "success.main",
+                    bgcolor: "success.lighter",
+                  },
+                  "& .MuiToggleButton-root[value='pending'].Mui-selected": {
+                    borderColor: "warning.main",
+                    color: "warning.main",
+                    bgcolor: "warning.lighter",
+                  },
+                  "& .MuiToggleButton-root[value='blocked'].Mui-selected": {
+                    borderColor: "error.main",
+                    color: "error.main",
+                    bgcolor: "error.lighter",
+                  },
+                }}
+              >
+                <ToggleButton value="active">
+                  <CheckCircleOutlineIcon sx={{ fontSize: { xs: 13, sm: 14 } }} />
+                  Active
+                </ToggleButton>
+                <ToggleButton value="pending">
+                  <AccessTimeIcon sx={{ fontSize: { xs: 13, sm: 14 } }} />
+                  Pending
+                </ToggleButton>
+                <ToggleButton value="blocked">
+                  <BlockIcon sx={{ fontSize: { xs: 13, sm: 14 } }} />
+                  Blocked
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
+          </Paper>
+
+          {/* Business Address */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 2, sm: 2.5 },
+              borderRadius: 3,
+              border: "1px solid",
+              borderColor: "divider",
+              bgcolor: "background.paper",
+              mb: 2,
+            }}
+          >
+            <Stack direction="row" spacing={1.25} sx={{ alignItems: "center", mb: 2 }}>
+              <Box
+                sx={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 1.5,
+                  bgcolor: alpha(theme.palette.info.main, 0.1),
+                  color: "info.main",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <LocationOnOutlinedIcon sx={{ fontSize: 18 }} />
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography sx={{ fontWeight: 700, fontSize: 14 }}>Business Address</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Headquarters location.
+                </Typography>
+              </Box>
+            </Stack>
+
+            <Stack spacing={2}>
+              <Box>
+                <Typography sx={{ ...fieldLabel, mb: 1 }}>Country</Typography>
+                <TextField
+                  select
+                  value={form.country}
+                  onChange={e => {
+                    setForm(prev => ({ ...prev, country: e.target.value }));
+                  }}
+                  fullWidth
+                  size="small"
+                  slotProps={{
+                    select: { displayEmpty: true },
+                    input: { style: { fontSize: 13 } },
+                  }}
+                >
+                  <MenuItem value="" disabled>
+                    <em style={{ color: "var(--mui-palette-text-disabled)" }}>Select country...</em>
+                  </MenuItem>
+                  {MOCK_COUNTRIES.map(c => (
+                    <MenuItem key={c} value={c}>
+                      {c}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Box>
+
+              <Box>
+                <Typography sx={{ ...fieldLabel, mb: 1 }}>City</Typography>
+                <TextField
+                  placeholder="e.g. Dubai"
+                  value={form.city}
+                  onChange={e => {
+                    setForm(prev => ({ ...prev, city: e.target.value }));
+                  }}
+                  fullWidth
+                  size="small"
+                  slotProps={{
+                    input: { style: { fontSize: 13 } },
+                  }}
+                />
+              </Box>
+
+              <Box>
+                <Typography sx={{ ...fieldLabel, mb: 1 }}>Street Address</Typography>
+                <TextField
+                  placeholder="Building, Floor, Street..."
+                  value={form.streetAddress}
+                  onChange={e => {
+                    setForm(prev => ({ ...prev, streetAddress: e.target.value }));
+                  }}
+                  fullWidth
+                  multiline
+                  rows={2}
+                  size="small"
+                  slotProps={{
+                    input: { style: { fontSize: 13 } },
+                  }}
+                />
+              </Box>
+            </Stack>
+          </Paper>
+
+          {/* Profile Completeness */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 2, sm: 2.5 },
+              borderRadius: 3,
+              border: "1px solid",
+              borderColor: "divider",
+              bgcolor: "background.paper",
+            }}
+          >
+            <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+              <Typography sx={{ fontWeight: 700, fontSize: 14 }}>Profile Completeness</Typography>
+              <Chip
+                label="Draft"
+                size="small"
+                sx={{ fontSize: 10, fontWeight: 600, height: 20, bgcolor: "action.hover", color: "text.secondary" }}
+              />
+            </Stack>
+
+            <LinearProgress
+              variant="determinate"
+              value={completenessScore}
+              sx={{
+                borderRadius: 2,
+                height: 5,
+                mb: 0.75,
+                bgcolor: "action.hover",
+                "& .MuiLinearProgress-bar": { borderRadius: 2, bgcolor: "primary.main" },
+              }}
+            />
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
+              {completenessScore}% complete.
+              {completenessScore < 100 ? " Required fields missing." : " Ready to onboard."}
+            </Typography>
+
+            <Stack spacing={0.75}>
+              {completenessItems.map(item => (
+                <Stack key={item.label} direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                  {item.done ? (
+                    <CheckCircleIcon sx={{ fontSize: 14, color: "success.main", flexShrink: 0 }} />
+                  ) : (
+                    <RadioButtonUncheckedIcon sx={{ fontSize: 14, color: "divider", flexShrink: 0 }} />
+                  )}
+                  <Typography variant="caption" sx={{ color: item.done ? "success.main" : "text.disabled" }}>
+                    {item.done
+                      ? item.label.replace(" missing", " ✓").replace(" unassigned", " assigned")
+                      : (item.missingLabel ?? item.label)}
+                  </Typography>
+                </Stack>
+              ))}
+            </Stack>
+          </Paper>
+        </Grid>
+      </Grid>
     </Box>
   );
 }

@@ -1,8 +1,8 @@
 import { $ } from "bun";
 import { logDebug } from "./logger";
 import { commandExists } from "./utils";
-import * as os from "node:os";
 import * as path from "node:path";
+import { unlink } from "node:fs/promises";
 
 export interface ConnectionInfo {
   server: string;
@@ -42,6 +42,7 @@ export function buildConnectionString(info: ConnectionInfo): string {
 export async function testSqlConnection(
   connectionString: string
 ): Promise<{ success: boolean; version?: string; error?: string }> {
+  const tempFile = path.join(process.cwd(), "scripts/setup", `test-sql-${Date.now().toString()}.csx`);
   try {
     const hasDotnetScript = await commandExists("dotnet-script");
     if (!hasDotnetScript) {
@@ -68,7 +69,6 @@ try {
 }
 `;
 
-    const tempFile = path.join(os.tmpdir(), `test-sql-${Date.now().toString()}.csx`);
     await Bun.write(tempFile, testProgram);
 
     logDebug(`Testing SQL connection with temp file: ${tempFile}`);
@@ -90,6 +90,12 @@ try {
       success: false,
       error: error instanceof Error ? error.message : "Connection test failed",
     };
+  } finally {
+    try {
+      await unlink(tempFile);
+    } catch {
+      // Ignore cleanup error
+    }
   }
 }
 
@@ -97,6 +103,7 @@ export async function executeSqlQuery(
   connectionString: string,
   query: string
 ): Promise<{ success: boolean; result?: string; error?: string }> {
+  const tempFile = path.join(process.cwd(), "scripts/setup", `exec-sql-${Date.now().toString()}.csx`);
   try {
     const testProgram = `#r "nuget: Microsoft.Data.SqlClient, 5.2.0"
 using Microsoft.Data.SqlClient;
@@ -115,7 +122,6 @@ try {
 }
 `;
 
-    const tempFile = path.join(os.tmpdir(), `exec-sql-${Date.now().toString()}.csx`);
     await Bun.write(tempFile, testProgram);
 
     logDebug(`Executing SQL query: ${query}`);
@@ -137,6 +143,12 @@ try {
       success: false,
       error: error instanceof Error ? error.message : "Query execution failed",
     };
+  } finally {
+    try {
+      await unlink(tempFile);
+    } catch {
+      // Ignore cleanup error
+    }
   }
 }
 
@@ -144,6 +156,7 @@ export async function executeSqlQueryRows(
   connectionString: string,
   query: string
 ): Promise<{ success: boolean; rows?: string[]; error?: string }> {
+  const tempFile = path.join(process.cwd(), "scripts/setup", `exec-sql-rows-${Date.now().toString()}.csx`);
   try {
     const testProgram = `#r "nuget: Microsoft.Data.SqlClient, 5.2.0"
 using Microsoft.Data.SqlClient;
@@ -164,7 +177,6 @@ try {
 }
 `;
 
-    const tempFile = path.join(os.tmpdir(), `exec-sql-rows-${Date.now().toString()}.csx`);
     await Bun.write(tempFile, testProgram);
 
     logDebug(`Executing SQL rows query: ${query}`);
@@ -188,6 +200,12 @@ try {
       success: false,
       error: error instanceof Error ? error.message : "Query execution failed",
     };
+  } finally {
+    try {
+      await unlink(tempFile);
+    } catch {
+      // Ignore cleanup error
+    }
   }
 }
 
