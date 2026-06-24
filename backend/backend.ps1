@@ -264,7 +264,7 @@ function Sign-Assemblies {
             $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=DevCert" -CertStoreLocation "Cert:\CurrentUser\My" -ErrorAction SilentlyContinue
         }
         if ($cert) {
-            Get-ChildItem -Path $BackendDir -Filter "*.dll" -Recurse | ForEach-Object {
+            Get-ChildItem -Path $BackendDir -Recurse | Where-Object { $_.Extension -in @('.dll', '.exe') } | ForEach-Object {
                 if ($_.FullName -like "*\bin\Debug\net10.0\*") {
                     if ($_.BaseName -in $projectNames) {
                         $filePath = $_.FullName

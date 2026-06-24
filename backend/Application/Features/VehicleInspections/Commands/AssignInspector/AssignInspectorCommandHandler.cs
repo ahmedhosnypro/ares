@@ -128,7 +128,7 @@ namespace Backend.Application.Features.VehicleInspections.Commands.AssignInspect
                 // If this is an auto-assignment, we'll want to bubble up an exception or status so it's counted as a failure for retry logic
                 if (!request.IsManual)
                 {
-                    throw new Exception("No eligible inspector found for auto-assignment.");
+                    throw new NoAvailableInspectorException("No eligible inspector found for auto-assignment.");
                 }
             }
 

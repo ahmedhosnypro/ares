@@ -726,6 +726,7 @@ function DetailsSkeleton() {
  *  Main Client Component
  * ──────────────────────────────────────────────────────────────────────── */
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function BookingDetailsClient({ bookingId }: { readonly bookingId: string }) {
   const router = useRouter();
   const theme = useTheme();
@@ -1156,34 +1157,41 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
         </SectionCard>
 
         {/* 5. Inspection Management */}
-        <BookingInspectionPanel
-          bookingId={booking.id}
-          initialInspectorId={booking.inspection?.assignedInspectorId}
-          initialInspectionStatus={booking.inspectionStatus || booking.inspection?.preInspectionStatus}
-          onAssignSuccess={() => void loadBooking(false)}
-        />
+        {(booking.status === "Confirmed" || booking.status === "Active") && (
+          <BookingInspectionPanel
+            bookingId={booking.id}
+            bookingStatus={booking.status}
+            initialInspectorId={booking.inspection?.assignedInspectorId}
+            initialInspectionStatus={booking.inspectionStatus || booking.inspection?.preInspectionStatus}
+            onAssignSuccess={() => void loadBooking(false)}
+          />
+        )}
 
-        {booking.inspection?.assignedInspectorId && (
-          <>
-            {/* 6. Pickup Inspection */}
+        {/* 6. Pickup Inspection */}
+        {(booking.status === "Confirmed" || booking.status === "Active" || booking.status === "Completed") &&
+          (booking.pickupInspection || booking.inspection?.assignedInspectorId) && (
             <InspectionCard
               title="Pickup Inspection"
               icon={<InspectionIcon />}
               inspection={booking.pickupInspection}
-              fallbackAssignedInspectorName={booking.inspection.assignedInspectorName ?? null}
-              fallbackStatus={booking.inspection.preInspectionStatus ?? null}
+              fallbackAssignedInspectorName={
+                booking.pickupInspection?.inspectorName ?? booking.inspection?.assignedInspectorName ?? null
+              }
+              fallbackStatus={booking.pickupInspection?.status ?? booking.inspection?.preInspectionStatus ?? null}
             />
+          )}
 
-            {/* 7. Return Inspection */}
+        {/* 7. Return Inspection */}
+        {(booking.status === "Active" || booking.status === "Completed") &&
+          (booking.returnInspection || booking.inspection?.assignedInspectorId) && (
             <InspectionCard
               title="Return Inspection"
               icon={<InspectionIcon />}
               inspection={booking.returnInspection}
-              fallbackAssignedInspectorName={booking.inspection.assignedInspectorName ?? null}
-              fallbackStatus={booking.inspection.postInspectionStatus ?? null}
+              fallbackAssignedInspectorName={booking.returnInspection?.inspectorName ?? null}
+              fallbackStatus={booking.returnInspection?.status ?? booking.inspection?.postInspectionStatus ?? null}
             />
-          </>
-        )}
+          )}
 
         {/* 7. Activity Timeline */}
         <SectionCard icon={<HistoryIcon />} title="Activity Timeline" subtitle="Real events recorded for this booking">

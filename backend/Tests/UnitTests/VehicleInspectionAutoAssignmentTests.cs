@@ -192,7 +192,7 @@ namespace Backend.Tests.UnitTests
             var handler = new AssignInspectorCommandHandler(context, mediatorMock.Object, notificationServiceMock.Object, loggerMock.Object);
             var command = new AssignInspectorCommand(booking.Id, "Pickup", false);
 
-            await Assert.ThrowsAsync<Exception>(() => handler.Handle(command, CancellationToken.None));
+            await Assert.ThrowsAsync<NoAvailableInspectorException>(() => handler.Handle(command, CancellationToken.None));
 
             // Check that no inspections were created
             var inspections = await context.VehicleInspections.Where(vi => vi.BookingId == booking.Id).ToListAsync();

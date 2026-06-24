@@ -6,7 +6,13 @@ import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 import { useFormContext, Controller, useFieldArray } from "react-hook-form";
 import { TRANSMISSION_OPTIONS, FUEL_OPTIONS } from "@/app/(dashboard)/supplier/vehicles/_components/VehicleForm.schema";
 
-export default function VehicleInfoEditor({ isAdmin }: { readonly isAdmin: boolean }) {
+export default function VehicleInfoEditor({
+  isAdmin,
+  categories = [],
+}: {
+  readonly isAdmin: boolean;
+  readonly categories?: readonly { id: string; name: string }[];
+}) {
   const {
     control,
     formState: { errors },
@@ -211,6 +217,29 @@ export default function VehicleInfoEditor({ isAdmin }: { readonly isAdmin: boole
               name="locationCity"
               control={control}
               render={({ field }) => <TextField {...field} label="Location City" fullWidth />}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <Controller
+              name="categoryId"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  select
+                  label="Category"
+                  fullWidth
+                  error={!!errors.categoryId}
+                  helperText={errors.categoryId?.message as string}
+                  disabled={categories.length === 0}
+                >
+                  {categories.map(cat => (
+                    <MenuItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
             />
           </Grid>
         </Grid>

@@ -47,8 +47,10 @@ import { useSession } from "next-auth/react";
 import DemoDataBadge from "../_components/DemoDataBadge";
 import {
   getSupplierDashboardStats,
+  getSupplierDashboardBookingsByStatus,
   type SupplierDashboardStats,
 } from "@/api-clients/supplier-dashboard/supplier-dashboard";
+import { getSupplierEarningsChart, type MonthlyRevenuePoint } from "@/api-clients/supplier-earnings/supplier-earnings";
 import { logger } from "@/utils/logger";
 import VehicleStats, { type StatItem } from "@/app/(dashboard)/_components/VehicleStats";
 
@@ -87,25 +89,6 @@ interface PendingAction {
 // ── Demo data ────────────────────────────────────────────────────────────────
 // All values below are hard-coded placeholders for the v1 dashboard. They will
 // be replaced with real per-supplier metrics in a future iteration.
-
-const DEMO_EARNINGS = [
-  { month: "Jan", earnings: 1820 },
-  { month: "Feb", earnings: 2410 },
-  { month: "Mar", earnings: 2150 },
-  { month: "Apr", earnings: 3080 },
-  { month: "May", earnings: 2740 },
-  { month: "Jun", earnings: 3520 },
-  { month: "Jul", earnings: 4180 },
-  { month: "Aug", earnings: 3960 },
-];
-
-const DEMO_BOOKINGS_BY_STATUS = [
-  { status: "Active", count: 4 },
-  { status: "Confirmed", count: 7 },
-  { status: "Pending", count: 3 },
-  { status: "Completed", count: 18 },
-  { status: "Cancelled", count: 2 },
-];
 
 const DEMO_ACTIVITY: ActivityItem[] = [
   { id: "a1", type: "booking", message: "New booking received for Toyota Corolla 2024", time: "12 min ago" },
@@ -179,6 +162,8 @@ export default function SupplierDashboardClient() {
 
   // ── Live stats state ──────────────────────────────────────────────────────
   const [stats, setStats] = useState<SupplierDashboardStats | null>(null);
+  const [earningsChartData, setEarningsChartData] = useState<MonthlyRevenuePoint[] | null>(null);
+  const [bookingsChartData, setBookingsChartData] = useState<{ status: string; count: number }[] | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
   const [statsError, setStatsError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -214,9 +199,23 @@ export default function SupplierDashboardClient() {
       setStatsError(null);
 
       try {
-        const data = await getSupplierDashboardStats(accessToken);
+        const [statsData, earningsData, bookingsData] = await Promise.all([
+          getSupplierDashboardStats(accessToken),
+          getSupplierEarningsChart(accessToken),
+          getSupplierDashboardBookingsByStatus(accessToken),
+        ]);
         if (cancelled) return;
-        setStats(data);
+        setStats(statsData);
+        setEarningsChartData(earningsData);
+
+        // Map backend DTO to chart format
+        setBookingsChartData([
+          { status: "Pending", count: bookingsData.pending },
+          { status: "Confirmed", count: bookingsData.confirmed },
+          { status: "Active", count: bookingsData.active },
+          { status: "Completed", count: bookingsData.completed },
+          { status: "Cancelled", count: bookingsData.cancelled },
+        ]);
       } catch (err: unknown) {
         if (cancelled) return;
         logger.error("Failed to load supplier dashboard stats", err);
@@ -312,16 +311,15 @@ export default function SupplierDashboardClient() {
                       <Typography variant="h6" sx={{ fontWeight: 700 }}>
                         Earnings Overview
                       </Typography>
-                      <DemoDataBadge />
                     </Box>
                     <IconButton size="small">
                       <MoreVertIcon />
                     </IconButton>
                   </Box>
                   <Box sx={{ width: "100%", height: 280, minWidth: 0, position: "relative", overflow: "hidden" }}>
-                    {mounted && (
+                    {mounted && earningsChartData && (
                       <ResponsiveContainer width="100%" height={280} minWidth={0}>
-                        <AreaChart data={DEMO_EARNINGS} margin={{ top: 10, right: 16, left: -8, bottom: 0 }}>
+                        <AreaChart data={earningsChartData} margin={{ top: 10, right: 16, left: -8, bottom: 0 }}>
                           <defs>
                             <linearGradient id="supplierEarningsFill" x1="0" y1="0" x2="0" y2="1">
                               <stop offset="0%" stopColor={theme.palette.primary.main} stopOpacity={0.45} />
@@ -352,7 +350,7 @@ export default function SupplierDashboardClient() {
                           />
                           <Area
                             type="monotone"
-                            dataKey="earnings"
+                            dataKey="revenue"
                             stroke={theme.palette.primary.main}
                             strokeWidth={2.5}
                             fill="url(#supplierEarningsFill)"
@@ -384,16 +382,15 @@ export default function SupplierDashboardClient() {
                       <Typography variant="h6" sx={{ fontWeight: 700 }}>
                         Bookings by Status
                       </Typography>
-                      <DemoDataBadge />
                     </Box>
                     <IconButton size="small">
                       <MoreVertIcon />
                     </IconButton>
                   </Box>
                   <Box sx={{ width: "100%", height: 280, minWidth: 0, position: "relative", overflow: "hidden" }}>
-                    {mounted && (
+                    {mounted && bookingsChartData && (
                       <ResponsiveContainer width="100%" height={280} minWidth={0}>
-                        <BarChart data={DEMO_BOOKINGS_BY_STATUS} margin={{ top: 10, right: 16, left: -8, bottom: 0 }}>
+                        <BarChart data={bookingsChartData} margin={{ top: 10, right: 16, left: -8, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} vertical={false} />
                           <XAxis
                             dataKey="status"

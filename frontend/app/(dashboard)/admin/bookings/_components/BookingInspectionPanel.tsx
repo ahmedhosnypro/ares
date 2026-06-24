@@ -28,6 +28,7 @@ import { logger } from "@/utils/logger";
 
 interface Props {
   readonly bookingId: string;
+  readonly bookingStatus?: string;
   /** Optional pre-loaded inspection status info from the booking */
   readonly initialInspectorId?: string | null;
   readonly initialInspectionStatus?: string | null;
@@ -50,8 +51,10 @@ function statusChipProps(status: string | null | undefined, theme: Theme): { bg:
  * inspection status, lets the admin pick an inspector and assign, and shows
  * the resulting assignment once made.
  */
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function BookingInspectionPanel({
   bookingId,
+  bookingStatus,
   initialInspectorId,
   initialInspectionStatus,
   onAssignSuccess,
@@ -65,6 +68,17 @@ export default function BookingInspectionPanel({
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [inspection, setInspection] = useState<InspectionDetails | null>(null);
+
+  const isConfirmed = bookingStatus === "Confirmed";
+  const isActive = bookingStatus === "Active";
+  const isValidStatus = isConfirmed || isActive;
+
+  const targetName = isConfirmed ? "Pickup Inspection" : isActive ? "Return Inspection" : "Invalid Target";
+  const buttonText = isConfirmed
+    ? "Assign Pickup Inspector"
+    : isActive
+      ? "Assign Return Inspector"
+      : "Assign Inspector";
 
   // Initial label for the badge — kept in sync with the assignment.
   const inspectionStatus =
@@ -137,6 +151,32 @@ export default function BookingInspectionPanel({
       </Stack>
       <Divider sx={{ mb: 2 }} />
 
+      {/* Target Info */}
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3, alignItems: "flex-start" }}>
+        <Box sx={{ flex: 1 }}>
+          <Typography variant="caption" color="text.secondary">
+            Booking Status
+          </Typography>
+          <Box sx={{ mt: 0.5 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              {bookingStatus ?? "Unknown"}
+            </Typography>
+          </Box>
+        </Box>
+        {isValidStatus && (
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="caption" color="text.secondary">
+              Assignment Target
+            </Typography>
+            <Box sx={{ mt: 0.5 }}>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                {targetName}
+              </Typography>
+            </Box>
+          </Box>
+        )}
+      </Stack>
+
       {/* Status row */}
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3, alignItems: "flex-start" }}>
         <Box sx={{ flex: 1 }}>
@@ -188,6 +228,8 @@ export default function BookingInspectionPanel({
 
       {inspection?.isSubmitted ? (
         <Alert severity="info">Inspection has been submitted and is locked. Cannot reassign at this stage.</Alert>
+      ) : !isValidStatus ? (
+        <Alert severity="info">Inspector assignment is unavailable for the current booking status.</Alert>
       ) : (
         <>
           <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
@@ -243,9 +285,9 @@ export default function BookingInspectionPanel({
               onClick={handleAssign}
               disabled={!selectedInspectorUserId || assigning || loadingInspectors}
               startIcon={assigning ? <CircularProgress size={16} color="inherit" /> : <AssignmentIndIcon />}
-              sx={{ minWidth: 160, whiteSpace: "nowrap" }}
+              sx={{ minWidth: 180, whiteSpace: "nowrap", flexShrink: 0 }}
             >
-              {assigning ? "Assigning..." : "Assign Inspector"}
+              {assigning ? "Assigning..." : buttonText}
             </Button>
           </Stack>
         </>

@@ -98,9 +98,23 @@ namespace Backend.Infrastructure.BackgroundServices
                     _logger.LogInformation("Assignment Success: Successfully assigned Pickup inspector for Booking {BookingId}", booking.Id);
                     successCount++;
                 }
+                catch (NoAvailableInspectorException ex)
+                {
+                    _logger.LogWarning("Assignment Retry: No available Pickup inspector for Booking {BookingId}. Message: {Message}", booking.Id, ex.Message);
+                    failureCount++;
+
+                    // Increment attempts
+                    booking.PickupAssignmentAttempts++;
+                    await bookingRepository.UpdateAsync(booking, cancellationToken);
+
+                    if (booking.PickupAssignmentAttempts >= 6)
+                    {
+                        await NotifyAdminOfAssignmentFailure(notificationService, booking.Id, "Pickup", cancellationToken);
+                    }
+                }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Assignment Failure: Failed to auto-assign Pickup inspector for Booking {BookingId}", booking.Id);
+                    _logger.LogError(ex, "Assignment Error: Unexpected error auto-assigning Pickup inspector for Booking {BookingId}", booking.Id);
                     failureCount++;
 
                     // Increment attempts
@@ -143,9 +157,23 @@ namespace Backend.Infrastructure.BackgroundServices
                     _logger.LogInformation("Assignment Success: Successfully assigned Return inspector for Booking {BookingId}", booking.Id);
                     successCount++;
                 }
+                catch (NoAvailableInspectorException ex)
+                {
+                    _logger.LogWarning("Assignment Retry: No available Return inspector for Booking {BookingId}. Message: {Message}", booking.Id, ex.Message);
+                    failureCount++;
+
+                    // Increment attempts
+                    booking.ReturnAssignmentAttempts++;
+                    await bookingRepository.UpdateAsync(booking, cancellationToken);
+
+                    if (booking.ReturnAssignmentAttempts >= 6)
+                    {
+                        await NotifyAdminOfAssignmentFailure(notificationService, booking.Id, "Return", cancellationToken);
+                    }
+                }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Assignment Failure: Failed to auto-assign Return inspector for Booking {BookingId}", booking.Id);
+                    _logger.LogError(ex, "Assignment Error: Unexpected error auto-assigning Return inspector for Booking {BookingId}", booking.Id);
                     failureCount++;
 
                     // Increment attempts

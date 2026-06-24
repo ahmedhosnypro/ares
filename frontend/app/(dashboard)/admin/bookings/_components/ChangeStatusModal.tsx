@@ -75,7 +75,11 @@ export default function ChangeStatusModal({
         onClose();
       } catch (e) {
         logger.error("Failed to change booking status", e);
-        setError(e instanceof Error ? e.message : "Failed to change status. Please try again.");
+        let displayError = "Failed to change status. Please try again.";
+        if (e instanceof Error) {
+          displayError = e.message;
+        }
+        setError(displayError);
       } finally {
         setSubmitting(false);
       }

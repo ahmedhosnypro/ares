@@ -20,4 +20,14 @@ public interface ISupplierDashboardService
     Task<SupplierDashboardStatsDto> GetStatsAsync(
         Guid supplierId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns booking counts grouped by business-friendly categories for the
+    /// authenticated supplier. All counts are filtered by <c>Vehicle.UserId == supplierId</c>.
+    /// </summary>
+    /// <param name="supplierId">Authenticated supplier user id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task<BookingsByStatusDto> GetBookingsByStatusAsync(
+        Guid supplierId,
+        CancellationToken cancellationToken = default);
 }

@@ -34,3 +34,24 @@ export async function getSupplierDashboardStats(accessToken: string): Promise<Su
     accessToken,
   });
 }
+
+/**
+ * Counts of bookings grouped by business-friendly categories.
+ */
+export interface BookingsByStatus {
+  pending: number;
+  confirmed: number;
+  active: number;
+  completed: number;
+  cancelled: number;
+}
+
+/**
+ * Fetch the authenticated supplier's booking counts by status.
+ */
+export async function getSupplierDashboardBookingsByStatus(accessToken: string): Promise<BookingsByStatus> {
+  return apiFetchJson<BookingsByStatus>("/api/supplier/dashboard/bookings-by-status", {
+    method: "GET",
+    accessToken,
+  });
+}

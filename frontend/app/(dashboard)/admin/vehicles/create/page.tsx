@@ -2,7 +2,7 @@ import { Box, Typography, Container, IconButton, Stack } from "@mui/material";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import { getServerSession } from "next-auth";
 import Link from "next/link";
-import VehicleDetailsClient from "@/app/(public)/vehicles/[vehicleId]/_components/vehicle-details/VehicleDetailsClient";
+import CreateVehicleClient from "./CreateVehicleClient";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { toApiUrl } from "@/utils/api-client";
 import type {
@@ -88,7 +88,7 @@ export default async function CreateVehiclePage() {
           </Typography>
         </Stack>
       </Container>
-      <VehicleDetailsClient vehicle={emptyVehicle} reviews={[]} locations={locations} canEdit isCreateMode />
+      <CreateVehicleClient emptyVehicle={emptyVehicle} locations={locations} />
     </Box>
   );
 }
