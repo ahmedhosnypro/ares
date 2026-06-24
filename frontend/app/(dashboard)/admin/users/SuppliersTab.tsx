@@ -166,7 +166,6 @@ export default function SuppliersTab() {
 
   useEffect(() => {
     void fetchSuppliers();
-     
   }, []);
 
   const handleDeleteConfirm = async () => {

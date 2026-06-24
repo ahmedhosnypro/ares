@@ -300,7 +300,9 @@ function ExtraActionButtons({
         disableElevation
         color={data.isActive ? "error" : "success"}
         disabled={actionLoading}
-        onClick={() => { void onToggleStatus(); }}
+        onClick={() => {
+          void onToggleStatus();
+        }}
         sx={{
           borderRadius: 2,
           px: 3,
@@ -322,7 +324,9 @@ function ExtraActionButtons({
             variant="contained"
             color="success"
             disabled={actionLoading}
-            onClick={() => { void onApprove(); }}
+            onClick={() => {
+              void onApprove();
+            }}
             sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600 }}
           >
             Approve
@@ -346,7 +350,9 @@ function ExtraActionButtons({
             variant="outlined"
             color={data.isActive ? "warning" : "primary"}
             disabled={actionLoading}
-            onClick={() => { void onToggleStatus(); }}
+            onClick={() => {
+              void onToggleStatus();
+            }}
             sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600 }}
           >
             {data.isActive ? "Disable Account" : "Enable Account"}
@@ -368,7 +374,7 @@ interface FieldRowProps {
 
 function FieldRow({ icon, label, value, accentColor }: FieldRowProps) {
   const theme = useTheme();
-  
+
   const fieldLabel = {
     fontWeight: 600,
     fontSize: "10px",
@@ -1513,7 +1519,14 @@ export default function UserDetailsView({
       </Grid>
 
       {/* Rejection Dialog for Drivers */}
-      <Dialog open={rejectOpen} onClose={() => { setRejectOpen(false); }} maxWidth="xs" fullWidth>
+      <Dialog
+        open={rejectOpen}
+        onClose={() => {
+          setRejectOpen(false);
+        }}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle sx={{ fontWeight: 800 }}>Reject Driver Application</DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ mb: 2, color: theme.palette.text.secondary }}>
@@ -1532,7 +1545,12 @@ export default function UserDetailsView({
           />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => { setRejectOpen(false); }} color="inherit">
+          <Button
+            onClick={() => {
+              setRejectOpen(false);
+            }}
+            color="inherit"
+          >
             Cancel
           </Button>
           <Button onClick={handleConfirmReject} variant="contained" color="error" disabled={!rejectReason.trim()}>
