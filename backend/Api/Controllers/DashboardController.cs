@@ -60,23 +60,30 @@ public class DashboardController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<IReadOnlyList<RecentActivityItemDto>>> GetRecentSummary(CancellationToken cancellationToken = default)
     {
-        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-        if (userIdClaim == null)
+        try
         {
-            return Unauthorized(new { Message = "User not authenticated" });
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+            {
+                return Unauthorized(new { Message = "User not authenticated" });
+            }
+
+            var userId = Guid.Parse(userIdClaim.Value);
+            var isSupplier = User.IsInRole("Supplier");
+            var isAdmin = User.IsInRole("Admin");
+
+            Guid? targetSupplierId = isSupplier && !isAdmin ? userId : null;
+
+            _logger.LogInformation("Getting recent activity summary for user {UserId}, targetSupplierId: {TargetSupplierId}", userId, targetSupplierId);
+
+            var items = await _dashboardService.GetRecentSummaryAsync(targetSupplierId, cancellationToken);
+
+            return Ok(items);
         }
-
-        var userId = Guid.Parse(userIdClaim.Value);
-        var isSupplier = User.IsInRole("Supplier");
-        var isAdmin = User.IsInRole("Admin");
-
-        Guid? targetSupplierId = isSupplier && !isAdmin ? userId : null;
-
-        _logger.LogInformation("Getting recent activity summary for user {UserId}, targetSupplierId: {TargetSupplierId}", userId, targetSupplierId);
-
-        var items = await _dashboardService.GetRecentSummaryAsync(targetSupplierId, cancellationToken);
-
-        return Ok(items);
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { Message = ex.ToString() });
+        }
     }
 
     [HttpGet("recent-bookings")]

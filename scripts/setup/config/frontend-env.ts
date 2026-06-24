@@ -321,8 +321,9 @@ export async function setupFrontendEnv(
 
   // Get configuration
   const defaults = getDefaultFrontendConfig(backendConfig);
-  const config =
-    quick || mode === "replace" || mode === "create"
+  const config = quick
+    ? defaults
+    : mode === "replace" || mode === "create"
       ? await promptFrontendConfig(defaults)
       : await promptFrontendConfig(defaults, existingEnv);
 

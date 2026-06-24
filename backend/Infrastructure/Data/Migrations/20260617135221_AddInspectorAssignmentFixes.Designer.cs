@@ -4,16 +4,19 @@ using Backend.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace Infrastructure.Migrations
+namespace Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260617135221_AddInspectorAssignmentFixes")]
+    partial class AddInspectorAssignmentFixes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -283,7 +286,7 @@ namespace Infrastructure.Migrations
                     b.Property<decimal?>("OriginalPrice")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int>("PickupAssignmentAttempts")
+                    b.Property<int>("PickupAssignmentRetries")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("PickupDate")
@@ -296,11 +299,14 @@ namespace Infrastructure.Migrations
                     b.Property<bool>("RequiresDriver")
                         .HasColumnType("bit");
 
-                    b.Property<int>("ReturnAssignmentAttempts")
+                    b.Property<int>("ReturnAssignmentRetries")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("ReturnDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ReturnInspectorId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -347,6 +353,8 @@ namespace Infrastructure.Migrations
                         .HasFilter("[BookingNumber] IS NOT NULL");
 
                     b.HasIndex("DriverId");
+
+                    b.HasIndex("ReturnInspectorId");
 
                     b.HasIndex("Status", "HoldExpiresAt")
                         .HasDatabaseName("IX_Bookings_Status_HoldExpiresAt");
@@ -1961,6 +1969,10 @@ namespace Infrastructure.Migrations
                         .HasForeignKey("DriverId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("Backend.Domain.Entities.ApplicationUser", "ReturnInspector")
+                        .WithMany()
+                        .HasForeignKey("ReturnInspectorId");
+
                     b.HasOne("Backend.Domain.Entities.ApplicationUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -1978,6 +1990,8 @@ namespace Infrastructure.Migrations
                     b.Navigation("AssignedInspector");
 
                     b.Navigation("Driver");
+
+                    b.Navigation("ReturnInspector");
 
                     b.Navigation("User");
 

@@ -186,7 +186,7 @@ namespace Backend.Api.Controllers
                     Vehicles = _context.Vehicles.Where(v => v.CategoryId == c.Id).Select(v => new { v.Id, v.Make, v.Model, v.LicensePlate }),
                     VehicleCount = _context.Vehicles.Count(v => v.CategoryId == c.Id),
                     BookingCount = _context.Bookings.Count(b => b.Vehicle!.CategoryId == c.Id),
-                    Revenue = _context.Payments.Where(p => p.Booking!.Vehicle!.CategoryId == c.Id && p.Status == "Succeeded").Sum(p => (decimal?)p.Amount) ?? 0m
+                    Revenue = _context.Payments.Where(p => p.Booking!.Vehicle!.CategoryId == c.Id && p.Status == "Captured").Sum(p => (decimal?)p.Amount) ?? 0m
                 })
                 .FirstOrDefaultAsync(cancellationToken);
 

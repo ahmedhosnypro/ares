@@ -1,9 +1,12 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Backend.Application.Exceptions;
 using Backend.Application.Features.VehicleInspections.Commands.AssignInspector;
 using Backend.Application.Interfaces;
+using Backend.Application.Services;
+using Backend.Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -62,13 +65,23 @@ namespace Backend.Infrastructure.BackgroundServices
             using var scope = _serviceProvider.CreateScope();
             var bookingRepository = scope.ServiceProvider.GetRequiredService<IBookingRepository>();
             var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+            var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
 
-            // Find bookings starting in <= 24 hours
             var targetTime = DateTime.UtcNow.AddHours(24);
 
-            var pendingBookings = (await bookingRepository.GetBookingsForAutoAssignmentAsync(targetTime, cancellationToken)).ToList();
+            await ProcessPickupAssignmentsAsync(bookingRepository, mediator, notificationService, targetTime, cancellationToken);
+            await ProcessReturnAssignmentsAsync(bookingRepository, mediator, notificationService, targetTime, cancellationToken);
+        }
 
-            _logger.LogInformation("Eligible Bookings Found: {Count} booking(s) found starting before {TargetTime}.", pendingBookings.Count, targetTime);
+        private async Task ProcessPickupAssignmentsAsync(
+            IBookingRepository bookingRepository, 
+            IMediator mediator, 
+            INotificationService notificationService,
+            DateTime targetTime, 
+            CancellationToken cancellationToken)
+        {
+            var pendingBookings = (await bookingRepository.GetBookingsForPickupAutoAssignmentAsync(targetTime, cancellationToken)).ToList();
+            _logger.LogInformation("Eligible Pickup Bookings Found: {Count} booking(s) found.", pendingBookings.Count);
 
             int successCount = 0;
             int failureCount = 0;
@@ -77,28 +90,93 @@ namespace Backend.Infrastructure.BackgroundServices
             {
                 try
                 {
-                    _logger.LogInformation("Auto-assigning inspector for Booking {BookingId}", booking.Id);
+                    _logger.LogInformation("Auto-assigning Pickup inspector for Booking {BookingId}", booking.Id);
 
-                    var command = new AssignInspectorCommand(booking.Id);
+                    var command = new AssignInspectorCommand(booking.Id, "Pickup", false);
                     await mediator.Send(command, cancellationToken);
 
-                    _logger.LogInformation("Assignment Success: Successfully assigned inspector for Booking {BookingId}", booking.Id);
+                    _logger.LogInformation("Assignment Success: Successfully assigned Pickup inspector for Booking {BookingId}", booking.Id);
                     successCount++;
-                }
-                catch (ConflictException ex)
-                {
-                    _logger.LogWarning(ex, "Booking Skipped: Booking {BookingId} was skipped because of status conflict: {Message}", booking.Id, ex.Message);
-                    failureCount++;
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Assignment Failure: Failed to auto-assign inspector for Booking {BookingId}", booking.Id);
+                    _logger.LogError(ex, "Assignment Failure: Failed to auto-assign Pickup inspector for Booking {BookingId}", booking.Id);
                     failureCount++;
+
+                    // Increment attempts
+                    booking.PickupAssignmentAttempts++;
+                    await bookingRepository.UpdateAsync(booking, cancellationToken);
+
+                    if (booking.PickupAssignmentAttempts >= 6)
+                    {
+                        await NotifyAdminOfAssignmentFailure(notificationService, booking.Id, "Pickup", cancellationToken);
+                    }
                 }
             }
-
-            _logger.LogInformation("Job Completion Summary: Total Processed: {Total}, Successes: {Successes}, Failures: {Failures}",
+            
+            _logger.LogInformation("Pickup Job Completion Summary: Processed: {Total}, Successes: {Successes}, Failures: {Failures}",
                 pendingBookings.Count, successCount, failureCount);
+        }
+
+        private async Task ProcessReturnAssignmentsAsync(
+            IBookingRepository bookingRepository, 
+            IMediator mediator, 
+            INotificationService notificationService,
+            DateTime targetTime, 
+            CancellationToken cancellationToken)
+        {
+            var pendingBookings = (await bookingRepository.GetBookingsForReturnAutoAssignmentAsync(targetTime, cancellationToken)).ToList();
+            _logger.LogInformation("Eligible Return Bookings Found: {Count} booking(s) found.", pendingBookings.Count);
+
+            int successCount = 0;
+            int failureCount = 0;
+
+            foreach (var booking in pendingBookings)
+            {
+                try
+                {
+                    _logger.LogInformation("Auto-assigning Return inspector for Booking {BookingId}", booking.Id);
+
+                    var command = new AssignInspectorCommand(booking.Id, "Return", false);
+                    await mediator.Send(command, cancellationToken);
+
+                    _logger.LogInformation("Assignment Success: Successfully assigned Return inspector for Booking {BookingId}", booking.Id);
+                    successCount++;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Assignment Failure: Failed to auto-assign Return inspector for Booking {BookingId}", booking.Id);
+                    failureCount++;
+
+                    // Increment attempts
+                    booking.ReturnAssignmentAttempts++;
+                    await bookingRepository.UpdateAsync(booking, cancellationToken);
+
+                    if (booking.ReturnAssignmentAttempts >= 6)
+                    {
+                        await NotifyAdminOfAssignmentFailure(notificationService, booking.Id, "Return", cancellationToken);
+                    }
+                }
+            }
+            
+            _logger.LogInformation("Return Job Completion Summary: Processed: {Total}, Successes: {Successes}, Failures: {Failures}",
+                pendingBookings.Count, successCount, failureCount);
+        }
+
+        private async Task NotifyAdminOfAssignmentFailure(INotificationService notificationService, Guid bookingId, string inspectionType, CancellationToken cancellationToken)
+        {
+            try
+            {
+                await notificationService.NotifyAdminsAsync(
+                    "Auto Assignment Failed",
+                    $"The system failed to auto-assign an inspector for {inspectionType} inspection of Booking {bookingId} after 6 attempts.",
+                    "AutoAssignmentFailed",
+                    cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to notify admins of auto-assignment failure for Booking {BookingId}", bookingId);
+            }
         }
     }
 }

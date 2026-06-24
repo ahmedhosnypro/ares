@@ -417,7 +417,6 @@ public class VehicleSearchPropertyTests : IDisposable
         _context.Reviews.RemoveRange(_context.Reviews);
         _context.VehicleImages.RemoveRange(_context.VehicleImages);
         _context.Vehicles.RemoveRange(_context.Vehicles);
-        _context.Categories.RemoveRange(_context.Categories);
         _context.UserAddresses.RemoveRange(_context.UserAddresses);
         _context.Users.RemoveRange(_context.Users);
         _context.SaveChanges();
@@ -492,34 +491,11 @@ public class VehicleSearchPropertyTests : IDisposable
     private List<Vehicle> CreateDiverseTestVehicles(Guid userId, int count)
     {
         var vehicles = new List<Vehicle>();
-        var categoryNames = new[] { "SUV", "Sedan", "Hatchback", "Coupe" };
+        var categories = new[] { "SUV", "Sedan", "Hatchback", "Coupe" };
         var transmissions = new[] { "Automatic", "Manual" };
-
-        // Ensure categories exist in context
-        var categories = new Dictionary<string, Category>();
-        foreach (var name in categoryNames)
-        {
-            var category = _context.Categories.FirstOrDefault(c => c.Name == name);
-            if (category == null)
-            {
-                category = new Category
-                {
-                    Id = Guid.NewGuid(),
-                    Name = name,
-                    Description = $"{name} Description",
-                    IsActive = true
-                };
-                _context.Categories.Add(category);
-            }
-            categories[name] = category;
-        }
-        _context.SaveChanges();
 
         for (int i = 0; i < count; i++)
         {
-            var categoryName = categoryNames[i % categoryNames.Length];
-            var category = categories[categoryName];
-
             var vehicle = new Vehicle
             {
                 Id = Guid.NewGuid(),
@@ -535,9 +511,7 @@ public class VehicleSearchPropertyTests : IDisposable
                 PricePerDay = 50 + (i * 15), // Varied prices: 50, 65, 80, 95, 110, 125, 140, etc.
                 LocationCity = "Test City",
                 Description = $"Test vehicle {i}",
-                Status = categoryName,
-                CategoryId = category.Id,
-                Category = category,
+                Status = categories[i % categories.Length], // Using Status as Category
                 AvailabilityStatus = "Available",
                 IsActive = true,
                 ApprovedAt = DateTime.UtcNow

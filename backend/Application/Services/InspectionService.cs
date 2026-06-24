@@ -83,9 +83,11 @@ public class InspectionService : IInspectionService
         var inspectorUser = await _userManager.FindByIdAsync(inspector.UserId.ToString())
             ?? throw new NotFoundException("Inspector user", inspector.UserId);
 
-        // Ensure we never create a second inspection for the same booking.
+        // Ensure we never create a second inspection of the same type for the same booking.
         var allInspections = await _inspectionRepository.GetAllAsync(cancellationToken);
-        var inspection = allInspections.FirstOrDefault(i => i.BookingId == bookingId);
+        var inspection = allInspections.FirstOrDefault(i => i.BookingId == bookingId && string.Equals(i.InspectionType, request.InspectionType, StringComparison.OrdinalIgnoreCase));
+
+        Guid? previousInspectorId = null;
 
         if (inspection == null)
         {
@@ -95,8 +97,10 @@ public class InspectionService : IInspectionService
                 VehicleId = booking.VehicleId,
                 BookingId = booking.Id,
                 InspectorId = inspector.UserId,
-                InspectionType = "Pickup",
-                InspectionDate = DateTime.UtcNow,
+                InspectionType = request.InspectionType,
+                InspectionDate = request.InspectionType.Equals("Pickup", StringComparison.OrdinalIgnoreCase)
+                    ? (booking.PickupDate ?? DateTime.UtcNow)
+                    : (booking.ReturnDate ?? booking.PickupDate?.AddDays(1) ?? DateTime.UtcNow),
                 Status = InspectionStatus.Pending,
                 IsSubmitted = false,
                 CreatedAt = DateTime.UtcNow,
@@ -114,6 +118,7 @@ public class InspectionService : IInspectionService
                     "Inspection has already been submitted and is locked.");
             }
 
+            previousInspectorId = inspection.InspectorId;
             inspection.InspectorId = inspector.UserId;
             inspection.Status = InspectionStatus.Pending;
             inspection.UpdatedAt = DateTime.UtcNow;
@@ -121,7 +126,10 @@ public class InspectionService : IInspectionService
         }
 
         // Mirror onto booking.
-        booking.AssignedInspectorId = inspector.UserId;
+        if (string.Equals(request.InspectionType, "Pickup", StringComparison.OrdinalIgnoreCase))
+        {
+            booking.AssignedInspectorId = inspector.UserId;
+        }
         booking.InspectionStatus = InspectionStatus.Pending;
         booking.UpdatedAt = DateTime.UtcNow;
         await _bookingRepository.UpdateAsync(booking, cancellationToken);
@@ -131,12 +139,26 @@ public class InspectionService : IInspectionService
         // Notify the inspector — best-effort, never break the workflow.
         try
         {
-            await _notificationService.CreateNotificationAsync(
-                inspector.UserId,
-                "New inspection assigned",
-                $"You have been assigned to inspect booking {booking.BookingNumber ?? booking.Id.ToString()}.",
-                NotificationTypeInspectionAssigned,
-                cancellationToken);
+            if (previousInspectorId != inspector.UserId)
+            {
+                await _notificationService.CreateNotificationAsync(
+                    inspector.UserId,
+                    "New inspection assigned",
+                    $"You have been assigned to inspect booking {booking.BookingNumber ?? booking.Id.ToString()} ({request.InspectionType}).",
+                    NotificationTypeInspectionAssigned,
+                    cancellationToken);
+            }
+
+            // Notify previous inspector of reassignment
+            if (previousInspectorId != null && previousInspectorId != inspector.UserId)
+            {
+                await _notificationService.CreateNotificationAsync(
+                    previousInspectorId.Value,
+                    "Inspection Reassigned",
+                    $"Your assignment for booking {booking.BookingNumber ?? booking.Id.ToString()} ({request.InspectionType}) has been reassigned to another inspector.",
+                    "InspectionReassigned",
+                    cancellationToken);
+            }
         }
         catch (Exception ex)
         {

@@ -19,6 +19,7 @@ import {
   InputAdornment,
   useTheme,
   alpha,
+  Radio,
 } from "@mui/material";
 import {
   ArrowBackRounded as BackIcon,
@@ -125,6 +126,7 @@ export default function CreateBookingClient() {
   const [returnDate, setReturnDate] = useState<Date | null>(null);
   const [pickupLocation, setPickupLocation] = useState("");
   const [dropOffLocation, setDropOffLocation] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"Cash" | "Online">("Cash");
 
   // ── Picker state ───────────────────────────────────────────────────
   const [customerSearch, setCustomerSearch] = useState("");
@@ -340,9 +342,14 @@ export default function CreateBookingClient() {
           pickupLocation,
           dropOffLocation,
           customerUserId: customer.id,
+          paymentMethod,
         });
-        const bookingNumber = encodeURIComponent(result.bookingNumber);
-        router.push(`/admin/bookings?created=1&bookingNumber=${bookingNumber}`);
+        if (paymentMethod === "Online") {
+          router.push(`/booking/payment/${result.bookingId}`);
+        } else {
+          const bookingNumber = encodeURIComponent(result.bookingNumber);
+          router.push(`/admin/bookings?created=1&bookingNumber=${bookingNumber}`);
+        }
       } catch (e) {
         logger.error("Failed to create booking", e);
         setError(e instanceof Error ? e.message : "Failed to create booking.");
@@ -835,6 +842,109 @@ export default function CreateBookingClient() {
                 </Stack>
               </Paper>
             )}
+          </SectionCard>
+
+          {/* 4. Payment Method Selection */}
+          <SectionCard
+            step={4}
+            title="Payment Method"
+            subtitle="Choose how the customer will pay for this booking"
+            done={true}
+          >
+            <Box
+              sx={{
+                display: "grid",
+                gap: 2,
+                gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+              }}
+            >
+              <Paper
+                elevation={0}
+                onClick={() => {
+                  setPaymentMethod("Cash");
+                }}
+                sx={{
+                  p: 2.5,
+                  borderRadius: 2,
+                  border: "2px solid",
+                  borderColor: theme => (paymentMethod === "Cash" ? theme.palette.primary.main : theme.palette.divider),
+                  bgcolor: theme =>
+                    paymentMethod === "Cash" ? alpha(theme.palette.primary.main, 0.04) : "background.paper",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease-in-out",
+                  "&:hover": {
+                    borderColor: theme => theme.palette.primary.main,
+                    bgcolor: theme => alpha(theme.palette.primary.main, 0.02),
+                  },
+                }}
+              >
+                <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+                  <Radio
+                    checked={paymentMethod === "Cash"}
+                    value="Cash"
+                    onChange={() => {
+                      setPaymentMethod("Cash");
+                    }}
+                    sx={{
+                      color: theme => theme.palette.divider,
+                      "&.Mui-checked": {
+                        color: theme => theme.palette.primary.main,
+                      },
+                    }}
+                  />
+                  <Box>
+                    <Typography sx={{ fontWeight: 700 }}>Cash Payment</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Booking confirmed immediately. Customer pays in cash upon rental.
+                    </Typography>
+                  </Box>
+                </Stack>
+              </Paper>
+
+              <Paper
+                elevation={0}
+                onClick={() => {
+                  setPaymentMethod("Online");
+                }}
+                sx={{
+                  p: 2.5,
+                  borderRadius: 2,
+                  border: "2px solid",
+                  borderColor: theme =>
+                    paymentMethod === "Online" ? theme.palette.primary.main : theme.palette.divider,
+                  bgcolor: theme =>
+                    paymentMethod === "Online" ? alpha(theme.palette.primary.main, 0.04) : "background.paper",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease-in-out",
+                  "&:hover": {
+                    borderColor: theme => theme.palette.primary.main,
+                    bgcolor: theme => alpha(theme.palette.primary.main, 0.02),
+                  },
+                }}
+              >
+                <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+                  <Radio
+                    checked={paymentMethod === "Online"}
+                    value="Online"
+                    onChange={() => {
+                      setPaymentMethod("Online");
+                    }}
+                    sx={{
+                      color: theme => theme.palette.divider,
+                      "&.Mui-checked": {
+                        color: theme => theme.palette.primary.main,
+                      },
+                    }}
+                  />
+                  <Box>
+                    <Typography sx={{ fontWeight: 700 }}>Online Payment</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Redirect to online checkout. Holds vehicle for 10 minutes until paid.
+                    </Typography>
+                  </Box>
+                </Stack>
+              </Paper>
+            </Box>
           </SectionCard>
         </Stack>
 

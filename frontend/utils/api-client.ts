@@ -9,13 +9,41 @@ type ApiFetchOptions = RequestInit & {
  * Callers can use `err instanceof ApiError && err.status === 404`
  * to distinguish "endpoint not found" from real server errors.
  */
+interface ValidationErrorDetail {
+  message: string;
+}
+
+interface ParsedApiError {
+  validationErrors?: ValidationErrorDetail[];
+  message?: string;
+}
+
 export class ApiError extends Error {
   constructor(
     public readonly status: number,
     public readonly statusText: string,
     public readonly body: string
   ) {
-    super(`API Error ${String(status)}: ${statusText}`);
+    let errorMessage = `API Error ${String(status)}: ${statusText}`;
+    try {
+      if (body) {
+        const parsed = JSON.parse(body) as ParsedApiError | null | undefined;
+        if (
+          parsed &&
+          parsed.validationErrors &&
+          Array.isArray(parsed.validationErrors) &&
+          parsed.validationErrors.length > 0
+        ) {
+          errorMessage = parsed.validationErrors.map(e => e.message).join(" ");
+        } else if (parsed && parsed.message) {
+          errorMessage = parsed.message;
+        }
+      }
+    } catch (e) {
+      logger.debug("Failed to parse API error body", e);
+    }
+
+    super(errorMessage);
     this.name = "ApiError";
   }
 }

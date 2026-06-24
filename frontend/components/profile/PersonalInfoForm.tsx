@@ -128,11 +128,19 @@ export default function PersonalInfoForm({
 
       if (!response.ok) {
         const body = (await response.json().catch(() => null)) as {
-          validationErrors?: { message: string }[];
+          validationErrors?: { field?: string; message: string }[];
           message?: string;
         } | null;
-        const msg = body?.validationErrors?.[0]?.message ?? body?.message ?? "Failed to update";
-        throw new Error(msg);
+
+        if (body?.validationErrors && body.validationErrors.length > 0) {
+          const msg = body.validationErrors[0].message;
+          setServerError(msg);
+          return;
+        }
+
+        const msg = body?.message ?? "Failed to update.";
+        setServerError(msg);
+        return;
       }
       setSuccessMsg("Personal information updated successfully.");
     } catch (error) {

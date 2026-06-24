@@ -9,5 +9,6 @@ namespace Backend.Application.DTOs.Inspection;
 /// active inspector (not the Inspector profile ID).
 /// </summary>
 public record AssignInspectorRequest(
-    [Required] Guid InspectorUserId
+    [Required] Guid InspectorUserId,
+    [Required] string InspectionType = "Pickup"
 );

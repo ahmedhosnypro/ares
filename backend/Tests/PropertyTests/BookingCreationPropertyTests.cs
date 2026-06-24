@@ -14,6 +14,9 @@ using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
 
+using MediatR;
+using Microsoft.Extensions.Configuration;
+
 namespace Backend.Tests.PropertyTests;
 
 /// <summary>
@@ -42,24 +45,34 @@ public class BookingCreationPropertyTests : IDisposable
         var store = new Mock<IUserStore<ApplicationUser>>();
         var userManagerMock = new Mock<UserManager<ApplicationUser>>(
             store.Object, null!, null!, null!, null!, null!, null!, null!, null!);
-
+        
         userManagerMock.Setup(x => x.FindByIdAsync(It.IsAny<string>()))
             .ReturnsAsync((string id) => new ApplicationUser { Id = Guid.Parse(id) });
         userManagerMock.Setup(x => x.IsInRoleAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
             .ReturnsAsync(false);
 
-        var pricingService = new PricingService(_context);
+        var pricingServiceMock = new Mock<IPricingService>();
+        pricingServiceMock.Setup(x => x.CalculateBookingPricingAsync(It.IsAny<Guid>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid vId, DateTime pickup, DateTime ret, CancellationToken ct) => {
+                var vehicle = _context.Vehicles.Find(vId);
+                var rate = vehicle?.PricePerDay ?? 100m;
+                var days = (ret - pickup).Days;
+                if (days <= 0) days = 1;
+                var price = rate * days;
+                return (price, 0m, price);
+            });
+
+        var mediatorMock = new Mock<IMediator>();
+        var configurationMock = new Mock<IConfiguration>();
+
         _bookingService = new BookingService(
             _bookingRepository,
             _vehicleRepository,
             _context,
             userManagerMock.Object,
-            notificationService: null,
-            verificationService: null,
-            driverPricingService: null,
-            driverProfileRepository: null,
-            commissionService: null,
-            pricingService: pricingService);
+            pricingServiceMock.Object,
+            mediatorMock.Object,
+            configurationMock.Object);
 
         // Ensure database is created
         _context.Database.EnsureCreated();
@@ -312,7 +325,7 @@ public class BookingCreationPropertyTests : IDisposable
     {
         var customerId = Guid.NewGuid();
         var supplierId = Guid.NewGuid();
-
+        
         _context.Users.Add(new ApplicationUser { Id = customerId, UserName = customerId.ToString(), Email = customerId + "@test.com" });
         _context.Users.Add(new ApplicationUser { Id = supplierId, UserName = supplierId.ToString(), Email = supplierId + "@test.com" });
 

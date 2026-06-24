@@ -21,7 +21,7 @@ public static class OperationalDataSeeder
 
         // 0. Cleanup existing operational data (Matches behavior of cancel_data.sql)
         logger.LogInformation("Cleaning up existing operational data...");
-
+        
         // Identify targeted demo users
         var demoUserEmails = new List<string>();
         for (int i = 1; i <= 2; i++) demoUserEmails.Add($"newcustomer{i}@ares.local");
@@ -37,10 +37,10 @@ public static class OperationalDataSeeder
         {
             // Cancel bookings instead of deleting them to maintain referential integrity
             var bookingsToCancel = await context.Bookings
-                .Where(b => demoUserIds.Contains(b.UserId) ||
+                .Where(b => demoUserIds.Contains(b.UserId) || 
                            (b.AssignedInspectorId != null && demoUserIds.Contains(b.AssignedInspectorId.Value)))
                 .ToListAsync();
-
+            
             foreach (var b in bookingsToCancel)
             {
                 b.Status = BookingStatus.Cancelled;
@@ -61,10 +61,10 @@ public static class OperationalDataSeeder
             {
                 var workAreas = await context.DriverWorkAreas.Where(wa => driverProfileIds.Contains(wa.DriverProfileId)).ToListAsync();
                 context.DriverWorkAreas.RemoveRange(workAreas);
-
+                
                 var reviews = await context.DriverReviews.Where(r => driverProfileIds.Contains(r.DriverProfileId)).ToListAsync();
                 context.DriverReviews.RemoveRange(reviews);
-
+                
                 context.DriverProfiles.RemoveRange(driverProfilesToCleanup);
             }
 
@@ -90,7 +90,7 @@ public static class OperationalDataSeeder
             {
                 await userManager.DeleteAsync(user);
             }
-
+            
             logger.LogInformation("Operational cleanup completed.");
         }
 
@@ -165,7 +165,7 @@ public static class OperationalDataSeeder
             var email = $"newinspector{index}@ares.local";
             var locationName = inspectorLocations[i];
             var firstName = firstNames[i];
-
+            
             var inspector = await EnsureUserAsync(userManager, email, $"{firstName}Insp", "Official", $"+2013000000{index}", "Inspector", true);
             inspectors.Add(inspector);
 
@@ -221,7 +221,7 @@ public static class OperationalDataSeeder
             var customer = customers[random.Next(customers.Count)];
             var vehicle = vehicles[random.Next(vehicles.Count)];
             var driverProfile = i % 2 == 0 ? driverProfiles[random.Next(driverProfiles.Count)] : null;
-
+            
             var locationIndex = random.Next(locations.Length);
             var bookingLocation = locations[locationIndex];
             var inspector = inspectors[locationIndex];
@@ -382,7 +382,7 @@ public static class OperationalDataSeeder
                 IsRead = true,
                 CreatedAt = pickupDate.AddDays(-2)
             });
-
+            
             if (status == BookingStatus.Completed)
             {
                 await context.Notifications.AddAsync(new Notification

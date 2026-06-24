@@ -150,7 +150,7 @@ function Ensure-DbHostResolves {
     # If using a named instance (e.g., Host\Instance), extract just the Host part
     $dnsHostName = $hostName -replace '\\.*$', ''
     
-    if ($dnsHostName -in @('localhost', '127.0.0.1', '.')) { return $true }
+    if ($dnsHostName -in @('localhost', '127.0.0.1', '.', '(localdb)')) { return $true }
 
     try {
         [System.Net.Dns]::GetHostAddresses($dnsHostName) | Out-Null

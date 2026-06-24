@@ -82,7 +82,7 @@ namespace Backend.Tests.UnitTests
         }
 
         [Fact]
-        public async Task Handle_SuccessfulAssignment_CreatesBothPickupAndReturnInspections()
+        public async Task Handle_SuccessfulAssignment_CreatesOnlyPickupInspection()
         {
             using var context = CreateContext();
             var (booking, _) = SeedBooking(context, BookingStatus.Confirmed);
@@ -93,7 +93,7 @@ namespace Backend.Tests.UnitTests
             var loggerMock = new Mock<ILogger<AssignInspectorCommandHandler>>();
 
             var handler = new AssignInspectorCommandHandler(context, mediatorMock.Object, notificationServiceMock.Object, loggerMock.Object);
-            var command = new AssignInspectorCommand(booking.Id);
+            var command = new AssignInspectorCommand(booking.Id, "Pickup", false);
 
             var result = await handler.Handle(command, CancellationToken.None);
 
@@ -102,17 +102,12 @@ namespace Backend.Tests.UnitTests
 
             // Check inspections
             var inspections = await context.VehicleInspections.Where(vi => vi.BookingId == booking.Id).ToListAsync();
-            Assert.Equal(2, inspections.Count);
+            Assert.Single(inspections);
 
             var pickup = inspections.FirstOrDefault(vi => vi.InspectionType == "Pickup");
-            var @return = inspections.FirstOrDefault(vi => vi.InspectionType == "Return");
-
             Assert.NotNull(pickup);
-            Assert.NotNull(@return);
             Assert.Equal(inspector.UserId, pickup.InspectorId);
-            Assert.Equal(inspector.UserId, @return.InspectorId);
             Assert.Equal(InspectionStatus.Pending, pickup.Status);
-            Assert.Equal(InspectionStatus.Pending, @return.Status);
 
             // Check Booking fields
             var updatedBooking = await context.Bookings.FindAsync(booking.Id);
@@ -124,6 +119,46 @@ namespace Backend.Tests.UnitTests
             notificationServiceMock.Verify(
                 n => n.CreateNotificationAsync(inspector.UserId, "New inspection assigned", It.IsAny<string>(), "InspectionAssigned", It.IsAny<CancellationToken>()),
                 Times.Once);
+        }
+
+        [Fact]
+        public async Task Handle_SuccessfulAssignment_CreatesOnlyReturnInspectionAndDoesNotOverwriteBookingInspector()
+        {
+            using var context = CreateContext();
+            var (booking, _) = SeedBooking(context, BookingStatus.Active);
+            booking.DropoffLocation = "Giza";
+            context.SaveChanges();
+
+            var pickupInspector = SeedInspector(context, "Cairo");
+            var returnInspector = SeedInspector(context, "Giza");
+
+            // Manually assign pickup inspector to booking
+            booking.AssignedInspectorId = pickupInspector.UserId;
+            context.SaveChanges();
+
+            var mediatorMock = new Mock<IMediator>();
+            var notificationServiceMock = new Mock<INotificationService>();
+            var loggerMock = new Mock<ILogger<AssignInspectorCommandHandler>>();
+
+            var handler = new AssignInspectorCommandHandler(context, mediatorMock.Object, notificationServiceMock.Object, loggerMock.Object);
+            var command = new AssignInspectorCommand(booking.Id, "Return", false);
+
+            var result = await handler.Handle(command, CancellationToken.None);
+
+            Assert.NotEqual(Guid.Empty, result);
+
+            var inspections = await context.VehicleInspections.Where(vi => vi.BookingId == booking.Id).ToListAsync();
+            Assert.Single(inspections);
+
+            var @return = inspections.FirstOrDefault(vi => vi.InspectionType == "Return");
+            Assert.NotNull(@return);
+            Assert.Equal(returnInspector.UserId, @return.InspectorId);
+            Assert.Equal(InspectionStatus.Pending, @return.Status);
+
+            // Check Booking fields - AssignedInspectorId must still refer to pickupInspector
+            var updatedBooking = await context.Bookings.FindAsync(booking.Id);
+            Assert.NotNull(updatedBooking);
+            Assert.Equal(pickupInspector.UserId, updatedBooking.AssignedInspectorId);
         }
 
         [Fact]
@@ -145,7 +180,7 @@ namespace Backend.Tests.UnitTests
         }
 
         [Fact]
-        public async Task Handle_NoInspectorAvailable_PublishesNoInspectorAvailableEvent()
+        public async Task Handle_NoInspectorAvailable_ThrowsExceptionAndPublishesEvent()
         {
             using var context = CreateContext();
             var (booking, _) = SeedBooking(context, BookingStatus.Confirmed);
@@ -155,20 +190,13 @@ namespace Backend.Tests.UnitTests
             var loggerMock = new Mock<ILogger<AssignInspectorCommandHandler>>();
 
             var handler = new AssignInspectorCommandHandler(context, mediatorMock.Object, notificationServiceMock.Object, loggerMock.Object);
-            var command = new AssignInspectorCommand(booking.Id);
+            var command = new AssignInspectorCommand(booking.Id, "Pickup", false);
 
-            var result = await handler.Handle(command, CancellationToken.None);
+            await Assert.ThrowsAsync<Exception>(() => handler.Handle(command, CancellationToken.None));
 
-            // Check that dummy inspections were still created but with null inspector
+            // Check that no inspections were created
             var inspections = await context.VehicleInspections.Where(vi => vi.BookingId == booking.Id).ToListAsync();
-            Assert.Equal(2, inspections.Count);
-            Assert.All(inspections, vi => Assert.Null(vi.InspectorId));
-
-            // Check Booking fields
-            var updatedBooking = await context.Bookings.FindAsync(booking.Id);
-            Assert.NotNull(updatedBooking);
-            Assert.Null(updatedBooking.AssignedInspectorId);
-            Assert.Equal(InspectionStatus.Pending, updatedBooking.InspectionStatus);
+            Assert.Empty(inspections);
 
             // Check that event was published
             mediatorMock.Verify(
@@ -185,12 +213,23 @@ namespace Backend.Tests.UnitTests
             var inspector1 = SeedInspector(context, "Cairo"); // will have 1 pending inspection
             var inspector2 = SeedInspector(context, "Cairo"); // will have 0 pending inspections
 
-            // Assign a pending inspection to inspector1
+            // Assign a pending inspection to inspector1 on a non-cancelled, non-completed booking
+            var activeBooking = new Booking
+            {
+                Id = Guid.NewGuid(),
+                VehicleId = Guid.NewGuid(),
+                UserId = Guid.NewGuid(),
+                PickupDate = DateTime.UtcNow.AddDays(1),
+                ReturnDate = DateTime.UtcNow.AddDays(4),
+                Status = BookingStatus.Confirmed
+            };
+            context.Bookings.Add(activeBooking);
+            
             context.VehicleInspections.Add(new VehicleInspection
             {
                 InspectionId = Guid.NewGuid(),
-                BookingId = Guid.NewGuid(),
-                VehicleId = Guid.NewGuid(),
+                BookingId = activeBooking.Id,
+                VehicleId = activeBooking.VehicleId,
                 InspectorId = inspector1.UserId,
                 InspectionType = "Pickup",
                 Status = InspectionStatus.Pending
@@ -202,7 +241,7 @@ namespace Backend.Tests.UnitTests
             var loggerMock = new Mock<ILogger<AssignInspectorCommandHandler>>();
 
             var handler = new AssignInspectorCommandHandler(context, mediatorMock.Object, notificationServiceMock.Object, loggerMock.Object);
-            var command = new AssignInspectorCommand(booking.Id);
+            var command = new AssignInspectorCommand(booking.Id, "Pickup", false);
 
             await handler.Handle(command, CancellationToken.None);
 

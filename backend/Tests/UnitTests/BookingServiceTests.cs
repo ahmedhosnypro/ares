@@ -11,6 +11,9 @@ using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
 
+using MediatR;
+using Microsoft.Extensions.Configuration;
+
 namespace Backend.Tests.UnitTests;
 
 public class BookingServiceTests
@@ -20,6 +23,8 @@ public class BookingServiceTests
     private readonly Mock<IApplicationDbContext> _contextMock;
     private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;
     private readonly Mock<IPricingService> _pricingServiceMock;
+    private readonly Mock<IMediator> _mediatorMock;
+    private readonly Mock<IConfiguration> _configurationMock;
     private readonly BookingService _bookingService;
 
     public BookingServiceTests()
@@ -29,6 +34,19 @@ public class BookingServiceTests
         _contextMock = new Mock<IApplicationDbContext>();
         _userManagerMock = MockUserManager();
         _pricingServiceMock = new Mock<IPricingService>();
+        _mediatorMock = new Mock<IMediator>();
+        _configurationMock = new Mock<IConfiguration>();
+
+        // Set up default pricing behavior to calculate based on vehicle rate
+        _pricingServiceMock.Setup(x => x.CalculateBookingPricingAsync(It.IsAny<Guid>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid vId, DateTime pickup, DateTime ret, CancellationToken ct) => {
+                var vehicle = _vehicleRepositoryMock.Object.GetByIdAsync(vId, ct).GetAwaiter().GetResult();
+                var rate = vehicle?.PricePerDay ?? 100m;
+                var days = (ret - pickup).Days;
+                if (days <= 0) days = 1;
+                var price = rate * days;
+                return (price, 0m, price);
+            });
 
         var emptyUserAddresses = new List<UserAddress>().AsQueryable();
         var userAddressesDbSet = emptyUserAddresses.BuildMockDbSet();
@@ -38,20 +56,14 @@ public class BookingServiceTests
         var driversDbSet = emptyDrivers.BuildMockDbSet();
         _contextMock.Setup(x => x.Drivers).Returns(driversDbSet.Object);
 
-        _pricingServiceMock.Setup(x => x.CalculateBookingPricingAsync(It.IsAny<Guid>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((100.00m, 0m, 100.00m));
-
         _bookingService = new BookingService(
             _bookingRepositoryMock.Object,
             _vehicleRepositoryMock.Object,
             _contextMock.Object,
             _userManagerMock.Object,
-            notificationService: null,
-            verificationService: null,
-            driverPricingService: null,
-            driverProfileRepository: null,
-            commissionService: null,
-            pricingService: _pricingServiceMock.Object);
+            _pricingServiceMock.Object,
+            _mediatorMock.Object,
+            _configurationMock.Object);
     }
 
     private static Mock<UserManager<ApplicationUser>> MockUserManager()
@@ -65,16 +77,16 @@ public class BookingServiceTests
         var validators = new List<IUserValidator<ApplicationUser>> { validator.Object };
         var pwdValidator = new Mock<IPasswordValidator<ApplicationUser>>();
         var pwdValidators = new List<IPasswordValidator<ApplicationUser>> { pwdValidator.Object };
-
+        
         var userManager = new Mock<UserManager<ApplicationUser>>(
-            store.Object,
-            options.Object,
-            hasher.Object,
-            validators,
-            pwdValidators,
-            null!,
-            null!,
-            null!,
+            store.Object, 
+            options.Object, 
+            hasher.Object, 
+            validators, 
+            pwdValidators, 
+            null!, 
+            null!, 
+            null!, 
             null!);
 
         userManager.Setup(x => x.FindByIdAsync(It.IsAny<string>()))
@@ -138,7 +150,7 @@ public class BookingServiceTests
         Assert.Equal("Booking created successfully", result.Message);
 
         _vehicleRepositoryMock.Verify(x => x.IsAvailableAsync(vehicleId, pickupDate, returnDate, It.IsAny<CancellationToken>(), It.IsAny<Guid?>(), It.IsAny<Guid?>()), Times.Once);
-        _vehicleRepositoryMock.Verify(x => x.GetByIdAsync(vehicleId, It.IsAny<CancellationToken>()), Times.Once);
+        _vehicleRepositoryMock.Verify(x => x.GetByIdAsync(vehicleId, It.IsAny<CancellationToken>()), Times.AtLeastOnce);
         _bookingRepositoryMock.Verify(x => x.AddAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>()), Times.Once);
         _bookingRepositoryMock.Verify(x => x.ReserveVehicleAtomicAsync(It.IsAny<Booking>(), It.IsAny<BookingStatus>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -194,9 +206,9 @@ public class BookingServiceTests
             PayLater: false
         );
 
-        var vehicle = new Vehicle
-        {
-            Id = vehicleId,
+        var vehicle = new Vehicle 
+        { 
+            Id = vehicleId, 
             UserId = supplierId, // Owned by the same user
             IsActive = true,
             PricePerDay = 50.00m
@@ -348,9 +360,6 @@ public class BookingServiceTests
         _bookingRepositoryMock.Setup(x => x.ReserveVehicleAtomicAsync(It.IsAny<Booking>(), It.IsAny<BookingStatus>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        _pricingServiceMock.Setup(x => x.CalculateBookingPricingAsync(vehicleId, pickupDate, returnDate, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((400.00m, 0m, 400.00m));
-
         // Act
         var result = await _bookingService.CreateBookingAsync(request, userId);
 
@@ -408,9 +417,6 @@ public class BookingServiceTests
 
         _bookingRepositoryMock.Setup(x => x.ReserveVehicleAtomicAsync(It.IsAny<Booking>(), It.IsAny<BookingStatus>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-
-        _pricingServiceMock.Setup(x => x.CalculateBookingPricingAsync(vehicleId, pickupDate, returnDate, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((expectedTotal, 0m, expectedTotal));
 
         // Act
         var result = await _bookingService.CreateBookingAsync(request, userId);

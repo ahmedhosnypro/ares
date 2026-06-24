@@ -48,15 +48,12 @@ import {
   EditOutlined as EditIcon,
   SyncAltOutlined as ChangeStatusIcon,
   DeleteOutlined as DeleteIcon,
-  PlayCircleTwoTone as ActiveIcon,
-  HourglassEmptyTwoTone as PendingIcon,
-  CheckCircleTwoTone as CompletedIcon,
 } from "@mui/icons-material";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
   useBookings,
-  useAdminBookingStats,
+  useAdminBookingAnalytics,
   type Booking,
   deleteBookings as deleteBookingsApi,
 } from "@/api-clients/bookings/bookings";
@@ -64,7 +61,7 @@ import { toImageUrl } from "@/utils/image-url";
 import { logger } from "@/utils/logger";
 import Link from "next/link";
 import ChangeStatusModal from "./ChangeStatusModal";
-import VehicleStats from "@/app/(dashboard)/_components/VehicleStats";
+import BookingsAnalytics from "./BookingsAnalytics";
 
 // ── CONSTANTS & HELPERS ─────────────────────────────────────────────────
 const getStatusConfig = (status?: string) => {
@@ -75,6 +72,16 @@ const getStatusConfig = (status?: string) => {
   if (s === "cancelled" || s === "returned") return { label: status ?? "Cancelled", colorKey: "error" as const };
   if (s === "draft") return { label: status ?? "Draft", colorKey: "warning" as const };
   return { label: status ?? "PaymentPending", colorKey: "warning" as const };
+};
+
+const getPaymentStatusConfig = (status?: string) => {
+  const s = status?.toLowerCase() ?? "";
+  if (s === "captured" || s === "paid" || s === "succeeded")
+    return { label: status ?? "Captured", colorKey: "success" as const };
+  if (s === "refunded") return { label: status ?? "Refunded", colorKey: "error" as const };
+  if (s === "failed") return { label: status ?? "Failed", colorKey: "error" as const };
+  if (s === "pending" || s === "paymentpending") return { label: status ?? "Pending", colorKey: "warning" as const };
+  return { label: "Unpaid", colorKey: null };
 };
 
 const formatCompactDate = (dateString: string) => {
@@ -154,33 +161,11 @@ export default function BookingsClient() {
     toDate ? new Date(toDate).toISOString() : null
   );
 
-  const { stats, loading: statsLoading, refetch: refetchStats } = useAdminBookingStats(session?.accessToken, user);
-
-  const bookingItems = useMemo(
-    () => [
-      {
-        label: "Active Bookings",
-        value: statsLoading ? "—" : (stats?.activeBookings ?? 0),
-        color: "success",
-        icon: <ActiveIcon fontSize="small" />,
-      },
-      {
-        label: "Pending Bookings",
-        value: statsLoading ? "—" : (stats?.pendingBookings ?? 0),
-        color: "warning",
-        icon: <PendingIcon fontSize="small" />,
-      },
-      {
-        label: "Completed Bookings",
-        value: statsLoading
-          ? "—"
-          : (stats?.totalCompletedBookings ?? stats?.completedBookings ?? stats?.completedToday ?? 0),
-        color: "info",
-        icon: <CompletedIcon fontSize="small" />,
-      },
-    ],
-    [stats, statsLoading]
-  );
+  const {
+    analytics,
+    loading: analyticsLoading,
+    refetch: refetchAnalytics,
+  } = useAdminBookingAnalytics(session?.accessToken, user);
 
   // ── Handlers ─────────────────────────────────────────────────────────
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -240,7 +225,7 @@ export default function BookingsClient() {
 
         // Refetch updated bookings list & stats
         refetch();
-        refetchStats();
+        refetchAnalytics();
 
         setSnackbar({
           open: true,
@@ -265,7 +250,7 @@ export default function BookingsClient() {
     if (loading) {
       return [
         <TableRow key="loading">
-          <TableCell colSpan={8} align="center" sx={{ py: 10 }}>
+          <TableCell colSpan={9} align="center" sx={{ py: 10 }}>
             <CircularProgress />
           </TableCell>
         </TableRow>,
@@ -275,7 +260,7 @@ export default function BookingsClient() {
     if (bookings.length === 0) {
       return [
         <TableRow key="empty">
-          <TableCell colSpan={8} align="center" sx={{ py: 10 }}>
+          <TableCell colSpan={9} align="center" sx={{ py: 10 }}>
             <Box sx={{ textAlign: "center", opacity: 0.6 }}>
               <Avatar
                 sx={{
@@ -401,19 +386,54 @@ export default function BookingsClient() {
             />
           </TableCell>
 
-          {/* Payment — status only */}
+          {/* Payment Method */}
           <TableCell>
             <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
-              <PaymentIcon
-                sx={{
-                  fontSize: 14,
-                  color: booking.paymentStatus === "Paid" ? "success.main" : "text.secondary",
-                }}
-              />
-              <Typography variant="body2" sx={{ fontSize: 13, fontWeight: 500 }}>
-                {booking.paymentStatus ?? "Unpaid"}
+              <PaymentIcon sx={{ fontSize: 14, color: "text.secondary" }} />
+              <Typography variant="body2" sx={{ fontSize: 13, fontWeight: 500, textTransform: "capitalize" }}>
+                {booking.paymentMethod ?? "None"}
               </Typography>
             </Stack>
+          </TableCell>
+
+          {/* Payment Status */}
+          <TableCell>
+            {(() => {
+              const statusConfig = getPaymentStatusConfig(booking.paymentStatus);
+              if (statusConfig.colorKey === null) {
+                return (
+                  <Chip
+                    label={statusConfig.label}
+                    size="small"
+                    sx={{
+                      textTransform: "capitalize",
+                      borderRadius: 1.5,
+                      bgcolor: "transparent",
+                      color: "text.secondary",
+                      fontWeight: 700,
+                      fontSize: 11,
+                      border: "1px solid",
+                      borderColor: "divider",
+                    }}
+                  />
+                );
+              }
+              const colorVal = theme.palette[statusConfig.colorKey].main;
+              return (
+                <Chip
+                  label={statusConfig.label}
+                  size="small"
+                  sx={{
+                    textTransform: "capitalize",
+                    borderRadius: 1.5,
+                    bgcolor: alpha(colorVal, 0.15),
+                    color: colorVal,
+                    fontWeight: 700,
+                    fontSize: 11,
+                  }}
+                />
+              );
+            })()}
           </TableCell>
 
           {/* Total */}
@@ -451,7 +471,7 @@ export default function BookingsClient() {
           alignItems: { xs: "flex-start", sm: "center" },
           gap: 2,
           justifyContent: "space-between",
-          mb: 4,
+          mb: 2,
         }}
       >
         <Box>
@@ -496,8 +516,8 @@ export default function BookingsClient() {
         </Alert>
       )}
 
-      {/* ── OPERATIONAL CARDS ── */}
-      <VehicleStats items={bookingItems} />
+      {/* ── ANALYTICS SECTION ── */}
+      <BookingsAnalytics analytics={analytics} loading={analyticsLoading} />
 
       {/* ── SEARCH & TABLE SECTION ── */}
       <Paper elevation={0} sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
@@ -599,7 +619,8 @@ export default function BookingsClient() {
                 <TableCell>Supplier</TableCell>
                 <TableCell>Period</TableCell>
                 <TableCell>Status</TableCell>
-                <TableCell>Payment</TableCell>
+                <TableCell>Payment Method</TableCell>
+                <TableCell>Payment Status</TableCell>
                 <TableCell>Total</TableCell>
                 <TableCell align="right" sx={{ pr: 3 }}>
                   Actions
@@ -612,7 +633,7 @@ export default function BookingsClient() {
             {!loading && (
               <TableFooter>
                 <TableRow>
-                  <TableCell colSpan={4}>
+                  <TableCell colSpan={5}>
                     <Typography variant="caption" color="text.secondary">
                       Showing page <strong>{page + 1}</strong> of {totalPages || 1} ({totalCount} total)
                     </Typography>

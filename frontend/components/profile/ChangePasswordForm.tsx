@@ -106,8 +106,18 @@ export default function ChangePasswordForm({ userId, accessToken }: ChangePasswo
       });
 
       if (!response.ok) {
-        const data = (await response.json().catch(() => ({}))) as { message?: string };
-        throw new Error(data.message ?? "Failed to change password.");
+        const data = (await response.json().catch(() => ({}))) as {
+          message?: string;
+          validationErrors?: { field?: string; message: string }[];
+        };
+
+        if (data.validationErrors && data.validationErrors.length > 0) {
+          setServerError(data.validationErrors[0].message);
+          return;
+        }
+
+        setServerError(data.message ?? "Failed to change password.");
+        return;
       }
 
       setSuccessMsg("Password changed successfully.");

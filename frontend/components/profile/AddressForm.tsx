@@ -7,6 +7,7 @@ import CountrySelect from "@/components/input/CountrySelect";
 import { addressSchema, type AddressFormData } from "@/lib/validation/schemas";
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
+import { z } from "zod";
 
 interface AddressFormProps {
   readonly userId: string;
@@ -28,6 +29,15 @@ interface AddressFormProps {
 }
 
 type FieldErrors = Partial<Record<keyof AddressFormData, string>>;
+
+function parseFieldErrors(issues: z.ZodError["issues"]): FieldErrors {
+  const errors: FieldErrors = {};
+  for (const issue of issues) {
+    const key = issue.path[0] as keyof AddressFormData;
+    if (!errors[key]) errors[key] = issue.message;
+  }
+  return errors;
+}
 
 export default function AddressForm({
   userId,
@@ -62,12 +72,33 @@ export default function AddressForm({
   const [emergencyPhone, setEmergencyPhone] = useState(initialEmergencyPhone);
   const [emergencyRelationship, setEmergencyRelationship] = useState(initialEmergencyRelationship);
 
-  const validateField = (field: keyof AddressFormData, value: string) => {
-    const result = addressSchema.shape[field].safeParse(value);
-    setFieldErrors(prev => ({
-      ...prev,
-      [field]: result.success ? undefined : result.error.issues[0]?.message,
-    }));
+  const validateField = (name: keyof AddressFormData, val: string) => {
+    const obj = {
+      street,
+      city,
+      state,
+      postalCode,
+      country,
+      emergencyName,
+      emergencyPhone,
+      emergencyRelationship,
+      [name]: val,
+    };
+    const res = addressSchema.safeParse(obj);
+    if (res.success) {
+      setFieldErrors(prev => {
+        const next = { ...prev };
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+        delete next[name];
+        return next;
+      });
+    } else {
+      const issue = res.error.issues.find(i => i.path[0] === name);
+      setFieldErrors(prev => ({
+        ...prev,
+        [name]: issue ? issue.message : "",
+      }));
+    }
   };
 
   const handleBlur = (field: keyof AddressFormData, value: string) => {
@@ -99,12 +130,7 @@ export default function AddressForm({
     const result = addressSchema.safeParse(payload);
 
     if (!result.success) {
-      const errors: FieldErrors = {};
-      for (const issue of result.error.issues) {
-        const key = issue.path[0] as keyof AddressFormData;
-        if (!errors[key]) errors[key] = issue.message;
-      }
-      setFieldErrors(errors);
+      setFieldErrors(parseFieldErrors(result.error.issues));
       setTouched({
         street: true,
         city: true,
@@ -137,11 +163,24 @@ export default function AddressForm({
 
       if (!response.ok) {
         const body = (await response.json().catch(() => null)) as {
-          validationErrors?: { message: string }[];
+          validationErrors?: { field?: string; message: string }[];
           message?: string;
         } | null;
-        const msg = body?.validationErrors?.[0]?.message ?? body?.message ?? "Failed to update";
-        throw new Error(msg);
+
+        if (body?.validationErrors && body.validationErrors.length > 0) {
+          // If the error is about a field not in this form (like the main phone), show it as a server error
+          const firstError = body.validationErrors[0];
+          let msg = firstError.message;
+          if (firstError.field?.toLowerCase() === "phone") {
+            msg = `Main Profile Error: ${msg}. Please update your main phone in the Personal Info section first.`;
+          }
+          setServerError(msg);
+          return;
+        }
+
+        const msg = body?.message ?? "Failed to update address.";
+        setServerError(msg);
+        return;
       }
       setSuccessMsg("Address saved successfully.");
     } catch (error) {
@@ -246,6 +285,9 @@ export default function AddressForm({
               onChange={v => {
                 setCountry(v);
                 if (touched.country) validateField("country", v);
+              }}
+              onBlur={() => {
+                handleBlur("country", country);
               }}
               label="Country"
               error={touched.country && !!fieldErrors.country}

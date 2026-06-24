@@ -608,6 +608,8 @@ export default function UsersTab() {
             <MenuItem value="admin">Admin</MenuItem>
             <MenuItem value="customer">Customer</MenuItem>
             <MenuItem value="supplier">Supplier</MenuItem>
+            <MenuItem value="driver">Driver</MenuItem>
+            <MenuItem value="inspector">Inspector</MenuItem>
           </Select>
         </FormControl>
 

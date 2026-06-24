@@ -436,15 +436,25 @@ public class BookingRepository : PaginatedRepository<Booking>, IBookingRepositor
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<Booking>> GetBookingsForAutoAssignmentAsync(
+    public async Task<IEnumerable<Booking>> GetBookingsForPickupAutoAssignmentAsync(
         DateTime targetTime,
         CancellationToken cancellationToken = default)
     {
         return await _dbSet
-            .AsNoTracking()
             .Where(b => b.Status == BookingStatus.Confirmed && b.PickupDate != null && b.PickupDate <= targetTime)
-            .Where(b => b.InspectionStatus == InspectionStatus.NotRequired || b.InspectionStatus == InspectionStatus.Pending)
-            .Where(b => b.AssignedInspectorId == null) // hasn't been assigned yet
+            .Where(b => b.PickupAssignmentAttempts < 6)
+            .Where(b => !_context.VehicleInspections.Any(vi => vi.BookingId == b.Id && vi.InspectionType == "Pickup" && vi.InspectorId != null))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IEnumerable<Booking>> GetBookingsForReturnAutoAssignmentAsync(
+        DateTime targetTime,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .Where(b => b.Status == BookingStatus.Active && b.ReturnDate != null && b.ReturnDate <= targetTime)
+            .Where(b => b.ReturnAssignmentAttempts < 6)
+            .Where(b => !_context.VehicleInspections.Any(vi => vi.BookingId == b.Id && vi.InspectionType == "Return" && vi.InspectorId != null))
             .ToListAsync(cancellationToken);
     }
 }

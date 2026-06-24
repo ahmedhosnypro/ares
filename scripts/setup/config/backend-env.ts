@@ -471,8 +471,9 @@ export async function setupBackendEnv(quick = false, isDevcontainer = false): Pr
 
   // Get configuration
   const defaults = getDefaultBackendConfig(isDevcontainer);
-  const config =
-    quick || mode === "replace" || mode === "create"
+  const config = quick
+    ? defaults
+    : mode === "replace" || mode === "create"
       ? await promptBackendConfig(defaults, isDevcontainer)
       : await promptBackendConfig(defaults, isDevcontainer, existingEnv);
 

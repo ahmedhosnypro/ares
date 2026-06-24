@@ -40,18 +40,18 @@ public class VehicleServiceTests : IDisposable
         _contextMock.Setup(x => x.CategoryOffers).Returns(categoryOffersQueryable.Object);
 
         _pricingServiceMock.Setup(x => x.CalculateBookingPricingAsync(It.IsAny<Guid>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Guid vehicleId, DateTime pickup, DateTime @return, CancellationToken ct) =>
+            .ReturnsAsync((Guid vId, DateTime start, DateTime end, CancellationToken ct) =>
             {
-                var vehicle = _vehicleRepositoryMock.Object.GetByIdAsync(vehicleId, ct).GetAwaiter().GetResult();
+                var days = (end - start).Days;
+                if (days <= 0) days = 1;
+
+                var vehicle = _vehicleRepositoryMock.Object.GetByIdAsync(vId, ct).Result;
                 if (vehicle == null)
                 {
-                    throw new NotFoundException($"Vehicle with ID {vehicleId} not found");
+                    throw new NotFoundException($"Vehicle with ID {vId} not found");
                 }
-                var pricePerDay = vehicle.PricePerDay ?? 0m;
-                var days = (@return - pickup).Days;
-                if (days <= 0) days = 1;
-                var total = pricePerDay * days;
-                return (total, 0m, total);
+                var rate = vehicle.PricePerDay ?? 100m;
+                return (rate * days, 0m, rate * days);
             });
 
         _vehicleService = new VehicleService(
@@ -59,7 +59,8 @@ public class VehicleServiceTests : IDisposable
             _reviewRepositoryMock.Object,
             _bookingRepositoryMock.Object,
             _contextMock.Object,
-            _pricingServiceMock.Object);
+            _pricingServiceMock.Object,
+            new Mock<INotificationService>().Object);
     }
 
     public void Dispose()

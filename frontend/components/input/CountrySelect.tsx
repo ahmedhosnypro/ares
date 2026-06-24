@@ -34,26 +34,43 @@ interface CountrySelectProps {
 export default function CountrySelect({
   value,
   onChange,
+  onBlur,
   label = "Country",
   required,
   error,
   helperText,
   id = "country-select",
   name,
-}: CountrySelectProps) {
-  const selectedOption = countries.find(c => c.label === value) ?? null;
+}: CountrySelectProps & { readonly onBlur?: () => void }) {
+  const selectedOption = countries.find(c => c.label === value) ?? value ?? null;
 
   return (
     <Autocomplete
       id={id}
       options={countries}
       autoHighlight
+      autoSelect
+      freeSolo
       value={selectedOption}
       onChange={(_event, newValue) => {
-        onChange?.(newValue?.label ?? "");
+        if (typeof newValue === "string") {
+          onChange?.(newValue);
+        } else {
+          onChange?.(newValue?.label ?? "");
+        }
       }}
-      getOptionLabel={option => option.label}
+      onBlur={onBlur}
+      getOptionLabel={option => {
+        if (typeof option === "string") {
+          return option;
+        }
+        return option.label;
+      }}
       renderOption={(props, option) => {
+        // When freeSolo is enabled, option can theoretically be a string, though renderOption is usually called with option objects from the list.
+        if (typeof option === "string") {
+          return <li {...props}>{option}</li>;
+        }
         const { key, ...optionProps } = props;
         return (
           <Box key={key} component="li" sx={{ "& > img": { mr: 2, flexShrink: 0 } }} {...optionProps}>

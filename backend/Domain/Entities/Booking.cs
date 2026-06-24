@@ -58,6 +58,9 @@ namespace Backend.Domain.Entities
         public virtual Review? Review { get; set; }
 
         // ─── Inspection workflow ─────────────────────────────────────────
+        public int PickupAssignmentAttempts { get; set; } = 0;
+        public int ReturnAssignmentAttempts { get; set; } = 0;
+
         // The inspector (ApplicationUser with Inspector role) assigned by an
         // admin to perform the pre-delivery vehicle inspection.
         public Guid? AssignedInspectorId { get; set; }

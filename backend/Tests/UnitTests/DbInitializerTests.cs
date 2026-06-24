@@ -122,7 +122,7 @@ public class DbInitializerTests
         var logger = new Mock<ILogger<ApplicationDbContext>>();
         var env = new Mock<IWebHostEnvironment>();
         env.Setup(x => x.ContentRootPath).Returns(System.IO.Directory.GetCurrentDirectory());
-
+        
         var serviceProvider = new Mock<IServiceProvider>();
 
         serviceProvider.Setup(x => x.GetService(typeof(RoleManager<IdentityRole<Guid>>)))

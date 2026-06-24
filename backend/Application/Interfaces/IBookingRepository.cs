@@ -116,9 +116,17 @@ public interface IBookingRepository : IPaginatedRepository<Booking>
 
     /// <summary>
     /// Gets all bookings that are confirmed and starting within the specified time,
-    /// but don't have a vehicle inspection assigned yet.
+    /// and haven't exceeded pickup assignment retry limits.
     /// </summary>
-    Task<IEnumerable<Booking>> GetBookingsForAutoAssignmentAsync(
+    Task<IEnumerable<Booking>> GetBookingsForPickupAutoAssignmentAsync(
+        DateTime targetTime,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets all bookings that are active and returning within the specified time,
+    /// and haven't exceeded return assignment retry limits.
+    /// </summary>
+    Task<IEnumerable<Booking>> GetBookingsForReturnAutoAssignmentAsync(
         DateTime targetTime,
         CancellationToken cancellationToken = default);
 }
