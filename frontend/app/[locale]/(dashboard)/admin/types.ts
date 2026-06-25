@@ -5,8 +5,6 @@ export interface DashboardSummary {
   pendingVerifications: number;
   availableVehicles: number;
   pendingInspections: number;
-  totalCategories?: number;
-  activePromotions?: number;
   vehiclesPerCategory?: Record<string, number>;
 }
 

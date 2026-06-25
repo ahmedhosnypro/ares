@@ -48,12 +48,6 @@ public class DashboardService : IDashboardService
         var pendingInspections = await _context.Bookings
             .CountAsync(b => b.InspectionStatus == InspectionStatus.Pending, cancellationToken);
 
-        var totalCategories = await _context.Categories
-            .CountAsync(c => c.IsActive, cancellationToken);
-
-        var activePromotions = await _context.Promotions
-            .CountAsync(p => p.Status == "Active" && p.StartDate <= DateTime.UtcNow && p.EndDate >= DateTime.UtcNow, cancellationToken);
-
         var vehiclesPerCategoryQuery = await _context.Vehicles
             .Where(v => v.IsActive && v.Category != null)
             .GroupBy(v => v.Category!.Name)
@@ -69,8 +63,6 @@ public class DashboardService : IDashboardService
             PendingVerifications: pendingVerifications,
             AvailableVehicles: availableVehicles,
             PendingInspections: pendingInspections,
-            TotalCategories: totalCategories,
-            ActivePromotions: activePromotions,
             VehiclesPerCategory: vehiclesPerCategory
         );
     }
