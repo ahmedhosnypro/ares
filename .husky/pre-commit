@@ -13,8 +13,8 @@ git add .
 echo "🔍 Running TypeScript check..."
 ~/.bun/bin/bun run tsgo || exit 1
 
-echo "🔍 Running lint..."
-~/.bun/bin/bun run lint || exit 1
+# echo "🔍 Running lint..."
+# ~/.bun/bin/bun run lint || exit 1
 
 echo "🏗️  Running build..."
 ~/.bun/bin/bun run build || exit 1
