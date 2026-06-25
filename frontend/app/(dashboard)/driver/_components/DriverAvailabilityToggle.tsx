@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import {
   Box,
@@ -17,9 +17,10 @@ import {
 } from "@mui/material";
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
+import type { DriverAvailabilityStatus } from "@/api-clients/driver-dashboard/driver-dashboard";
 
 interface DriverAvailabilityToggleProps {
-  readonly initialAvailability: "Available" | "Unavailable" | "Reserved";
+  readonly initialAvailability: DriverAvailabilityStatus;
   readonly onAvailabilityChange?: (newAvailability: string) => void;
 }
 
@@ -31,6 +32,11 @@ export default function DriverAvailabilityToggle({
   const [availability, setAvailability] = useState(initialAvailability);
   const [isLoading, setIsLoading] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState(false);
+
+  // Sync state when initialAvailability prop changes from parent (e.g. after API fetch finishes)
+  useEffect(() => {
+    setAvailability(initialAvailability);
+  }, [initialAvailability]);
 
   const isReserved = availability === "Reserved";
   const isAvailable = availability === "Available";
