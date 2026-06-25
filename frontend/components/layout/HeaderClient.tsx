@@ -57,6 +57,7 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
   const navigationLinks = [
     { label: "Search", href: "/search" },
     { label: "Locations", href: "/locations" },
+    { label: "Categories", href: "/categories" },
     { label: "Offers & Deals", href: "/offers" },
     { label: "About Us", href: "/about" },
   ];
