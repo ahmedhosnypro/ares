@@ -12,7 +12,7 @@ import ProfileCard from "./ProfileCard";
 import { Box, CardContent, Grid, Button, Card, Fade, Stack } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { type Session } from "next-auth";
-import { type ProfileData } from "@/app/(customer)/account/profile/types";
+import { type ProfileData } from "@/app/[locale]/(customer)/account/profile/types";
 import { getMyVerification, type UserVerificationDto } from "@/api-clients/verifications/verifications";
 import {
   getMyDriverLicense,

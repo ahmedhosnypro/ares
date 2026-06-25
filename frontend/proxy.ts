@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
+import createMiddleware from "next-intl/middleware";
+import { routing } from "@/shared/i18n/routing";
+
+const intlMiddleware = createMiddleware(routing);
 
 export default async function proxy(request: NextRequest) {
   const response = NextResponse.next();
@@ -40,7 +44,8 @@ export default async function proxy(request: NextRequest) {
     }
   }
 
-  return response;
+  // Apply next-intl middleware for locale handling
+  return intlMiddleware(request);
 }
 
 export const config = {

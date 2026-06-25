@@ -39,7 +39,7 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import { toImageUrl } from "@/utils/image-url";
 import ThemeSwitcher from "@/components/ui/ThemeSwitcher";
 import CheckoutIndicator from "@/components/layout/CheckoutIndicator";
-import NotificationsPanel from "@/app/_components/NotificationsPanel";
+import NotificationsPanel from "@/app/[locale]/_components/NotificationsPanel";
 
 interface HeaderClientProps {
   readonly session: Session | null;
