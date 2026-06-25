@@ -22,6 +22,28 @@ public class UserManagementService : IUserManagementService
     private readonly ISupplierRestrictionService _supplierRestrictionService;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
+    private string? FormatDateOfBirth(DateTime? date) =>
+        date.HasValue ? date.Value.ToString("yyyy-MM-dd") : null;
+
+    private DateTime? ParseDateOfBirth(string? dateString)
+    {
+        if (string.IsNullOrWhiteSpace(dateString)) return null;
+        return DateTime.TryParse(dateString, out var parsed) ? parsed : null;
+    }
+
+    private string? BuildAvatarUrl(string? profileImage)
+    {
+        if (string.IsNullOrWhiteSpace(profileImage)) return null;
+        // Already a full URL
+        if (profileImage.StartsWith("http://") || profileImage.StartsWith("https://")) return profileImage;
+        // Build full URL from request context
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext == null) return profileImage;
+        var request = httpContext.Request;
+        var baseUrl = $"{request.Scheme}://{request.Host}";
+        return $"{baseUrl}/{profileImage.TrimStart('/')}";
+    }
+
     public UserManagementService(
         IUserRepository userRepository,
         UserManager<ApplicationUser> userManager,
@@ -112,7 +134,9 @@ public class UserManagementService : IUserManagementService
                 Status: user.Status,
                 Roles: roles.ToList(),
                 CreatedAt: user.CreatedAt,
-                UpdatedAt: user.UpdatedAt
+                UpdatedAt: user.UpdatedAt,
+                DateOfBirth: FormatDateOfBirth(user.DateOfBirth),
+                AvatarUrl: BuildAvatarUrl(user.ProfileImage)
             );
             userDtos.Add(userDto);
         }
@@ -164,7 +188,9 @@ public class UserManagementService : IUserManagementService
             Status: user.Status,
             Roles: roles.ToList(),
             CreatedAt: user.CreatedAt,
-            UpdatedAt: user.UpdatedAt
+            UpdatedAt: user.UpdatedAt,
+            DateOfBirth: FormatDateOfBirth(user.DateOfBirth),
+            AvatarUrl: BuildAvatarUrl(user.ProfileImage)
         );
 
         _logger.LogInformation("Successfully retrieved user {UserId}", userId);
@@ -199,6 +225,7 @@ public class UserManagementService : IUserManagementService
             LastName = request.LastName,
             PhoneNumber = request.PhoneNumber,
             Status = request.Status ?? "Active",
+            DateOfBirth = ParseDateOfBirth(request.DateOfBirth),
             EmailConfirmed = true, // Admin-created users are pre-confirmed
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -269,6 +296,7 @@ public class UserManagementService : IUserManagementService
 
         var previousStatus = user.Status;
         user.Status = request.Status;
+        user.DateOfBirth = ParseDateOfBirth(request.DateOfBirth);
         user.UpdatedAt = DateTime.UtcNow;
 
         // Update phone number if changed

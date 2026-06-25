@@ -31,5 +31,7 @@ public record CreateUserRequest(
     [MaxLength(50)]
     string? Status,
 
-    List<string>? Roles
+    List<string>? Roles,
+
+    string? DateOfBirth = null
 );

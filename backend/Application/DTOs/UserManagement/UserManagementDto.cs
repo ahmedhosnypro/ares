@@ -14,5 +14,7 @@ public record UserManagementDto(
     string? Status,
     List<string> Roles,
     DateTime CreatedAt,
-    DateTime UpdatedAt
+    DateTime UpdatedAt,
+    string? DateOfBirth = null,
+    string? AvatarUrl = null
 );
