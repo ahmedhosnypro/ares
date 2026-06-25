@@ -19,11 +19,7 @@ export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip static files and Next.js internals
-  if (
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/favicon") ||
-    pathname.includes(".")
-  ) {
+  if (pathname.startsWith("/_next") || pathname.startsWith("/favicon") || pathname.includes(".")) {
     return NextResponse.next();
   }
 
@@ -33,14 +29,10 @@ export default async function proxy(request: NextRequest) {
   }
 
   // If already has locale prefix, strip it for auth checks but serve normally
-  const hasLocalePrefix = locales.some(
-    (l) => pathname === `/${l}` || pathname.startsWith(`/${l}/`)
-  );
+  const hasLocalePrefix = locales.some(l => pathname === `/${l}` || pathname.startsWith(`/${l}/`));
 
   // Determine the "clean" path (without locale prefix) for auth checks
-  const cleanPath = hasLocalePrefix
-    ? pathname.replace(/^\/(ar|en)/, "") || "/"
-    : pathname;
+  const cleanPath = hasLocalePrefix ? pathname.replace(/^\/(ar|en)/, "") || "/" : pathname;
 
   // Auth checks
   const token = await getToken({ req: request });
