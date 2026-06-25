@@ -88,6 +88,7 @@ function UserMobileCard({ u, theme, fetchUsers, onRequestDelete }: UserMobileCar
       <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
         <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", flex: 1, minWidth: 0 }}>
           <Avatar
+            src={(u.avatarUrl as string) || undefined}
             sx={{
               bgcolor: theme.palette.primary.light,
               fontWeight: 700,
@@ -381,6 +382,7 @@ export default function UsersTab() {
                       <TableCell>
                         <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
                           <Avatar
+                            src={(u.avatarUrl as string) || undefined}
                             sx={{
                               bgcolor: theme.palette.primary.light,
                               fontWeight: 700,

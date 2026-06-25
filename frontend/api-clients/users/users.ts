@@ -44,6 +44,7 @@ export const createUser = async (payload: {
   phoneNumber: string;
   status: string;
   roles: string[];
+  dateOfBirth?: string;
 }) => {
   const session = await getSession();
 
@@ -85,6 +86,7 @@ export async function updateUser(
     phoneNumber: string | null;
     status: string;
     roles: string[];
+    dateOfBirth?: string;
   }
 ): Promise<UserResponse> {
   const session = await getSession();
@@ -94,6 +96,30 @@ export async function updateUser(
     accessToken: session?.accessToken ?? undefined,
     body: JSON.stringify(payload),
   });
+}
+
+/**
+ * Upload profile photo for a user (Admin only)
+ */
+export async function uploadUserPhoto(userId: string, photo: File): Promise<{ success: boolean; avatarUrl: string }> {
+  const session = await getSession();
+  const formData = new FormData();
+  formData.append("photo", photo);
+
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/admin/users/${userId}/photo`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${session?.accessToken ?? ""}`,
+    },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Photo upload failed: ${text}`);
+  }
+
+  return res.json() as Promise<{ success: boolean; avatarUrl: string }>;
 }
 
 // toggle status

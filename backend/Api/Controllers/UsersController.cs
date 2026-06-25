@@ -243,15 +243,18 @@ public class AdminUsersController : ControllerBase
 {
     private readonly IUserManagementService _userManagementService;
     private readonly IUserDeletionService _userDeletionService;
+    private readonly IUserProfileService _userProfileService;
     private readonly ILogger<AdminUsersController> _logger;
 
     public AdminUsersController(
         IUserManagementService userManagementService,
         IUserDeletionService userDeletionService,
+        IUserProfileService userProfileService,
         ILogger<AdminUsersController> logger)
     {
         _userManagementService = userManagementService;
         _userDeletionService = userDeletionService;
+        _userProfileService = userProfileService;
         _logger = logger;
     }
 
@@ -406,7 +409,8 @@ public class AdminUsersController : ControllerBase
             LastName: user.LastName,
             PhoneNumber: user.PhoneNumber,
             Status: newStatus,
-            Roles: user.Roles
+            Roles: user.Roles,
+            DateOfBirth: user.DateOfBirth
         );
 
         await _userManagementService.UpdateUserAsync(id, request, cancellationToken);
@@ -418,6 +422,31 @@ public class AdminUsersController : ControllerBase
         _logger.LogInformation("Successfully toggled status for user {UserId} to {FinalStatus}", id, finalStatus);
 
         return Ok(new { Message = $"User status changed to {finalStatus}", Status = finalStatus });
+    }
+
+    /// <summary>
+    /// Upload profile photo for a user (Admin only)
+    /// </summary>
+    [HttpPost("{id}/photo")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UploadUserPhoto(
+        Guid id,
+        IFormFile photo,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Admin uploading photo for user {UserId}", id);
+
+        var user = await _userManagementService.GetUserByIdAsync(id, cancellationToken);
+        if (user == null)
+            return NotFound(new { Message = $"User with ID {id} not found" });
+
+        var photoUrl = await _userProfileService.UploadProfilePhotoAsync(id, photo, cancellationToken);
+
+        _logger.LogInformation("Admin successfully uploaded photo for user {UserId}", id);
+
+        return Ok(new { Success = true, AvatarUrl = photoUrl });
     }
 
     /// <summary>

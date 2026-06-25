@@ -1,62 +1,78 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
-import createMiddleware from "next-intl/middleware";
-import { routing } from "@/shared/i18n/routing";
 
-const intlMiddleware = createMiddleware(routing);
+const locales = ["ar", "en"];
+const defaultLocale = "ar";
+
+function getLocale(request: NextRequest): string {
+  const cookieLocale = request.cookies.get("NEXT_LOCALE")?.value;
+  if (cookieLocale && locales.includes(cookieLocale)) {
+    return cookieLocale;
+  }
+  const acceptLanguage = request.headers.get("accept-language") ?? "";
+  if (acceptLanguage.includes("en")) return "en";
+  return defaultLocale;
+}
 
 export default async function proxy(request: NextRequest) {
-  const response = NextResponse.next();
+  const { pathname } = request.nextUrl;
 
+  // Skip static files and Next.js internals
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/favicon") ||
+    pathname.includes(".")
+  ) {
+    return NextResponse.next();
+  }
+
+  // NextAuth API routes — don't touch
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.next();
+  }
+
+  // If already has locale prefix, strip it for auth checks but serve normally
+  const hasLocalePrefix = locales.some(
+    (l) => pathname === `/${l}` || pathname.startsWith(`/${l}/`)
+  );
+
+  // Determine the "clean" path (without locale prefix) for auth checks
+  const cleanPath = hasLocalePrefix
+    ? pathname.replace(/^\/(ar|en)/, "") || "/"
+    : pathname;
+
+  // Auth checks
   const token = await getToken({ req: request });
-  const path = request.nextUrl.pathname;
 
-  // Protect Admin routes
-  if (path.startsWith("/admin")) {
-    if (!token || !token.roles.includes("Admin")) {
-      return NextResponse.redirect(new URL("/", request.url));
+  if (cleanPath.startsWith("/admin")) {
+    if (!token || !(token.roles as string[])?.includes("Admin")) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/sign-in";
+      return NextResponse.redirect(url);
     }
   }
 
-  // Protect Supplier routes
-  if (path.startsWith("/supplier")) {
-    if (!token || !token.roles.includes("Supplier")) {
-      return NextResponse.redirect(new URL("/", request.url));
+  if (cleanPath.startsWith("/supplier")) {
+    if (!token || !(token.roles as string[])?.includes("Supplier")) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/sign-in";
+      return NextResponse.redirect(url);
     }
   }
 
-  // Set theme cookie if not present and user has a preference in headers
-  const themeCookie = request.cookies.get("theme-mode");
-
-  if (!themeCookie) {
-    // Check if user agent suggests dark mode preference
-    const userAgent = request.headers.get("user-agent") || "";
-    const acceptHeader = request.headers.get("accept") || "";
-
-    // Some browsers send dark mode hints
-    if (userAgent.includes("Dark") || acceptHeader.includes("dark")) {
-      response.cookies.set("theme-mode", "dark", {
-        path: "/",
-        maxAge: 60 * 60 * 24 * 365, // 1 year
-        sameSite: "lax",
-      });
-    }
+  // If already has locale prefix, serve as-is
+  if (hasLocalePrefix) {
+    return NextResponse.next();
   }
 
-  // Apply next-intl middleware for locale handling
-  return intlMiddleware(request);
+  // Rewrite internally to add locale (URL stays the same in browser)
+  const locale = getLocale(request);
+  const rewriteUrl = request.nextUrl.clone();
+  rewriteUrl.pathname = `/${locale}${pathname}`;
+  return NextResponse.rewrite(rewriteUrl);
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

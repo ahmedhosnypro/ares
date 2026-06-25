@@ -34,7 +34,7 @@ import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { z } from "zod";
-import { getUserById, updateUser } from "@/api-clients/users/users";
+import { getUserById, updateUser, uploadUserPhoto } from "@/api-clients/users/users";
 import { logger } from "@/utils/logger";
 import { alpha } from "@mui/material/styles";
 
@@ -163,7 +163,17 @@ export default function EditUserPage() {
         phoneNumber: form.phoneNumber || null,
         status: form.status,
         roles: [form.role],
+        dateOfBirth: form.dateOfBirth || undefined,
       });
+
+      // Upload photo if a new one was selected
+      if (form.profilePhoto) {
+        try {
+          await uploadUserPhoto(id, form.profilePhoto);
+        } catch {
+          // Photo upload failure is non-critical — other changes were saved
+        }
+      }
 
       router.push("/admin/users");
     } catch (err) {

@@ -38,7 +38,7 @@ import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { z } from "zod";
 import { passwordSchema } from "@/lib/validation/schemas";
-import { createUser } from "@/api-clients/users/users";
+import { createUser, uploadUserPhoto } from "@/api-clients/users/users";
 
 export default function CreateUserPage() {
   const router = useRouter();
@@ -107,7 +107,7 @@ export default function CreateUserPage() {
         setFieldErrors(simplified);
         return;
       }
-      await createUser({
+      const res = await createUser({
         email: form.email.trim(),
         password: form.password,
         firstName: form.firstName.trim(),
@@ -115,7 +115,22 @@ export default function CreateUserPage() {
         phoneNumber: form.phoneNumber,
         status: form.status,
         roles: [form.role],
+        dateOfBirth: form.dateOfBirth || undefined,
       });
+
+      // Upload photo if selected
+      if (form.profilePhoto && res) {
+        try {
+          const created = res as unknown as { userId?: string };
+          const userId = created.userId;
+          if (userId) {
+            await uploadUserPhoto(userId, form.profilePhoto);
+          }
+        } catch {
+          // Photo upload failure is non-critical — user was created successfully
+        }
+      }
+
       router.push("/admin/users");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Create user failed");
