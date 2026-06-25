@@ -29,7 +29,7 @@ async function getLocale() {
   if (localeCookie?.value && ["ar", "en"].includes(localeCookie.value)) {
     return localeCookie.value;
   }
-  return "ar";
+  return "en";
 }
 
 export async function generateMetadata(): Promise<Metadata> {
