@@ -1,7 +1,7 @@
 import { Box, Typography, Container, IconButton, Stack } from "@mui/material";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import { getServerSession } from "next-auth";
-import Link from "next/link";
+import { Link } from "@/shared/i18n/routing";
 import SupplierCreateVehicleClient from "./SupplierCreateVehicleClient";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { toApiUrl } from "@/utils/api-client";

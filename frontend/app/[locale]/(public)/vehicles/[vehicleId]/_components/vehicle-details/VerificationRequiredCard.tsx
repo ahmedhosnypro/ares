@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/shared/i18n/routing";
 import { Box, Button, Skeleton, Stack, Typography, alpha } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import HourglassTopRoundedIcon from "@mui/icons-material/HourglassTopRounded";

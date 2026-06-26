@@ -22,7 +22,7 @@ import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
-import Link from "next/link";
+import { Link } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
 import {
   getNotifications,

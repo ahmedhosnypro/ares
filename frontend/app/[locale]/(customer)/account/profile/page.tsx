@@ -6,8 +6,7 @@ import { logger } from "@/utils/logger";
 import SharedProfileContainer from "@/components/profile/SharedProfileContainer";
 import ProfileCard from "@/components/profile/ProfileCard";
 import { Alert, Box, Button, CardContent, Container, Typography } from "@mui/material";
-import Link from "next/link";
-
+import { Link } from "@/shared/i18n/routing";
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions);
 

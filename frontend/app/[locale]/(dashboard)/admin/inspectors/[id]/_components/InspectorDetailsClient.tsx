@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Box, CircularProgress, Alert, Button } from "@mui/material";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/shared/i18n/routing";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { getInspectorDetails, updateInspectorStatus, type InspectorDetails } from "@/api-clients/inspectors/inspectors";
 import { logger } from "@/utils/logger";

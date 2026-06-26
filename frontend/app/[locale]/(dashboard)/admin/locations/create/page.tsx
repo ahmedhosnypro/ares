@@ -15,7 +15,7 @@ import {
   Alert,
   CircularProgress,
 } from "@mui/material";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
 import { createLocation } from "@/api-clients/locations/locations";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";

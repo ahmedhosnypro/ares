@@ -1,4 +1,6 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
+import { getLocale } from "next-intl/server";
+import { redirect } from "@/shared/i18n/routing";
 import { getServerSession } from "next-auth";
 import { Box, Container, Paper, Stack, Typography, Button, Divider, Grid } from "@mui/material";
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
@@ -71,11 +73,12 @@ async function fetchTransactionId(bookingId: string, accessToken: string): Promi
 }
 
 export default async function ConfirmationPage({ params }: PageProps) {
+  const locale = await getLocale();
   const { bookingId } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session?.accessToken) {
-    redirect(`/sign-in?callbackUrl=/bookings/confirmation/${bookingId}`);
+    return redirect({ href: `/sign-in?callbackUrl=/bookings/confirmation/${bookingId}`, locale });
   }
 
   const booking = await fetchBookingDetails(bookingId, session.accessToken);

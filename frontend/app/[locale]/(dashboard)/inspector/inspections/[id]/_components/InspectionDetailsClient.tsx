@@ -24,7 +24,7 @@ import {
   InputAdornment,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/shared/i18n/routing";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlineRounded";

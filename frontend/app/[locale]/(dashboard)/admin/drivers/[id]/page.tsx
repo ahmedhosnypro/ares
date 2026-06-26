@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
 import { Box, CircularProgress, Alert, Button, Snackbar } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";

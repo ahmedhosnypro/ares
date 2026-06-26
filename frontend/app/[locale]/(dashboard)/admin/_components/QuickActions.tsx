@@ -6,8 +6,7 @@ import AssessmentIcon from "@mui/icons-material/Assessment";
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import FactCheckIcon from "@mui/icons-material/FactCheck";
 import { QuickAction } from "./mockData";
-import Link from "next/link";
-
+import { Link } from "@/shared/i18n/routing";
 const IconMap = {
   Car: DirectionsCarIcon,
   Shield: VerifiedUserIcon,

@@ -15,7 +15,8 @@ import {
   Alert,
   CircularProgress,
 } from "@mui/material";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
 import { getLocationById, updateLocation } from "@/api-clients/locations/locations";
 import { logger } from "@/utils/logger";

@@ -49,7 +49,8 @@ import {
   SyncAltOutlined as ChangeStatusIcon,
   DeleteOutlined as DeleteIcon,
 } from "@mui/icons-material";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useRouter, Link } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
 import {
   useBookings,
@@ -59,7 +60,7 @@ import {
 } from "@/api-clients/bookings/bookings";
 import { toImageUrl } from "@/utils/image-url";
 import { logger } from "@/utils/logger";
-import Link from "next/link";
+
 import ChangeStatusModal from "./ChangeStatusModal";
 import BookingsAnalytics from "./BookingsAnalytics";
 

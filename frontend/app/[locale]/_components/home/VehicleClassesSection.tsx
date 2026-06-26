@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/shared/i18n/routing";
 import Image from "next/image";
 import { Box, Button, Card, CardContent, CardMedia, Divider, Grid, Typography, Link as MuiLink } from "@mui/material";
 import { toImageUrl } from "@/utils/image-url";

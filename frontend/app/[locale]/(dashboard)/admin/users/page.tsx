@@ -1,7 +1,8 @@
 "use client";
 
 import { Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useRouter } from "@/shared/i18n/routing";
 import { Box, Tabs, Tab, CircularProgress, Paper, useTheme, useMediaQuery } from "@mui/material";
 import PeopleIcon from "@mui/icons-material/People";
 import StorefrontIcon from "@mui/icons-material/Storefront";

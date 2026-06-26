@@ -40,7 +40,7 @@ import {
   type AlertColor,
 } from "@mui/material";
 
-import Link from "next/link";
+import { Link } from "@/shared/i18n/routing";
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityOutlinedIcon from "@mui/icons-material/LaunchOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";

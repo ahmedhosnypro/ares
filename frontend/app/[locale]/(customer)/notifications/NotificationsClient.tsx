@@ -19,7 +19,7 @@ import DoneAllIcon from "@mui/icons-material/DoneAll";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/shared/i18n/routing";
 import {
   getNotifications,
   markAllNotificationsAsRead,

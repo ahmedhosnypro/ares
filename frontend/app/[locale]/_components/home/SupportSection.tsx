@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/shared/i18n/routing";
 import { Box, Button, Grid, List, ListItem, ListItemIcon, ListItemText, Paper, Typography, alpha } from "@mui/material";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import type { PublicLandingSupport } from "@/utils/public-data";

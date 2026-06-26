@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, Link } from "@/shared/i18n/routing";
 import { signOut, useSession } from "next-auth/react";
 import { performLogoutCleanup } from "@/utils/auth-cleanup";
 import type { Session } from "next-auth";

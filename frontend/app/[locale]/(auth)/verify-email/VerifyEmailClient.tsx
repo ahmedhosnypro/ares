@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { Box, Typography, Button, CircularProgress, Alert } from "@mui/material";
-import Link from "next/link";
+import { Link } from "@/shared/i18n/routing";
 import { CheckCircle as CheckCircleIcon, ErrorOutlined as ErrorIcon } from "@mui/icons-material";
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";

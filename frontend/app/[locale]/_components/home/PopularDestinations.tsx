@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/shared/i18n/routing";
 import Image from "next/image";
 import { Box, Button, Card, CardContent, Container, Stack, Typography, Link as MuiLink } from "@mui/material";
 import LocationOnIcon from "@mui/icons-material/LocationOn";

@@ -30,9 +30,10 @@ import {
   Search as SearchIcon,
   ExitToApp as ExitIcon,
 } from "@mui/icons-material";
-import Link from "next/link";
+
 import Image from "next/image";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, Link } from "@/shared/i18n/routing";
 import { useSession, signOut } from "next-auth/react";
 import { performLogoutCleanup } from "@/utils/auth-cleanup";
 import ThemeSwitcher from "@/components/ui/ThemeSwitcher";

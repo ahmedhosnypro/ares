@@ -1,15 +1,17 @@
 import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
+import { getLocale } from "next-intl/server";
+import { redirect } from "@/shared/i18n/routing";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import SignUpForm from "./SignUpForm";
 
 export default async function SignUpPage() {
+  const locale = await getLocale();
   // Check if user is already authenticated
   const session = await getServerSession(authOptions);
 
   // If authenticated, redirect to profile/dashboard
   if (session) {
-    redirect("/account/profile");
+    redirect({ href: "/account/profile", locale });
   }
 
   // If not authenticated, show the sign-up form

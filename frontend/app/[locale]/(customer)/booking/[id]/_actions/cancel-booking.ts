@@ -1,20 +1,22 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { redirect } from "@/shared/i18n/routing";
+import { getLocale } from "next-intl/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { toApiUrl } from "@/utils/api-client";
 
 export async function cancelBookingAction(id: string, formData: FormData) {
+  const locale = await getLocale();
   const bookingId = ((formData.get("bookingId") as string | null) ?? "").trim();
 
   if (bookingId === "") {
-    redirect(`/booking/${id}?error=invalid-booking`);
+    redirect({ href: `/booking/${id}?error=invalid-booking`, locale });
   }
 
   const activeSession = await getServerSession(authOptions);
   if (!activeSession?.accessToken) {
-    redirect("/sign-in");
+    return redirect({ href: "/sign-in", locale });
   }
 
   const response = await fetch(toApiUrl(`/api/bookings/${bookingId}/cancel`), {
@@ -24,12 +26,13 @@ export async function cancelBookingAction(id: string, formData: FormData) {
   });
 
   if (response.ok) {
-    redirect(`/booking/${bookingId}?notice=cancelled`);
+    redirect({ href: `/booking/${bookingId}?notice=cancelled`, locale });
   }
 
-  if (response.status === 400) redirect(`/booking/${bookingId}?error=not-eligible`);
-  if (response.status === 401 || response.status === 403) redirect(`/booking/${bookingId}?error=forbidden`);
-  if (response.status === 404) redirect(`/booking/${bookingId}?error=not-found`);
+  if (response.status === 400) redirect({ href: `/booking/${bookingId}?error=not-eligible`, locale });
+  if (response.status === 401 || response.status === 403)
+    redirect({ href: `/booking/${bookingId}?error=forbidden`, locale });
+  if (response.status === 404) redirect({ href: `/booking/${bookingId}?error=not-found`, locale });
 
-  redirect(`/booking/${bookingId}?error=cancel-failed`);
+  redirect({ href: `/booking/${bookingId}?error=cancel-failed`, locale });
 }

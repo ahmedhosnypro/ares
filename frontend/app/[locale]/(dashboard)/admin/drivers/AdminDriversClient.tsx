@@ -25,7 +25,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/shared/i18n/routing";
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
 

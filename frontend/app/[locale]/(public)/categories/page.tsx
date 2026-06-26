@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { Link } from "@/shared/i18n/routing";
 import Image from "next/image";
 import { Box, Container, Grid, Typography, CircularProgress, Card, Link as MuiLink, Stack } from "@mui/material";
 import ElectricCarIcon from "@mui/icons-material/ElectricCar";

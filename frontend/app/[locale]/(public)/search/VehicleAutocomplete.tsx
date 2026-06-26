@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/shared/i18n/routing";
 import Image from "next/image";
 import { Autocomplete, TextField, Box, Typography, Avatar } from "@mui/material";
 import { useTheme } from "@mui/material/styles";

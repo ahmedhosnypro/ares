@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { Box, Button, CardContent, Container, Typography } from "@mui/material";
-import Link from "next/link";
+import { Link } from "@/shared/i18n/routing";
 import BookingsList from "./_componets/BookingsList";
 import { ResumeBookingBanner } from "@/app/[locale]/(customer)/booking/_components/ResumeBookingBanner";
 

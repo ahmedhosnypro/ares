@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/shared/i18n/routing";
 import Image from "next/image";
 import { Card, CardContent, Typography, Box, Stack, Button } from "@mui/material";
 import { DirectionsCarFilledTwoTone as CarIcon } from "@mui/icons-material";

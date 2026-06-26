@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/shared/i18n/routing";
 import { Card, CardContent, Typography, Box, Stack, Avatar, Button, alpha } from "@mui/material";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";

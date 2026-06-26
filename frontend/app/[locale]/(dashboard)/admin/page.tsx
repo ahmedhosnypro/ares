@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { getLocale } from "next-intl/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import AdminDashboardView from "./_components/AdminDashboardView";
@@ -15,7 +16,7 @@ import {
   TopVehicle,
 } from "./_components/mockData";
 import { logger } from "@/utils/logger";
-import { redirect } from "next/navigation";
+import { redirect } from "@/shared/i18n/routing";
 
 export const metadata: Metadata = {
   title: "Admin Dashboard | ARES Car Rental",
@@ -223,10 +224,11 @@ async function getTopVehicles(accessToken: string): Promise<readonly TopVehicle[
   }
 }
 export default async function AdminDashboardPage() {
+  const locale = await getLocale();
   const session = await getServerSession(authOptions);
 
   if (!session || !session.user.roles.includes("Admin") || !session.accessToken) {
-    redirect("/");
+    return redirect({ href: "/", locale });
   }
 
   const accessToken = session.accessToken;

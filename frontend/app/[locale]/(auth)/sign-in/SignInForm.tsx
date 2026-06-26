@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useRouter, Link } from "@/shared/i18n/routing";
+
 import Image from "next/image";
 import { signIn, getSession } from "next-auth/react";
 import {

@@ -6,8 +6,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { Box, Typography, Button, Chip, alpha } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import Link from "next/link";
-
+import { Link } from "@/shared/i18n/routing";
 // Fix leaflet default icon path issues with Next.js
 const DefaultIcon = L.icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",

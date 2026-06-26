@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Alert, Box, Button, CircularProgress, Pagination, Typography } from "@mui/material";
 import { DirectionsCar as CarIcon, CalendarMonth as CalendarIcon } from "@mui/icons-material";
-import Link from "next/link";
+import { Link } from "@/shared/i18n/routing";
 import BookingCard, { type BookingItem } from "./BookingCard";
 import BookingFilters from "./BookingFilters";
 import { toApiUrl } from "@/utils/api-client";
