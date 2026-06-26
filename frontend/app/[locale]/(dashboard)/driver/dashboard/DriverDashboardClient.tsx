@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { Box, Container, Grid, Typography } from "@mui/material";
+import { Box, Container, Grid, Typography, CircularProgress } from "@mui/material";
 import { useEffect, useState } from "react";
 
 // Nested components
@@ -11,16 +11,12 @@ import KpiMetricsGrid from "./_components/KpiMetricsGrid";
 import UpcomingSchedule from "./_components/UpcomingSchedule";
 import PayoutLogsTable from "./_components/PayoutLogsTable";
 
-// API services and fallback mocks
+// API services
 import {
   getDriverActiveAssignment,
   getDriverUpcomingSchedule,
   getDriverPayoutLogs,
   getDriverDashboardSummary,
-  mockAssignment,
-  mockUpcomingTrips,
-  mockPayoutHistory,
-  mockDashboardSummary,
   type TripAssignment,
   type UpcomingTrip,
   type HistoricalPayout,
@@ -28,42 +24,54 @@ import {
   type DriverAvailabilityStatus,
 } from "@/api-clients/driver-dashboard/driver-dashboard";
 
+const DEFAULT_KPI: DriverKpiMetrics = {
+  earnings: "$0.00",
+  tripsCompleted: 0,
+  activeUpcomingCount: 0,
+  rating: "0.0 / 5.0",
+};
+
 export default function DriverDashboardClient() {
   const { data: session } = useSession();
 
-  // State hooks initialized with the Mock fallback data for immediate seamless rendering
-  const [assignment, setAssignment] = useState<TripAssignment>(mockAssignment);
-  const [upcomingTrips, setUpcomingTrips] = useState<readonly UpcomingTrip[]>(mockUpcomingTrips);
-  const [payoutHistory, setPayoutHistory] = useState<readonly HistoricalPayout[]>(mockPayoutHistory);
-  const [kpiMetrics, setKpiMetrics] = useState<DriverKpiMetrics>({
-    earnings: `$${mockDashboardSummary.totalEarnings.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-    tripsCompleted: mockDashboardSummary.totalTripsCompleted,
-    activeUpcomingCount: mockDashboardSummary.upcomingAssignmentsCount,
-    rating: `${mockDashboardSummary.averageRating.toFixed(1)} / 5.0`,
-  });
-  const [availability, setAvailability] = useState<DriverAvailabilityStatus>(mockDashboardSummary.availability);
+  const [isLoading, setIsLoading] = useState(true);
+  const [assignment, setAssignment] = useState<TripAssignment | null>(null);
+  const [upcomingTrips, setUpcomingTrips] = useState<readonly UpcomingTrip[]>([]);
+  const [payoutHistory, setPayoutHistory] = useState<readonly HistoricalPayout[]>([]);
+  const [kpiMetrics, setKpiMetrics] = useState<DriverKpiMetrics>(DEFAULT_KPI);
+  const [availability, setAvailability] = useState<DriverAvailabilityStatus>("Unavailable");
 
-  // Fetch real API data when token is ready, with automatic error fallback
   useEffect(() => {
     const token = session?.accessToken;
     if (!token) return;
 
     async function loadDashboardData(t: string) {
-      const activeTask = getDriverActiveAssignment(t).then(data => setAssignment(data));
-      const upcomingTask = getDriverUpcomingSchedule(t).then(data => setUpcomingTrips(data));
-      const payoutsTask = getDriverPayoutLogs(t).then(data => setPayoutHistory(data));
+      setIsLoading(true);
+      try {
+        const [activeData, upcomingData, payoutsData, summaryData] = await Promise.allSettled([
+          getDriverActiveAssignment(t),
+          getDriverUpcomingSchedule(t),
+          getDriverPayoutLogs(t),
+          getDriverDashboardSummary(t),
+        ]);
 
-      const summaryTask = getDriverDashboardSummary(t).then(summary => {
-        setAvailability(summary.availability);
-        setKpiMetrics({
-          earnings: `$${summary.totalEarnings.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-          tripsCompleted: summary.totalTripsCompleted,
-          activeUpcomingCount: summary.upcomingAssignmentsCount,
-          rating: `${summary.averageRating.toFixed(1)} / 5.0`,
-        });
-      });
+        if (activeData.status === "fulfilled") setAssignment(activeData.value);
+        if (upcomingData.status === "fulfilled") setUpcomingTrips(upcomingData.value);
+        if (payoutsData.status === "fulfilled") setPayoutHistory(payoutsData.value);
 
-      await Promise.allSettled([activeTask, upcomingTask, payoutsTask, summaryTask]);
+        if (summaryData.status === "fulfilled" && summaryData.value) {
+          const summary = summaryData.value;
+          setAvailability(summary.availability);
+          setKpiMetrics({
+            earnings: `$${summary.totalEarnings.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+            tripsCompleted: summary.totalTripsCompleted,
+            activeUpcomingCount: summary.upcomingAssignmentsCount,
+            rating: `${summary.averageRating.toFixed(1)} / 5.0`,
+          });
+        }
+      } finally {
+        setIsLoading(false);
+      }
     }
 
     void loadDashboardData(token);
@@ -73,12 +81,20 @@ export default function DriverDashboardClient() {
     setAvailability(newAvailability as DriverAvailabilityStatus);
   };
 
+  if (isLoading) {
+    return (
+      <Box sx={{ minHeight: "100vh", bgcolor: "background.default", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default", py: { xs: 3, md: 5 } }}>
       <Container maxWidth="xl">
         {/* Header Panel */}
         <DashboardHeader
-          userName={session?.user?.firstName || "Chauffeur"}
+          userName={session?.user?.firstName ?? "Chauffeur"}
           initialAvailability={availability}
           onAvailabilityChange={handleAvailabilityChange}
         />
@@ -93,20 +109,20 @@ export default function DriverDashboardClient() {
           />
         </Box>
 
-        {/* Split Grid Section with Increased Spacing */}
+        {/* Split Grid Section */}
         <Grid container spacing={{ xs: 4, md: 5 }}>
-          {/* Prominent Active Assignment Card (8 Columns) */}
+          {/* Active Assignment Card (8 Columns) */}
           <Grid size={{ xs: 12, lg: 8 }}>
             <ActiveAssignmentCard assignment={assignment} />
           </Grid>
 
-          {/* Secondary Calendar & Shift Schedule (4 Columns) */}
+          {/* Calendar & Shift Schedule (4 Columns) */}
           <Grid size={{ xs: 12, lg: 4 }} sx={{ display: "flex", flexDirection: "column" }}>
             <UpcomingSchedule trips={upcomingTrips} />
           </Grid>
         </Grid>
 
-        {/* Tab Selection Heading & Logs Table */}
+        {/* Historical Payout Logs */}
         <Box sx={{ mt: 4, mb: 2, borderBottom: "1px solid", borderColor: "border.light" }}>
           <Box sx={{ pb: 1.5, display: "inline-block", borderBottom: "2px solid", borderColor: "primary.main" }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "primary.main" }}>
