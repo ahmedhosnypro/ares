@@ -6,6 +6,14 @@
 - Completed Pages: 0
 - Progress: 0%
 
+## Messages Structure Progress
+
+- **Types**: 3/94 split (common, auth, errors done; 91 page-specific type files to create during execution)
+- **English**: 3/94 split (common, auth, errors done; 91 page-specific en/ files to create during execution)
+- **Arabic**: 3/94 split (common, auth, errors done; 91 page-specific ar/ files to create during execution)
+
+> See `shared/Messages_README.md` for messages directory conventions.
+
 ---
 
 ## Auth Pages (6)
