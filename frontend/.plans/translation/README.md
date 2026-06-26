@@ -12,8 +12,11 @@ The goal of this translation project is to make the Ares Car Rental platform ful
 - **Locales**: `ar` (Arabic), `en` (English)
 - **Default locale**: ar
 - **Locale prefix**: never (URLs are locale-free)
-- **Message files**: shared/messages/en.ts and shared/messages/ar.ts
-- **Type definitions**: shared/messages/types/message.ts
+- **Message structure**: See `shared/Messages_README.md` for full details
+  - Root files: `shared/messages/en.ts` and `shared/messages/ar.ts` (compose from sub-directories)
+  - Type definitions: `shared/messages/types/` (split per namespace, composed in `message.ts`)
+  - English translations: `shared/messages/en/` (split per namespace)
+  - Arabic translations: `shared/messages/ar/` (split per namespace)
 - **i18n request config**: shared/i18n/request.ts
 - **i18n routing**: shared/i18n/routing.ts
 
@@ -24,11 +27,13 @@ When executing a page translation task:
 1. **Component Discovery** - Read the page file and all \_components/ directories to identify all components used
 2. **Hardcoded String Audit** - For each component, find all hardcoded UI strings (labels, placeholders, titles, messages, aria labels, etc.)
 3. **Message Key Design** - Define message keys following the existing namespace pattern (e.g. auth.login.title, common.save)
-4. **Type Update** - Add new keys to the TypeScript type definitions in shared/messages/types/message.ts
-5. **English Translation** - Add English values to shared/messages/en.ts
-6. **Arabic Translation** - Add Arabic values to shared/messages/ar.ts
-7. **Component Update** - Replace hardcoded strings with useTranslations() or getTranslations() calls
-8. **Verify** - Run type checking and linting to confirm no errors
+4. **Create type file** - Create a new type file at `shared/messages/types/{section}/{page}.ts` exporting `{Page}Labels`
+5. **Register type in schema** - Import the new type in `shared/messages/types/message.ts` and add it to `MessageSchema`
+6. **Create English translation** - Create file at `shared/messages/en/{section}/{page}.ts` importing the type and exporting translations
+7. **Create Arabic translation** - Create file at `shared/messages/ar/{section}/{page}.ts` importing the type and exporting translations
+8. **Update root files** - Import the new namespace in both `en.ts` and `ar.ts`
+9. **Component Update** - Replace hardcoded strings with useTranslations() or getTranslations() calls
+10. **Verify** - Run type checking and linting to confirm no errors
 
 ## Key Principles
 
@@ -39,6 +44,8 @@ When executing a page translation task:
 - Test translations in the actual UI to ensure proper display (especially RTL for Arabic)
 
 ## File Structure
+
+### Translation Plan (this directory)
 
 ```
 .plans/translation/
@@ -52,6 +59,38 @@ When executing a page translation task:
 |   +-- root/
 +-- components/        # Component-level task files (created during execution)
 ```
+
+### Message Files (shared/messages/)
+
+```
+shared/messages/
++-- en.ts              # Root - composes all en/ sub-files
++-- ar.ts              # Root - composes all ar/ sub-files
++-- types/
+|   +-- message.ts     # MessageSchema - composes all type imports
+|   +-- common.ts      # CommonLabels
+|   +-- auth.ts        # AuthLabels
+|   +-- errors.ts      # ErrorsLabels
+|   +-- auth/          # (future) auth page-specific types per sub-page
+|   +-- customer/      # (future) customer page-specific types
+|   +-- dashboard/    # (future) dashboard page-specific types
+|   +-- public/       # (future) public page-specific types
+|   +-- root/         # (future) root page-specific types
++-- en/
+|   +-- common.ts      # English common translations
+|   +-- auth.ts        # English auth translations
+|   +-- errors.ts      # English error translations
+|   +-- auth/          # (future) auth page-specific English translations
+|   +-- customer/      # (future) customer page-specific English translations
+|   +-- ...            # Same structure as types/
++-- ar/
+    +-- common.ts      # Arabic common translations
+    +-- auth.ts        # Arabic auth translations
+    +-- errors.ts      # Arabic error translations
+    +-- ...            # Same structure as en/
+```
+
+See `shared/Messages_README.md` for full conventions and examples.
 
 ## Per-Page Task File Template
 
