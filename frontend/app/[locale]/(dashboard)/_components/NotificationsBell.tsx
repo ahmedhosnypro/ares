@@ -22,7 +22,7 @@ import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
-import Link from "next/link";
+import { Link } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
 import {
   getNotifications,
@@ -267,8 +267,8 @@ export default function NotificationsBell({
         open={open}
         anchorEl={anchorEl}
         onClose={handleClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        anchorOrigin={{ vertical: "bottom", horizontal: theme.direction === "rtl" ? "left" : "right" }}
+        transformOrigin={{ vertical: "top", horizontal: theme.direction === "rtl" ? "left" : "right" }}
         transitionDuration={200}
         slotProps={{
           paper: {

@@ -26,7 +26,7 @@ import {
   AttachMoneyRounded as MoneyIcon,
   CreditCardOutlined as CreditCardIcon,
 } from "@mui/icons-material";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
 import {
   getSupplierBookingById,

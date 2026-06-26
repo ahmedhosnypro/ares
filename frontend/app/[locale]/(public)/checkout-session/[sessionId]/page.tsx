@@ -1,4 +1,5 @@
-import { redirect } from "next/navigation";
+import { redirect } from "@/shared/i18n/routing";
+import { getLocale } from "next-intl/server";
 import { Box, Container, Paper, Stack, Typography, Button } from "@mui/material";
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import ErrorOutlinedIcon from "@mui/icons-material/ErrorOutlined";
@@ -8,6 +9,7 @@ interface PageProps {
 }
 
 export default async function CheckoutSessionPage({ searchParams }: PageProps) {
+  const locale = await getLocale();
   const params = await searchParams;
 
   const success = params["success"] === "true";
@@ -15,7 +17,7 @@ export default async function CheckoutSessionPage({ searchParams }: PageProps) {
 
   // On success, redirect immediately to confirmation
   if (success && merchantOrderId) {
-    redirect(`/bookings/confirmation/${merchantOrderId}`);
+    redirect({ href: `/bookings/confirmation/${merchantOrderId}`, locale });
   }
 
   // On failure, show error UI

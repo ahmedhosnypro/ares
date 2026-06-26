@@ -26,7 +26,7 @@ import {
   DeleteOutlineRounded as DeleteIcon,
   Category as CategoryIcon,
 } from "@mui/icons-material";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
 import { getCategories, deleteCategory, Category } from "@/api-clients/categories/categories";
 import Snackbar from "@mui/material/Snackbar";

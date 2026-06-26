@@ -36,8 +36,8 @@ import {
   Public as CountriesIcon,
   Place as LocationsIcon,
 } from "@mui/icons-material";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+
+import { usePathname, Link } from "@/shared/i18n/routing";
 import { useSession, signOut } from "next-auth/react";
 import { performLogoutCleanup } from "@/utils/auth-cleanup";
 

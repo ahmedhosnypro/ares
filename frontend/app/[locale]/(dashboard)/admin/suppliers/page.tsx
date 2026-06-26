@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/shared/i18n/routing";
 import { Box, CircularProgress } from "@mui/material";
 
 /**

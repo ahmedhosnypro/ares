@@ -21,7 +21,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/shared/i18n/routing";
 import { useFormUndoRedo } from "./useFormUndoRedo";
 import Gallery from "./Gallery";
 import GalleryEditor from "./GalleryEditor";

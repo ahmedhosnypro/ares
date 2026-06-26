@@ -23,7 +23,7 @@ import {
   SaveOutlined as SaveIcon,
   DirectionsCarFilledTwoTone as CarIcon,
 } from "@mui/icons-material";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
 import { getAdminBookingDetails, updateBooking, type Booking } from "@/api-clients/bookings/bookings";
 import { logger } from "@/utils/logger";

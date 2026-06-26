@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
 import { Alert, AlertTitle, Box, Button, Stack } from "@mui/material";
 import RestoreIcon from "@mui/icons-material/Restore";

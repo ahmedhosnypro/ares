@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/shared/i18n/routing";
 import VehicleDetailsClient, {
   type FormValues,
 } from "@/app/[locale]/(public)/vehicles/[vehicleId]/_components/vehicle-details/VehicleDetailsClient";

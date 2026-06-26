@@ -30,6 +30,37 @@ export function getClientTheme(): PaletteMode {
 }
 
 /**
+ * Get a cookie value by name (client-side)
+ */
+export async function getCookie(name: string): Promise<string | null> {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const cookieStore = (
+    globalThis as unknown as { cookieStore?: { get: (n: string) => Promise<{ value?: string } | null> } }
+  ).cookieStore;
+  if (cookieStore !== undefined) {
+    try {
+      const cookie = await cookieStore.get(name);
+      return cookie?.value ?? null;
+    } catch {
+      // Fall through to legacy method
+    }
+  }
+
+  const nameEQ = `${name}=`;
+  const cookies = document.cookie.split(";");
+  for (const cookie of cookies) {
+    const trimmedCookie = cookie.trimStart();
+    if (trimmedCookie.startsWith(nameEQ)) {
+      return trimmedCookie.substring(nameEQ.length);
+    }
+  }
+  return null;
+}
+
+/**
  * Set theme preference in both localStorage and cookie
  */
 export function setThemePreference(mode: PaletteMode) {

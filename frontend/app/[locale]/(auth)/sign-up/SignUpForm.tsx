@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import Link from "next/link";
+import { Link } from "@/shared/i18n/routing";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { toApiUrl } from "@/utils/api-client";

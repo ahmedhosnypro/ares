@@ -1,5 +1,5 @@
 import Image from "next/image";
-import Link from "next/link";
+import { Link } from "@/shared/i18n/routing";
 import {
   Box,
   Button,

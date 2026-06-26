@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useRouter, Link } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
-import Link from "next/link";
+
 import {
   Alert,
   Box,

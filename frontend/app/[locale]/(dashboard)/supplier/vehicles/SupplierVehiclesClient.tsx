@@ -56,7 +56,7 @@ import {
   LaunchOutlined as ViewIcon,
 } from "@mui/icons-material";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
 
 import {

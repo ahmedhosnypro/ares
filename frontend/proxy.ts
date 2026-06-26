@@ -15,7 +15,7 @@ function getLocale(request: NextRequest): string {
   return defaultLocale;
 }
 
-export default async function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip static files and Next.js internals
@@ -38,7 +38,7 @@ export default async function proxy(request: NextRequest) {
   const token = await getToken({ req: request });
 
   if (cleanPath.startsWith("/admin")) {
-    if (!token || !(token.roles as string[])?.includes("Admin")) {
+    if (!token || !token.roles.includes("Admin")) {
       const url = request.nextUrl.clone();
       url.pathname = "/sign-in";
       return NextResponse.redirect(url);
@@ -46,7 +46,7 @@ export default async function proxy(request: NextRequest) {
   }
 
   if (cleanPath.startsWith("/supplier")) {
-    if (!token || !(token.roles as string[])?.includes("Supplier")) {
+    if (!token || !token.roles.includes("Supplier")) {
       const url = request.nextUrl.clone();
       url.pathname = "/sign-in";
       return NextResponse.redirect(url);
@@ -82,5 +82,7 @@ export default async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    "/((?!api|_next/static|_next/image|favicon\\.ico|site\\.webmanifest|cover\\.mp4|img/|.*\\.(?:mp4|webm|ogg|mp3|wav|flac|aac|png|jpg|jpeg|gif|svg|ico|webp|avif|bmp|tiff|woff|woff2|ttf|otf|eot|json|xml|txt|pdf|zip)).*)",
+  ],
 };

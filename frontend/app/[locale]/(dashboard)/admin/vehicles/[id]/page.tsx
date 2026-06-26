@@ -11,8 +11,7 @@ import {
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
-import Link from "next/link";
-
+import { Link } from "@/shared/i18n/routing";
 interface PageProps {
   readonly params: Promise<{ id: string }>;
 }

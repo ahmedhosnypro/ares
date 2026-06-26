@@ -43,7 +43,7 @@ import {
   SearchRounded as SearchIcon,
   MapTwoTone as MapIcon,
 } from "@mui/icons-material";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
 import { useLocations, deleteLocation, type Location } from "@/api-clients/locations/locations";
 import { toImageUrl } from "@/utils/image-url";

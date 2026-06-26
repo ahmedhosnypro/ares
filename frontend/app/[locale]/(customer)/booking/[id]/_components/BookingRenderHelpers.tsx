@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/shared/i18n/routing";
 import { Box, Button, CardContent, Container, Paper, Typography } from "@mui/material";
 
 export function renderSignInRequired() {

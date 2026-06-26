@@ -47,7 +47,7 @@ import {
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
 } from "@mui/icons-material";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/shared/i18n/routing";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import {

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-import Link from "next/link";
+import { Link } from "@/shared/i18n/routing";
 import Image from "next/image";
 import {
   Alert,

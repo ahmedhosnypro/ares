@@ -24,7 +24,7 @@ import { DirectionsCar as CarIcon, PersonSearch as PersonSearchIcon } from "@mui
 import { toApiUrl } from "@/utils/api-client";
 import { toImageUrl } from "@/utils/image-url";
 import { logger } from "@/utils/logger";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/shared/i18n/routing";
 
 interface PublicDriver {
   driverProfileId: string;

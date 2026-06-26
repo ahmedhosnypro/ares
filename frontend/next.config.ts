@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
   images: {
     // Disable image optimization for localhost URLs to avoid 400 errors
     // The Next.js Image Optimization API can't reach localhost:5000 from the server side
-    unoptimized: process.env.NODE_ENV === "development",
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "http",

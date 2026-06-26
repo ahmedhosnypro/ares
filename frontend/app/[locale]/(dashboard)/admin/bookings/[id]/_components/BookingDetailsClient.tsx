@@ -53,7 +53,7 @@ import {
   HourglassEmptyOutlined as HourglassIcon,
   ScheduleOutlined as ScheduleIcon,
 } from "@mui/icons-material";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
 import {
   getAdminBookingDetails,

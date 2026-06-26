@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
 import { Box, Button, CircularProgress, Container, Paper, Typography, Alert, AlertTitle } from "@mui/material";
 import { useTheme } from "@mui/material/styles";

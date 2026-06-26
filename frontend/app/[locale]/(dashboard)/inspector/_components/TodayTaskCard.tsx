@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/shared/i18n/routing";
 import { Box, Paper, Stack, Typography, IconButton, Tooltip, useTheme, alpha } from "@mui/material";
 import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
 import CarRepairIcon from "@mui/icons-material/CarRepair";

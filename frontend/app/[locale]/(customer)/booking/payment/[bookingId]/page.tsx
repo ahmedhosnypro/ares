@@ -1,4 +1,6 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
+import { getLocale } from "next-intl/server";
+import { redirect } from "@/shared/i18n/routing";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { toApiUrl } from "@/utils/api-client";
@@ -31,11 +33,12 @@ async function fetchBookingDetails(bookingId: string, accessToken: string): Prom
 }
 
 export default async function CheckoutPage({ params }: PageProps) {
+  const locale = await getLocale();
   const { bookingId } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session?.accessToken) {
-    redirect(`/sign-in?callbackUrl=/booking/payment/${bookingId}`);
+    return redirect({ href: `/sign-in?callbackUrl=/booking/payment/${bookingId}`, locale });
   }
 
   const booking = await fetchBookingDetails(bookingId, session.accessToken);
@@ -46,7 +49,7 @@ export default async function CheckoutPage({ params }: PageProps) {
 
   // If already paid/confirmed, redirect to confirmation
   if (booking.status === "Confirmed" || booking.status === "Active" || booking.status === "Completed") {
-    redirect(`/bookings/confirmation/${bookingId}`);
+    redirect({ href: `/bookings/confirmation/${bookingId}`, locale });
   }
 
   return <PaymentClient booking={booking} accessToken={session.accessToken} />;

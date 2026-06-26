@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname } from "@/shared/i18n/routing";
 import {
   Dashboard as DashboardIcon,
   Route as TripsIcon,

@@ -26,7 +26,7 @@ import {
   EventAvailable as BookingIcon,
   MonetizationOn as RevenueIcon,
 } from "@mui/icons-material";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
 import { getCategoryDetails, CategoryDetails } from "@/api-clients/categories/categories";
 import Alert from "@mui/material/Alert";
