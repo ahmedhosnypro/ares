@@ -276,9 +276,91 @@ export default function UsersTab() {
     });
   }, [users, search, statusFilter, roleFilter]);
 
+<<<<<<< HEAD:frontend/app/(dashboard)/admin/users/UsersTab.tsx
   const totalUsers = users.length;
   const activeUsers = users.filter(u => u.status === "active").length;
   const blockedUsers = users.filter(u => u.status === "blocked").length;
+=======
+  // Fallbacks are the exact values from the user's design image
+  const cardItems = useMemo(
+    () => [
+      {
+        label: "Total Users",
+        value: totalStatsUsers,
+        fallback: 1248,
+        change: "↑ 12.5% month",
+        color: "info",
+        icon: <UsersIcon />,
+      },
+      {
+        label: "Active",
+        value: activeUsersCount,
+        fallback: 1120,
+        change: "↑ 11.2% month",
+        color: "active",
+        icon: <ActiveIcon />,
+      },
+      {
+        label: "Blocked",
+        value: blockedUsersCount,
+        fallback: 128,
+        change: "↓ 2.5% month",
+        color: "blocked",
+        icon: <BlockedIcon />,
+      },
+      {
+        label: "Admins",
+        value: adminsCount,
+        fallback: 12,
+        change: "↑ 4.2% month",
+        color: "primary",
+        icon: <KeyIcon />,
+      },
+      {
+        label: "Customers",
+        value: customersCount,
+        fallback: 842,
+        change: "↑ 10.3% month",
+        color: "success",
+        icon: <UserIcon />,
+      },
+      {
+        label: "Suppliers",
+        value: suppliersCount,
+        fallback: 156,
+        change: "↑ 8.1% month",
+        color: "completed",
+        icon: <StoreIcon />,
+      },
+      {
+        label: "Drivers",
+        value: driversCount,
+        fallback: 192,
+        change: "↑ 14.7% month",
+        color: "pending",
+        icon: <SteeringWheelIcon />,
+      },
+      {
+        label: "Inspectors",
+        value: inspectorsCount,
+        fallback: 58,
+        change: "↑ 6.2% month",
+        color: "blocked",
+        icon: <ShieldIcon />,
+      },
+    ],
+    [
+      totalStatsUsers,
+      activeUsersCount,
+      blockedUsersCount,
+      adminsCount,
+      customersCount,
+      suppliersCount,
+      driversCount,
+      inspectorsCount,
+    ]
+  );
+>>>>>>> 0fbecac (Sync with main and format):frontend/app/[locale]/(dashboard)/admin/users/UsersTab.tsx
 
   const userStatsItems = useMemo(
     () => [
