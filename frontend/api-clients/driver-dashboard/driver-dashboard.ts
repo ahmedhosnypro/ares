@@ -1,4 +1,4 @@
-import { apiFetchJson } from "@/utils/api-client";
+import { apiFetchJson, ApiError } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
 
 export interface TripAssignment {
@@ -169,16 +169,20 @@ export const mockDashboardSummary: DriverDashboardSummaryDto = {
 
 /**
  * Fetch active rental assignment details for the logged-in driver.
+ * Returns null if there is no active assignment (404).
  */
-export async function getDriverActiveAssignment(accessToken: string): Promise<TripAssignment> {
+export async function getDriverActiveAssignment(accessToken: string): Promise<TripAssignment | null> {
   try {
-    return await apiFetchJson<TripAssignment>("/api/driver/active-assignment", {
+    return await apiFetchJson<TripAssignment>("/api/driver/dashboard/active-assignment", {
       method: "GET",
       accessToken,
     });
   } catch (error) {
-    logger.warn("Failed to fetch driver active assignment. Falling back to mock data.", error);
-    return mockAssignment;
+    if (error instanceof ApiError && error.status === 404) {
+      return null;
+    }
+    logger.warn("Failed to fetch driver active assignment.", error);
+    return null;
   }
 }
 
@@ -187,13 +191,13 @@ export async function getDriverActiveAssignment(accessToken: string): Promise<Tr
  */
 export async function getDriverUpcomingSchedule(accessToken: string): Promise<readonly UpcomingTrip[]> {
   try {
-    return await apiFetchJson<UpcomingTrip[]>("/api/driver/upcoming-schedule", {
+    return await apiFetchJson<UpcomingTrip[]>("/api/driver/dashboard/upcoming-schedule", {
       method: "GET",
       accessToken,
     });
   } catch (error) {
-    logger.warn("Failed to fetch driver upcoming schedule. Falling back to mock data.", error);
-    return mockUpcomingTrips;
+    logger.warn("Failed to fetch driver upcoming schedule.", error);
+    return [];
   }
 }
 
@@ -202,13 +206,13 @@ export async function getDriverUpcomingSchedule(accessToken: string): Promise<re
  */
 export async function getDriverPayoutLogs(accessToken: string): Promise<readonly HistoricalPayout[]> {
   try {
-    return await apiFetchJson<HistoricalPayout[]>("/api/driver/payout-logs", {
+    return await apiFetchJson<HistoricalPayout[]>("/api/driver/dashboard/payout-logs", {
       method: "GET",
       accessToken,
     });
   } catch (error) {
-    logger.warn("Failed to fetch driver payout logs. Falling back to mock data.", error);
-    return mockPayoutHistory;
+    logger.warn("Failed to fetch driver payout logs.", error);
+    return [];
   }
 }
 
@@ -216,15 +220,15 @@ export async function getDriverPayoutLogs(accessToken: string): Promise<readonly
  * Fetch analytical payout summary metrics/KPIs for the logged-in driver.
  * Uses existing backend endpoint: GET /api/driver/dashboard/summary
  */
-export async function getDriverDashboardSummary(accessToken: string): Promise<DriverDashboardSummaryDto> {
+export async function getDriverDashboardSummary(accessToken: string): Promise<DriverDashboardSummaryDto | null> {
   try {
     return await apiFetchJson<DriverDashboardSummaryDto>("/api/driver/dashboard/summary", {
       method: "GET",
       accessToken,
     });
   } catch (error) {
-    logger.warn("Failed to fetch driver dashboard summary. Falling back to mock summary data.", error);
-    return mockDashboardSummary;
+    logger.warn("Failed to fetch driver dashboard summary.", error);
+    return null;
   }
 }
 

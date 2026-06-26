@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 const locales = ["ar", "en"];
-const defaultLocale = "ar";
+const defaultLocale = "en"; // must match routing.ts defaultLocale
 
 function getLocale(request: NextRequest): string {
   const cookieLocale = request.cookies.get("NEXT_LOCALE")?.value;
@@ -11,7 +11,7 @@ function getLocale(request: NextRequest): string {
     return cookieLocale;
   }
   const acceptLanguage = request.headers.get("accept-language") ?? "";
-  if (acceptLanguage.includes("en")) return "en";
+  if (acceptLanguage.includes("ar")) return "ar";
   return defaultLocale;
 }
 
@@ -47,6 +47,22 @@ export default async function proxy(request: NextRequest) {
 
   if (cleanPath.startsWith("/supplier")) {
     if (!token || !(token.roles as string[])?.includes("Supplier")) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/sign-in";
+      return NextResponse.redirect(url);
+    }
+  }
+
+  if (cleanPath.startsWith("/driver")) {
+    if (!token || !(token.roles as string[])?.includes("Driver")) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/sign-in";
+      return NextResponse.redirect(url);
+    }
+  }
+
+  if (cleanPath.startsWith("/inspector")) {
+    if (!token || !(token.roles as string[])?.includes("Inspector")) {
       const url = request.nextUrl.clone();
       url.pathname = "/sign-in";
       return NextResponse.redirect(url);
