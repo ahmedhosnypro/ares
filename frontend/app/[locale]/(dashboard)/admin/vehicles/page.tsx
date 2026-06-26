@@ -314,10 +314,6 @@ function FleetOverview({
             <DonutChart available={availableCount} booked={rentalCount} maintenance={maintenanceCount} total={total} />
             <Stack spacing={1} sx={{ flex: 1 }}>
               <LegendItem color={theme.palette.success.main} label="Available" pct={availPct} />
-<<<<<<< HEAD:frontend/app/(dashboard)/admin/vehicles/page.tsx
-=======
-              <LegendItem color={theme.palette.error.main} label="Unavailable" pct={unavailablePct} />
->>>>>>> 0fbecac (Sync with main and format):frontend/app/[locale]/(dashboard)/admin/vehicles/page.tsx
               <LegendItem color={theme.palette.primary.main} label="Booked" pct={bookedPct} />
               <LegendItem color={theme.palette.warning.main} label="Maintenance" pct={maintenancePct} />
             </Stack>

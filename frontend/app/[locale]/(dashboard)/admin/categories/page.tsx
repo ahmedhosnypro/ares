@@ -41,12 +41,9 @@ export default function AdminCategoriesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-<<<<<<< HEAD:frontend/app/(dashboard)/admin/categories/page.tsx
   const [formOpen, setFormOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
-=======
->>>>>>> 0fbecac (Sync with main and format):frontend/app/[locale]/(dashboard)/admin/categories/page.tsx
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "success" | "error" }>({
     open: false,
     message: "",
@@ -266,7 +263,6 @@ export default function AdminCategoriesPage() {
         )}
       </Paper>
 
-<<<<<<< HEAD:frontend/app/(dashboard)/admin/categories/page.tsx
       {formOpen && (
         <CategoryForm
           open={formOpen}
@@ -278,8 +274,6 @@ export default function AdminCategoriesPage() {
         />
       )}
 
-=======
->>>>>>> 0fbecac (Sync with main and format):frontend/app/[locale]/(dashboard)/admin/categories/page.tsx
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
