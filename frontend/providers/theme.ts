@@ -1,4 +1,17 @@
 import { responsiveFontSizes, createTheme, type PaletteMode, type PaletteOptions } from "@mui/material/styles";
+import { arEG as muiArEg, enUS as muiEnUS } from "@mui/material/locale";
+import { arSD as dataGridArSD, enUS as dataGridEnUS } from "@mui/x-data-grid/locales";
+
+const locales = (locale: string = "en") => {
+  switch (locale) {
+    case "ar":
+      return [muiArEg, dataGridArSD];
+    case "en":
+      return [muiEnUS, dataGridEnUS];
+    default:
+      return [];
+  }
+};
 
 // Extend the Palette interface to include custom colors
 declare module "@mui/material/styles" {
@@ -406,176 +419,181 @@ const darkPalette: PaletteOptions = {
   },
 };
 
-export function createAppTheme(mode: PaletteMode) {
+export function createAppTheme(mode: PaletteMode, direction: "rtl" | "ltr" = "ltr", locale: string = "en") {
   const isLight = mode === "light";
   const palette = isLight ? lightPalette : darkPalette;
   const autofillBackground = isLight ? "#ffffff" : "#1a1f23";
   const autofillText = isLight ? "#10212b" : "#e8eaed";
 
-  const baseTheme = createTheme({
-    palette: {
-      mode,
-      ...palette,
-    },
-    shape: {
-      borderRadius: 20,
-    },
-    typography: {
-      fontFamily: 'var(--font-geist-sans), "Inter", "Segoe UI", sans-serif',
-      // Improved mobile-first typography scaling
-      body1: {
-        fontSize: "1rem", // 16px - safe for mobile inputs
-        lineHeight: 1.6,
-        "@media (max-width: 768px)": {
-          fontSize: "1rem", // Keep 16px on mobile for inputs
-        },
-      },
-      body2: {
-        fontSize: "0.875rem", // 14px - minimum readable size
-        lineHeight: 1.5,
-        "@media (max-width: 768px)": {
-          fontSize: "0.875rem", // 14px minimum on mobile
-        },
-      },
-      caption: {
-        fontSize: "0.75rem", // 12px - absolute minimum
-        lineHeight: 1.4,
-        "@media (max-width: 768px)": {
-          fontSize: "0.75rem", // 12px minimum on mobile
-        },
-      },
-      h1: {
-        fontWeight: 800,
-        letterSpacing: "-0.04em",
-        lineHeight: 1,
-      },
-      h2: {
-        fontWeight: 800,
-        letterSpacing: "-0.03em",
-      },
-      h3: {
-        fontWeight: 700,
-      },
-      h5: {
-        fontWeight: 700,
-        fontSize: "1.25rem", // 20px
-        "@media (max-width: 768px)": {
-          fontSize: "1.125rem", // 18px on mobile
-        },
-      },
-      button: {
-        fontWeight: 700,
-        textTransform: "none",
-        fontSize: "1rem", // 16px for better touch targets
-      },
-    },
-    components: {
-      MuiCssBaseline: {
-        styleOverrides: {
-          body: {
-            backgroundImage: isLight
-              ? "radial-gradient(circle at top left, rgba(184, 134, 11, 0.08), transparent 28%), radial-gradient(circle at top right, rgba(15, 91, 91, 0.09), transparent 24%)"
-              : "radial-gradient(circle at top left, rgba(184, 134, 11, 0.15), transparent 28%), radial-gradient(circle at top right, rgba(15, 91, 91, 0.2), transparent 24%)",
-          },
+  const baseTheme = createTheme(
+    {
+      direction,
 
-          "input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:-webkit-autofill:active, textarea:-webkit-autofill, select:-webkit-autofill":
-            {
-              WebkitBoxShadow: `0 0 0 1000px ${autofillBackground} inset !important`,
-              WebkitTextFillColor: `${autofillText} !important`,
-              caretColor: autofillText,
-              borderRadius: "inherit",
-              transition: "background-color 9999s ease-out, color 9999s ease-out",
-            },
-          "input:autofill, textarea:autofill, select:autofill": {
-            boxShadow: `0 0 0 1000px ${autofillBackground} inset`,
-            color: autofillText,
+      palette: {
+        mode,
+        ...palette,
+      },
+      shape: {
+        borderRadius: 20,
+      },
+      typography: {
+        fontFamily: 'var(--font-geist-sans), "Inter", "Segoe UI", sans-serif',
+        // Improved mobile-first typography scaling
+        body1: {
+          fontSize: "1rem", // 16px - safe for mobile inputs
+          lineHeight: 1.6,
+          "@media (max-width: 768px)": {
+            fontSize: "1rem", // Keep 16px on mobile for inputs
           },
-          "input[data-com-onepassword-filled], textarea[data-com-onepassword-filled], input[data-com-onepassword-filled='dark'], textarea[data-com-onepassword-filled='dark']":
-            {
-              backgroundColor: `${autofillBackground} !important`,
-              WebkitBoxShadow: `0 0 0 1000px ${autofillBackground} inset !important`,
-              WebkitTextFillColor: `${autofillText} !important`,
-              color: `${autofillText} !important`,
-              caretColor: `${autofillText} !important`,
+        },
+        body2: {
+          fontSize: "0.875rem", // 14px - minimum readable size
+          lineHeight: 1.5,
+          "@media (max-width: 768px)": {
+            fontSize: "0.875rem", // 14px minimum on mobile
+          },
+        },
+        caption: {
+          fontSize: "0.75rem", // 12px - absolute minimum
+          lineHeight: 1.4,
+          "@media (max-width: 768px)": {
+            fontSize: "0.75rem", // 12px minimum on mobile
+          },
+        },
+        h1: {
+          fontWeight: 800,
+          letterSpacing: "-0.04em",
+          lineHeight: 1,
+        },
+        h2: {
+          fontWeight: 800,
+          letterSpacing: "-0.03em",
+        },
+        h3: {
+          fontWeight: 700,
+        },
+        h5: {
+          fontWeight: 700,
+          fontSize: "1.25rem", // 20px
+          "@media (max-width: 768px)": {
+            fontSize: "1.125rem", // 18px on mobile
+          },
+        },
+        button: {
+          fontWeight: 700,
+          textTransform: "none",
+          fontSize: "1rem", // 16px for better touch targets
+        },
+      },
+      components: {
+        MuiCssBaseline: {
+          styleOverrides: {
+            body: {
+              backgroundImage: isLight
+                ? "radial-gradient(circle at top left, rgba(184, 134, 11, 0.08), transparent 28%), radial-gradient(circle at top right, rgba(15, 91, 91, 0.09), transparent 24%)"
+                : "radial-gradient(circle at top left, rgba(184, 134, 11, 0.15), transparent 28%), radial-gradient(circle at top right, rgba(15, 91, 91, 0.2), transparent 24%)",
             },
 
-          "*::-webkit-scrollbar": {
-            width: "8px",
-            backgroundColor: "transparent",
-          },
-          "*::-webkit-scrollbar-track": {
-            background: mode === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)",
-            borderRadius: "8px",
-            margin: "8px 0",
-          },
-          "*::-webkit-scrollbar-thumb": {
-            background: mode === "dark" ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.2)",
-            borderRadius: "8px",
-            border: mode === "dark" ? "2px solid rgba(30, 30, 30, 0.9)" : "2px solid rgba(255, 255, 255, 0.9)",
-          },
-          "*::-webkit-scrollbar-thumb:hover": {
-            background: mode === "dark" ? "rgba(255, 255, 255, 0.3)" : "rgba(0, 0, 0, 0.3)",
-          },
-          "*": {
-            scrollbarWidth: "thin",
-            scrollbarColor:
-              mode === "dark"
-                ? "rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05)"
-                : "rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.05)",
-          },
-        },
-      },
-      MuiButton: {
-        styleOverrides: {
-          root: {
-            borderRadius: 999,
-            boxShadow: "none",
-            paddingLeft: 20,
-            paddingRight: 20,
-          },
-        },
-      },
-      MuiPaper: {
-        styleOverrides: {
-          root: {
-            backgroundImage: "none",
-          },
-        },
-      },
-      MuiCard: {
-        styleOverrides: {
-          root: {
-            borderRadius: 24,
-            boxShadow: isLight ? "0 24px 60px rgba(16, 33, 43, 0.08)" : "0 24px 60px rgba(0, 0, 0, 0.3)",
-          },
-        },
-      },
-      MuiTextField: {
-        defaultProps: {
-          variant: "outlined",
-          fullWidth: true,
-        },
-      },
-      MuiOutlinedInput: {
-        styleOverrides: {
-          input: {
-            "&:-webkit-autofill, &:-webkit-autofill:hover, &:-webkit-autofill:focus, &:-webkit-autofill:active": {
-              WebkitBoxShadow: `0 0 0 1000px ${autofillBackground} inset !important`,
-              WebkitTextFillColor: `${autofillText} !important`,
-              caretColor: autofillText,
+            "input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:-webkit-autofill:active, textarea:-webkit-autofill, select:-webkit-autofill":
+              {
+                WebkitBoxShadow: `0 0 0 1000px ${autofillBackground} inset !important`,
+                WebkitTextFillColor: `${autofillText} !important`,
+                caretColor: autofillText,
+                borderRadius: "inherit",
+                transition: "background-color 9999s ease-out, color 9999s ease-out",
+              },
+            "input:autofill, textarea:autofill, select:autofill": {
+              boxShadow: `0 0 0 1000px ${autofillBackground} inset`,
+              color: autofillText,
             },
-            "&[data-com-onepassword-filled], &[data-com-onepassword-filled='dark']": {
-              backgroundColor: `${autofillBackground} !important`,
-              WebkitBoxShadow: `0 0 0 1000px ${autofillBackground} inset !important`,
-              WebkitTextFillColor: `${autofillText} !important`,
-              color: `${autofillText} !important`,
-              caretColor: `${autofillText} !important`,
+            "input[data-com-onepassword-filled], textarea[data-com-onepassword-filled], input[data-com-onepassword-filled='dark'], textarea[data-com-onepassword-filled='dark']":
+              {
+                backgroundColor: `${autofillBackground} !important`,
+                WebkitBoxShadow: `0 0 0 1000px ${autofillBackground} inset !important`,
+                WebkitTextFillColor: `${autofillText} !important`,
+                color: `${autofillText} !important`,
+                caretColor: `${autofillText} !important`,
+              },
+
+            "*::-webkit-scrollbar": {
+              width: "8px",
+              backgroundColor: "transparent",
+            },
+            "*::-webkit-scrollbar-track": {
+              background: mode === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)",
+              borderRadius: "8px",
+              margin: "8px 0",
+            },
+            "*::-webkit-scrollbar-thumb": {
+              background: mode === "dark" ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.2)",
+              borderRadius: "8px",
+              border: mode === "dark" ? "2px solid rgba(30, 30, 30, 0.9)" : "2px solid rgba(255, 255, 255, 0.9)",
+            },
+            "*::-webkit-scrollbar-thumb:hover": {
+              background: mode === "dark" ? "rgba(255, 255, 255, 0.3)" : "rgba(0, 0, 0, 0.3)",
+            },
+            "*": {
+              scrollbarWidth: "thin",
+              scrollbarColor:
+                mode === "dark"
+                  ? "rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05)"
+                  : "rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.05)",
+            },
+          },
+        },
+        MuiButton: {
+          styleOverrides: {
+            root: {
+              borderRadius: 999,
+              boxShadow: "none",
+              paddingLeft: 20,
+              paddingRight: 20,
+            },
+          },
+        },
+        MuiPaper: {
+          styleOverrides: {
+            root: {
+              backgroundImage: "none",
+            },
+          },
+        },
+        MuiCard: {
+          styleOverrides: {
+            root: {
+              borderRadius: 24,
+              boxShadow: isLight ? "0 24px 60px rgba(16, 33, 43, 0.08)" : "0 24px 60px rgba(0, 0, 0, 0.3)",
+            },
+          },
+        },
+        MuiTextField: {
+          defaultProps: {
+            variant: "outlined",
+            fullWidth: true,
+          },
+        },
+        MuiOutlinedInput: {
+          styleOverrides: {
+            input: {
+              "&:-webkit-autofill, &:-webkit-autofill:hover, &:-webkit-autofill:focus, &:-webkit-autofill:active": {
+                WebkitBoxShadow: `0 0 0 1000px ${autofillBackground} inset !important`,
+                WebkitTextFillColor: `${autofillText} !important`,
+                caretColor: autofillText,
+              },
+              "&[data-com-onepassword-filled], &[data-com-onepassword-filled='dark']": {
+                backgroundColor: `${autofillBackground} !important`,
+                WebkitBoxShadow: `0 0 0 1000px ${autofillBackground} inset !important`,
+                WebkitTextFillColor: `${autofillText} !important`,
+                color: `${autofillText} !important`,
+                caretColor: `${autofillText} !important`,
+              },
             },
           },
         },
       },
     },
-  });
+    ...locales(locale)
+  );
 
   return responsiveFontSizes(baseTheme);
 }

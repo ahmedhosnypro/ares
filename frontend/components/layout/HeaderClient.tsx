@@ -38,6 +38,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import { toImageUrl } from "@/utils/image-url";
 import ThemeSwitcher from "@/components/ui/ThemeSwitcher";
+import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
 import CheckoutIndicator from "@/components/layout/CheckoutIndicator";
 import NotificationsPanel from "@/app/[locale]/_components/NotificationsPanel";
 
@@ -233,6 +234,9 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
             <Stack direction="row" spacing={1} sx={{ alignItems: "center", ml: "auto" }}>
               {/* Theme Switcher */}
               <ThemeSwitcher color="inherit" size="medium" />
+
+              {/* Language Switcher */}
+              <LanguageSwitcher color="inherit" size="medium" />
 
               {/* Pending checkout indicator */}
               <CheckoutIndicator />
@@ -625,6 +629,18 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
                 <ThemeSwitcher size="small" />
                 <Typography variant="body2" color="text.secondary">
                   Toggle theme
+                </Typography>
+              </Box>
+            </Box>
+
+            <Box>
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                Language
+              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <LanguageSwitcher color="inherit" size="small" />
+                <Typography variant="body2" color="text.secondary">
+                  Switch language
                 </Typography>
               </Box>
             </Box>

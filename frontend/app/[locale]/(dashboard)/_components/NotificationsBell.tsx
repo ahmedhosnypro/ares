@@ -267,8 +267,8 @@ export default function NotificationsBell({
         open={open}
         anchorEl={anchorEl}
         onClose={handleClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        anchorOrigin={{ vertical: "bottom", horizontal: theme.direction === "rtl" ? "left" : "right" }}
+        transformOrigin={{ vertical: "top", horizontal: theme.direction === "rtl" ? "left" : "right" }}
         transitionDuration={200}
         slotProps={{
           paper: {

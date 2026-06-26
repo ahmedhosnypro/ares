@@ -36,6 +36,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { performLogoutCleanup } from "@/utils/auth-cleanup";
 import ThemeSwitcher from "@/components/ui/ThemeSwitcher";
+import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
 import NotificationsBell from "./NotificationsBell";
 import LogoutConfirmDialog from "./LogoutConfirmDialog";
 
@@ -410,7 +411,8 @@ export default function DashboardShell({
           </Box>
 
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <ThemeSwitcher />
+            <LanguageSwitcher color="inherit" size="medium" />
+            <ThemeSwitcher color="inherit" size="medium" />
             <NotificationsBell allNotificationsHref={notificationsHref} allNotificationsLabel={notificationsLabel} />
             <IconButton
               onClick={() => {
@@ -428,9 +430,9 @@ export default function DashboardShell({
       <Menu
         id="menu-appbar"
         anchorEl={anchorEl}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        anchorOrigin={{ vertical: "top", horizontal: theme.direction === "rtl" ? "left" : "right" }}
         keepMounted
-        transformOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "bottom", horizontal: theme.direction === "rtl" ? "right" : "left" }}
         open={Boolean(anchorEl)}
         onClose={handleClose}
         slotProps={{

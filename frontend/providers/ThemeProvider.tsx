@@ -1,47 +1,84 @@
 "use client";
 
-import { useState, useEffect, ReactNode, startTransition } from "react";
+import { type ReactNode, startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ThemeProvider } from "@mui/material/styles";
 import { CssBaseline } from "@mui/material";
+import { useLocale } from "next-intl";
 import { createAppTheme } from "./theme";
-import { getClientTheme, setThemePreference } from "@/lib/theme-detection";
+import { getClientTheme, getCookie, setThemePreference } from "@/lib/theme-detection";
 import type { PaletteMode } from "@mui/material/styles";
 import { ThemeContext } from "@/context/ThemeContext";
 
 interface AppThemeProviderProps {
   readonly children: ReactNode;
-  readonly initialTheme?: PaletteMode; // Allow server to pass initial theme
+  readonly initialTheme?: PaletteMode;
 }
 
 export function AppThemeProvider({ children, initialTheme = "light" }: AppThemeProviderProps) {
   const [mode, setMode] = useState<PaletteMode>(initialTheme);
+  const [isThemeChanging, setIsThemeChanging] = useState<boolean>(false);
+  const locale = useLocale();
+  const direction = locale === "ar" ? "rtl" : "ltr";
+  const isMounted = useRef(false);
 
-  // Load theme preference from client on mount
   useEffect(() => {
-    const clientTheme = getClientTheme();
-    if (clientTheme !== mode) {
-      startTransition(() => {
-        setMode(clientTheme);
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    getCookie("theme-mode")
+      .then(cookieTheme => {
+        if (!isMounted.current) return;
+        const clientTheme = cookieTheme === "light" || cookieTheme === "dark" ? cookieTheme : getClientTheme();
+
+        if (clientTheme !== mode) {
+          startTransition(() => {
+            setMode(clientTheme);
+          });
+        }
+      })
+      .catch(() => {
+        if (!isMounted.current) return;
+        const clientTheme = getClientTheme();
+        if (clientTheme !== mode) {
+          startTransition(() => {
+            setMode(clientTheme);
+          });
+        }
       });
-    }
   }, [mode]);
 
-  // Sync data-theme attribute for CSS variable application (e.g. from globals.css)
   useEffect(() => {
-    document.documentElement.dataset.theme = mode;
-    document.documentElement.style.colorScheme = mode;
+    if (typeof document !== "undefined") {
+      document.documentElement.dataset.theme = mode;
+      document.documentElement.style.colorScheme = mode;
+      document.documentElement.dir = direction;
+      document.documentElement.lang = locale;
+    }
+  }, [mode, direction, locale]);
+
+  const toggleTheme = useCallback(() => {
+    setIsThemeChanging(true);
+    const newMode = mode === "light" ? "dark" : "light";
+    setMode(newMode);
+    setThemePreference(newMode);
+
+    setTimeout(() => {
+      setIsThemeChanging(false);
+    }, 300);
   }, [mode]);
 
-  const toggleTheme = () => {
-    const newMode = mode === "light" ? "dark" : "light";
-    // setThemePreference will save to storage/cookies and trigger a page reload
-    setThemePreference(newMode);
-  };
-
-  const theme = createAppTheme(mode);
+  const theme = useMemo(() => createAppTheme(mode, direction, locale), [mode, direction, locale]);
+  const themeContextValue = useMemo(
+    () => ({ mode, toggleTheme, isThemeChanging, setIsThemeChanging }),
+    [mode, toggleTheme, isThemeChanging]
+  );
 
   return (
-    <ThemeContext.Provider value={{ mode, toggleTheme }}>
+    <ThemeContext.Provider value={themeContextValue}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         {children}
