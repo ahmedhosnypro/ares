@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import {
   Alert,
   Box,
@@ -43,6 +44,7 @@ export default function CompleteProfileClient() {
   const { data: session, update } = useSession();
   const router = useRouter();
   const theme = useTheme();
+  const t = useTranslations("dashboard.driverCompleteProfile");
 
   const [isLoading, setIsLoading] = useState(false);
   const [serviceAreas, setServiceAreas] = useState<ServiceArea[]>([]);
@@ -106,12 +108,12 @@ export default function CompleteProfileClient() {
     if (!session?.accessToken) return;
 
     if (!licenseImage || !idFrontImage || !idBackImage) {
-      setError("Please upload all required documents.");
+      setError(t("errors.pleaseUploadAllRequiredDocuments"));
       return;
     }
 
     if (selectedAreaIds.length === 0) {
-      setError("Please select at least one work area.");
+      setError(t("errors.pleaseSelectAtLeastOneWorkArea"));
       return;
     }
 
@@ -143,14 +145,14 @@ export default function CompleteProfileClient() {
 
       if (!res.ok) {
         const data = (await res.json().catch(() => ({ message: undefined }))) as { message?: string };
-        throw new Error(data.message ?? "Failed to complete profile.");
+        throw new Error(data.message ?? t("errors.failedToCompleteProfile"));
       }
 
       await update(); // refresh session
       router.push("/driver/verification-status");
     } catch (err) {
       logger.error("Profile completion error", err);
-      setError(err instanceof Error ? err.message : "An unexpected error occurred.");
+      setError(err instanceof Error ? err.message : t("errors.anUnexpectedErrorOccurred"));
     } finally {
       setIsLoading(false);
     }
@@ -201,7 +203,7 @@ export default function CompleteProfileClient() {
           onClick={() => ref.current?.click()}
           sx={{ p: 3, borderStyle: "dashed", borderWidth: 2 }}
         >
-          Upload Image
+          {t("uploadImage")}
         </Button>
       )}
     </Box>
@@ -224,11 +226,9 @@ export default function CompleteProfileClient() {
             <DirectionsCarIcon fontSize="large" />
           </Box>
           <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 800 }}>
-            Complete Your Driver Profile
+            {t("title")}
           </Typography>
-          <Typography color="text.secondary">
-            Please provide your details and documents to start receiving ride requests.
-          </Typography>
+          <Typography color="text.secondary">{t("subtitle")}</Typography>
         </Box>
 
         {error && (
@@ -245,12 +245,12 @@ export default function CompleteProfileClient() {
           <Grid container spacing={4}>
             <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 700 }}>
-                Personal Details
+                {t("personalDetails")}
               </Typography>
               <Stack spacing={3}>
                 <TextField
                   fullWidth
-                  label="Address"
+                  label={t("address")}
                   required
                   value={address}
                   onChange={e => {
@@ -259,7 +259,7 @@ export default function CompleteProfileClient() {
                 />
                 <TextField
                   fullWidth
-                  label="Emergency Contact Name"
+                  label={t("emergencyContactName")}
                   required
                   value={emergencyName}
                   onChange={e => {
@@ -268,7 +268,7 @@ export default function CompleteProfileClient() {
                 />
                 <TextField
                   fullWidth
-                  label="Emergency Contact Phone"
+                  label={t("emergencyContactPhone")}
                   required
                   value={emergencyPhone}
                   onChange={e => {
@@ -278,10 +278,10 @@ export default function CompleteProfileClient() {
               </Stack>
 
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 700, mt: 4 }}>
-                Work Areas
+                {t("workAreas")}
               </Typography>
               <FormControl fullWidth required>
-                <InputLabel id="areas-label">Select Service Areas</InputLabel>
+                <InputLabel id="areas-label">{t("selectServiceAreas")}</InputLabel>
                 <Select
                   labelId="areas-label"
                   multiple
@@ -293,10 +293,10 @@ export default function CompleteProfileClient() {
                       .map(a => a.name)
                       .join(", ")
                   }
-                  label="Select Service Areas"
+                  label={t("selectServiceAreas")}
                 >
                   {isLoadingAreas ? (
-                    <MenuItem disabled>Loading areas...</MenuItem>
+                    <MenuItem disabled>{t("loadingAreas")}</MenuItem>
                   ) : (
                     serviceAreas.map(area => (
                       <MenuItem key={area.id} value={area.id}>
@@ -311,12 +311,12 @@ export default function CompleteProfileClient() {
 
             <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 700 }}>
-                License & Documents
+                {t("licenseAndDocuments")}
               </Typography>
               <Stack spacing={3}>
                 <TextField
                   fullWidth
-                  label="License Number"
+                  label={t("licenseNumber")}
                   required
                   value={licenseNumber}
                   onChange={e => {
@@ -325,7 +325,7 @@ export default function CompleteProfileClient() {
                 />
                 <TextField
                   fullWidth
-                  label="License Expiry Date"
+                  label={t("licenseExpiryDate")}
                   type="date"
                   required
                   slotProps={{ inputLabel: { shrink: true } }}
@@ -335,9 +335,9 @@ export default function CompleteProfileClient() {
                   }}
                 />
                 <Box>
-                  {renderFileUploader("Driver License Image", licenseImage, setLicenseImage, licenseInputRef)}
-                  {renderFileUploader("National ID (Front)", idFrontImage, setIdFrontImage, idFrontInputRef)}
-                  {renderFileUploader("National ID (Back)", idBackImage, setIdBackImage, idBackInputRef)}
+                  {renderFileUploader(t("driverLicenseImage"), licenseImage, setLicenseImage, licenseInputRef)}
+                  {renderFileUploader(t("nationalIdFront"), idFrontImage, setIdFrontImage, idFrontInputRef)}
+                  {renderFileUploader(t("nationalIdBack"), idBackImage, setIdBackImage, idBackInputRef)}
                 </Box>
               </Stack>
             </Grid>
@@ -351,7 +351,7 @@ export default function CompleteProfileClient() {
               disabled={isLoading}
               sx={{ px: 6, py: 1.5, borderRadius: 2, fontWeight: 700 }}
             >
-              {isLoading ? <CircularProgress size={24} color="inherit" /> : "Submit Profile"}
+              {isLoading ? <CircularProgress size={24} color="inherit" /> : t("submitProfile")}
             </Button>
           </Box>
         </form>

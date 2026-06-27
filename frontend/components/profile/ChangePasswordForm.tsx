@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Alert,
   Box,
@@ -17,7 +17,7 @@ import LockResetRoundedIcon from "@mui/icons-material/LockResetRounded";
 import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
 import VisibilityOffRoundedIcon from "@mui/icons-material/VisibilityOffRounded";
 import { useTranslations } from "next-intl";
-import { changePasswordSchema, type ChangePasswordFormData } from "@/lib/validation/schemas";
+import { z } from "zod";
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
 
@@ -26,7 +26,27 @@ interface ChangePasswordFormProps {
   readonly accessToken: string;
 }
 
+type ChangePasswordFormData = z.infer<ReturnType<typeof createChangePasswordSchema>>;
 type FieldErrors = Partial<Record<keyof ChangePasswordFormData, string>>;
+
+function createChangePasswordSchema(t: (key: string) => string) {
+  return z
+    .object({
+      currentPassword: z.string().min(1, t("validation.currentPasswordRequired")),
+      newPassword: z
+        .string()
+        .min(8, t("validation.passwordMinLength"))
+        .regex(/[A-Z]/, t("validation.passwordUppercase"))
+        .regex(/[a-z]/, t("validation.passwordLowercase"))
+        .regex(/\d/, t("validation.passwordDigit"))
+        .regex(/[\W_]/, t("validation.passwordSpecialChar")),
+      confirmPassword: z.string().min(1, t("validation.confirmPasswordRequired")),
+    })
+    .refine(data => data.newPassword === data.confirmPassword, {
+      message: t("validation.passwordsDoNotMatch"),
+      path: ["confirmPassword"],
+    });
+}
 
 const PASSWORD_STRENGTH_KEYS = ["tooShort", "weak", "fair", "good", "strong"] as const;
 
@@ -46,7 +66,9 @@ function getPasswordStrength(password: string) {
 }
 
 export default function ChangePasswordForm({ userId, accessToken }: ChangePasswordFormProps) {
-  const t = useTranslations("customer.accountProfile");
+  const t = useTranslations("customer.changePassword");
+  const localizedSchema = useMemo(() => createChangePasswordSchema(t), [t]);
+
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [serverError, setServerError] = useState("");
@@ -63,14 +85,13 @@ export default function ChangePasswordForm({ userId, accessToken }: ChangePasswo
   const passwordStrength = getPasswordStrength(newPassword);
 
   const validateField = (field: keyof ChangePasswordFormData, value: string) => {
-    // For confirmPassword we need to validate the whole object to catch the refine
     if (field === "confirmPassword") {
-      const result = changePasswordSchema.safeParse({ currentPassword, newPassword, confirmPassword: value });
+      const result = localizedSchema.safeParse({ currentPassword, newPassword, confirmPassword: value });
       const issue = result.success ? undefined : result.error.issues.find(i => i.path[0] === "confirmPassword");
       setFieldErrors(prev => ({ ...prev, confirmPassword: issue?.message }));
       return;
     }
-    const result = changePasswordSchema.shape[field].safeParse(value);
+    const result = localizedSchema.shape[field].safeParse(value);
     setFieldErrors(prev => ({
       ...prev,
       [field]: result.success ? undefined : result.error.issues[0]?.message,
@@ -87,7 +108,7 @@ export default function ChangePasswordForm({ userId, accessToken }: ChangePasswo
     setSuccessMsg("");
     setServerError("");
 
-    const result = changePasswordSchema.safeParse({ currentPassword, newPassword, confirmPassword });
+    const result = localizedSchema.safeParse({ currentPassword, newPassword, confirmPassword });
     if (!result.success) {
       const errors: FieldErrors = {};
       for (const issue of result.error.issues) {
@@ -118,11 +139,11 @@ export default function ChangePasswordForm({ userId, accessToken }: ChangePasswo
           return;
         }
 
-        setServerError(data.message ?? t("security.changeFailed"));
+        setServerError(data.message ?? t("changeFailed"));
         return;
       }
 
-      setSuccessMsg(t("security.changeSuccess"));
+      setSuccessMsg(t("changeSuccess"));
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -130,7 +151,7 @@ export default function ChangePasswordForm({ userId, accessToken }: ChangePasswo
       setFieldErrors({});
     } catch (error) {
       logger.error("Change password error", error);
-      setServerError(error instanceof Error ? error.message : t("security.changeFailed"));
+      setServerError(error instanceof Error ? error.message : t("changeFailed"));
     } finally {
       setLoading(false);
     }
@@ -139,7 +160,7 @@ export default function ChangePasswordForm({ userId, accessToken }: ChangePasswo
   return (
     <Box>
       <Typography variant="h6" color="text.primary" gutterBottom sx={{ fontWeight: 700 }}>
-        {t("security.changePassword")}
+        {t("title")}
       </Typography>
       <Divider sx={{ mb: 3, borderColor: "border.light" }} />
 
@@ -153,7 +174,7 @@ export default function ChangePasswordForm({ userId, accessToken }: ChangePasswo
       >
         <TextField
           id="currentPassword"
-          label={t("security.currentPassword")}
+          label={t("currentPassword")}
           type={showCurrent ? "text" : "password"}
           autoComplete="current-password"
           required
@@ -172,7 +193,7 @@ export default function ChangePasswordForm({ userId, accessToken }: ChangePasswo
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
-                    aria-label={t("security.toggleCurrentPasswordAria")}
+                    aria-label={t("toggleCurrentPasswordAria")}
                     onClick={() => {
                       setShowCurrent(v => !v);
                     }}
@@ -194,7 +215,7 @@ export default function ChangePasswordForm({ userId, accessToken }: ChangePasswo
         <Box>
           <TextField
             id="newPassword"
-            label={t("security.newPassword")}
+            label={t("newPassword")}
             type={showNew ? "text" : "password"}
             autoComplete="new-password"
             required
@@ -213,7 +234,7 @@ export default function ChangePasswordForm({ userId, accessToken }: ChangePasswo
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
-                      aria-label={t("security.toggleNewPasswordAria")}
+                      aria-label={t("toggleNewPasswordAria")}
                       onClick={() => {
                         setShowNew(v => !v);
                       }}
@@ -240,7 +261,7 @@ export default function ChangePasswordForm({ userId, accessToken }: ChangePasswo
                 sx={{ height: 4, borderRadius: 999, mb: 0.5 }}
               />
               <Typography variant="caption" color={`${passwordStrength.color}.main`} sx={{ fontWeight: 600 }}>
-                {passwordStrength.key ? t(`security.passwordStrength.${passwordStrength.key}`) : ""}
+                {passwordStrength.key ? t(`passwordStrength.${passwordStrength.key}`) : ""}
               </Typography>
             </Box>
           )}
@@ -248,7 +269,7 @@ export default function ChangePasswordForm({ userId, accessToken }: ChangePasswo
 
         <TextField
           id="confirmPassword"
-          label={t("security.confirmNewPassword")}
+          label={t("confirmNewPassword")}
           type={showConfirm ? "text" : "password"}
           autoComplete="new-password"
           required
@@ -267,7 +288,7 @@ export default function ChangePasswordForm({ userId, accessToken }: ChangePasswo
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
-                    aria-label={t("security.toggleConfirmPasswordAria")}
+                    aria-label={t("toggleConfirmPasswordAria")}
                     onClick={() => {
                       setShowConfirm(v => !v);
                     }}
@@ -323,7 +344,7 @@ export default function ChangePasswordForm({ userId, accessToken }: ChangePasswo
               "&:hover": { boxShadow: theme => theme.palette.shadow.buttonHover },
             }}
           >
-            {loading ? t("security.changing") : t("security.changePasswordButton")}
+            {loading ? t("changing") : t("changeButton")}
           </Button>
         </Box>
       </Box>

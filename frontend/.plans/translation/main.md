@@ -3,14 +3,14 @@
 ## Overall Progress
 
 - Total Pages: 94
-- Completed Pages: 16
+- Completed Pages: 20
 - Progress: 17%
 
 ## Messages Structure Progress
 
-- **Types**: 20/94 split (common, auth, errors + 7 auth + 6 customer + 4 admin page types done; 74 remaining)
-- **English**: 20/94 split (common, auth, errors + 7 auth + 6 customer + 4 admin page translations done; 74 remaining)
-- **Arabic**: 20/94 split (common, auth, errors + 7 auth + 6 customer + 4 admin page translations done; 74 remaining)
+- **Types**: 20/94 split (common, auth, errors + 7 auth + 7 customer + 4 admin page types done; 74 remaining)
+- **English**: 20/94 split (common, auth, errors + 7 auth + 7 customer + 4 admin page translations done; 74 remaining)
+- **Arabic**: 20/94 split (common, auth, errors + 7 auth + 7 customer + 4 admin page translations done; 74 remaining)
 
 > See `shared/Messages_README.md` for messages directory conventions.
 
@@ -33,10 +33,10 @@
 - [x] [Driver Selection](pages/customer/booking/driver-selection/_vehicleId.md) — `/(customer)/booking/driver-selection/[vehicleId]`
 - [x] [Booking Payment](pages/customer/booking/payment/_bookingId.md) — `/(customer)/booking/payment/[bookingId]`
 - [x] [Customer Bookings](pages/customer/bookings.md) — `/(customer)/bookings`
-- [ ] [Change Password](pages/customer/change-password.md) — `/(customer)/change-password`
-- [ ] [Customer Info](pages/customer/info.md) — `/(customer)/info`
-- [ ] [Customer Notifications](pages/customer/notifications.md) — `/(customer)/notifications`
-- [ ] [Customer Settings](pages/customer/settings.md) — `/(customer)/settings`
+- [x] [Change Password](pages/customer/change-password.md) — `/(customer)/change-password`
+- [x] [Customer Info](pages/customer/info.md) — `/(customer)/info`
+- [x] [Customer Notifications](pages/customer/notifications.md) — `/(customer)/notifications`
+- [x] [Customer Settings](pages/customer/settings.md) — `/(customer)/settings`
 
 ## Dashboard - Admin Pages (37)
 
@@ -80,13 +80,13 @@
 
 ## Dashboard - Driver Pages (7)
 
-- [ ] [Complete Profile](pages/dashboard/driver/complete-profile.md) — `/(dashboard)/driver/complete-profile`
-- [ ] [Driver Dashboard](pages/dashboard/driver/dashboard.md) — `/(dashboard)/driver/dashboard`
-- [ ] [Driver Earnings](pages/dashboard/driver/earnings.md) — `/(dashboard)/driver/earnings`
-- [ ] [Driver Notifications](pages/dashboard/driver/notifications.md) — `/(dashboard)/driver/notifications`
-- [ ] [Driver Profile](pages/dashboard/driver/profile.md) — `/(dashboard)/driver/profile`
-- [ ] [Driver Trips](pages/dashboard/driver/trips.md) — `/(dashboard)/driver/trips`
-- [ ] [Verification Status](pages/dashboard/driver/verification-status.md) — `/(dashboard)/driver/verification-status`
+- [x] [Complete Profile](pages/dashboard/driver/complete-profile.md) — `/(dashboard)/driver/complete-profile`
+- [x] [Driver Dashboard](pages/dashboard/driver/dashboard.md) — `/(dashboard)/driver/dashboard`
+- [x] [Driver Earnings](pages/dashboard/driver/earnings.md) — `/(dashboard)/driver/earnings`
+- [x] [Driver Notifications](pages/dashboard/driver/notifications.md) — `/(dashboard)/driver/notifications`
+- [x] [Driver Profile](pages/dashboard/driver/profile.md) — `/(dashboard)/driver/profile`
+- [x] [Driver Trips](pages/dashboard/driver/trips.md) — `/(dashboard)/driver/trips`
+- [x] [Verification Status](pages/dashboard/driver/verification-status.md) — `/(dashboard)/driver/verification-status`
 
 ## Dashboard - Inspector Pages (4)
 

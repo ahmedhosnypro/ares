@@ -12,6 +12,7 @@ import {
   Chip,
   useTheme,
 } from "@mui/material";
+import { useTranslations } from "next-intl";
 
 interface HistoricalPayout {
   readonly tripId: string;
@@ -29,6 +30,7 @@ interface PayoutLogsTableProps {
 
 export default function PayoutLogsTable({ payouts }: PayoutLogsTableProps) {
   const theme = useTheme();
+  const t = useTranslations("dashboard.driverDashboard.payoutLogs");
 
   return (
     <Card
@@ -52,7 +54,7 @@ export default function PayoutLogsTable({ payouts }: PayoutLogsTableProps) {
                   variant="caption"
                   sx={{ fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.5px" }}
                 >
-                  Trip ID
+                  {t("tripId")}
                 </Typography>
               </TableCell>
               <TableCell>
@@ -60,7 +62,7 @@ export default function PayoutLogsTable({ payouts }: PayoutLogsTableProps) {
                   variant="caption"
                   sx={{ fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.5px" }}
                 >
-                  Date Completed
+                  {t("dateCompleted")}
                 </Typography>
               </TableCell>
               <TableCell>
@@ -68,7 +70,7 @@ export default function PayoutLogsTable({ payouts }: PayoutLogsTableProps) {
                   variant="caption"
                   sx={{ fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.5px" }}
                 >
-                  Client
+                  {t("client")}
                 </Typography>
               </TableCell>
               <TableCell>
@@ -76,7 +78,7 @@ export default function PayoutLogsTable({ payouts }: PayoutLogsTableProps) {
                   variant="caption"
                   sx={{ fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.5px" }}
                 >
-                  Vehicle
+                  {t("vehicle")}
                 </Typography>
               </TableCell>
               <TableCell>
@@ -84,7 +86,7 @@ export default function PayoutLogsTable({ payouts }: PayoutLogsTableProps) {
                   variant="caption"
                   sx={{ fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.5px" }}
                 >
-                  Duration
+                  {t("duration")}
                 </Typography>
               </TableCell>
               <TableCell>
@@ -92,7 +94,7 @@ export default function PayoutLogsTable({ payouts }: PayoutLogsTableProps) {
                   variant="caption"
                   sx={{ fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.5px" }}
                 >
-                  Earnings
+                  {t("earnings")}
                 </Typography>
               </TableCell>
               <TableCell>
@@ -100,7 +102,7 @@ export default function PayoutLogsTable({ payouts }: PayoutLogsTableProps) {
                   variant="caption"
                   sx={{ fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.5px" }}
                 >
-                  Payout Status
+                  {t("payoutStatus")}
                 </Typography>
               </TableCell>
             </TableRow>
@@ -121,7 +123,12 @@ export default function PayoutLogsTable({ payouts }: PayoutLogsTableProps) {
                 <TableCell>{row.duration}</TableCell>
                 <TableCell sx={{ fontWeight: 700, color: "text.primary" }}>{row.amount}</TableCell>
                 <TableCell>
-                  <Chip label={row.status} size="small" color="success" sx={{ fontWeight: 700, borderRadius: 2 }} />
+                  <Chip
+                    label={row.status === "Paid" ? t("paid") : t("pending")}
+                    size="small"
+                    color="success"
+                    sx={{ fontWeight: 700, borderRadius: 2 }}
+                  />
                 </TableCell>
               </TableRow>
             ))}
