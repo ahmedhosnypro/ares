@@ -15,6 +15,7 @@ export interface DriverEarningsLabels {
   bookingId: string;
   vehicle: string;
   earnings: string;
+  earningsAriaLabel: string;
   errors: {
     failedToLoadEarningsData: string;
   };

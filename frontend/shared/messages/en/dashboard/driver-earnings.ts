@@ -17,6 +17,7 @@ export const driverEarnings: DriverEarningsLabels = {
   bookingId: "Booking ID",
   vehicle: "Vehicle",
   earnings: "Earnings",
+  earningsAriaLabel: "Earnings history table",
   errors: {
     failedToLoadEarningsData: "Failed to load earnings data",
   },

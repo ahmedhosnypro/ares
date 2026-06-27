@@ -141,8 +141,14 @@ export default function GoogleSignInButton({
           const session = await getSession();
           if (callbackUrl) {
             router.push(callbackUrl);
+          } else if (session?.user.roles.includes("Admin")) {
+            router.push("/admin");
           } else if (session?.user.roles.includes("Supplier")) {
             router.push("/supplier/dashboard");
+          } else if (session?.user.roles.includes("Driver")) {
+            router.push("/driver/dashboard");
+          } else if (session?.user.roles.includes("Inspector")) {
+            router.push("/inspector");
           } else {
             router.push("/");
           }

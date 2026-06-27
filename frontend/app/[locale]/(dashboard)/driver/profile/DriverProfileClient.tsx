@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
 import { Alert, Box, CircularProgress, Container, Typography, Chip, Stack, Grid, CardContent } from "@mui/material";
 import { Badge as BadgeIcon, DirectionsCar as DirectionsCarIcon } from "@mui/icons-material";
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
-import { format } from "date-fns";
+import { useDateFnsLocale } from "@/hooks/useDateFnsLocale";
 import SharedProfileContainer from "@/components/profile/SharedProfileContainer";
 import ProfileCard from "@/components/profile/ProfileCard";
 import { type ProfileData } from "@/app/[locale]/(customer)/account/profile/types";
@@ -39,6 +41,10 @@ interface DriverProfileDetails {
 
 export default function DriverProfileClient() {
   const { data: session } = useSession();
+  const t = useTranslations("dashboard.driverProfile");
+  const tc = useTranslations("common");
+  const { formatLocalized } = useDateFnsLocale();
+  const currentLocale = useLocale();
 
   const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState<DriverProfileDetails | null>(null);
@@ -54,19 +60,19 @@ export default function DriverProfileClient() {
           },
         });
 
-        if (!res.ok) throw new Error("Failed to load profile");
+        if (!res.ok) throw new Error(t("failedToLoadProfile"));
 
         const data = (await res.json()) as unknown as DriverProfileDetails;
         setProfile(data);
       } catch (err) {
         logger.error("Error fetching driver profile", err);
-        setError("Could not load your profile details.");
+        setError(t("couldNotLoadProfileDetails"));
       } finally {
         setIsLoading(false);
       }
     };
     void fetchProfile();
-  }, [session]);
+  }, [session, t]);
 
   if (isLoading) {
     return (
@@ -79,12 +85,11 @@ export default function DriverProfileClient() {
   if (error || !profile || !session) {
     return (
       <Container maxWidth="md" sx={{ py: 4 }}>
-        <Alert severity="error">{error || "Profile not found."}</Alert>
+        <Alert severity="error">{error || t("profileNotFound")}</Alert>
       </Container>
     );
   }
 
-  // Parse address fields from flat address string
   const addressParts = profile.address ? profile.address.split(",").map(p => p.trim()) : [];
   const mappedAddress = {
     street: addressParts[0] || "",
@@ -94,7 +99,6 @@ export default function DriverProfileClient() {
     country: addressParts[4] || "",
   };
 
-  // Map to the shared ProfileData interface
   const profileData: ProfileData = {
     userId: session.user.id || "",
     firstName: profile.firstName ?? "",
@@ -109,16 +113,16 @@ export default function DriverProfileClient() {
     emergencyContact: {
       name: profile.emergencyContactName ?? "",
       phone: profile.emergencyContactPhone ?? "",
-      relationship: "Emergency",
+      relationship: t("emergencyContactRelationship"),
     },
     verificationStatus: {
       email: profile.status === "Verified",
       phone: profile.status === "Verified",
       driverLicense: profile.status === "Verified",
-      kyc: profile.status === "Verified" ? "Approved" : "Pending",
+      kyc: profile.status === "Verified" ? t("kycApproved") : t("kycPending"),
     },
     dateOfBirth: "",
-    languagePreference: "en",
+    languagePreference: currentLocale,
     currencyPreference: "USD",
   };
 
@@ -129,7 +133,7 @@ export default function DriverProfileClient() {
           <Grid container spacing={4}>
             <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="h6" sx={{ fontWeight: 700, mb: 3, display: "flex", alignItems: "center", gap: 1 }}>
-                <BadgeIcon color="primary" /> License Details
+                <BadgeIcon color="primary" /> {t("licenseDetails")}
               </Typography>
               <Stack spacing={2}>
                 <Box>
@@ -138,10 +142,10 @@ export default function DriverProfileClient() {
                     color="text.secondary"
                     sx={{ textTransform: "uppercase", fontWeight: 700 }}
                   >
-                    License Number
+                    {t("licenseNumber")}
                   </Typography>
                   <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                    {profile.licenseNumber || "N/A"}
+                    {profile.licenseNumber || tc("na")}
                   </Typography>
                 </Box>
                 <Box>
@@ -150,10 +154,12 @@ export default function DriverProfileClient() {
                     color="text.secondary"
                     sx={{ textTransform: "uppercase", fontWeight: 700 }}
                   >
-                    Expiry Date
+                    {t("expiryDate")}
                   </Typography>
                   <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                    {profile.licenseExpiryDate ? format(new Date(profile.licenseExpiryDate), "MMMM d, yyyy") : "N/A"}
+                    {profile.licenseExpiryDate
+                      ? formatLocalized(new Date(profile.licenseExpiryDate), "MMMM d, yyyy")
+                      : tc("na")}
                   </Typography>
                 </Box>
               </Stack>
@@ -161,10 +167,10 @@ export default function DriverProfileClient() {
 
             <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="h6" sx={{ fontWeight: 700, mb: 3, display: "flex", alignItems: "center", gap: 1 }}>
-                <DirectionsCarIcon color="primary" /> Approved Work Areas
+                <DirectionsCarIcon color="primary" /> {t("approvedWorkAreas")}
               </Typography>
               {profile.workAreas.length === 0 ? (
-                <Typography color="text.secondary">No work areas assigned.</Typography>
+                <Typography color="text.secondary">{t("noWorkAreasAssigned")}</Typography>
               ) : (
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
                   {profile.workAreas.map(area => (

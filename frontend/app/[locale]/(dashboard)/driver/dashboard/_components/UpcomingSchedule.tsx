@@ -76,7 +76,15 @@ export default function UpcomingSchedule({ trips }: UpcomingScheduleProps) {
                 </Box>
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-                    {trip.vehicleModel} • {trip.duration}
+                    {trip.vehicleModel} •{" "}
+                    {(() => {
+                      const dm = trip.duration.match(/^(\d+)\s+Days?$/i);
+                      if (dm) {
+                        const c = Number(dm[1]);
+                        return c === 1 ? t("day") : t("days", { count: c });
+                      }
+                      return trip.duration;
+                    })()}
                   </Typography>
                   <Typography
                     variant="caption"

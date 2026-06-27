@@ -40,11 +40,11 @@ export default function DashboardHeader({ userName, initialAvailability, onAvail
                   fontSize: "1.5rem",
                 }}
               >
-                {userName?.[0] || "C"}
+                {userName?.[0] || t("defaultInitial")}
               </Avatar>
               <Box>
                 <Typography variant="h5" sx={{ fontWeight: 700, color: "text.primary", mb: 0.5 }}>
-                  {t("welcomeBack", { userName: userName || "Chauffeur" })}
+                  {t("welcomeBack", { userName: userName || t("defaultUserName") })}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   {t("portalDescription")}

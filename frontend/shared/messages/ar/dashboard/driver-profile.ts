@@ -11,4 +11,8 @@ export const driverProfile: DriverProfileLabels = {
   na: "غير متوفر",
   approvedWorkAreas: "مناطق العمل المعتمدة",
   noWorkAreasAssigned: "لم يتم تعيين مناطق عمل.",
+  emergencyContactRelationship: "طوارئ",
+  failedToLoadProfile: "فشل تحميل الملف",
+  kycApproved: "معتمد",
+  kycPending: "قيد الانتظار",
 };

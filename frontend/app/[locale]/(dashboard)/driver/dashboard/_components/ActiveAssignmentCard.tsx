@@ -236,7 +236,7 @@ export default function ActiveAssignmentCard({ assignment }: ActiveAssignmentCar
                     color="text.secondary"
                     sx={{ display: "block", mt: 0.5, fontWeight: 500 }}
                   >
-                    Scheduled: {assignment.pickupDate}
+                    {t("scheduled")}: {assignment.pickupDate}
                   </Typography>
                 </Box>
               </Card>
@@ -277,7 +277,7 @@ export default function ActiveAssignmentCard({ assignment }: ActiveAssignmentCar
                     color="text.secondary"
                     sx={{ display: "block", mt: 0.5, fontWeight: 500 }}
                   >
-                    Scheduled: {assignment.dropoffDate}
+                    {t("scheduled")}: {assignment.dropoffDate}
                   </Typography>
                 </Box>
               </Card>
@@ -408,7 +408,17 @@ export default function ActiveAssignmentCard({ assignment }: ActiveAssignmentCar
                   </Typography>
                   <Chip
                     icon={<DurationIcon />}
-                    label={assignment.rentalDuration}
+                    label={(() => {
+                      const d = assignment.rentalDuration;
+                      const drm = d.match(/^(\d+)\s+Days?\s+Remaining$/i);
+                      if (drm) return t("daysRemaining", { count: Number(drm[1]) });
+                      const dm = d.match(/^(\d+)\s+Days?$/i);
+                      if (dm) {
+                        const c = Number(dm[1]);
+                        return c === 1 ? t("day") : t("days", { count: c });
+                      }
+                      return d;
+                    })()}
                     size="small"
                     color="primary"
                     sx={{ fontWeight: 700, borderRadius: 2 }}
@@ -418,38 +428,14 @@ export default function ActiveAssignmentCard({ assignment }: ActiveAssignmentCar
                 <Divider />
 
                 <Stack spacing={1.5}>
-                  {t.rich("guidelines", {
-                    0: chunks => (
-                      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-                        <Box
-                          sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "primary.main", flexShrink: 0 }}
-                        />
-                        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-                          {chunks}
-                        </Typography>
-                      </Stack>
-                    ),
-                    1: chunks => (
-                      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-                        <Box
-                          sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "primary.main", flexShrink: 0 }}
-                        />
-                        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-                          {chunks}
-                        </Typography>
-                      </Stack>
-                    ),
-                    2: chunks => (
-                      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-                        <Box
-                          sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "primary.main", flexShrink: 0 }}
-                        />
-                        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-                          {chunks}
-                        </Typography>
-                      </Stack>
-                    ),
-                  })}
+                  {(t.raw("guidelines") as readonly string[]).map((guideline, index) => (
+                    <Stack key={index} direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+                      <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "primary.main", flexShrink: 0 }} />
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                        {guideline}
+                      </Typography>
+                    </Stack>
+                  ))}
                 </Stack>
               </Stack>
             </Card>

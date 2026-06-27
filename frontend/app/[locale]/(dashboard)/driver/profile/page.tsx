@@ -1,10 +1,14 @@
-import { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import DriverProfileClient from "./DriverProfileClient";
 
-export const metadata: Metadata = {
-  title: "My Profile | ARES Driver",
-  description: "View and manage your driver profile.",
-};
+export async function generateMetadata({ params: { locale } }: { params: { locale: string } }) {
+  const t = await getTranslations({ locale, namespace: "dashboard.driverProfile" });
+
+  return {
+    title: t("title"),
+    description: t("description"),
+  };
+}
 
 export default function DriverProfilePage() {
   return <DriverProfileClient />;
