@@ -30,7 +30,7 @@ export default function GalleryEditor() {
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const images = watch("images");
+  const images = watch("images") || [];
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [fileError, setFileError] = useState<string | null>(null);
 
@@ -100,7 +100,7 @@ export default function GalleryEditor() {
           bgcolor: "action.hover",
         }}
       >
-        {activeImage.url && (activeImage.url.startsWith("blob:") || toImageUrl(activeImage.url)) ? (
+        {activeImage?.url && (activeImage.url.startsWith("blob:") || toImageUrl(activeImage.url)) ? (
           <Image
             src={activeImage.url.startsWith("blob:") ? activeImage.url : (toImageUrl(activeImage.url) as string)}
             alt="Vehicle"

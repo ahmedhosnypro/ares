@@ -8,8 +8,6 @@ import { DashboardSummary, RecentSummaryItem } from "./types";
 import { SummaryItem } from "./_components/StatCardGrid";
 import { BookingListItem } from "./_components/RecentBookings";
 import {
-  DashboardAlert,
-  mockAlerts,
   mockActivities,
   QuickAction,
   mockQuickActions,
@@ -152,14 +150,7 @@ async function getRecentBookings(
   }
 }
 
-async function getAlerts(accessToken: string): Promise<readonly DashboardAlert[]> {
-  try {
-    const data = await apiFetchJson<DashboardAlert[]>("api/dashboard/alerts", { accessToken });
-    return data.length > 0 ? data : mockAlerts;
-  } catch {
-    return mockAlerts;
-  }
-}
+
 
 async function getActivities(accessToken: string): Promise<readonly RecentSummaryItem[]> {
   try {
@@ -201,9 +192,8 @@ export default async function AdminDashboardPage() {
 
   const accessToken = session.accessToken;
   const { summary, rawData: rawSummaryData } = await getSummary(accessToken);
-  const [recentBookings, alerts, activities, quickActions, topVehicles] = await Promise.all([
+  const [recentBookings, activities, quickActions, topVehicles] = await Promise.all([
     getRecentBookings(accessToken),
-    getAlerts(accessToken),
     getActivities(accessToken),
     getQuickActions(accessToken),
     getTopVehicles(accessToken),
@@ -213,7 +203,6 @@ export default async function AdminDashboardPage() {
     <AdminDashboardView
       summary={summary}
       recentBookings={recentBookings}
-      alerts={alerts}
       activities={activities}
       quickActions={quickActions}
       topVehicles={topVehicles}
