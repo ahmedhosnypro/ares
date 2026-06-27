@@ -36,6 +36,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import {
   searchCustomersPicker,
   searchAvailableVehiclesPicker,
@@ -118,6 +119,8 @@ export default function CreateBookingClient() {
   const router = useRouter();
   const theme = useTheme();
   const { data: session } = useSession();
+  const t = useTranslations("dashboardAdmin.createBooking");
+  const tCommon = useTranslations("common");
 
   // ── Form state ─────────────────────────────────────────────────────
   const [customer, setCustomer] = useState<CustomerPickerItem | null>(null);
@@ -316,15 +319,14 @@ export default function CreateBookingClient() {
 
   // ── Derived pricing ───────────────────────────────────────────────
   const dailyRate = vehicle?.dailyRate ?? 0;
-  const { totalDays, totalPrice, datesValid, daysString } = useMemo(() => {
+  const { totalDays, totalPrice, datesValid } = useMemo(() => {
     const p = pickupDate;
     const r = returnDate;
     if (!p || !r || isNaN(p.getTime()) || isNaN(r.getTime()) || p >= r) {
-      return { totalDays: 0, totalPrice: 0, datesValid: false, daysString: "" };
+      return { totalDays: 0, totalPrice: 0, datesValid: false };
     }
     const days = Math.round((r.getTime() - p.getTime()) / (1000 * 60 * 60 * 24));
-    const daysString = days === 1 ? "" : "s";
-    return { totalDays: days, totalPrice: days * dailyRate, datesValid: true, daysString };
+    return { totalDays: days, totalPrice: days * dailyRate, datesValid: true };
   }, [pickupDate, returnDate, dailyRate]);
 
   // ── Validity checks for each section ──────────────────────────────
@@ -391,10 +393,10 @@ export default function CreateBookingClient() {
           </IconButton>
           <Box>
             <Typography variant="h4" sx={{ fontWeight: 800 }}>
-              Create Booking
+              {t("title")}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Set up a new reservation for a customer.
+              {t("subtitle")}
             </Typography>
           </Box>
         </Stack>
@@ -408,7 +410,7 @@ export default function CreateBookingClient() {
             sx={{ borderRadius: 2 }}
             disabled={submitting}
           >
-            Cancel
+            {tCommon("cancel")}
           </Button>
           <Button
             variant="contained"
@@ -417,7 +419,7 @@ export default function CreateBookingClient() {
             disabled={!canSubmit}
             sx={{ borderRadius: 2, fontWeight: 700, minWidth: 180 }}
           >
-            {submitting ? <CircularProgress size={22} color="inherit" /> : "Create Booking"}
+            {submitting ? <CircularProgress size={22} color="inherit" /> : t("buttons.create")}
           </Button>
         </Stack>
       </Stack>
@@ -440,8 +442,8 @@ export default function CreateBookingClient() {
           {/* 1. Customer Selection */}
           <SectionCard
             step={1}
-            title="Customer"
-            subtitle="Search and pick the customer for this booking"
+            title={t("steps.customer.title")}
+            subtitle={t("steps.customer.subtitle")}
             done={customerDone}
           >
             <Autocomplete
@@ -460,7 +462,7 @@ export default function CreateBookingClient() {
                 }
               }}
               isOptionEqualToValue={(option, value) => option.id === value.id}
-              getOptionLabel={option => option.fullName || option.email || option.phone || "Unnamed customer"}
+              getOptionLabel={option => option.fullName || option.email || option.phone || t("steps.customer.unnamed")}
               loading={customerLoading}
               slotProps={{
                 paper: {
@@ -470,9 +472,7 @@ export default function CreateBookingClient() {
                 },
               }}
               noOptionsText={
-                customerSearch.trim().length < 3
-                  ? "Type at least 3 characters to search customers."
-                  : "No customers found."
+                customerSearch.trim().length < 3 ? t("steps.customer.minCharacters") : t("steps.customer.noOptions")
               }
               renderOption={(props, option) => (
                 <li {...props} key={option.id}>
@@ -489,10 +489,10 @@ export default function CreateBookingClient() {
                     </Avatar>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography sx={{ fontWeight: 600 }} noWrap>
-                        {option.fullName || "Unnamed"}
+                        {option.fullName || t("steps.customer.unnamed")}
                       </Typography>
                       <Typography variant="caption" color="text.secondary" noWrap>
-                        {option.email ?? "no email"} · {option.phone ?? "no phone"}
+                        {option.email ?? t("steps.customer.noEmail")} · {option.phone ?? t("steps.customer.noPhone")}
                       </Typography>
                     </Box>
                   </Stack>
@@ -501,8 +501,8 @@ export default function CreateBookingClient() {
               renderInput={params => (
                 <TextField
                   {...params}
-                  label="Customer"
-                  placeholder="Search by name, email, or phone…"
+                  label={t("steps.customer.label")}
+                  placeholder={t("steps.customer.placeholder")}
                   fullWidth
                   size="small"
                   slotProps={{
@@ -531,12 +531,7 @@ export default function CreateBookingClient() {
           </SectionCard>
 
           {/* 2. Booking Information */}
-          <SectionCard
-            step={2}
-            title="Booking Information"
-            subtitle="Dates and pickup / dropoff details"
-            done={datesDone}
-          >
+          <SectionCard step={2} title={t("steps.info.title")} subtitle={t("steps.info.subtitle")} done={datesDone}>
             <Box
               sx={{
                 display: "grid",
@@ -546,7 +541,7 @@ export default function CreateBookingClient() {
             >
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DatePicker
-                  label="Pickup Date"
+                  label={t("steps.info.pickupDate")}
                   value={pickupDate}
                   onChange={value => {
                     setPickupDate(value);
@@ -555,7 +550,7 @@ export default function CreateBookingClient() {
                   slotProps={{ textField: { fullWidth: true } }}
                 />
                 <DatePicker
-                  label="Return Date"
+                  label={t("steps.info.returnDate")}
                   value={returnDate}
                   onChange={value => {
                     setReturnDate(value);
@@ -565,7 +560,7 @@ export default function CreateBookingClient() {
                     textField: {
                       fullWidth: true,
                       error: showDateError,
-                      helperText: showDateError ? "Return date must be after pickup date" : "",
+                      helperText: showDateError ? t("steps.info.returnDateError") : "",
                     },
                   }}
                 />
@@ -599,7 +594,7 @@ export default function CreateBookingClient() {
                 }}
                 isOptionEqualToValue={(option, value) => option.id === value.id}
                 getOptionLabel={option => option.label}
-                noOptionsText="No locations found."
+                noOptionsText={t("steps.info.noLocations")}
                 renderOption={(props, option) => (
                   <li {...props} key={option.id}>
                     <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
@@ -611,8 +606,8 @@ export default function CreateBookingClient() {
                 renderInput={params => (
                   <TextField
                     {...params}
-                    label="Pickup Location"
-                    placeholder="Search pickup location…"
+                    label={t("steps.info.pickupLocation")}
+                    placeholder={t("steps.info.pickupLocationPlaceholder")}
                     fullWidth
                     slotProps={{
                       ...params.slotProps,
@@ -666,7 +661,7 @@ export default function CreateBookingClient() {
                 }}
                 isOptionEqualToValue={(option, value) => option.id === value.id}
                 getOptionLabel={option => option.label}
-                noOptionsText="No locations found."
+                noOptionsText={t("steps.info.noLocations")}
                 renderOption={(props, option) => (
                   <li {...props} key={option.id}>
                     <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
@@ -678,8 +673,8 @@ export default function CreateBookingClient() {
                 renderInput={params => (
                   <TextField
                     {...params}
-                    label="Dropoff Location"
-                    placeholder="Search dropoff location…"
+                    label={t("steps.info.dropoffLocation")}
+                    placeholder={t("steps.info.dropoffLocationPlaceholder")}
                     fullWidth
                     slotProps={{
                       ...params.slotProps,
@@ -710,12 +705,8 @@ export default function CreateBookingClient() {
           {/* 3. Vehicle Selection */}
           <SectionCard
             step={3}
-            title="Vehicle"
-            subtitle={
-              selectedPickupLocation
-                ? "Only available vehicles are shown for the selected dates and location"
-                : "Select a pickup location first to browse available vehicles"
-            }
+            title={t("steps.vehicle.title")}
+            subtitle={selectedPickupLocation ? t("steps.vehicle.subtitleActive") : t("steps.vehicle.subtitleInactive")}
             done={vehicleDone}
           >
             {!vehicle ? (
@@ -739,9 +730,7 @@ export default function CreateBookingClient() {
                 getOptionLabel={option => option.name}
                 filterOptions={x => x}
                 noOptionsText={
-                  !selectedPickupLocation
-                    ? "Please select a pickup location first."
-                    : "No available vehicles found for the selected location and dates."
+                  !selectedPickupLocation ? t("steps.vehicle.noLocationSelected") : t("steps.vehicle.noVehiclesFound")
                 }
                 slotProps={{
                   paper: {
@@ -765,14 +754,14 @@ export default function CreateBookingClient() {
                       </Avatar>
                       <Box sx={{ flex: 1, minWidth: 0 }}>
                         <Typography sx={{ fontWeight: 600 }} noWrap>
-                          {option.name || "Unnamed"}
+                          {option.name || t("steps.vehicle.unnamed")}
                         </Typography>
                         <Typography variant="caption" color="text.secondary" noWrap>
-                          {option.plateNumber ?? "No plate"} · {option.supplierName ?? "—"}
+                          {option.plateNumber ?? t("steps.vehicle.noPlate")} · {option.supplierName ?? "—"}
                         </Typography>
                       </Box>
                       <Typography sx={{ fontWeight: 700, color: "success.main", whiteSpace: "nowrap" }}>
-                        {formatCurrency(option.dailyRate ?? 0)}/day
+                        {t("steps.vehicle.dailyRate", { rate: formatCurrency(option.dailyRate ?? 0) })}
                       </Typography>
                     </Stack>
                   </li>
@@ -780,8 +769,8 @@ export default function CreateBookingClient() {
                 renderInput={params => (
                   <TextField
                     {...params}
-                    label="Vehicle"
-                    placeholder="Search by make, model, or plate…"
+                    label={t("steps.vehicle.label")}
+                    placeholder={t("steps.vehicle.placeholder")}
                     fullWidth
                     slotProps={{
                       ...params.slotProps,
@@ -834,13 +823,13 @@ export default function CreateBookingClient() {
                     <Box>
                       <Typography sx={{ fontWeight: 700 }}>{vehicle.name || "—"}</Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {vehicle.plateNumber ?? "No plate"} · {vehicle.supplierName ?? "—"}
+                        {vehicle.plateNumber ?? t("steps.vehicle.noPlate")} · {vehicle.supplierName ?? "—"}
                       </Typography>
                     </Box>
                   </Stack>
                   <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
                     <Chip
-                      label={`${formatCurrency(vehicle.dailyRate ?? 0)} / day`}
+                      label={t("steps.vehicle.dailyRate", { rate: formatCurrency(vehicle.dailyRate ?? 0) })}
                       size="small"
                       color="success"
                       sx={{ fontWeight: 700 }}
@@ -852,7 +841,7 @@ export default function CreateBookingClient() {
                         setVehicle(null);
                       }}
                     >
-                      Change
+                      {t("steps.vehicle.change")}
                     </Button>
                   </Stack>
                 </Stack>
@@ -861,12 +850,7 @@ export default function CreateBookingClient() {
           </SectionCard>
 
           {/* 4. Payment Method Selection */}
-          <SectionCard
-            step={4}
-            title="Payment Method"
-            subtitle="Choose how the customer will pay for this booking"
-            done={true}
-          >
+          <SectionCard step={4} title={t("steps.payment.title")} subtitle={t("steps.payment.subtitle")} done={true}>
             <Box
               sx={{
                 display: "grid",
@@ -909,9 +893,9 @@ export default function CreateBookingClient() {
                     }}
                   />
                   <Box>
-                    <Typography sx={{ fontWeight: 700 }}>Cash Payment</Typography>
+                    <Typography sx={{ fontWeight: 700 }}>{t("steps.payment.cash.title")}</Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Booking confirmed immediately. Customer pays in cash upon rental.
+                      {t("steps.payment.cash.description")}
                     </Typography>
                   </Box>
                 </Stack>
@@ -953,9 +937,9 @@ export default function CreateBookingClient() {
                     }}
                   />
                   <Box>
-                    <Typography sx={{ fontWeight: 700 }}>Online Payment</Typography>
+                    <Typography sx={{ fontWeight: 700 }}>{t("steps.payment.online.title")}</Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Redirect to online checkout. Holds vehicle for 10 minutes until paid.
+                      {t("steps.payment.online.description")}
                     </Typography>
                   </Box>
                 </Stack>
@@ -977,26 +961,26 @@ export default function CreateBookingClient() {
             top: { lg: 24 },
           }}
         >
-          <Typography sx={{ fontWeight: 700, mb: 2 }}>Pricing Summary</Typography>
+          <Typography sx={{ fontWeight: 700, mb: 2 }}>{t("summary.title")}</Typography>
           <Stack spacing={1.5}>
             <Stack direction="row" sx={{ justifyContent: "space-between" }}>
               <Typography variant="body2" color="text.secondary">
-                Daily Rate
+                {t("summary.dailyRate")}
               </Typography>
               <Typography sx={{ fontWeight: 600 }}>{formatCurrency(dailyRate)}</Typography>
             </Stack>
             <Stack direction="row" sx={{ justifyContent: "space-between" }}>
               <Typography variant="body2" color="text.secondary">
-                Total Days
+                {t("summary.totalDays")}
               </Typography>
               <Typography sx={{ fontWeight: 600 }}>
-                {datesValid ? `${String(totalDays)} day${daysString}` : "—"}
+                {datesValid ? t("summary.totalDaysPlural", { count: totalDays }) : "—"}
               </Typography>
             </Stack>
             <Divider />
             <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
               <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                Total Price
+                {t("summary.totalPrice")}
               </Typography>
               <Typography variant="h6" sx={{ fontWeight: 800, color: "success.main" }}>
                 {formatCurrency(totalPrice)}
@@ -1005,13 +989,13 @@ export default function CreateBookingClient() {
           </Stack>
           <Stack spacing={0.5} sx={{ mt: 2 }}>
             <Typography variant="caption" color="text.secondary">
-              Pricing updates live as you change vehicle and dates.
+              {t("summary.noticeLive")}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              The server confirms the final amount on save.
+              {t("summary.noticeConfirm")}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Payment is collected through a separate flow — creating a booking does not require completing payment.
+              {t("summary.noticeFlow")}
             </Typography>
           </Stack>
         </Paper>

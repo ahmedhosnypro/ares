@@ -34,6 +34,8 @@ import type { AdminComplianceLabels } from "./dashboard/admin/admin/compliance";
 import type { AdminSecurityLabels } from "./dashboard/admin/admin/security";
 import type { AdminVehiclesMgmtLabels } from "./dashboard/admin/admin/vehicles";
 import type { BankDetailsLabels } from "./dashboard/admin/bank-details";
+import type { AdminBookingsLabels } from "./dashboard/admin/bookings";
+import type { CreateBookingLabels } from "./dashboard/admin/bookings/create";
 
 export type {
   AuthLabels,
@@ -119,6 +121,8 @@ export type DashboardAdminAdminSchema = {
 export type DashboardAdminSchema = {
   readonly admin: DashboardAdminAdminSchema;
   readonly bankDetails: BankDetailsLabels;
+  readonly bookings: AdminBookingsLabels;
+  readonly createBooking: CreateBookingLabels;
 };
 
 export type MessageSchema = {

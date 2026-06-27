@@ -9,6 +9,7 @@ import {
   AssignmentReturnTwoTone as ReturnIcon,
   ScheduleTwoTone as UpcomingIcon,
 } from "@mui/icons-material";
+import { useTranslations } from "next-intl";
 import type { AdminBookingAnalytics } from "@/api-clients/bookings/bookings";
 import { StatCard } from "@/app/[locale]/(dashboard)/_components/VehicleStats";
 
@@ -19,6 +20,7 @@ interface BookingsAnalyticsProps {
 
 export default function BookingsAnalytics({ analytics, loading }: BookingsAnalyticsProps) {
   const theme = useTheme();
+  const t = useTranslations("dashboardAdmin.bookings");
 
   // Ensure strict ordering and map colors for the Donut Chart
   const statusOrder = [
@@ -52,10 +54,31 @@ export default function BookingsAnalytics({ analytics, loading }: BookingsAnalyt
     }
   };
 
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "Draft":
+        return t("analytics.statuses.draft");
+      case "Payment Pending":
+        return t("analytics.statuses.paymentPending");
+      case "Confirmed":
+        return t("analytics.statuses.confirmed");
+      case "Active":
+        return t("analytics.statuses.active");
+      case "Completed":
+        return t("analytics.statuses.completed");
+      case "Cancelled":
+        return t("analytics.statuses.cancelled");
+      case "Cancelled By Admin":
+        return t("analytics.statuses.cancelledByAdmin");
+      default:
+        return status;
+    }
+  };
+
   const chartData = statusOrder.map(status => {
     const found = analytics?.statusDistribution.find(s => s.status === status);
     return {
-      name: status,
+      name: getStatusLabel(status),
       value: found ? found.count : 0,
       color: getColorForStatus(status),
     };
@@ -65,25 +88,25 @@ export default function BookingsAnalytics({ analytics, loading }: BookingsAnalyt
 
   const kpis = [
     {
-      label: "Active Bookings",
+      label: t("analytics.kpis.activeBookings"),
       value: analytics?.activeBookings ?? 0,
       color: "success",
       icon: <ActiveIcon />,
     },
     {
-      label: "Pickup Queue",
+      label: t("analytics.kpis.pickupQueue"),
       value: analytics?.pickupQueue ?? 0,
       color: "warning",
       icon: <PickupIcon />,
     },
     {
-      label: "Return Queue",
+      label: t("analytics.kpis.returnQueue"),
       value: analytics?.returnQueue ?? 0,
       color: "info",
       icon: <ReturnIcon />,
     },
     {
-      label: "Upcoming Pickups",
+      label: t("analytics.kpis.upcomingPickups"),
       value: analytics?.upcomingPickups ?? 0,
       color: "primary",
       icon: <UpcomingIcon />,
@@ -116,7 +139,7 @@ export default function BookingsAnalytics({ analytics, loading }: BookingsAnalyt
             }}
           >
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-              Booking Status Distribution
+              {t("analytics.title")}
             </Typography>
             <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", flexGrow: 1 }}>
               {/* Donut Chart Wrapper */}
@@ -139,7 +162,7 @@ export default function BookingsAnalytics({ analytics, loading }: BookingsAnalyt
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(value: unknown) => [String(value), "Bookings"]}
+                      formatter={(value: unknown) => [String(value), t("analytics.chartTooltip")]}
                       contentStyle={{ borderRadius: 8, border: "none", boxShadow: theme.shadows[3] }}
                     />
                   </PieChart>
@@ -160,7 +183,7 @@ export default function BookingsAnalytics({ analytics, loading }: BookingsAnalyt
                   }}
                 >
                   <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, fontSize: "0.7rem" }}>
-                    Total
+                    {t("analytics.total")}
                   </Typography>
                   <Typography variant="h5" sx={{ fontWeight: 800, color: "text.primary", lineHeight: 1 }}>
                     {totalBookings}
