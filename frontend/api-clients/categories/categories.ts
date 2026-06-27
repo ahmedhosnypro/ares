@@ -41,6 +41,39 @@ export interface Promotion {
   isActive: boolean;
 }
 
+export interface CategorySummary {
+  totalCategories: number;
+  totalVehicles: number;
+  categoriesWithOffers: number;
+  averageCommission: number;
+}
+
+export interface AdminCategoryListDto {
+  id: string;
+  name: string;
+  description?: string;
+  commissionPercentage: number;
+  isActive: boolean;
+  vehicleCount: number;
+  offerStatus: "Active" | "Expired" | "None";
+  offerName?: string;
+  offerPercentage?: number;
+  offerEndDate?: string;
+  imageUrl?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface PagedResult<T> {
+  data: T[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}
+
 export async function getCategories(): Promise<Category[]> {
   const session = await getSession();
 
@@ -54,6 +87,42 @@ export async function getCategoryDetails(id: string): Promise<CategoryDetails> {
   const session = await getSession();
 
   return apiFetchJson<CategoryDetails>(`/api/admin/categories/${id}/details`, {
+    method: "GET",
+    accessToken: session?.accessToken ?? undefined,
+  });
+}
+
+export async function getCategorySummary(): Promise<CategorySummary> {
+  const session = await getSession();
+
+  return apiFetchJson<CategorySummary>(`/api/admin/categories/summary`, {
+    method: "GET",
+    accessToken: session?.accessToken ?? undefined,
+  });
+}
+
+export async function searchCategories(params: {
+  search?: string;
+  status?: string;
+  offer?: string;
+  sortBy?: string;
+  page?: number;
+  pageSize?: number;
+}): Promise<PagedResult<AdminCategoryListDto>> {
+  const session = await getSession();
+
+  const queryParams = new URLSearchParams();
+  if (params.search) queryParams.append("search", params.search);
+  if (params.status) queryParams.append("status", params.status);
+  if (params.offer) queryParams.append("offer", params.offer);
+  if (params.sortBy) queryParams.append("sortBy", params.sortBy);
+  if (params.page) queryParams.append("page", params.page.toString());
+  if (params.pageSize) queryParams.append("pageSize", params.pageSize.toString());
+
+  const queryString = queryParams.toString();
+  const endpoint = `/api/admin/categories/search${queryString ? `?${queryString}` : ""}`;
+
+  return apiFetchJson<PagedResult<AdminCategoryListDto>>(endpoint, {
     method: "GET",
     accessToken: session?.accessToken ?? undefined,
   });

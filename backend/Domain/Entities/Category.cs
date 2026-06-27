@@ -23,6 +23,9 @@ namespace Backend.Domain.Entities
         [Column(TypeName = "decimal(5,2)")]
         public decimal DiscountPercentage { get; set; }
 
+        [NotMapped]
+        public string? ImageUrl { get; set; }
+
         public bool IsActive { get; set; } = true;
 
         public ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
