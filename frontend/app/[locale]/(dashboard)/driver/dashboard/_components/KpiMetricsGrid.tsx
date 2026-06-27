@@ -1,6 +1,7 @@
 "use client";
 
 import { Box, Grid, Card, CardContent, Stack, Avatar, Typography } from "@mui/material";
+import { useTranslations } from "next-intl";
 import {
   AttachMoney as EarningsIcon,
   AssignmentTurnedIn as VerifiedIcon,
@@ -16,6 +17,8 @@ interface KpiMetricsGridProps {
 }
 
 export default function KpiMetricsGrid({ earnings, tripsCompleted, activeUpcomingCount, rating }: KpiMetricsGridProps) {
+  const t = useTranslations("dashboard.driverDashboard.kpiMetrics");
+
   return (
     <Box>
       <Typography
@@ -23,7 +26,7 @@ export default function KpiMetricsGrid({ earnings, tripsCompleted, activeUpcomin
         color="text.secondary"
         sx={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: "1.5px", display: "block", mb: 2 }}
       >
-        Overview Metrics
+        {t("overviewMetrics")}
       </Typography>
       <Grid container spacing={3}>
         {/* Earnings Card */}
@@ -45,7 +48,7 @@ export default function KpiMetricsGrid({ earnings, tripsCompleted, activeUpcomin
                     color="text.secondary"
                     sx={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px" }}
                   >
-                    Earnings
+                    {t("earnings")}
                   </Typography>
                   <Typography variant="h5" sx={{ fontWeight: 700, color: "text.primary", mt: 0.5 }}>
                     {earnings}
@@ -78,7 +81,7 @@ export default function KpiMetricsGrid({ earnings, tripsCompleted, activeUpcomin
                     color="text.secondary"
                     sx={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px" }}
                   >
-                    Trips Done
+                    {t("tripsDone")}
                   </Typography>
                   <Typography variant="h5" sx={{ fontWeight: 700, color: "text.primary", mt: 0.5 }}>
                     {tripsCompleted}
@@ -111,7 +114,7 @@ export default function KpiMetricsGrid({ earnings, tripsCompleted, activeUpcomin
                     color="text.secondary"
                     sx={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px" }}
                   >
-                    Scheduled
+                    {t("scheduled")}
                   </Typography>
                   <Typography variant="h5" sx={{ fontWeight: 700, color: "text.primary", mt: 0.5 }}>
                     {activeUpcomingCount}
@@ -144,7 +147,7 @@ export default function KpiMetricsGrid({ earnings, tripsCompleted, activeUpcomin
                     color="text.secondary"
                     sx={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px" }}
                   >
-                    Rating
+                    {t("rating")}
                   </Typography>
                   <Typography variant="h5" sx={{ fontWeight: 700, color: "text.primary", mt: 0.5 }}>
                     {rating}

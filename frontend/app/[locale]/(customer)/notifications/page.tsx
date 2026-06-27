@@ -1,9 +1,13 @@
 import { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import NotificationsClient from "./NotificationsClient";
 
-export const metadata: Metadata = {
-  title: "My Notifications | ARES Car Rental",
-  description: "Stay updated with your latest booking status, offers, and system alerts in one place.",
+export const generateMetadata = async (): Promise<Metadata> => {
+  const t = await getTranslations("customer.notifications");
+  return {
+    title: t("metaTitle"),
+    description: t("metaDescription"),
+  };
 };
 
 export default function CustomerNotificationsPage() {

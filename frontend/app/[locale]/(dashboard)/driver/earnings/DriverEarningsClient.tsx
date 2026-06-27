@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import {
   Alert,
   Box,
@@ -41,6 +42,7 @@ interface DriverAssignment {
 export default function DriverEarningsClient() {
   const { data: session } = useSession();
   const theme = useTheme();
+  const t = useTranslations("dashboard.driverEarnings");
 
   const [isLoading, setIsLoading] = useState(true);
   const [assignments, setAssignments] = useState<DriverAssignment[]>([]);
@@ -56,19 +58,19 @@ export default function DriverEarningsClient() {
           },
         });
 
-        if (!res.ok) throw new Error("Failed to load earnings data");
+        if (!res.ok) throw new Error(t("errors.failedToLoadEarningsData"));
 
         const data = (await res.json()) as DriverAssignment[];
         setAssignments(data);
       } catch (err) {
         logger.error("Error fetching driver assignments for earnings", err);
-        setError("Could not load your earnings data.");
+        setError(t("couldNotLoadEarningsData"));
       } finally {
         setIsLoading(false);
       }
     };
     void fetchAssignments();
-  }, [session]);
+  }, [session, t]);
 
   const { totalEarnings, monthlyEarnings, completedTripEarnings, recentEarnings } = useMemo(() => {
     let total = 0;
@@ -113,10 +115,10 @@ export default function DriverEarningsClient() {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Typography variant="h4" component="h1" sx={{ fontWeight: 800, mb: 1 }}>
-        Earnings Overview
+        {t("earningsOverview")}
       </Typography>
       <Typography color="text.secondary" sx={{ mb: 4 }}>
-        Track your income and review your completed trip earnings.
+        {t("trackYourIncome")}
       </Typography>
 
       {error && (
@@ -128,15 +130,15 @@ export default function DriverEarningsClient() {
       <Grid container spacing={3} sx={{ mb: 6 }}>
         <Grid size={{ xs: 12, sm: 4 }}>
           <StatCard
-            title="Total Earnings"
+            title={t("totalEarnings")}
             value={`$${totalEarnings.toFixed(2)}`}
             icon={<WalletIcon sx={{ color: "primary.main" }} />}
-            trend={{ value: 0, label: "Lifetime earnings" }}
+            trend={{ value: 0, label: t("lifetimeEarnings") }}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>
           <StatCard
-            title="This Month"
+            title={t("thisMonth")}
             value={`$${monthlyEarnings.toFixed(2)}`}
             icon={<TrendingUpIcon sx={{ color: "success.main" }} />}
             trend={{ value: 0, label: format(new Date(), "MMMM yyyy") }}
@@ -144,16 +146,16 @@ export default function DriverEarningsClient() {
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>
           <StatCard
-            title="Completed Trips"
+            title={t("completedTrips")}
             value={`$${completedTripEarnings.toFixed(2)}`}
             icon={<EventAvailableIcon sx={{ color: "info.main" }} />}
-            trend={{ value: 0, label: "Earnings from finished trips" }}
+            trend={{ value: 0, label: t("earningsFromFinishedTrips") }}
           />
         </Grid>
       </Grid>
 
       <Typography variant="h5" sx={{ fontWeight: 800, mb: 3 }}>
-        Recent Earnings History
+        {t("recentEarningsHistory")}
       </Typography>
 
       {recentEarnings.length === 0 ? (
@@ -161,7 +163,7 @@ export default function DriverEarningsClient() {
           elevation={0}
           sx={{ p: 4, textAlign: "center", border: `1px dashed ${theme.palette.divider}`, borderRadius: 2 }}
         >
-          <Typography color="text.secondary">You haven&#39;t completed any trips yet.</Typography>
+          <Typography color="text.secondary">{t("noCompletedTrips")}</Typography>
         </Paper>
       ) : (
         <TableContainer
@@ -172,11 +174,11 @@ export default function DriverEarningsClient() {
           <Table sx={{ minWidth: 650 }} aria-label="earnings history table">
             <TableHead sx={{ bgcolor: "background.default" }}>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Booking ID</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Vehicle</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{t("date")}</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{t("bookingId")}</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{t("vehicle")}</TableCell>
                 <TableCell align="right" sx={{ fontWeight: 700 }}>
-                  Earnings
+                  {t("earnings")}
                 </TableCell>
               </TableRow>
             </TableHead>

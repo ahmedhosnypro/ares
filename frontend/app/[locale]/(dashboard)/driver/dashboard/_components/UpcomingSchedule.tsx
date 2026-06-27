@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, Box, Typography, Stack, useTheme } from "@mui/material";
+import { useTranslations } from "next-intl";
 import { CalendarToday as CalendarIcon } from "@mui/icons-material";
 
 interface UpcomingTrip {
@@ -18,6 +19,7 @@ interface UpcomingScheduleProps {
 
 export default function UpcomingSchedule({ trips }: UpcomingScheduleProps) {
   const theme = useTheme();
+  const t = useTranslations("dashboard.driverDashboard.upcomingSchedule");
 
   return (
     <Card
@@ -41,7 +43,7 @@ export default function UpcomingSchedule({ trips }: UpcomingScheduleProps) {
         }}
       >
         <Typography variant="subtitle2" sx={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 1 }}>
-          <CalendarIcon color="primary" fontSize="small" /> Calendar & Shift Schedule
+          <CalendarIcon color="primary" fontSize="small" /> {t("calendarAndShiftSchedule")}
         </Typography>
       </Box>
       <CardContent sx={{ p: 3 }}>
