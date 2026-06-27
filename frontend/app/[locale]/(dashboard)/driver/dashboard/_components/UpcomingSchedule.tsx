@@ -74,17 +74,26 @@ export default function UpcomingSchedule({ trips }: UpcomingScheduleProps) {
                     {trip.payout}
                   </Typography>
                 </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-                    {trip.vehicleModel} •{" "}
-                    {(() => {
-                      const dm = trip.duration.match(/^(\d+)\s+Days?$/i);
-                      if (dm) {
-                        const c = Number(dm[1]);
-                        return c === 1 ? t("day") : t("days", { count: c });
-                      }
-                      return trip.duration;
-                    })()}
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1 }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ fontWeight: 500, display: "flex", alignItems: "center", gap: 0.5 }}
+                  >
+                    <Box component="span" dir="ltr" sx={{ fontWeight: 500 }}>
+                      {trip.vehicleModel}
+                    </Box>
+                    <Box component="span">•</Box>
+                    <Box component="span" dir="auto">
+                      {(() => {
+                        const dm = trip.duration.match(/^(\d+)\s+Days?$/i);
+                        if (dm) {
+                          const c = Number(dm[1]);
+                          return c === 1 ? t("day") : t("days", { count: c });
+                        }
+                        return trip.duration;
+                      })()}
+                    </Box>
                   </Typography>
                   <Typography
                     variant="caption"
