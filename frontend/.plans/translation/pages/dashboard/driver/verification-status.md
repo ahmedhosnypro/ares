@@ -9,7 +9,7 @@
 
 - [ ] Not started
 - [ ] In progress
-- [ ] Completed
+- [x] Completed
 
 ## Shared Components
 

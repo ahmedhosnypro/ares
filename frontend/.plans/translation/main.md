@@ -3,8 +3,8 @@
 ## Overall Progress
 
 - Total Pages: 94
-- Completed Pages: 13
-- Progress: 14%
+- Completed Pages: 16
+- Progress: 17%
 
 ## Messages Structure Progress
 
@@ -34,9 +34,9 @@
 - [x] [Booking Payment](pages/customer/booking/payment/_bookingId.md) — `/(customer)/booking/payment/[bookingId]`
 - [x] [Customer Bookings](pages/customer/bookings.md) — `/(customer)/bookings`
 - [x] [Change Password](pages/customer/change-password.md) — `/(customer)/change-password`
-- [ ] [Customer Info](pages/customer/info.md) — `/(customer)/info`
-- [ ] [Customer Notifications](pages/customer/notifications.md) — `/(customer)/notifications`
-- [ ] [Customer Settings](pages/customer/settings.md) — `/(customer)/settings`
+- [x] [Customer Info](pages/customer/info.md) — `/(customer)/info`
+- [x] [Customer Notifications](pages/customer/notifications.md) — `/(customer)/notifications`
+- [x] [Customer Settings](pages/customer/settings.md) — `/(customer)/settings`
 
 ## Dashboard - Admin Pages (37)
 
@@ -80,13 +80,13 @@
 
 ## Dashboard - Driver Pages (7)
 
-- [ ] [Complete Profile](pages/dashboard/driver/complete-profile.md) — `/(dashboard)/driver/complete-profile`
-- [ ] [Driver Dashboard](pages/dashboard/driver/dashboard.md) — `/(dashboard)/driver/dashboard`
-- [ ] [Driver Earnings](pages/dashboard/driver/earnings.md) — `/(dashboard)/driver/earnings`
-- [ ] [Driver Notifications](pages/dashboard/driver/notifications.md) — `/(dashboard)/driver/notifications`
-- [ ] [Driver Profile](pages/dashboard/driver/profile.md) — `/(dashboard)/driver/profile`
-- [ ] [Driver Trips](pages/dashboard/driver/trips.md) — `/(dashboard)/driver/trips`
-- [ ] [Verification Status](pages/dashboard/driver/verification-status.md) — `/(dashboard)/driver/verification-status`
+- [x] [Complete Profile](pages/dashboard/driver/complete-profile.md) — `/(dashboard)/driver/complete-profile`
+- [x] [Driver Dashboard](pages/dashboard/driver/dashboard.md) — `/(dashboard)/driver/dashboard`
+- [x] [Driver Earnings](pages/dashboard/driver/earnings.md) — `/(dashboard)/driver/earnings`
+- [x] [Driver Notifications](pages/dashboard/driver/notifications.md) — `/(dashboard)/driver/notifications`
+- [x] [Driver Profile](pages/dashboard/driver/profile.md) — `/(dashboard)/driver/profile`
+- [x] [Driver Trips](pages/dashboard/driver/trips.md) — `/(dashboard)/driver/trips`
+- [x] [Verification Status](pages/dashboard/driver/verification-status.md) — `/(dashboard)/driver/verification-status`
 
 ## Dashboard - Inspector Pages (4)
 
