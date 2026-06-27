@@ -144,6 +144,14 @@ const eslintConfig = defineConfig([
     },
   },
 
+  // Disable cspell for translation message files (contain mixed EN/AR words)
+  {
+    files: ["shared/messages/**/*.{ts,tsx}"],
+    rules: {
+      "@cspell/spellchecker": "off",
+    },
+  },
+
   // Allow console in logger implementation, vite config, and scripts
   {
     files: ["src/utils/logger/**/*.ts", "vite.config.ts", "scripts/**/*.ts"],

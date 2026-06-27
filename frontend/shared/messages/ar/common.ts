@@ -64,6 +64,7 @@ const common: CommonLabels = {
   minutesAgo: "د",
   hoursAgo: "س",
   daysAgo: "ي",
+  na: "غير متوفر",
 };
 
 export default common;

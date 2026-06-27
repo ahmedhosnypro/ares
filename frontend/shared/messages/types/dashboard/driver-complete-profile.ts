@@ -1,5 +1,6 @@
 export interface DriverCompleteProfileLabels {
   title: string;
+  pageDescription: string;
   subtitle: string;
   personalDetails: string;
   address: string;

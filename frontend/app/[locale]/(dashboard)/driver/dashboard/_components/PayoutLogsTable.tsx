@@ -123,7 +123,12 @@ export default function PayoutLogsTable({ payouts }: PayoutLogsTableProps) {
                 <TableCell>{row.duration}</TableCell>
                 <TableCell sx={{ fontWeight: 700, color: "text.primary" }}>{row.amount}</TableCell>
                 <TableCell>
-                  <Chip label={row.status} size="small" color="success" sx={{ fontWeight: 700, borderRadius: 2 }} />
+                  <Chip
+                    label={row.status === "Paid" ? t("paid") : t("pending")}
+                    size="small"
+                    color="success"
+                    sx={{ fontWeight: 700, borderRadius: 2 }}
+                  />
                 </TableCell>
               </TableRow>
             ))}

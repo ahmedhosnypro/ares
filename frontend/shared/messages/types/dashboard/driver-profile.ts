@@ -9,4 +9,8 @@ export interface DriverProfileLabels {
   na: string;
   approvedWorkAreas: string;
   noWorkAreasAssigned: string;
+  emergencyContactRelationship: string;
+  failedToLoadProfile: string;
+  kycApproved: string;
+  kycPending: string;
 }

@@ -11,4 +11,8 @@ export const driverProfile: DriverProfileLabels = {
   na: "N/A",
   approvedWorkAreas: "Approved Work Areas",
   noWorkAreasAssigned: "No work areas assigned.",
+  emergencyContactRelationship: "Emergency",
+  failedToLoadProfile: "Failed to load profile",
+  kycApproved: "Approved",
+  kycPending: "Pending",
 };

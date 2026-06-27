@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { Box, Container, Grid, Typography } from "@mui/material";
 import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
 import { useEffect, useState } from "react";
 
 // Nested components
@@ -32,16 +33,25 @@ import {
 export default function DriverDashboardClient() {
   const { data: session } = useSession();
   const t = useTranslations("dashboard.driverDashboard");
+  const locale = useLocale();
+
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
 
   // State hooks initialized with the Mock fallback data for immediate seamless rendering
   const [assignment, setAssignment] = useState<TripAssignment>(mockAssignment);
   const [upcomingTrips, setUpcomingTrips] = useState<readonly UpcomingTrip[]>(mockUpcomingTrips);
   const [payoutHistory, setPayoutHistory] = useState<readonly HistoricalPayout[]>(mockPayoutHistory);
   const [kpiMetrics, setKpiMetrics] = useState<DriverKpiMetrics>({
-    earnings: `$${mockDashboardSummary.totalEarnings.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+    earnings: formatCurrency(mockDashboardSummary.totalEarnings),
     tripsCompleted: mockDashboardSummary.totalTripsCompleted,
     activeUpcomingCount: mockDashboardSummary.upcomingAssignmentsCount,
-    rating: `${mockDashboardSummary.averageRating.toFixed(1)} / 5.0`,
+    rating: t("kpiMetrics.ratingFormat", { value: mockDashboardSummary.averageRating.toFixed(1) }),
   });
   const [availability, setAvailability] = useState<DriverAvailabilityStatus>(mockDashboardSummary.availability);
 
@@ -50,24 +60,24 @@ export default function DriverDashboardClient() {
     const token = session?.accessToken;
     if (!token) return;
 
-    async function loadDashboardData(t: string) {
-      const activeTask = getDriverActiveAssignment(t).then(data => {
+    async function loadDashboardData(accessToken: string) {
+      const activeTask = getDriverActiveAssignment(accessToken).then(data => {
         setAssignment(data);
       });
-      const upcomingTask = getDriverUpcomingSchedule(t).then(data => {
+      const upcomingTask = getDriverUpcomingSchedule(accessToken).then(data => {
         setUpcomingTrips(data);
       });
-      const payoutsTask = getDriverPayoutLogs(t).then(data => {
+      const payoutsTask = getDriverPayoutLogs(accessToken).then(data => {
         setPayoutHistory(data);
       });
 
-      const summaryTask = getDriverDashboardSummary(t).then(summary => {
+      const summaryTask = getDriverDashboardSummary(accessToken).then(summary => {
         setAvailability(summary.availability);
         setKpiMetrics({
-          earnings: `$${summary.totalEarnings.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+          earnings: formatCurrency(summary.totalEarnings),
           tripsCompleted: summary.totalTripsCompleted,
           activeUpcomingCount: summary.upcomingAssignmentsCount,
-          rating: `${summary.averageRating.toFixed(1)} / 5.0`,
+          rating: t("kpiMetrics.ratingFormat", { value: summary.averageRating.toFixed(1) }),
         });
       });
 
@@ -86,7 +96,7 @@ export default function DriverDashboardClient() {
       <Container maxWidth="xl">
         {/* Header Panel */}
         <DashboardHeader
-          userName={session?.user.firstName || "Chauffeur"}
+          userName={session?.user.firstName || t("chauffeur")}
           initialAvailability={availability}
           onAvailabilityChange={handleAvailabilityChange}
         />

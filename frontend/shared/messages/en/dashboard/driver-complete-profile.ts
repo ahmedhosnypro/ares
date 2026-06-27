@@ -2,6 +2,7 @@ import type { DriverCompleteProfileLabels } from "../../types/dashboard/driver-c
 
 export const driverCompleteProfile: DriverCompleteProfileLabels = {
   title: "Complete Your Driver Profile",
+  pageDescription: "Provide your license, ID, and work area details to start driving with ARES.",
   subtitle: "Please provide your details and documents to start receiving ride requests.",
   personalDetails: "Personal Details",
   address: "Address",

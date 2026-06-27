@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
 import {
   Alert,
   Box,
@@ -26,7 +27,8 @@ import {
 } from "@mui/icons-material";
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
-import { format, isSameMonth } from "date-fns";
+import { isSameMonth } from "date-fns";
+import { useDateFnsLocale } from "@/hooks/useDateFnsLocale";
 import StatCard from "../../_components/StatCard";
 
 interface DriverAssignment {
@@ -43,6 +45,25 @@ export default function DriverEarningsClient() {
   const { data: session } = useSession();
   const theme = useTheme();
   const t = useTranslations("dashboard.driverEarnings");
+  const { formatLocalized } = useDateFnsLocale();
+  const locale = useLocale();
+
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+
+  const formatCurrencyWithSign = (amount: number) =>
+    new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: "USD",
+      signDisplay: "always",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
 
   const [isLoading, setIsLoading] = useState(true);
   const [assignments, setAssignments] = useState<DriverAssignment[]>([]);
@@ -131,7 +152,7 @@ export default function DriverEarningsClient() {
         <Grid size={{ xs: 12, sm: 4 }}>
           <StatCard
             title={t("totalEarnings")}
-            value={`$${totalEarnings.toFixed(2)}`}
+            value={formatCurrency(totalEarnings)}
             icon={<WalletIcon sx={{ color: "primary.main" }} />}
             trend={{ value: 0, label: t("lifetimeEarnings") }}
           />
@@ -139,15 +160,15 @@ export default function DriverEarningsClient() {
         <Grid size={{ xs: 12, sm: 4 }}>
           <StatCard
             title={t("thisMonth")}
-            value={`$${monthlyEarnings.toFixed(2)}`}
+            value={formatCurrency(monthlyEarnings)}
             icon={<TrendingUpIcon sx={{ color: "success.main" }} />}
-            trend={{ value: 0, label: format(new Date(), "MMMM yyyy") }}
+            trend={{ value: 0, label: formatLocalized(new Date(), "MMMM yyyy") }}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>
           <StatCard
             title={t("completedTrips")}
-            value={`$${completedTripEarnings.toFixed(2)}`}
+            value={formatCurrency(completedTripEarnings)}
             icon={<EventAvailableIcon sx={{ color: "info.main" }} />}
             trend={{ value: 0, label: t("earningsFromFinishedTrips") }}
           />
@@ -171,7 +192,7 @@ export default function DriverEarningsClient() {
           elevation={0}
           sx={{ borderRadius: 2, border: `1px solid ${theme.palette.divider}` }}
         >
-          <Table sx={{ minWidth: 650 }} aria-label="earnings history table">
+          <Table sx={{ minWidth: 650 }} aria-label={t("earningsAriaLabel")}>
             <TableHead sx={{ bgcolor: "background.default" }}>
               <TableRow>
                 <TableCell sx={{ fontWeight: 700 }}>{t("date")}</TableCell>
@@ -186,12 +207,12 @@ export default function DriverEarningsClient() {
               {recentEarnings.map(row => (
                 <TableRow key={row.bookingId} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                   <TableCell component="th" scope="row">
-                    {format(new Date(row.returnDate), "MMM dd, yyyy")}
+                    {formatLocalized(new Date(row.returnDate), "MMM dd, yyyy")}
                   </TableCell>
                   <TableCell>{row.bookingNumber}</TableCell>
                   <TableCell>{row.vehicleName}</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 800, color: "success.main" }}>
-                    +${row.earnings.toFixed(2)}
+                    {formatCurrencyWithSign(row.earnings)}
                   </TableCell>
                 </TableRow>
               ))}

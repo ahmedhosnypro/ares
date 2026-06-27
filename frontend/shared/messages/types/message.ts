@@ -27,6 +27,7 @@ import type { DriverDashboardLabels } from "./dashboard/driver-dashboard";
 import type { DriverEarningsLabels } from "./dashboard/driver-earnings";
 import type { DriverNotificationsLabels } from "./dashboard/driver-notifications";
 import type { DriverProfileLabels } from "./dashboard/driver-profile";
+import type { DriverTripsLabels } from "./dashboard/driver-trips";
 import type { LogoutDialogLabels } from "./dashboard/logout-dialog";
 import type { DeleteNotificationDialogLabels } from "./delete-notification-dialog";
 import type { AdminComplianceLabels } from "./dashboard/admin/admin/compliance";
@@ -65,6 +66,12 @@ export type {
   AdminSecurityLabels,
   AdminVehiclesMgmtLabels,
   BankDetailsLabels,
+  DriverTripsLabels,
+  DriverCompleteProfileLabels,
+  DriverDashboardLabels,
+  DriverEarningsLabels,
+  DriverNotificationsLabels,
+  DriverProfileLabels,
 };
 
 export type AuthPagesSchema = {
@@ -99,6 +106,7 @@ export type DashboardSchema = {
   readonly driverEarnings: DriverEarningsLabels;
   readonly driverNotifications: DriverNotificationsLabels;
   readonly driverProfile: DriverProfileLabels;
+  readonly driverTrips: DriverTripsLabels;
   readonly logoutDialog: LogoutDialogLabels;
 };
 

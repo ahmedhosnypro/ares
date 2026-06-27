@@ -172,6 +172,8 @@ export default function SignInForm() {
           router.push("/admin");
         } else if (session?.user.roles.includes("Supplier")) {
           router.push("/supplier/dashboard");
+        } else if (session?.user.roles.includes("Driver")) {
+          router.push("/driver/dashboard");
         } else if (session?.user.roles.includes("Inspector")) {
           router.push("/inspector");
         } else {
