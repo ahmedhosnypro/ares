@@ -78,6 +78,7 @@ export default function SupplierCreateVehicleClient({ emptyVehicle, locations }:
       canEdit
       isCreateMode
       onSave={handleSave}
+      mode="create"
     />
   );
 }

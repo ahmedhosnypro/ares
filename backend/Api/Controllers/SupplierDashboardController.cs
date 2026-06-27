@@ -88,4 +88,27 @@ public class SupplierDashboardController : ControllerBase
         var counts = await _supplierDashboardService.GetBookingsByStatusAsync(supplierId, cancellationToken);
         return Ok(counts);
     }
+
+    /// <summary>
+    /// Returns vehicle counts grouped by status for the
+    /// authenticated supplier. All counts are scoped to vehicles where
+    /// <c>UserId</c> matches the caller.
+    /// </summary>
+    [HttpGet("vehicle-status-distribution")]
+    [ProducesResponseType(typeof(Dictionary<string, int>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<Dictionary<string, int>>> GetVehicleStatusDistribution(CancellationToken cancellationToken = default)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var supplierId))
+        {
+            return Unauthorized(new { Message = "User not authenticated" });
+        }
+
+        _logger.LogInformation("Fetching supplier dashboard vehicle status distribution for supplier {SupplierId}", supplierId);
+
+        var counts = await _supplierDashboardService.GetVehicleStatusDistributionAsync(supplierId, cancellationToken);
+        return Ok(counts);
+    }
 }

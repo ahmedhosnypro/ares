@@ -21,10 +21,8 @@ import {
   CardContent,
   Typography,
   Avatar,
-  Chip,
   IconButton,
   Stack,
-  Button,
   Divider,
   Alert,
   alpha,
@@ -36,21 +34,23 @@ import HourglassTopIcon from "@mui/icons-material/HourglassTop";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import EventAvailableOutlinedIcon from "@mui/icons-material/EventAvailableOutlined";
-import PaymentIcon from "@mui/icons-material/Payment";
-import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import VerifiedOutlinedIcon from "@mui/icons-material/VerifiedOutlined";
-import PriorityHighIcon from "@mui/icons-material/PriorityHigh";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { DirectionsCarFilledTwoTone as CarIcon } from "@mui/icons-material";
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell } from "recharts";
 import { useSession } from "next-auth/react";
-import DemoDataBadge from "../_components/DemoDataBadge";
+import Image from "next/image";
+import { toImageUrl } from "@/utils/image-url";
 import {
   getSupplierDashboardStats,
   getSupplierDashboardBookingsByStatus,
+  getSupplierVehicleStatusDistribution,
   type SupplierDashboardStats,
 } from "@/api-clients/supplier-dashboard/supplier-dashboard";
-import { getSupplierEarningsChart, type MonthlyRevenuePoint } from "@/api-clients/supplier-earnings/supplier-earnings";
+import { 
+  getSupplierEarningsChart, 
+  getSupplierTopVehicles, 
+  type MonthlyRevenuePoint, 
+  type SupplierTopVehicle 
+} from "@/api-clients/supplier-earnings/supplier-earnings";
 import { logger } from "@/utils/logger";
 import VehicleStats, { type StatItem } from "@/app/[locale]/(dashboard)/_components/VehicleStats";
 
@@ -69,73 +69,6 @@ const itemVariants = {
     opacity: 1,
     transition: { type: "spring" as const, stiffness: 300, damping: 24 },
   },
-};
-
-interface ActivityItem {
-  id: string;
-  type: "booking" | "payment" | "user" | "vehicle";
-  message: string;
-  time: string;
-}
-
-interface PendingAction {
-  id: string;
-  title: string;
-  description: string;
-  severity: "warning" | "info" | "error";
-  actionLabel: string;
-}
-
-// ── Demo data ────────────────────────────────────────────────────────────────
-// All values below are hard-coded placeholders for the v1 dashboard. They will
-// be replaced with real per-supplier metrics in a future iteration.
-
-const DEMO_ACTIVITY: ActivityItem[] = [
-  { id: "a1", type: "booking", message: "New booking received for Toyota Corolla 2024", time: "12 min ago" },
-  { id: "a2", type: "payment", message: "Payout of $1,240 has been processed", time: "2 hr ago" },
-  { id: "a3", type: "vehicle", message: "Hyundai Elantra listing approved by admin", time: "5 hr ago" },
-  { id: "a4", type: "booking", message: "Booking #BK-2031 marked as completed", time: "Yesterday" },
-  { id: "a5", type: "user", message: "Customer left a 5-star review on Kia Sportage", time: "Yesterday" },
-];
-
-const DEMO_PENDING_ACTIONS: PendingAction[] = [
-  {
-    id: "p1",
-    title: "2 vehicles awaiting admin approval",
-    description: "Newly added vehicles are pending review before going live.",
-    severity: "warning",
-    actionLabel: "Review",
-  },
-  {
-    id: "p2",
-    title: "1 booking needs confirmation",
-    description: "A customer is waiting for you to confirm their pickup details.",
-    severity: "error",
-    actionLabel: "Confirm",
-  },
-  {
-    id: "p3",
-    title: "Complete your supplier profile",
-    description: "Add your bank details to start receiving payouts automatically.",
-    severity: "info",
-    actionLabel: "Complete",
-  },
-];
-
-const ACTIVITY_META: Record<
-  ActivityItem["type"],
-  { color: "primary" | "success" | "warning" | "info"; icon: React.ReactNode }
-> = {
-  booking: { color: "primary", icon: <EventAvailableOutlinedIcon fontSize="small" /> },
-  payment: { color: "success", icon: <PaymentIcon fontSize="small" /> },
-  user: { color: "info", icon: <PersonAddIcon fontSize="small" /> },
-  vehicle: { color: "warning", icon: <DirectionsCarIcon fontSize="small" /> },
-};
-
-const ACTION_META: Record<PendingAction["severity"], { color: "warning" | "info" | "error"; icon: React.ReactNode }> = {
-  warning: { color: "warning", icon: <HourglassTopIcon fontSize="small" /> },
-  info: { color: "info", icon: <VerifiedOutlinedIcon fontSize="small" /> },
-  error: { color: "error", icon: <PriorityHighIcon fontSize="small" /> },
 };
 
 // ── Number formatting helpers ────────────────────────────────────────────────
@@ -164,6 +97,8 @@ export default function SupplierDashboardClient() {
   const [stats, setStats] = useState<SupplierDashboardStats | null>(null);
   const [earningsChartData, setEarningsChartData] = useState<MonthlyRevenuePoint[] | null>(null);
   const [bookingsChartData, setBookingsChartData] = useState<{ status: string; count: number }[] | null>(null);
+  const [topVehicles, setTopVehicles] = useState<SupplierTopVehicle[] | null>(null);
+  const [vehicleStatusChartData, setVehicleStatusChartData] = useState<{ name: string; value: number; color: string }[] | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
   const [statsError, setStatsError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -199,14 +134,17 @@ export default function SupplierDashboardClient() {
       setStatsError(null);
 
       try {
-        const [statsData, earningsData, bookingsData] = await Promise.all([
+        const [statsData, earningsData, bookingsData, topVehiclesData, vehicleStatusData] = await Promise.all([
           getSupplierDashboardStats(accessToken),
           getSupplierEarningsChart(accessToken),
           getSupplierDashboardBookingsByStatus(accessToken),
+          getSupplierTopVehicles(accessToken, "bookings"),
+          getSupplierVehicleStatusDistribution(accessToken),
         ]);
         if (cancelled) return;
         setStats(statsData);
         setEarningsChartData(earningsData);
+        setTopVehicles(topVehiclesData);
 
         // Map backend DTO to chart format
         setBookingsChartData([
@@ -216,6 +154,24 @@ export default function SupplierDashboardClient() {
           { status: "Completed", count: bookingsData.completed },
           { status: "Cancelled", count: bookingsData.cancelled },
         ]);
+
+        const statusColors: Record<string, string> = {
+          Available: theme.palette.success.main,
+          Booked: theme.palette.primary.main,
+          Unavailable: theme.palette.primary.main,
+          FullyBooked: theme.palette.primary.main,
+          Maintenance: theme.palette.error.main,
+          ComingSoon: theme.palette.info.main,
+          Retired: theme.palette.text.disabled,
+        };
+
+        const chartData = Object.entries(vehicleStatusData).map(([status, count]) => ({
+          name: status,
+          value: count,
+          color: statusColors[status] || theme.palette.grey[500],
+        }));
+
+        setVehicleStatusChartData(chartData);
       } catch (err: unknown) {
         if (cancelled) return;
         logger.error("Failed to load supplier dashboard stats", err);
@@ -429,7 +385,7 @@ export default function SupplierDashboardClient() {
           </Grid>
         </Grid>
 
-        {/* ── Recent activity & Pending actions row ─────────────────────── */}
+        {/* ── Top Vehicles & Vehicle Status row ─────────────────────── */}
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, lg: 7 }}>
             <motion.div variants={itemVariants} style={{ height: "100%" }}>
@@ -447,9 +403,8 @@ export default function SupplierDashboardClient() {
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2.5, gap: 1 }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
                       <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                        Recent Activity
+                        Top Performing Vehicles
                       </Typography>
-                      <DemoDataBadge />
                     </Box>
                     <IconButton size="small">
                       <MoreVertIcon />
@@ -457,39 +412,56 @@ export default function SupplierDashboardClient() {
                   </Box>
 
                   <Stack divider={<Divider flexItem />} spacing={0}>
-                    {DEMO_ACTIVITY.map(item => {
-                      const meta = ACTIVITY_META[item.type];
-                      return (
+                    {topVehicles?.map((vehicle, index) => (
+                      <Box
+                        key={vehicle.vehicleId}
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 2,
+                          py: 1.5,
+                        }}
+                      >
                         <Box
-                          key={item.id}
                           sx={{
+                            width: 56,
+                            height: 56,
+                            borderRadius: 2,
+                            overflow: "hidden",
+                            flexShrink: 0,
+                            bgcolor: t => alpha(t.palette.primary.main, 0.08),
                             display: "flex",
                             alignItems: "center",
-                            gap: 2,
-                            py: 1.5,
+                            justifyContent: "center",
                           }}
                         >
-                          <Avatar
-                            sx={{
-                              width: 40,
-                              height: 40,
-                              bgcolor: alpha(theme.palette[meta.color].main, 0.12),
-                              color: `${meta.color}.main`,
-                            }}
-                          >
-                            {meta.icon}
-                          </Avatar>
-                          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                            <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>
-                              {item.message}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-                              {item.time}
-                            </Typography>
-                          </Box>
+                          {vehicle.imageUrl ? (
+                            <Image
+                              src={(toImageUrl(vehicle.imageUrl) as string) || vehicle.imageUrl}
+                              alt={`${vehicle.make} ${vehicle.model}`}
+                              width={120}
+                              height={90}
+                              style={{ objectFit: "cover", width: "100%", height: "100%" }}
+                            />
+                          ) : (
+                            <CarIcon fontSize="small" />
+                          )}
                         </Box>
-                      );
-                    })}
+                        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>
+                            {vehicle.make} {vehicle.model}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                            {formatCount(vehicle.completedBookingsCount)} completed bookings
+                          </Typography>
+                        </Box>
+                      </Box>
+                    ))}
+                    {topVehicles?.length === 0 && (
+                      <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: "center" }}>
+                        No completed bookings yet.
+                      </Typography>
+                    )}
                   </Stack>
                 </CardContent>
               </Card>
@@ -512,71 +484,57 @@ export default function SupplierDashboardClient() {
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2.5, gap: 1 }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
                       <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                        Pending Actions
+                        Vehicle Status
                       </Typography>
-                      <DemoDataBadge />
                     </Box>
-                    <Chip
-                      label={DEMO_PENDING_ACTIONS.length.toString()}
-                      size="small"
-                      color="warning"
-                      sx={{ fontWeight: 700, borderRadius: 2 }}
-                    />
                   </Box>
 
-                  <Stack spacing={1.5}>
-                    {DEMO_PENDING_ACTIONS.map(action => {
-                      const meta = ACTION_META[action.severity];
-                      return (
-                        <Box
-                          key={action.id}
-                          sx={{
-                            display: "flex",
-                            alignItems: "flex-start",
-                            gap: 1.5,
-                            p: 1.75,
-                            borderRadius: 2,
-                            border: "1px solid",
-                            borderColor: alpha(theme.palette[meta.color].main, 0.25),
-                            bgcolor: alpha(theme.palette[meta.color].main, 0.05),
-                          }}
-                        >
-                          <Avatar
-                            sx={{
-                              width: 36,
-                              height: 36,
-                              bgcolor: alpha(theme.palette[meta.color].main, 0.18),
-                              color: `${meta.color}.main`,
-                            }}
+                  <Box sx={{ width: "100%", height: 280, minWidth: 0, position: "relative", overflow: "hidden" }}>
+                    {mounted && vehicleStatusChartData && (
+                      <ResponsiveContainer width="100%" height={280} minWidth={0}>
+                        <PieChart>
+                          <Pie
+                            data={vehicleStatusChartData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={70}
+                            outerRadius={100}
+                            paddingAngle={2}
+                            dataKey="value"
+                            stroke="none"
                           >
-                            {meta.icon}
-                          </Avatar>
-                          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                            <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary" }}>
-                              {action.title}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.25 }}>
-                              {action.description}
-                            </Typography>
-                          </Box>
-                          <Button
-                            size="small"
-                            color={meta.color}
-                            endIcon={<ChevronRightIcon />}
-                            disabled
-                            sx={{
-                              flexShrink: 0,
-                              fontWeight: 700,
-                              textTransform: "none",
-                              borderRadius: 2,
+                            {vehicleStatusChartData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            contentStyle={{
+                              borderRadius: 8,
+                              border: `1px solid ${theme.palette.divider}`,
+                              background: theme.palette.background.paper,
+                              boxShadow: theme.shadows[3],
                             }}
-                          >
-                            {action.actionLabel}
-                          </Button>
+                            itemStyle={{
+                              fontWeight: 600,
+                            }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    )}
+                  </Box>
+                  
+                  {mounted && vehicleStatusChartData && (
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, justifyContent: "center", mt: 1 }}>
+                      {vehicleStatusChartData.filter(v => v.value > 0).map((status, idx) => (
+                        <Box key={idx} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <Box sx={{ width: 12, height: 12, borderRadius: "50%", bgcolor: status.color }} />
+                          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                            {status.name} ({status.value})
+                          </Typography>
                         </Box>
-                      );
-                    })}
-                  </Stack>
+                      ))}
+                    </Box>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>

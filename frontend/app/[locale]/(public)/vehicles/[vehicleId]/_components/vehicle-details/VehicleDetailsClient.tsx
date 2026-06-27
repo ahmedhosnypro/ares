@@ -87,6 +87,7 @@ interface VehicleDetailsClientProps {
   readonly canEdit: boolean;
   readonly isCreateMode?: boolean;
   readonly onSave?: (values: FormValues) => Promise<void>;
+  readonly mode?: "create" | "edit" | "details";
 }
 
 export default function VehicleDetailsClient({
@@ -96,6 +97,7 @@ export default function VehicleDetailsClient({
   canEdit,
   isCreateMode = false,
   onSave,
+  mode = "details",
 }: VehicleDetailsClientProps) {
   const theme = useTheme();
   const router = useRouter();
@@ -328,6 +330,7 @@ export default function VehicleDetailsClient({
   };
 
   const verification = useVerificationStatus();
+  const isDetails = !onSave;
 
   return (
     <FormProvider {...methods}>
@@ -369,12 +372,14 @@ export default function VehicleDetailsClient({
                   )}
                 </Paper>
 
-                <Paper
-                  elevation={0}
-                  sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: { xs: 2, md: 3 } }}
-                >
-                  <ReviewSection reviews={reviews} />
-                </Paper>
+                {isDetails && (
+                  <Paper
+                    elevation={0}
+                    sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: { xs: 2, md: 3 } }}
+                  >
+                    <ReviewSection reviews={reviews} />
+                  </Paper>
+                )}
               </Stack>
             </Grid>
 

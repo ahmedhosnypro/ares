@@ -76,6 +76,7 @@ export default function SupplierVehicleDetailsClient({
       locations={locations}
       canEdit={canEdit}
       onSave={handleSave}
+      mode="edit"
     />
   );
 }

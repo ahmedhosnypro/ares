@@ -80,8 +80,11 @@ export async function getSupplierEarningsChart(accessToken: string, year?: numbe
  * completed bookings are excluded by the backend, so the array length is
  * 0..5 — never larger.
  */
-export async function getSupplierTopVehicles(accessToken: string): Promise<SupplierTopVehicle[]> {
-  return apiFetchJson<SupplierTopVehicle[]>("/api/supplier/earnings/top-vehicles", {
+export async function getSupplierTopVehicles(
+  accessToken: string,
+  sortBy: "earnings" | "bookings" = "earnings"
+): Promise<SupplierTopVehicle[]> {
+  return apiFetchJson<SupplierTopVehicle[]>(`/api/supplier/earnings/top-vehicles?sortBy=${sortBy}`, {
     method: "GET",
     accessToken,
   });

@@ -76,6 +76,7 @@ export default function AdminVehicleDetailsClient({
       locations={locations}
       canEdit={canEdit}
       onSave={handleSave}
+      mode="edit"
     />
   );
 }
