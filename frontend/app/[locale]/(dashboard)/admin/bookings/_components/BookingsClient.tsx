@@ -52,6 +52,7 @@ import {
 import { useSearchParams } from "next/navigation";
 import { useRouter, Link } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import {
   useBookings,
   useAdminBookingAnalytics,
@@ -65,24 +66,33 @@ import ChangeStatusModal from "./ChangeStatusModal";
 import BookingsAnalytics from "./BookingsAnalytics";
 
 // ── CONSTANTS & HELPERS ─────────────────────────────────────────────────
-const getStatusConfig = (status?: string) => {
+const getStatusConfig = (status?: string, t?: (key: string) => string) => {
   const s = status?.toLowerCase() ?? "";
   if (s === "active" || s === "confirmed" || s === "pickup")
-    return { label: status ?? "Active", colorKey: "success" as const };
-  if (s === "completed") return { label: status ?? "Completed", colorKey: "info" as const };
-  if (s === "cancelled" || s === "returned") return { label: status ?? "Cancelled", colorKey: "error" as const };
-  if (s === "draft") return { label: status ?? "Draft", colorKey: "warning" as const };
-  return { label: status ?? "PaymentPending", colorKey: "warning" as const };
+    return { label: t ? t("filters.statuses.active") : (status ?? "Active"), colorKey: "success" as const };
+  if (s === "completed")
+    return { label: t ? t("filters.statuses.completed") : (status ?? "Completed"), colorKey: "info" as const };
+  if (s === "cancelled" || s === "returned")
+    return { label: t ? t("filters.statuses.cancelled") : (status ?? "Cancelled"), colorKey: "error" as const };
+  if (s === "draft")
+    return { label: t ? t("filters.statuses.draft") : (status ?? "Draft"), colorKey: "warning" as const };
+  return {
+    label: t ? t("filters.statuses.paymentPending") : (status ?? "PaymentPending"),
+    colorKey: "warning" as const,
+  };
 };
 
-const getPaymentStatusConfig = (status?: string) => {
+const getPaymentStatusConfig = (status?: string, t?: (key: string) => string) => {
   const s = status?.toLowerCase() ?? "";
   if (s === "captured" || s === "paid" || s === "succeeded")
-    return { label: status ?? "Captured", colorKey: "success" as const };
-  if (s === "refunded") return { label: status ?? "Refunded", colorKey: "error" as const };
-  if (s === "failed") return { label: status ?? "Failed", colorKey: "error" as const };
-  if (s === "pending" || s === "paymentpending") return { label: status ?? "Pending", colorKey: "warning" as const };
-  return { label: "Unpaid", colorKey: null };
+    return { label: t ? t("paymentStatuses.captured") : (status ?? "Captured"), colorKey: "success" as const };
+  if (s === "refunded")
+    return { label: t ? t("paymentStatuses.refunded") : (status ?? "Refunded"), colorKey: "error" as const };
+  if (s === "failed")
+    return { label: t ? t("paymentStatuses.failed") : (status ?? "Failed"), colorKey: "error" as const };
+  if (s === "pending" || s === "paymentpending")
+    return { label: t ? t("paymentStatuses.pending") : (status ?? "Pending"), colorKey: "warning" as const };
+  return { label: t ? t("paymentStatuses.unpaid") : "Unpaid", colorKey: null };
 };
 
 const formatCompactDate = (dateString: string) => {
@@ -107,6 +117,8 @@ export default function BookingsClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
+  const t = useTranslations("dashboardAdmin.bookings");
+  const tCommon = useTranslations("common");
 
   // Filters / paging
   const [search, setSearch] = useState("");
@@ -230,14 +242,14 @@ export default function BookingsClient() {
 
         setSnackbar({
           open: true,
-          message: "Booking deleted successfully.",
+          message: t("alerts.deleteSuccess"),
           severity: "success",
         });
       } catch (error) {
         logger.error("Error deleting booking", error);
         setSnackbar({
           open: true,
-          message: error instanceof Error ? error.message : "Failed to delete booking.",
+          message: error instanceof Error ? error.message : t("alerts.deleteError"),
           severity: "error",
         });
       } finally {
@@ -275,10 +287,10 @@ export default function BookingsClient() {
                 <SearchIcon sx={{ fontSize: 32, color: "text.disabled" }} />
               </Avatar>
               <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 700 }}>
-                No bookings found
+                {t("table.empty.title")}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Try adjusting your filters or create a new booking.
+                {t("table.empty.description")}
               </Typography>
             </Box>
           </TableCell>
@@ -288,7 +300,7 @@ export default function BookingsClient() {
 
     return bookings.map((booking: Booking) => {
       const effectiveStatus = statusOverrides[booking.id] ?? booking.status;
-      const statusConfig = getStatusConfig(effectiveStatus);
+      const statusConfig = getStatusConfig(effectiveStatus, t);
       const statusColor = theme.palette[statusConfig.colorKey].main;
 
       return (
@@ -367,7 +379,7 @@ export default function BookingsClient() {
               {formatCompactDate(booking.from)} → {formatCompactDate(booking.to)}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {booking.totalDays ? `${String(booking.totalDays)} Days` : "—"}
+              {booking.totalDays ? t("table.daysCount", { count: booking.totalDays }) : "—"}
             </Typography>
           </TableCell>
 
@@ -400,7 +412,7 @@ export default function BookingsClient() {
           {/* Payment Status */}
           <TableCell>
             {(() => {
-              const statusConfig = getPaymentStatusConfig(booking.paymentStatus);
+              const statusConfig = getPaymentStatusConfig(booking.paymentStatus, t);
               if (statusConfig.colorKey === null) {
                 return (
                   <Chip
@@ -477,9 +489,9 @@ export default function BookingsClient() {
       >
         <Box>
           <Typography variant="h4" sx={{ fontSize: { xs: "1.6rem", sm: "2rem" }, fontWeight: 800 }}>
-            Bookings Management
+            {t("title")}
           </Typography>
-          <Typography color="text.secondary">Monitor and manage all ARES reservations</Typography>
+          <Typography color="text.secondary">{t("subtitle")}</Typography>
         </Box>
 
         <Box
@@ -507,13 +519,13 @@ export default function BookingsClient() {
           }}
         >
           <AddIcon fontSize="small" />
-          New Booking
+          {t("newBooking")}
         </Box>
       </Stack>
 
       {created && (
         <Alert severity="success" sx={{ mb: 3 }}>
-          Booking{bookingNumber ? ` ${bookingNumber}` : ""} created and pending customer payment.
+          {t("alerts.createdSuccess", { bookingNumber: bookingNumber ? ` ${bookingNumber}` : "" })}
         </Alert>
       )}
 
@@ -535,7 +547,7 @@ export default function BookingsClient() {
           }}
         >
           <TextField
-            placeholder="Search by ID, customer, or vehicle…"
+            placeholder={t("filters.searchPlaceholder")}
             value={search}
             onChange={handleSearchChange}
             size="small"
@@ -551,28 +563,28 @@ export default function BookingsClient() {
             }}
           />
           <FormControl size="small" sx={{ minWidth: 160 }}>
-            <InputLabel>Status</InputLabel>
+            <InputLabel>{tCommon("status")}</InputLabel>
             <Select
               value={statusFilter}
-              label="Status"
+              label={tCommon("status")}
               onChange={e => {
                 setStatusFilter(e.target.value);
                 setPage(0);
               }}
               sx={{ borderRadius: 2 }}
             >
-              <MenuItem value="All">All Statuses</MenuItem>
-              <MenuItem value="Draft">Draft</MenuItem>
-              <MenuItem value="PaymentPending">Payment Pending</MenuItem>
-              <MenuItem value="Confirmed">Confirmed</MenuItem>
-              <MenuItem value="Active">Active</MenuItem>
-              <MenuItem value="Completed">Completed</MenuItem>
-              <MenuItem value="Cancelled">Cancelled</MenuItem>
+              <MenuItem value="All">{t("filters.statuses.all")}</MenuItem>
+              <MenuItem value="Draft">{t("filters.statuses.draft")}</MenuItem>
+              <MenuItem value="PaymentPending">{t("filters.statuses.paymentPending")}</MenuItem>
+              <MenuItem value="Confirmed">{t("filters.statuses.confirmed")}</MenuItem>
+              <MenuItem value="Active">{t("filters.statuses.active")}</MenuItem>
+              <MenuItem value="Completed">{t("filters.statuses.completed")}</MenuItem>
+              <MenuItem value="Cancelled">{t("filters.statuses.cancelled")}</MenuItem>
             </Select>
           </FormControl>
           <TextField
             type="date"
-            label="From"
+            label={t("filters.dateFrom")}
             size="small"
             slotProps={{ inputLabel: { shrink: true } }}
             value={fromDate}
@@ -584,7 +596,7 @@ export default function BookingsClient() {
           />
           <TextField
             type="date"
-            label="To"
+            label={t("filters.dateTo")}
             size="small"
             slotProps={{ inputLabel: { shrink: true } }}
             value={toDate}
@@ -615,16 +627,16 @@ export default function BookingsClient() {
                   },
                 }}
               >
-                <TableCell sx={{ pl: 3 }}>Booking</TableCell>
-                <TableCell>Vehicle</TableCell>
-                <TableCell>Supplier</TableCell>
-                <TableCell>Period</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Payment Method</TableCell>
-                <TableCell>Payment Status</TableCell>
-                <TableCell>Total</TableCell>
+                <TableCell sx={{ pl: 3 }}>{t("table.headers.booking")}</TableCell>
+                <TableCell>{t("table.headers.vehicle")}</TableCell>
+                <TableCell>{t("table.headers.supplier")}</TableCell>
+                <TableCell>{t("table.headers.period")}</TableCell>
+                <TableCell>{t("table.headers.status")}</TableCell>
+                <TableCell>{t("table.headers.paymentMethod")}</TableCell>
+                <TableCell>{t("table.headers.paymentStatus")}</TableCell>
+                <TableCell>{t("table.headers.total")}</TableCell>
                 <TableCell align="right" sx={{ pr: 3 }}>
-                  Actions
+                  {tCommon("actions")}
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -636,7 +648,11 @@ export default function BookingsClient() {
                 <TableRow>
                   <TableCell colSpan={5}>
                     <Typography variant="caption" color="text.secondary">
-                      Showing page <strong>{page + 1}</strong> of {totalPages || 1} ({totalCount} total)
+                      {t.rich("table.pagination.showingPage", {
+                        totalPages: totalPages || 1,
+                        totalCount: totalCount,
+                        strong: () => <strong>{page + 1}</strong>,
+                      })}
                     </Typography>
                   </TableCell>
                   <TableCell colSpan={4} align="right">
@@ -667,11 +683,11 @@ export default function BookingsClient() {
         }}
         slotProps={{ paper: { sx: { borderRadius: 2, p: 1, minWidth: 350 } } }}
       >
-        <DialogTitle sx={{ fontWeight: 700 }}>Delete Booking</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>{t("deleteDialog.title")}</DialogTitle>
         <DialogContent>
-          Are you sure you want to delete this booking?
+          {t("deleteDialog.content")}
           <br />
-          <strong>This action cannot be undone.</strong>
+          <strong>{t("deleteDialog.subcontent")}</strong>
         </DialogContent>
         <DialogActions>
           <Button
@@ -682,7 +698,7 @@ export default function BookingsClient() {
             variant="outlined"
             sx={{ borderRadius: 2 }}
           >
-            Cancel
+            {tCommon("cancel")}
           </Button>
           <Button
             disabled={isDeleting}
@@ -691,7 +707,7 @@ export default function BookingsClient() {
             variant="contained"
             sx={{ borderRadius: 2, fontWeight: 700, minWidth: 100 }}
           >
-            {isDeleting ? <CircularProgress size={24} color="inherit" /> : "Delete"}
+            {isDeleting ? <CircularProgress size={24} color="inherit" /> : tCommon("delete")}
           </Button>
         </DialogActions>
       </Dialog>
@@ -705,20 +721,20 @@ export default function BookingsClient() {
       >
         <MenuItem onClick={handleViewDetails} sx={{ fontSize: 14, gap: 1.5 }}>
           <ViewIcon fontSize="small" />
-          View Details
+          {t("menu.viewDetails")}
         </MenuItem>
         <MenuItem onClick={handleEdit} sx={{ fontSize: 14, gap: 1.5 }}>
           <EditIcon fontSize="small" />
-          Edit Booking
+          {t("menu.editBooking")}
         </MenuItem>
         <MenuItem onClick={handleChangeStatus} sx={{ fontSize: 14, gap: 1.5 }}>
           <ChangeStatusIcon fontSize="small" />
-          Change Status
+          {t("menu.changeStatus")}
         </MenuItem>
         <Divider />
         <MenuItem onClick={handleDeleteClick} sx={{ fontSize: 14, gap: 1.5, color: "error.main", fontWeight: 600 }}>
           <DeleteIcon fontSize="small" color="error" />
-          Delete Booking
+          {t("menu.deleteBooking")}
         </MenuItem>
       </Menu>
 

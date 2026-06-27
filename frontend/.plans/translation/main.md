@@ -44,8 +44,8 @@
 - [x] [Admin Security](pages/dashboard/admin/admin/security.md) — `/(dashboard)/admin/admin/security`
 - [x] [Admin Vehicles Mgmt](pages/dashboard/admin/admin/vehicles.md) — `/(dashboard)/admin/admin/vehicles`
 - [x] [Bank Details](pages/dashboard/admin/bank-details.md) — `/(dashboard)/admin/bank-details`
-- [ ] [Admin Bookings](pages/dashboard/admin/bookings.md) — `/(dashboard)/admin/bookings`
-- [ ] [Create Booking](pages/dashboard/admin/bookings/create.md) — `/(dashboard)/admin/bookings/create`
+- [x] [Admin Bookings](pages/dashboard/admin/bookings.md) — `/(dashboard)/admin/bookings`
+- [x] [Create Booking](pages/dashboard/admin/bookings/create.md) — `/(dashboard)/admin/bookings/create`
 - [ ] [Booking Detail](pages/dashboard/admin/bookings/_id.md) — `/(dashboard)/admin/bookings/[id]`
 - [ ] [Edit Booking](pages/dashboard/admin/bookings/_id/edit.md) — `/(dashboard)/admin/bookings/[id]/edit`
 - [ ] [Categories](pages/dashboard/admin/categories.md) — `/(dashboard)/admin/categories`
