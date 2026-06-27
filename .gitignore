@@ -49,3 +49,5 @@ frontend/.eslintcache
 
 
 .playwright-mcp/
+
+.kilo

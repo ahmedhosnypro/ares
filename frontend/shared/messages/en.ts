@@ -28,6 +28,7 @@ import { driverDashboard } from "./en/dashboard/driver-dashboard";
 import { driverEarnings } from "./en/dashboard/driver-earnings";
 import { driverNotifications } from "./en/dashboard/driver-notifications";
 import { driverProfile } from "./en/dashboard/driver-profile";
+import { driverTrips } from "./en/dashboard/driver-trips";
 import logoutDialog from "./en/dashboard/logout-dialog";
 import deleteNotificationDialog from "./en/delete-notification-dialog";
 import compliance from "./en/dashboard/admin/admin/compliance";
@@ -70,6 +71,7 @@ const en: MessageSchema = {
     driverEarnings,
     driverNotifications,
     driverProfile,
+    driverTrips,
     logoutDialog,
   },
   dashboardAdmin: {

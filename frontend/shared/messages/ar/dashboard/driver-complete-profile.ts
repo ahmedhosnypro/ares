@@ -2,6 +2,7 @@ import type { DriverCompleteProfileLabels } from "../../types/dashboard/driver-c
 
 export const driverCompleteProfile: DriverCompleteProfileLabels = {
   title: "أكمل ملف تعريف السائق",
+  pageDescription: "قدم رخصتك وهويتك وتفاصيل منطقة العمل لبدء القيادة مع ARES.",
   subtitle: "يرجى تقديم التفاصيل والمستندات الخاصة بك لبدء استقبال طلبات الركوب.",
   personalDetails: "التفاصيل الشخصية",
   address: "العنوان",

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import {
   Box,
   Switch,
@@ -29,11 +30,11 @@ export default function DriverAvailabilityToggle({
   onAvailabilityChange,
 }: DriverAvailabilityToggleProps) {
   const { data: session } = useSession();
+  const t = useTranslations("dashboard.driverDashboard.availability");
   const [availability, setAvailability] = useState(initialAvailability);
   const [isLoading, setIsLoading] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState(false);
 
-  // Sync state when initialAvailability prop changes from parent (e.g. after API fetch finishes)
   useEffect(() => {
     setAvailability(initialAvailability);
   }, [initialAvailability]);
@@ -63,7 +64,7 @@ export default function DriverAvailabilityToggle({
         body: JSON.stringify({ availability: targetAvailability }),
       });
 
-      if (!res.ok) throw new Error("Failed to update availability");
+      if (!res.ok) throw new Error(t("failedToUpdateAvailability"));
 
       const data = (await res.json()) as { availability: DriverAvailabilityStatus };
       setAvailability(data.availability);
@@ -75,15 +76,17 @@ export default function DriverAvailabilityToggle({
     }
   };
 
+  const targetStatusLabel = isAvailable ? t("unavailable") : t("available");
+
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
       {isLoading && <CircularProgress size={20} />}
       <Typography variant="body2" sx={{ fontWeight: 600, color: "text.secondary" }}>
-        Status:
+        {t("status")}
       </Typography>
 
       {isReserved ? (
-        <Chip label="Reserved" color="warning" size="small" sx={{ fontWeight: 700 }} />
+        <Chip label={t("reserved")} color="warning" size="small" sx={{ fontWeight: 700 }} />
       ) : (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Switch
@@ -91,10 +94,10 @@ export default function DriverAvailabilityToggle({
             onChange={handleToggle}
             disabled={isLoading}
             color="success"
-            aria-label="Toggle availability"
+            aria-label={t("toggleAvailability")}
           />
           <Chip
-            label={isAvailable ? "Available" : "Unavailable"}
+            label={isAvailable ? t("available") : t("unavailable")}
             color={isAvailable ? "success" : "default"}
             size="small"
             sx={{ fontWeight: 700 }}
@@ -108,11 +111,12 @@ export default function DriverAvailabilityToggle({
           setConfirmDialog(false);
         }}
       >
-        <DialogTitle>Confirm Availability Change</DialogTitle>
+        <DialogTitle>{t("confirmAvailabilityChange")}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to change your status to {isAvailable ? "Unavailable" : "Available"}?
-            {isAvailable ? " You will not receive any new requests." : " You will start receiving ride requests."}
+            {t("changeStatusTo", { status: targetStatusLabel })}
+            <br />
+            {isAvailable ? t("youWillNotReceiveRequests") : t("youWillStartReceivingRequests")}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -122,7 +126,7 @@ export default function DriverAvailabilityToggle({
             }}
             color="inherit"
           >
-            Cancel
+            {t("cancel")}
           </Button>
           <Button
             onClick={() => {
@@ -132,7 +136,7 @@ export default function DriverAvailabilityToggle({
             color="primary"
             autoFocus
           >
-            Confirm
+            {t("confirm")}
           </Button>
         </DialogActions>
       </Dialog>

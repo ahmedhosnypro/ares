@@ -17,6 +17,7 @@ export const driverEarnings: DriverEarningsLabels = {
   bookingId: "معرف الحجز",
   vehicle: "المركبة",
   earnings: "الأرباح",
+  earningsAriaLabel: "جدول سجل الأرباح",
   errors: {
     failedToLoadEarningsData: "فشل تحميل بيانات الأرباح",
   },
