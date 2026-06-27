@@ -16,12 +16,18 @@ import driverSelection from "./ar/customer/driver-selection";
 import bookingPayment from "./ar/customer/booking-payment";
 import bookings from "./ar/customer/bookings";
 import changePassword from "./ar/customer/change-password";
+import notifications from "./ar/customer/notifications";
 import header from "./ar/header";
 import shell from "./ar/dashboard/shell";
 import adminSidebar from "./ar/dashboard/admin-sidebar";
 import driverSidebar from "./ar/dashboard/driver-sidebar";
 import supplierSidebar from "./ar/dashboard/supplier-sidebar";
 import inspectorSidebar from "./ar/dashboard/inspector-sidebar";
+import { driverCompleteProfile } from "./ar/dashboard/driver-complete-profile";
+import { driverDashboard } from "./ar/dashboard/driver-dashboard";
+import { driverEarnings } from "./ar/dashboard/driver-earnings";
+import { driverNotifications } from "./ar/dashboard/driver-notifications";
+import { driverProfile } from "./ar/dashboard/driver-profile";
 import logoutDialog from "./ar/dashboard/logout-dialog";
 import deleteNotificationDialog from "./ar/delete-notification-dialog";
 
@@ -46,6 +52,7 @@ const ar: MessageSchema = {
     bookingPayment,
     bookings,
     changePassword,
+    notifications,
   },
   header,
   dashboard: {
@@ -54,6 +61,11 @@ const ar: MessageSchema = {
     driverSidebar,
     supplierSidebar,
     inspectorSidebar,
+    driverCompleteProfile,
+    driverDashboard,
+    driverEarnings,
+    driverNotifications,
+    driverProfile,
     logoutDialog,
   },
   deleteNotificationDialog,
