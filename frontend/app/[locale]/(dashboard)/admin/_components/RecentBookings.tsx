@@ -144,12 +144,8 @@ export default function RecentBookings({ bookings = [] }: RecentBookingsProps) {
             <TableBody>
               {bookings.map(row => (
                 <TableRow key={row.bookingId} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
-                  <TableCell sx={{ fontWeight: "600" }}>
-                    {row.bookingNumber}
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: "500" }}>
-                    {row.customerName}
-                  </TableCell>
+                  <TableCell sx={{ fontWeight: "600" }}>{row.bookingNumber}</TableCell>
+                  <TableCell sx={{ fontWeight: "500" }}>{row.customerName}</TableCell>
                   <TableCell>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                       <Avatar
@@ -171,9 +167,7 @@ export default function RecentBookings({ bookings = [] }: RecentBookingsProps) {
                       </Typography>
                     </Box>
                   </TableCell>
-                  <TableCell>
-                    {new Date(row.bookingDate).toLocaleDateString()}
-                  </TableCell>
+                  <TableCell>{new Date(row.bookingDate).toLocaleDateString()}</TableCell>
                   <TableCell sx={{ textAlign: "right" }}>
                     <Chip
                       label={row.status}

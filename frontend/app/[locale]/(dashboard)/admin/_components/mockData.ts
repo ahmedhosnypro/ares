@@ -29,8 +29,6 @@ export interface TopVehicle {
   trendPercentage?: number;
 }
 
-
-
 export const mockRevenueData: RevenueDataPoint[] = [
   { date: "May 1", revenue: 45000, bookings: 58000, refunds: 5000 },
   { date: "May 6", revenue: 52000, bookings: 72000, refunds: 8000 },
@@ -109,8 +107,6 @@ export const mockTopVehicles: TopVehicle[] = [
     trendPercentage: -3,
   },
 ];
-
-
 
 export interface DashboardActivity {
   id: string;

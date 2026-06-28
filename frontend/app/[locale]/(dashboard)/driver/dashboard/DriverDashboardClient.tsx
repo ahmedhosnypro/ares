@@ -85,7 +85,7 @@ export default function DriverDashboardClient() {
     }
 
     void loadDashboardData(token);
-  }, [session]);
+  }, [session, formatCurrency, t]);
 
   const handleAvailabilityChange = (newAvailability: string) => {
     setAvailability(newAvailability as DriverAvailabilityStatus);

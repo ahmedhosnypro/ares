@@ -20,7 +20,6 @@ import {
   Card,
   CardContent,
   Typography,
-  Avatar,
   IconButton,
   Stack,
   Divider,
@@ -35,7 +34,21 @@ import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { DirectionsCarFilledTwoTone as CarIcon } from "@mui/icons-material";
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell } from "recharts";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+  PieChart,
+  Pie,
+  // eslint-disable-next-line sonarjs/deprecation
+  Cell,
+} from "recharts";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { toImageUrl } from "@/utils/image-url";
@@ -45,11 +58,11 @@ import {
   getSupplierVehicleStatusDistribution,
   type SupplierDashboardStats,
 } from "@/api-clients/supplier-dashboard/supplier-dashboard";
-import { 
-  getSupplierEarningsChart, 
-  getSupplierTopVehicles, 
-  type MonthlyRevenuePoint, 
-  type SupplierTopVehicle 
+import {
+  getSupplierEarningsChart,
+  getSupplierTopVehicles,
+  type MonthlyRevenuePoint,
+  type SupplierTopVehicle,
 } from "@/api-clients/supplier-earnings/supplier-earnings";
 import { logger } from "@/utils/logger";
 import VehicleStats, { type StatItem } from "@/app/[locale]/(dashboard)/_components/VehicleStats";
@@ -98,7 +111,9 @@ export default function SupplierDashboardClient() {
   const [earningsChartData, setEarningsChartData] = useState<MonthlyRevenuePoint[] | null>(null);
   const [bookingsChartData, setBookingsChartData] = useState<{ status: string; count: number }[] | null>(null);
   const [topVehicles, setTopVehicles] = useState<SupplierTopVehicle[] | null>(null);
-  const [vehicleStatusChartData, setVehicleStatusChartData] = useState<{ name: string; value: number; color: string }[] | null>(null);
+  const [vehicleStatusChartData, setVehicleStatusChartData] = useState<
+    { name: string; value: number; color: string }[] | null
+  >(null);
   const [statsLoading, setStatsLoading] = useState(true);
   const [statsError, setStatsError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -188,7 +203,7 @@ export default function SupplierDashboardClient() {
     return () => {
       cancelled = true;
     };
-  }, [session?.accessToken, sessionStatus]);
+  }, [session?.accessToken, sessionStatus, theme]);
 
   // Defensive coercion — backend can in theory send null/undefined for any
   // field; we never want the cards to render `NaN` or crash on `.toLocaleString`.
@@ -412,7 +427,7 @@ export default function SupplierDashboardClient() {
                   </Box>
 
                   <Stack divider={<Divider flexItem />} spacing={0}>
-                    {topVehicles?.map((vehicle, index) => (
+                    {topVehicles?.map(vehicle => (
                       <Box
                         key={vehicle.vehicleId}
                         sx={{
@@ -504,6 +519,7 @@ export default function SupplierDashboardClient() {
                             stroke="none"
                           >
                             {vehicleStatusChartData.map((entry, index) => (
+                              // eslint-disable-next-line @typescript-eslint/no-deprecated, sonarjs/deprecation
                               <Cell key={`cell-${index}`} fill={entry.color} />
                             ))}
                           </Pie>
@@ -522,17 +538,19 @@ export default function SupplierDashboardClient() {
                       </ResponsiveContainer>
                     )}
                   </Box>
-                  
+
                   {mounted && vehicleStatusChartData && (
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, justifyContent: "center", mt: 1 }}>
-                      {vehicleStatusChartData.filter(v => v.value > 0).map((status, idx) => (
-                        <Box key={idx} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                          <Box sx={{ width: 12, height: 12, borderRadius: "50%", bgcolor: status.color }} />
-                          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                            {status.name} ({status.value})
-                          </Typography>
-                        </Box>
-                      ))}
+                      {vehicleStatusChartData
+                        .filter(v => v.value > 0)
+                        .map((status, idx) => (
+                          <Box key={idx} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <Box sx={{ width: 12, height: 12, borderRadius: "50%", bgcolor: status.color }} />
+                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                              {status.name} ({status.value})
+                            </Typography>
+                          </Box>
+                        ))}
                     </Box>
                   )}
                 </CardContent>

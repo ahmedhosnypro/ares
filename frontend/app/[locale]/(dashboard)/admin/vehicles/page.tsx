@@ -63,10 +63,19 @@ import { getCategories, bulkAssignVehicles, type Category } from "@/api-clients/
 import VisibilityOutlinedIcon from "@mui/icons-material/LaunchOutlined";
 import { toImageUrl } from "@/utils/image-url";
 import { logger } from "@/utils/logger";
+// eslint-disable-next-line sonarjs/deprecation
 import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 import { StatCard } from "@/app/[locale]/(dashboard)/_components/VehicleStats";
 
 // ── Types ──
+interface VehicleStatusChartDataItem {
+  readonly name: string;
+  readonly value: number;
+  readonly percentage: number;
+  readonly color: string;
+  readonly isEmpty: boolean;
+}
+
 interface FleetOverviewProps {
   /** Total vehicles in the fleet */
   readonly total: number;
@@ -116,7 +125,13 @@ const getStatusLabel = (status: VehicleStatus) => {
 };
 
 // ── Recharts Donut Chart ──
-function VehicleStatusDonut({ data, total }: { readonly data: readonly any[]; readonly total: number }) {
+function VehicleStatusDonut({
+  data,
+  total,
+}: {
+  readonly data: readonly VehicleStatusChartDataItem[];
+  readonly total: number;
+}) {
   return (
     <Box sx={{ position: "relative", width: 150, height: 150, flexShrink: 0 }}>
       <ResponsiveContainer width="100%" height="100%">
@@ -132,15 +147,19 @@ function VehicleStatusDonut({ data, total }: { readonly data: readonly any[]; re
             stroke="none"
           >
             {data.map((entry, index) => (
+              // eslint-disable-next-line @typescript-eslint/no-deprecated, sonarjs/deprecation
               <Cell key={`cell-${index}`} fill={entry.color} opacity={entry.isEmpty ? 0.3 : 1} />
             ))}
           </Pie>
           <RechartsTooltip
             content={({ active, payload }) => {
-              if (active && payload && payload.length) {
-                const itemData = payload[0].payload;
+              if (active && payload.length > 0) {
+                const itemData = payload[0].payload as VehicleStatusChartDataItem;
                 return (
-                  <Paper elevation={3} sx={{ p: 1.5, borderRadius: 2, display: "flex", flexDirection: "column", gap: 0.5 }}>
+                  <Paper
+                    elevation={3}
+                    sx={{ p: 1.5, borderRadius: 2, display: "flex", flexDirection: "column", gap: 0.5 }}
+                  >
                     <Typography variant="caption" sx={{ fontWeight: 700, color: itemData.color }}>
                       {itemData.name}
                     </Typography>
@@ -186,7 +205,11 @@ function LegendItem({
   isEmpty,
 }: Readonly<{ color: string; label: string; count: number; isEmpty: boolean }>): JSX.Element {
   return (
-    <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between", opacity: isEmpty ? 0.6 : 1 }}>
+    <Stack
+      direction="row"
+      spacing={1}
+      sx={{ alignItems: "center", justifyContent: "space-between", opacity: isEmpty ? 0.6 : 1 }}
+    >
       <Stack direction="row" spacing={0.8} sx={{ alignItems: "center" }}>
         <Box
           sx={{
@@ -226,7 +249,7 @@ function FleetOverview({
     [VehicleStatus.Retired]: 0,
   };
 
-  const chartData = Object.values(VehicleStatus).map((status) => {
+  const chartData = Object.values(VehicleStatus).map(status => {
     const count = countMap[status] || 0;
     const pct = Math.round((count / safeTotal) * 100);
     return {
@@ -258,10 +281,14 @@ function FleetOverview({
           <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700 }}>
             Vehicle Status Overview
           </Typography>
-          <Stack direction="row" spacing={{ xs: 2, sm: 4 }} sx={{ alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
+          <Stack
+            direction="row"
+            spacing={{ xs: 2, sm: 4 }}
+            sx={{ alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}
+          >
             <VehicleStatusDonut data={chartData} total={total} />
             <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: x => x.spacing(1, 2) }}>
-              {chartData.map((item) => (
+              {chartData.map(item => (
                 <LegendItem
                   key={item.name}
                   color={item.color}
@@ -284,7 +311,11 @@ function FleetOverview({
               icon={<CarIcon fontSize="small" />}
               label="Total Assets"
               value={total}
-              change={trends?.totalAssets !== undefined ? `${trends.totalAssets > 0 ? "+" : ""}${trends.totalAssets}%` : undefined}
+              change={
+                trends?.totalAssets !== undefined
+                  ? `${trends.totalAssets > 0 ? "+" : ""}${trends.totalAssets}%`
+                  : undefined
+              }
               isUp={trends?.totalAssets !== undefined ? trends.totalAssets >= 0 : undefined}
               color="primary"
             />
@@ -296,7 +327,9 @@ function FleetOverview({
               icon={<AvailableIcon fontSize="small" />}
               label="Available Now"
               value={availableCount}
-              change={trends?.available !== undefined ? `${trends.available > 0 ? "+" : ""}${trends.available}%` : undefined}
+              change={
+                trends?.available !== undefined ? `${trends.available > 0 ? "+" : ""}${trends.available}%` : undefined
+              }
               isUp={trends?.available !== undefined ? trends.available >= 0 : undefined}
               color="success"
             />
@@ -308,7 +341,11 @@ function FleetOverview({
               icon={<MaintenanceIcon fontSize="small" />}
               label="In Maintenance"
               value={maintenanceCount}
-              change={trends?.maintenance !== undefined ? `${trends.maintenance > 0 ? "+" : ""}${trends.maintenance}%` : undefined}
+              change={
+                trends?.maintenance !== undefined
+                  ? `${trends.maintenance > 0 ? "+" : ""}${trends.maintenance}%`
+                  : undefined
+              }
               isUp={trends?.maintenance !== undefined ? trends.maintenance >= 0 : undefined}
               color="warning"
             />
@@ -326,10 +363,10 @@ function FleetOverview({
 
 const STATUS_OPTIONS: readonly { value: VehicleStatusFilter; label: string }[] = [
   { value: "", label: "All statuses" },
-  { value: "Available", label: "Available" },
-  { value: "FullyBooked", label: "Fully Booked (On Rental)" },
-  { value: "Maintenance", label: "Maintenance" },
-  { value: "Retired", label: "Retired" },
+  { value: VehicleStatus.Available, label: "Available" },
+  { value: VehicleStatus.FullyBooked, label: "Fully Booked (On Rental)" },
+  { value: VehicleStatus.Maintenance, label: "Maintenance" },
+  { value: VehicleStatus.Retired, label: "Retired" },
 ];
 
 const TRANSMISSION_OPTIONS: readonly { value: string; label: string }[] = [

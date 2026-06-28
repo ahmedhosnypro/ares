@@ -5,7 +5,6 @@ import { Card, CardContent, Typography, Box, useTheme, Select, MenuItem, FormCon
 import { ResponsiveContainer, PieChart, Pie, Tooltip, Label, Sector } from "recharts";
 import { VehicleStatusData, mockCityVehicleData } from "./mockData";
 
-
 export default function VehicleStatusChart({ data }: { readonly data: readonly VehicleStatusData[] }) {
   const theme = useTheme();
   const [selectedCity, setSelectedCity] = useState("All Cities");
@@ -51,7 +50,9 @@ export default function VehicleStatusChart({ data }: { readonly data: readonly V
         flexDirection: "column",
       }}
     >
-      <CardContent sx={{ p: 2, "&:last-child": { pb: 2 }, flexGrow: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+      <CardContent
+        sx={{ p: 2, "&:last-child": { pb: 2 }, flexGrow: 1, minWidth: 0, display: "flex", flexDirection: "column" }}
+      >
         <Box
           sx={{
             display: "flex",
@@ -124,7 +125,12 @@ export default function VehicleStatusChart({ data }: { readonly data: readonly V
                           ) {
                             return (
                               <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="central">
-                                <tspan x={viewBox.cx} y={viewBox.cy - 10} fontSize="14" fill={theme.palette.text.secondary}>
+                                <tspan
+                                  x={viewBox.cx}
+                                  y={viewBox.cy - 10}
+                                  fontSize="14"
+                                  fill={theme.palette.text.secondary}
+                                >
                                   Total
                                 </tspan>
                                 <tspan

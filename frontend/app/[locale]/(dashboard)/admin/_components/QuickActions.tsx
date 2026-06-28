@@ -1,4 +1,4 @@
-import { Card, CardContent, Typography, Box, Grid, alpha, useTheme } from "@mui/material";
+import { Card, CardContent, Typography, Box, Grid, alpha, useTheme, type Theme } from "@mui/material";
 import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
@@ -15,13 +15,13 @@ const IconMap = {
   AddBox: AddBoxIcon,
 };
 
-const getActionColor = (theme: any, label: string) => {
+const getActionColor = (theme: Theme, label: string) => {
   const lowerLabel = label.toLowerCase();
-  if (lowerLabel.includes("create booking")) return theme.palette.status.active.main; // Green
-  if (lowerLabel.includes("add user")) return theme.palette.status.confirmed.main; // Blue
-  if (lowerLabel.includes("add vehicle")) return theme.palette.status.completed.main; // Purple
-  if (lowerLabel.includes("review")) return theme.palette.warning?.main || "#f97316"; // Orange
-  if (lowerLabel.includes("assign")) return theme.palette.status.pending.main; // Amber
+  if (lowerLabel.includes("create booking")) return theme.palette.status.active.main;
+  if (lowerLabel.includes("add user")) return theme.palette.status.confirmed.main;
+  if (lowerLabel.includes("add vehicle")) return theme.palette.status.completed.main;
+  if (lowerLabel.includes("review")) return theme.palette.warning.main;
+  if (lowerLabel.includes("assign")) return theme.palette.status.pending.main;
   return theme.palette.primary.main;
 };
 
@@ -47,7 +47,7 @@ export default function QuickActions({ actions }: Readonly<{ actions: readonly Q
         </Typography>
         <Grid container spacing={1.5}>
           {actions.map((action, i) => {
-            const Icon = IconMap[action.icon as keyof typeof IconMap] || AddBoxIcon;
+            const Icon = (IconMap as Record<string, typeof AddBoxIcon>)[action.icon] ?? AddBoxIcon;
             const colorMain = getActionColor(theme, action.label);
 
             return (

@@ -64,7 +64,7 @@ export default function DeleteNotificationDialog({
             fontSize: "0.95rem",
           }}
         >
-          "{notificationTitle}"
+          &ldquo;{notificationTitle}&rdquo;
         </Box>
         <DialogContentText sx={{ color: "text.secondary", fontSize: "0.875rem" }}>{t("cannotUndo")}</DialogContentText>
       </DialogContent>

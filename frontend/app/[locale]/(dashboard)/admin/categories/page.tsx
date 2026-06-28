@@ -14,7 +14,6 @@ import {
   Paper,
   Chip,
   Stack,
-  CircularProgress,
   LinearProgress,
   Button,
   alpha,
@@ -24,7 +23,6 @@ import {
   InputAdornment,
   MenuItem,
   Pagination,
-  Grid,
   Card,
   useTheme,
 } from "@mui/material";
@@ -62,8 +60,8 @@ function EmptyState({
   filtersActive,
   handleClearFilters,
 }: {
-  filtersActive: boolean;
-  handleClearFilters: () => void;
+  readonly filtersActive: boolean;
+  readonly handleClearFilters: () => void;
 }) {
   return (
     <Box sx={{ py: 8, textAlign: "center" }}>
@@ -73,7 +71,7 @@ function EmptyState({
           height: 64,
           mx: "auto",
           mb: 2,
-          bgcolor: (t) => alpha(t.palette.text.disabled, 0.1),
+          bgcolor: t => alpha(t.palette.text.disabled, 0.1),
         }}
       >
         <SearchIcon sx={{ fontSize: 32, color: "text.disabled" }} />
@@ -139,7 +137,9 @@ export default function AdminCategoriesPage() {
       setDebouncedSearch(search);
       setPage(1);
     }, 300);
-    return () => clearTimeout(handler);
+    return () => {
+      clearTimeout(handler);
+    };
   }, [search]);
 
   // Fetch summary stats
@@ -263,11 +263,9 @@ export default function AdminCategoriesPage() {
   const resolvePaletteColor = useMemo(
     () => (color: string) => {
       const isPaletteColor = color in theme.palette;
-      return isPaletteColor
-        ? (theme.palette[color as keyof typeof theme.palette] as { main: string }).main
-        : color;
+      return isPaletteColor ? (theme.palette[color as keyof typeof theme.palette] as { main: string }).main : color;
     },
-    [theme.palette]
+    [theme, theme.palette]
   );
 
   return (
@@ -289,16 +287,26 @@ export default function AdminCategoriesPage() {
         }}
       >
         {[
-          { icon: <CategoryIcon fontSize="small" />, label: "Categories", value: summary?.totalCategories ?? 0, color: "primary" },
+          {
+            icon: <CategoryIcon fontSize="small" />,
+            label: "Categories",
+            value: summary?.totalCategories ?? 0,
+            color: "primary",
+          },
           { icon: <CarIcon fontSize="small" />, label: "Vehicles", value: summary?.totalVehicles ?? 0, color: "info" },
-          { icon: <OfferIcon fontSize="small" />, label: "With Offers", value: summary?.categoriesWithOffers ?? 0, color: "warning" },
+          {
+            icon: <OfferIcon fontSize="small" />,
+            label: "With Offers",
+            value: summary?.categoriesWithOffers ?? 0,
+            color: "warning",
+          },
           {
             icon: <CommissionIcon fontSize="small" />,
             label: "Avg Commission",
             value: summaryLoading ? "..." : `${Math.round(summary?.averageCommission ?? 0)}%`,
             color: "success",
           },
-        ].map((card) => {
+        ].map(card => {
           const mainColor = resolvePaletteColor(card.color);
           return (
             <Card
@@ -374,7 +382,9 @@ export default function AdminCategoriesPage() {
             size="small"
             placeholder="Search categories..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={e => {
+              setSearch(e.target.value);
+            }}
             slotProps={{
               input: {
                 startAdornment: (
@@ -391,7 +401,7 @@ export default function AdminCategoriesPage() {
             size="small"
             label="Status"
             value={status}
-            onChange={(e) => {
+            onChange={e => {
               setStatus(e.target.value);
               setPage(1);
             }}
@@ -406,7 +416,7 @@ export default function AdminCategoriesPage() {
             size="small"
             label="Offer"
             value={offer}
-            onChange={(e) => {
+            onChange={e => {
               setOffer(e.target.value);
               setPage(1);
             }}
@@ -422,7 +432,7 @@ export default function AdminCategoriesPage() {
             size="small"
             label="Sort By"
             value={sortBy}
-            onChange={(e) => {
+            onChange={e => {
               setSortBy(e.target.value);
               setPage(1);
             }}
@@ -483,7 +493,7 @@ export default function AdminCategoriesPage() {
           <TableContainer sx={{ opacity: loading ? 0.6 : 1, transition: "opacity 0.15s ease" }}>
             <Table>
               <TableHead>
-                <TableRow sx={{ bgcolor: (t) => alpha(t.palette.primary.main, 0.04) }}>
+                <TableRow sx={{ bgcolor: t => alpha(t.palette.primary.main, 0.04) }}>
                   <TableCell>{t("table.headers.name")}</TableCell>
                   <TableCell>{t("table.headers.commission")}</TableCell>
                   <TableCell>{t("table.headers.vehicles")}</TableCell>
@@ -494,7 +504,7 @@ export default function AdminCategoriesPage() {
               </TableHead>
               <TableBody>
                 {categories.length > 0 ? (
-                  categories.map((c) => {
+                  categories.map(c => {
                     const daysRemaining = getRemainingDays(c.offerEndDate);
                     return (
                       <TableRow
@@ -505,7 +515,9 @@ export default function AdminCategoriesPage() {
                           transition: "background 0.15s",
                           "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.03) },
                         }}
-                        onClick={() => router.push(`/admin/categories/${c.id}`)}
+                        onClick={() => {
+                          router.push(`/admin/categories/${c.id}`);
+                        }}
                       >
                         <TableCell>
                           <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
@@ -624,8 +636,7 @@ export default function AdminCategoriesPage() {
                             label={c.isActive ? t("table.statusActive") : t("table.statusInactive")}
                             size="small"
                             sx={{
-                              bgcolor: (t) =>
-                                alpha(c.isActive ? t.palette.success.main : t.palette.text.disabled, 0.15),
+                              bgcolor: t => alpha(c.isActive ? t.palette.success.main : t.palette.text.disabled, 0.15),
                               color: c.isActive ? "success.main" : "text.secondary",
                               fontWeight: 700,
                             }}
@@ -636,7 +647,7 @@ export default function AdminCategoriesPage() {
                             <Tooltip title={t("actions.edit")}>
                               <IconButton
                                 size="small"
-                                onClick={(e) => {
+                                onClick={e => {
                                   e.stopPropagation();
                                   router.push(`/admin/categories/${c.id}`);
                                 }}
@@ -647,7 +658,7 @@ export default function AdminCategoriesPage() {
                             <Tooltip title={t("actions.edit")}>
                               <IconButton
                                 size="small"
-                                onClick={(e) => {
+                                onClick={e => {
                                   e.stopPropagation();
                                   handleEdit(c);
                                 }}
@@ -656,15 +667,13 @@ export default function AdminCategoriesPage() {
                               </IconButton>
                             </Tooltip>
                             <Tooltip
-                              title={
-                                c.vehicleCount > 0 ? t("alerts.deleteHasVehiclesError") : t("actions.delete")
-                              }
+                              title={c.vehicleCount > 0 ? t("alerts.deleteHasVehiclesError") : t("actions.delete")}
                             >
                               <span>
                                 <IconButton
                                   size="small"
                                   disabled={c.vehicleCount > 0}
-                                  onClick={(e) => {
+                                  onClick={e => {
                                     e.stopPropagation();
                                     void handleDelete(c.id, c.vehicleCount);
                                   }}
@@ -709,7 +718,9 @@ export default function AdminCategoriesPage() {
           <Pagination
             count={totalPages}
             page={page}
-            onChange={(_, val) => setPage(val)}
+            onChange={(_, val) => {
+              setPage(val);
+            }}
             size="small"
             sx={{ "& .MuiPaginationItem-root": { borderRadius: 2 } }}
           />
