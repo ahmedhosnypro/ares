@@ -38,6 +38,9 @@ export interface DriverDashboardLabels {
     day: string;
     days: string;
     daysRemaining: string;
+    noAssignment: string;
+    noActiveAssignment: string;
+    noAssignmentDescription: string;
   };
   upcomingSchedule: {
     calendarAndShiftSchedule: string;
