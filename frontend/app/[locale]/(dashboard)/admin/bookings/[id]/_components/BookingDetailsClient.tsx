@@ -54,6 +54,7 @@ import {
   ScheduleOutlined as ScheduleIcon,
 } from "@mui/icons-material";
 import { useRouter } from "@/shared/i18n/routing";
+import { useTranslations, useLocale } from "next-intl";
 import { useSession } from "next-auth/react";
 import {
   getAdminBookingDetails,
@@ -80,6 +81,10 @@ interface RefundSectionProps {
 }
 
 function RefundSection({ bookingId, paymentAmount, accessToken, onRefunded }: RefundSectionProps) {
+  const t = useTranslations("dashboardAdmin.bookingDetails");
+  const tCommon = useTranslations("common");
+  const locale = useLocale();
+
   const [open, setOpen] = useState(false);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
@@ -105,7 +110,7 @@ function RefundSection({ bookingId, paymentAmount, accessToken, onRefunded }: Re
       setCustomAmount(data.refundAmount.toFixed(2));
     } catch (err) {
       logger.error("Refund preview error", err);
-      setPreviewError("Could not load refund preview");
+      setPreviewError(t("errors.loadFailed"));
     } finally {
       setLoadingPreview(false);
     }
@@ -125,7 +130,7 @@ function RefundSection({ bookingId, paymentAmount, accessToken, onRefunded }: Re
       onRefunded();
     } catch (err) {
       logger.error("Refund error", err);
-      setPreviewError("Refund failed. Please try again.");
+      setPreviewError(t("refundDialog.processingState"));
     } finally {
       setProcessing(false);
     }
@@ -134,7 +139,7 @@ function RefundSection({ bookingId, paymentAmount, accessToken, onRefunded }: Re
   return (
     <>
       <Button variant="contained" color="primary" onClick={() => void handleOpen()} fullWidth>
-        Process Refund
+        {t("refundDialog.processRefundButton")}
       </Button>
       <Dialog
         open={open}
@@ -144,13 +149,13 @@ function RefundSection({ bookingId, paymentAmount, accessToken, onRefunded }: Re
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle sx={{ fontWeight: 800 }}>Process Refund</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 800 }}>{t("refundDialog.title")}</DialogTitle>
         <DialogContent>
           {loadingPreview && (
             <Stack sx={{ alignItems: "center", py: 3 }} spacing={1}>
               <CircularProgress size={28} />
               <Typography variant="body2" color="text.secondary">
-                Loading refund calculator…
+                {t("refundDialog.loadingPreview")}
               </Typography>
             </Stack>
           )}
@@ -163,7 +168,7 @@ function RefundSection({ bookingId, paymentAmount, accessToken, onRefunded }: Re
             <Stack spacing={2}>
               <Stack direction="row" sx={{ justifyContent: "space-between" }}>
                 <Typography variant="body2" color="text.secondary">
-                  Policy
+                  {t("refundDialog.policy")}
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 700, textTransform: "capitalize" }}>
                   {policyType}
@@ -171,7 +176,7 @@ function RefundSection({ bookingId, paymentAmount, accessToken, onRefunded }: Re
               </Stack>
               <Stack direction="row" sx={{ justifyContent: "space-between" }}>
                 <Typography variant="body2" color="text.secondary">
-                  Algorithm Percentage
+                  {t("refundDialog.percentage")}
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 700 }}>
                   {refundPercentage}%
@@ -179,22 +184,22 @@ function RefundSection({ bookingId, paymentAmount, accessToken, onRefunded }: Re
               </Stack>
               <Stack direction="row" sx={{ justifyContent: "space-between" }}>
                 <Typography variant="body2" color="text.secondary">
-                  Suggested Refund
+                  {t("refundDialog.suggestedRefund")}
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                  ${refundAmount.toFixed(2)}
+                  {formatCurrency(refundAmount, "USD", locale)}
                 </Typography>
               </Stack>
               <Divider />
               <TextField
-                label="Refund Amount"
+                label={t("refundDialog.inputLabel")}
                 type="number"
                 value={customAmount}
                 onChange={e => {
                   setCustomAmount(e.target.value);
                 }}
                 fullWidth
-                helperText={`Max: $${paymentAmount.toFixed(2)}`}
+                helperText={t("refundDialog.maxHelper", { amount: formatCurrency(paymentAmount, "USD", locale) })}
                 slotProps={{ htmlInput: { min: 0, max: paymentAmount, step: 0.01 } }}
               />
             </Stack>
@@ -207,7 +212,7 @@ function RefundSection({ bookingId, paymentAmount, accessToken, onRefunded }: Re
             }}
             disabled={processing}
           >
-            Cancel
+            {tCommon("cancel")}
           </Button>
           <Button
             variant="contained"
@@ -216,7 +221,7 @@ function RefundSection({ bookingId, paymentAmount, accessToken, onRefunded }: Re
             disabled={processing || loadingPreview || !!previewError}
             startIcon={processing ? <CircularProgress size={14} color="inherit" /> : null}
           >
-            {processing ? "Processing…" : "Confirm Refund"}
+            {processing ? t("refundDialog.processingState") : t("refundDialog.confirmRefundButton")}
           </Button>
         </DialogActions>
       </Dialog>
@@ -228,22 +233,22 @@ function RefundSection({ bookingId, paymentAmount, accessToken, onRefunded }: Re
  *  Formatters
  * ──────────────────────────────────────────────────────────────────────── */
 
-const formatDateLong = (s?: string | null) => {
+const formatDateLong = (s?: string | null, locale = "en") => {
   if (!s) return "—";
   const d = new Date(s);
   if (isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("en-US", {
+  return d.toLocaleDateString(locale === "ar" ? "ar-EG" : "en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
 };
 
-const formatDateTime = (s?: string | null) => {
+const formatDateTime = (s?: string | null, locale = "en") => {
   if (!s) return "—";
   const d = new Date(s);
   if (isNaN(d.getTime())) return "—";
-  return d.toLocaleString("en-US", {
+  return d.toLocaleString(locale === "ar" ? "ar-EG" : "en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -252,10 +257,10 @@ const formatDateTime = (s?: string | null) => {
   });
 };
 
-const formatCurrency = (n?: number | null, currency = "USD") => {
+const formatCurrency = (n?: number | null, currency = "USD", locale = "en") => {
   if (n == null || isNaN(n)) return "—";
   try {
-    return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(n);
+    return new Intl.NumberFormat(locale === "ar" ? "ar-EG" : "en-US", { style: "currency", currency }).format(n);
   } catch {
     return `$${n.toFixed(2)}`;
   }
@@ -443,14 +448,17 @@ function InspectionCard({
   fallbackAssignedInspectorName,
   fallbackStatus,
 }: InspectionCardProps) {
+  const t = useTranslations("dashboardAdmin.bookingDetails");
+  const locale = useLocale();
+
   // No row in DB and no inspector mirror — show empty state.
   if (!inspection && !fallbackAssignedInspectorName && !fallbackStatus) {
     return (
       <SectionCard icon={icon} title={title}>
         <EmptyState
           icon={<InspectionIcon />}
-          title="No inspection yet"
-          description="This inspection has not been performed. Assign an inspector to start the process."
+          title={t("inspection.emptyState.title")}
+          description={t("inspection.emptyState.description")}
         />
       </SectionCard>
     );
@@ -474,29 +482,37 @@ function InspectionCard({
     >
       <Stack spacing={2.5}>
         <InfoGrid columns={2}>
-          <InfoItem label="Assigned Inspector" value={inspectorName} icon={<AssignIcon sx={{ fontSize: 16 }} />} />
           <InfoItem
-            label="Inspection Date"
-            value={inspection ? formatDateTime(inspection.inspectionDate) : "—"}
+            label={t("inspection.assignedInspector")}
+            value={inspectorName}
+            icon={<AssignIcon sx={{ fontSize: 16 }} />}
+          />
+          <InfoItem
+            label={t("inspection.date")}
+            value={inspection ? formatDateTime(inspection.inspectionDate, locale) : "—"}
             icon={<EventIcon sx={{ fontSize: 16 }} />}
           />
           <InfoItem
-            label="Submitted At"
-            value={inspection?.submittedAt ? formatDateTime(inspection.submittedAt) : "Not submitted"}
+            label={t("inspection.submittedAt")}
+            value={
+              inspection?.submittedAt ? formatDateTime(inspection.submittedAt, locale) : t("inspection.notSubmitted")
+            }
             icon={<ScheduleIcon sx={{ fontSize: 16 }} />}
           />
           <InfoItem
-            label="Condition"
+            label={t("inspection.condition")}
             value={inspection?.generalCondition ?? "—"}
             icon={<CheckCircleIcon sx={{ fontSize: 16 }} />}
           />
           <InfoItem
-            label="Mileage"
-            value={inspection ? `${inspection.odometerReading.toLocaleString()} km` : "—"}
+            label={t("inspection.mileage")}
+            value={
+              inspection ? `${inspection.odometerReading.toLocaleString(locale === "ar" ? "ar-EG" : "en-US")} km` : "—"
+            }
             icon={<SpeedIcon sx={{ fontSize: 16 }} />}
           />
           <InfoItem
-            label="Fuel Level"
+            label={t("inspection.fuelLevel")}
             value={inspection ? `${inspection.fuelLevel.toFixed(0)}%` : "—"}
             icon={<FuelIcon sx={{ fontSize: 16 }} />}
           />
@@ -510,7 +526,7 @@ function InspectionCard({
               sx={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.4, display: "block", mb: 1 }}
             >
               <NotesIcon sx={{ fontSize: 14, verticalAlign: "middle", mr: 0.5 }} />
-              Condition Notes
+              {t("inspection.conditionNotes")}
             </Typography>
             <Paper
               variant="outlined"
@@ -531,7 +547,7 @@ function InspectionCard({
               sx={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.4, display: "block", mb: 1 }}
             >
               <PhotoIcon sx={{ fontSize: 14, verticalAlign: "middle", mr: 0.5 }} />
-              Inspection Images ({inspection.imageUrls.length})
+              {t("inspection.imagesTitle", { count: inspection.imageUrls.length })}
             </Typography>
             <Box
               sx={{
@@ -565,7 +581,7 @@ function InspectionCard({
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={src}
-                      alt={`Inspection ${String(idx + 1)}`}
+                      alt={`${t("inspection.imagesTitle", { count: idx + 1 })}`}
                       style={{
                         position: "absolute",
                         inset: 0,
@@ -632,13 +648,126 @@ function timelineColor(type: string): "primary" | "success" | "warning" | "error
   }
 }
 
-function TimelineList({ events }: { readonly events: BookingTimelineEvent[] }) {
+function getLocalizedEventContent(evt: BookingTimelineEvent, bookingNumber: string, t: any) {
+  const type = evt.type;
+  const desc = evt.description || "";
+
+  switch (type) {
+    case "BookingCreated": {
+      const match = desc.match(/Booking #(\S+) was created\./);
+      const number = match ? match[1] : bookingNumber;
+      return {
+        title: t("timeline.events.bookingCreated.title"),
+        description: t("timeline.events.bookingCreated.description", { number }),
+      };
+    }
+    case "InspectorAssigned": {
+      const match = desc.match(/(.+) was assigned to inspect the vehicle\./);
+      const name = match ? match[1] : desc;
+      return {
+        title: t("timeline.events.inspectorAssigned.title"),
+        description: match ? t("timeline.events.inspectorAssigned.description", { name }) : desc,
+      };
+    }
+    case "PickupInspectionCompleted": {
+      const match = desc.match(/Inspection result: (.+)\./);
+      if (match) {
+        const rawStatus = match[1];
+        const localizedStatus = t(`badges.${rawStatus.toLowerCase()}` as any);
+        return {
+          title: t("timeline.events.pickupInspectionCompleted.title"),
+          description: t("timeline.events.pickupInspectionCompleted.description", { status: localizedStatus }),
+        };
+      }
+      return {
+        title: t("timeline.events.pickupInspectionCompleted.title"),
+        description: desc,
+      };
+    }
+    case "ReturnInspectionCompleted": {
+      const match = desc.match(/Inspection result: (.+)\./);
+      if (match) {
+        const rawStatus = match[1];
+        const localizedStatus = t(`badges.${rawStatus.toLowerCase()}` as any);
+        return {
+          title: t("timeline.events.returnInspectionCompleted.title"),
+          description: t("timeline.events.returnInspectionCompleted.description", { status: localizedStatus }),
+        };
+      }
+      return {
+        title: t("timeline.events.returnInspectionCompleted.title"),
+        description: desc,
+      };
+    }
+    case "PaymentCompleted": {
+      const match = desc.match(/([\d\.]+) (\S+) via (.+)\./);
+      if (match) {
+        const amount = match[1];
+        const currency = match[2];
+        const method = match[3];
+        return {
+          title: t("timeline.events.paymentCompleted.title"),
+          description: t("timeline.events.paymentCompleted.description", { amount, currency, method }),
+        };
+      }
+      return {
+        title: t("timeline.events.paymentCompleted.title"),
+        description: desc,
+      };
+    }
+    case "BookingCancelled": {
+      return {
+        title: t("timeline.events.bookingCancelled.title"),
+        description: desc,
+      };
+    }
+    case "BookingCompleted": {
+      return {
+        title: t("timeline.events.bookingCompleted.title"),
+        description: null,
+      };
+    }
+    case "RefundProcessed": {
+      const match = desc.match(/Refund (.+): ([\d\.]+) (\S+)\./);
+      if (match) {
+        const rawStatus = match[1];
+        const amount = match[2];
+        const currency = match[3];
+        const localizedStatus = t(`badges.${rawStatus.toLowerCase()}` as any);
+        return {
+          title: t("timeline.events.refundProcessed.title"),
+          description: t("timeline.events.refundProcessed.description", { status: localizedStatus, amount, currency }),
+        };
+      }
+      return {
+        title: t("timeline.events.refundProcessed.title"),
+        description: desc,
+      };
+    }
+    default:
+      return {
+        title: evt.title,
+        description: desc,
+      };
+  }
+}
+
+function TimelineList({
+  events,
+  bookingNumber,
+}: {
+  readonly events: BookingTimelineEvent[];
+  readonly bookingNumber: string;
+}) {
+  const t = useTranslations("dashboardAdmin.bookingDetails");
+  const locale = useLocale();
+
   if (events.length === 0) {
     return (
       <EmptyState
         icon={<HistoryIcon />}
-        title="No activity yet"
-        description="Activity will appear here as the booking progresses."
+        title={t("timeline.emptyState.title")}
+        description={t("timeline.emptyState.description")}
       />
     );
   }
@@ -648,6 +777,7 @@ function TimelineList({ events }: { readonly events: BookingTimelineEvent[] }) {
       {events.map((evt, idx) => {
         const isLast = idx === events.length - 1;
         const color = timelineColor(evt.type);
+        const { title, description } = getLocalizedEventContent(evt, bookingNumber, t);
         return (
           <Stack key={`${evt.type}-${evt.occurredAt}-${String(idx)}`} direction="row" spacing={2}>
             <Stack sx={{ alignItems: "center" }}>
@@ -680,15 +810,15 @@ function TimelineList({ events }: { readonly events: BookingTimelineEvent[] }) {
             </Stack>
             <Box sx={{ pb: isLast ? 0 : 2.5, flex: 1 }}>
               <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                {evt.title}
+                {title}
               </Typography>
-              {evt.description && (
+              {description && (
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
-                  {evt.description}
+                  {description}
                 </Typography>
               )}
               <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
-                {formatDateTime(evt.occurredAt)}
+                {formatDateTime(evt.occurredAt, locale)}
               </Typography>
             </Box>
           </Stack>
@@ -728,6 +858,8 @@ function DetailsSkeleton() {
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function BookingDetailsClient({ bookingId }: { readonly bookingId: string }) {
+  const t = useTranslations("dashboardAdmin.bookingDetails");
+  const locale = useLocale();
   const router = useRouter();
   const theme = useTheme();
   const { data: session } = useSession();
@@ -751,7 +883,7 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
         setBooking(data);
       } catch (e) {
         logger.error("Failed to load booking details", e);
-        setError(e instanceof Error ? e.message : "Failed to load booking details.");
+        setError(e instanceof Error ? e.message : t("errors.loadFailed"));
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -767,14 +899,14 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
   const handleDelete = () => {
     void (async () => {
       if (!session?.accessToken || !booking) return;
-      if (!window.confirm("Delete this booking? This action cannot be undone.")) return;
+      if (!window.confirm(t("errors.deleteConfirm"))) return;
       setDeleting(true);
       try {
         await deleteBookingsApi(session.accessToken, [booking.id]);
         router.push("/admin/bookings");
       } catch (e) {
         logger.error("Failed to delete booking", e);
-        setError(e instanceof Error ? e.message : "Failed to delete booking.");
+        setError(e instanceof Error ? e.message : t("errors.deleteFailed"));
       } finally {
         setDeleting(false);
       }
@@ -788,7 +920,7 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
   if (error || !booking) {
     return (
       <Box sx={{ p: 3, maxWidth: 900, mx: "auto" }}>
-        <Alert severity="error">{error ?? "Booking not found."}</Alert>
+        <Alert severity="error">{error ?? t("errors.notFound")}</Alert>
         <Button
           sx={{ mt: 2 }}
           variant="outlined"
@@ -797,7 +929,7 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
             router.push("/admin/bookings");
           }}
         >
-          Back to Bookings
+          {t("buttons.back")}
         </Button>
       </Box>
     );
@@ -825,56 +957,52 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
       {/* ── VERTICAL SECTIONS ── */}
       <Stack spacing={3}>
         {/* 1. Booking Information */}
-        <SectionCard
-          icon={<EventIcon />}
-          title="Booking Information"
-          subtitle="Operational dates, locations and totals"
-        >
+        <SectionCard icon={<EventIcon />} title={t("bookingInfo.title")} subtitle={t("bookingInfo.subtitle")}>
           <InfoGrid columns={3}>
-            <InfoItem label="Booking Number" value={booking.bookingNumber ?? "—"} />
+            <InfoItem label={t("bookingInfo.number")} value={booking.bookingNumber ?? "—"} />
             <InfoItem
-              label="Status"
+              label={t("bookingInfo.status")}
               value={
                 <Chip
                   size="small"
-                  label={booking.status}
+                  label={t(`badges.${booking.status.toLowerCase()}` as any)}
                   color={statusColorKey}
                   sx={{ fontWeight: 700, textTransform: "capitalize" }}
                 />
               }
             />
             <InfoItem
-              label="Total Days"
-              value={booking.totalDays != null ? `${String(booking.totalDays)} days` : "—"}
+              label={t("bookingInfo.totalDays")}
+              value={booking.totalDays != null ? t("bookingInfo.daysValue", { count: booking.totalDays }) : "—"}
             />
-            <InfoItem label="Pickup Date" value={formatDateLong(booking.from)} />
-            <InfoItem label="Return Date" value={formatDateLong(booking.to)} />
+            <InfoItem label={t("bookingInfo.pickupDate")} value={formatDateLong(booking.from, locale)} />
+            <InfoItem label={t("bookingInfo.returnDate")} value={formatDateLong(booking.to, locale)} />
             <InfoItem
-              label="Total Amount"
+              label={t("bookingInfo.totalAmount")}
               value={
                 <Typography component="span" sx={{ fontWeight: 800, color: "success.main" }}>
-                  {formatCurrency(booking.price ?? 0, currency)}
+                  {formatCurrency(booking.price ?? 0, currency, locale)}
                 </Typography>
               }
               icon={<MoneyIcon sx={{ fontSize: 16, color: "success.main" }} />}
             />
             <InfoItem
-              label="Pickup Location"
+              label={t("bookingInfo.pickupLocation")}
               value={booking.pickupLocation?.name ?? "—"}
               icon={<PlaceIcon sx={{ fontSize: 16 }} />}
             />
             <InfoItem
-              label="Dropoff Location"
+              label={t("bookingInfo.dropoffLocation")}
               value={booking.dropOffLocation?.name ?? "—"}
               icon={<PlaceIcon sx={{ fontSize: 16 }} />}
             />
-            <InfoItem label="Created Date" value={formatDateTime(booking.createdAt ?? null)} />
-            <InfoItem label="Last Updated" value={formatDateTime(booking.updatedAt ?? null)} />
+            <InfoItem label={t("bookingInfo.createdDate")} value={formatDateTime(booking.createdAt ?? null, locale)} />
+            <InfoItem label={t("bookingInfo.lastUpdated")} value={formatDateTime(booking.updatedAt ?? null, locale)} />
           </InfoGrid>
         </SectionCard>
 
         {/* 2. Customer Information */}
-        <SectionCard icon={<PersonIcon />} title="Customer Information" subtitle="Renter contact details">
+        <SectionCard icon={<PersonIcon />} title={t("customerInfo.title")} subtitle={t("customerInfo.subtitle")}>
           {booking.customer ? (
             <Stack direction={{ xs: "column", sm: "row" }} spacing={3} sx={{ alignItems: { sm: "flex-start" } }}>
               <Avatar
@@ -899,7 +1027,7 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
                     <Chip
                       size="small"
                       icon={<VerifiedIcon sx={{ fontSize: 14 }} />}
-                      label="Email Verified"
+                      label={t("customerInfo.emailVerified")}
                       color="success"
                       variant="outlined"
                       sx={{ fontWeight: 600 }}
@@ -908,7 +1036,9 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
                   {customerVerificationStatus && (
                     <Chip
                       size="small"
-                      label={`ID: ${customerVerificationStatus}`}
+                      label={t("customerInfo.idVerification", {
+                        status: t(`badges.${customerVerificationStatus.toLowerCase()}` as any),
+                      })}
                       color={getStatusConfig(customerVerificationStatus)}
                       variant="outlined"
                       sx={{ fontWeight: 600, textTransform: "capitalize" }}
@@ -917,12 +1047,12 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
                 </Stack>
                 <InfoGrid columns={2}>
                   <InfoItem
-                    label="Email"
+                    label={t("customerInfo.email")}
                     value={booking.customer.email ?? "—"}
                     icon={<EmailIcon sx={{ fontSize: 16 }} />}
                   />
                   <InfoItem
-                    label="Phone Number"
+                    label={t("customerInfo.phone")}
                     value={booking.customer.phone ?? "—"}
                     icon={<PhoneIcon sx={{ fontSize: 16 }} />}
                   />
@@ -932,14 +1062,14 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
           ) : (
             <EmptyState
               icon={<PersonIcon />}
-              title="No customer attached"
-              description="This booking does not have a customer record."
+              title={t("customerInfo.emptyState.title")}
+              description={t("customerInfo.emptyState.description")}
             />
           )}
         </SectionCard>
 
         {/* 3. Vehicle Information (includes supplier) */}
-        <SectionCard icon={<CarIcon />} title="Vehicle Information" subtitle="Vehicle details and supplier">
+        <SectionCard icon={<CarIcon />} title={t("vehicleInfo.title")} subtitle={t("vehicleInfo.subtitle")}>
           <Stack spacing={3}>
             <Stack direction={{ xs: "column", sm: "row" }} spacing={3} sx={{ alignItems: { sm: "flex-start" } }}>
               <Box
@@ -976,7 +1106,7 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
                   {booking.car?.availabilityStatus && (
                     <Chip
                       size="small"
-                      label={booking.car.availabilityStatus}
+                      label={t(`badges.${booking.car.availabilityStatus.toLowerCase()}` as any)}
                       color={getStatusConfig(booking.car.availabilityStatus)}
                       variant="outlined"
                       sx={{ fontWeight: 600, textTransform: "capitalize" }}
@@ -984,15 +1114,22 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
                   )}
                 </Stack>
                 <InfoGrid columns={3}>
-                  <InfoItem label="Make" value={booking.car?.make ?? "—"} />
-                  <InfoItem label="Model" value={booking.car?.model ?? "—"} />
-                  <InfoItem label="Year" value={booking.car?.year ?? "—"} />
-                  <InfoItem label="License Plate" value={booking.car?.plateNumber ?? "—"} />
+                  <InfoItem label={t("vehicleInfo.make")} value={booking.car?.make ?? "—"} />
+                  <InfoItem label={t("vehicleInfo.model")} value={booking.car?.model ?? "—"} />
+                  <InfoItem label={t("vehicleInfo.year")} value={booking.car?.year ?? "—"} />
+                  <InfoItem label={t("vehicleInfo.licensePlate")} value={booking.car?.plateNumber ?? "—"} />
                   <InfoItem
-                    label="Daily Rate"
-                    value={formatCurrency(booking.car?.dailyRate ?? booking.dailyRate ?? null, currency)}
+                    label={t("vehicleInfo.dailyRate")}
+                    value={formatCurrency(booking.car?.dailyRate ?? booking.dailyRate ?? null, currency, locale)}
                   />
-                  <InfoItem label="Availability" value={booking.car?.availabilityStatus ?? "—"} />
+                  <InfoItem
+                    label={t("vehicleInfo.availability")}
+                    value={
+                      booking.car?.availabilityStatus
+                        ? t(`badges.${booking.car.availabilityStatus.toLowerCase()}` as any)
+                        : "—"
+                    }
+                  />
                 </InfoGrid>
               </Box>
             </Stack>
@@ -1003,15 +1140,25 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
               <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 1.5 }}>
                 <BusinessIcon sx={{ fontSize: 18, color: "primary.main" }} />
                 <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                  Supplier
+                  {t("vehicleInfo.supplierHeader")}
                 </Typography>
               </Stack>
               <InfoGrid columns={2}>
-                <InfoItem label="Supplier Name" value={carSupplier?.fullName ?? carSupplier?.name ?? "—"} />
-                <InfoItem label="Company Name" value={carSupplier?.companyName ?? supplierDisplayName} />
-                <InfoItem label="Email" value={carSupplier?.email ?? "—"} icon={<EmailIcon sx={{ fontSize: 16 }} />} />
                 <InfoItem
-                  label="Phone Number"
+                  label={t("vehicleInfo.supplierName")}
+                  value={carSupplier?.fullName ?? carSupplier?.name ?? "—"}
+                />
+                <InfoItem
+                  label={t("vehicleInfo.supplierCompanyName")}
+                  value={carSupplier?.companyName ?? supplierDisplayName}
+                />
+                <InfoItem
+                  label={t("vehicleInfo.supplierEmail")}
+                  value={carSupplier?.email ?? "—"}
+                  icon={<EmailIcon sx={{ fontSize: 16 }} />}
+                />
+                <InfoItem
+                  label={t("vehicleInfo.supplierPhone")}
                   value={carSupplier?.phone ?? "—"}
                   icon={<PhoneIcon sx={{ fontSize: 16 }} />}
                 />
@@ -1023,13 +1170,13 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
         {/* 4. Payment Information */}
         <SectionCard
           icon={<PaymentIcon />}
-          title="Payment Information"
-          subtitle="Latest payment and refund details"
+          title={t("paymentInfo.title")}
+          subtitle={t("paymentInfo.subtitle")}
           action={
             booking.paymentStatus && (
               <Chip
                 size="small"
-                label={booking.paymentStatus}
+                label={t(`badges.${booking.paymentStatus.toLowerCase()}` as any)}
                 color={getPaymentStatusConfig(booking.paymentStatus)}
                 sx={{ fontWeight: 700, textTransform: "capitalize" }}
               />
@@ -1051,28 +1198,28 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
               )}
               <InfoGrid columns={3}>
                 <InfoItem
-                  label="Payment Status"
+                  label={t("paymentInfo.status")}
                   value={
                     <Chip
                       size="small"
-                      label={booking.paymentDetails.status}
+                      label={t(`badges.${booking.paymentDetails.status.toLowerCase()}` as any)}
                       color={getPaymentStatusConfig(booking.paymentDetails.status)}
                       sx={{ fontWeight: 700, textTransform: "capitalize" }}
                     />
                   }
                 />
                 <InfoItem
-                  label="Amount"
+                  label={t("paymentInfo.amount")}
                   value={
                     <Typography component="span" sx={{ fontWeight: 800, color: "success.main" }}>
-                      {formatCurrency(booking.paymentDetails.amount, booking.paymentDetails.currency)}
+                      {formatCurrency(booking.paymentDetails.amount, booking.paymentDetails.currency, locale)}
                     </Typography>
                   }
                 />
-                <InfoItem label="Currency" value={booking.paymentDetails.currency} />
-                <InfoItem label="Payment Method" value={booking.paymentDetails.method || "—"} />
+                <InfoItem label={t("paymentInfo.currency")} value={booking.paymentDetails.currency} />
+                <InfoItem label={t("paymentInfo.method")} value={booking.paymentDetails.method || "—"} />
                 <InfoItem
-                  label="Transaction Reference"
+                  label={t("paymentInfo.reference")}
                   value={
                     booking.paymentDetails.transactionId ? (
                       <Typography
@@ -1093,12 +1240,18 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
                     )
                   }
                 />
-                <InfoItem label="Authorization Code" value={booking.paymentDetails.authorizationCode ?? "—"} />
-                <InfoItem label="Paid Date" value={formatDateTime(booking.paymentDetails.processedAt)} />
-                <InfoItem label="Created" value={formatDateTime(booking.paymentDetails.createdAt)} />
+                <InfoItem label={t("paymentInfo.authCode")} value={booking.paymentDetails.authorizationCode ?? "—"} />
+                <InfoItem
+                  label={t("paymentInfo.paidDate")}
+                  value={formatDateTime(booking.paymentDetails.processedAt, locale)}
+                />
+                <InfoItem
+                  label={t("paymentInfo.created")}
+                  value={formatDateTime(booking.paymentDetails.createdAt, locale)}
+                />
                 {booking.paymentDetails.failureReason && (
                   <InfoItem
-                    label="Failure Reason"
+                    label={t("paymentInfo.failureReason")}
                     value={
                       <Typography component="span" color="error.main">
                         {booking.paymentDetails.failureReason}
@@ -1115,24 +1268,28 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
                   <Divider />
                   <Box>
                     <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1.5 }}>
-                      Refund
+                      {t("paymentInfo.refundHeader")}
                     </Typography>
                     <InfoGrid columns={3}>
                       <InfoItem
-                        label="Refund Amount"
+                        label={t("paymentInfo.refundAmount")}
                         value={
                           booking.paymentDetails.refundAmount != null
-                            ? formatCurrency(booking.paymentDetails.refundAmount, booking.paymentDetails.currency)
+                            ? formatCurrency(
+                                booking.paymentDetails.refundAmount,
+                                booking.paymentDetails.currency,
+                                locale
+                              )
                             : "—"
                         }
                       />
                       <InfoItem
-                        label="Refund Status"
+                        label={t("paymentInfo.refundStatus")}
                         value={
                           booking.paymentDetails.refundStatus ? (
                             <Chip
                               size="small"
-                              label={booking.paymentDetails.refundStatus}
+                              label={t(`badges.${booking.paymentDetails.refundStatus.toLowerCase()}` as any)}
                               color={getStatusConfig(booking.paymentDetails.refundStatus)}
                               variant="outlined"
                               sx={{ fontWeight: 600, textTransform: "capitalize" }}
@@ -1142,8 +1299,14 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
                           )
                         }
                       />
-                      <InfoItem label="Refund Method" value={booking.paymentDetails.refundMethod ?? "—"} />
-                      <InfoItem label="Refund Date" value={formatDateTime(booking.paymentDetails.refundProcessedAt)} />
+                      <InfoItem
+                        label={t("paymentInfo.refundMethod")}
+                        value={booking.paymentDetails.refundMethod ?? "—"}
+                      />
+                      <InfoItem
+                        label={t("paymentInfo.refundDate")}
+                        value={formatDateTime(booking.paymentDetails.refundProcessedAt, locale)}
+                      />
                     </InfoGrid>
                   </Box>
                 </>
@@ -1152,8 +1315,8 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
           ) : (
             <EmptyState
               icon={<PaymentIcon />}
-              title="No payment recorded yet"
-              description="When a payment is processed for this booking it will appear here."
+              title={t("paymentInfo.emptyState.title")}
+              description={t("paymentInfo.emptyState.description")}
             />
           )}
         </SectionCard>
@@ -1173,7 +1336,7 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
         {(booking.status === "Confirmed" || booking.status === "Active" || booking.status === "Completed") &&
           (booking.pickupInspection || booking.inspection?.assignedInspectorId) && (
             <InspectionCard
-              title="Pickup Inspection"
+              title={t("inspection.pickupTitle")}
               icon={<InspectionIcon />}
               inspection={booking.pickupInspection}
               fallbackAssignedInspectorName={
@@ -1187,7 +1350,7 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
         {(booking.status === "Active" || booking.status === "Completed") &&
           (booking.returnInspection || booking.inspection?.assignedInspectorId) && (
             <InspectionCard
-              title="Return Inspection"
+              title={t("inspection.returnTitle")}
               icon={<InspectionIcon />}
               inspection={booking.returnInspection}
               fallbackAssignedInspectorName={booking.returnInspection?.inspectorName ?? null}
@@ -1196,14 +1359,14 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
           )}
 
         {/* 7. Activity Timeline */}
-        <SectionCard icon={<HistoryIcon />} title="Activity Timeline" subtitle="Real events recorded for this booking">
+        <SectionCard icon={<HistoryIcon />} title={t("timeline.title")} subtitle={t("timeline.subtitle")}>
           {booking.timeline && booking.timeline.length > 0 ? (
-            <TimelineList events={booking.timeline} />
+            <TimelineList events={booking.timeline} bookingNumber={booking.bookingNumber ?? ""} />
           ) : (
             <EmptyState
               icon={<HourglassIcon />}
-              title="No timeline events"
-              description="As the booking progresses through its lifecycle, activity will be captured here."
+              title={t("timeline.emptyState.title")}
+              description={t("timeline.emptyState.description")}
             />
           )}
         </SectionCard>
@@ -1247,6 +1410,8 @@ function BookingDetailsHeader({
   onSetStatusModalOpen,
   onDelete,
 }: BookingDetailsHeaderProps) {
+  const t = useTranslations("dashboardAdmin.bookingDetails");
+  const locale = useLocale();
   const router = useRouter();
   return (
     <Paper
@@ -1268,7 +1433,7 @@ function BookingDetailsHeader({
         }}
       >
         <Stack direction="row" spacing={2} sx={{ alignItems: "center", flex: 1, minWidth: 0 }}>
-          <Tooltip title="Back to bookings">
+          <Tooltip title={t("backToBookingsTooltip")}>
             <IconButton
               onClick={() => {
                 router.push("/admin/bookings");
@@ -1281,23 +1446,23 @@ function BookingDetailsHeader({
           <Box sx={{ minWidth: 0 }}>
             <Stack direction="row" spacing={1.25} sx={{ alignItems: "center", flexWrap: "wrap" }}>
               <Typography variant="h5" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
-                Booking #{booking.bookingNumber ?? booking.id.split("-")[0]}
+                {t("pageTitle")} #{booking.bookingNumber ?? booking.id.split("-")[0]}
               </Typography>
               <Chip
                 size="small"
-                label={booking.status}
+                label={t(`badges.${booking.status.toLowerCase()}` as any)}
                 color={statusColorKey}
                 sx={{ fontWeight: 700, textTransform: "capitalize" }}
               />
             </Stack>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              Last updated {formatDateTime(booking.updatedAt ?? booking.createdAt ?? null)}
+              {t("lastUpdated", { date: formatDateTime(booking.updatedAt ?? booking.createdAt ?? null, locale) })}
             </Typography>
           </Box>
         </Stack>
 
         <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
-          <Tooltip title="Refresh">
+          <Tooltip title={locale === "ar" ? "تحديث" : "Refresh"}>
             <span>
               <IconButton
                 onClick={() => {
@@ -1318,7 +1483,7 @@ function BookingDetailsHeader({
             }}
             sx={{ borderRadius: 2 }}
           >
-            Edit
+            {t("buttons.edit")}
           </Button>
           <Button
             variant="contained"
@@ -1328,7 +1493,7 @@ function BookingDetailsHeader({
             }}
             sx={{ borderRadius: 2, fontWeight: 700 }}
           >
-            Change Status
+            {t("buttons.changeStatus")}
           </Button>
           <Button
             variant="outlined"
@@ -1338,7 +1503,7 @@ function BookingDetailsHeader({
             onClick={onDelete}
             sx={{ borderRadius: 2 }}
           >
-            Delete
+            {t("buttons.delete")}
           </Button>
         </Stack>
       </Stack>

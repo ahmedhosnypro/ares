@@ -40,6 +40,12 @@ import privacy from "./ar/public/privacy";
 import terms from "./ar/public/terms";
 import adminBookings from "./ar/dashboard/admin/bookings";
 import createBooking from "./ar/dashboard/admin/bookings/create";
+import bookingDetails from "./ar/dashboard/admin/bookings/_id/details";
+import editBooking from "./ar/dashboard/admin/bookings/_id/edit";
+import categories from "./ar/dashboard/admin/categories";
+import categoryDetails from "./ar/dashboard/admin/categories/detail";
+import countries from "./ar/dashboard/admin/countries";
+import createCountry from "./ar/dashboard/admin/countries/create";
 
 const ar: MessageSchema = {
   common,
@@ -88,6 +94,12 @@ const ar: MessageSchema = {
     bankDetails,
     bookings: adminBookings,
     createBooking,
+    bookingDetails,
+    editBooking,
+    categories,
+    categoryDetails,
+    countries,
+    createCountry,
   },
   deleteNotificationDialog,
   publicPages: {

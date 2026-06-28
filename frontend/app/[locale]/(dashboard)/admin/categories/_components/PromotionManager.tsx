@@ -35,9 +35,13 @@ import {
 } from "@/api-clients/categories/categories";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
+import { useTranslations } from "next-intl";
+import { ApiError } from "@/utils/api-client";
 
 export default function PromotionManager({ categoryId }: { readonly categoryId: string }) {
   const theme = useTheme();
+  const t = useTranslations("dashboardAdmin.categoryDetails");
+  const tc = useTranslations("common");
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,13 +68,14 @@ export default function PromotionManager({ categoryId }: { readonly categoryId: 
     try {
       setLoading(true);
       const data = await getPromotionsByCategory(categoryId);
-      setPromotions(data);
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      setPromotions(data ?? []);
     } catch {
-      setError("Failed to load promotions.");
+      setError(t("promotions.alerts.loadError"));
     } finally {
       setLoading(false);
     }
-  }, [categoryId]);
+  }, [categoryId, t]);
 
   useEffect(() => {
     void fetchPromotions();
@@ -101,16 +106,15 @@ export default function PromotionManager({ categoryId }: { readonly categoryId: 
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this promotion?")) return;
+    if (!window.confirm(t("promotions.deleteConfirm"))) return;
     try {
       await deletePromotion(id);
       setPromotions(prev => prev.filter(p => p.id !== id));
-      setSnackbar({ open: true, message: "Promotion deleted.", severity: "success" });
+      setSnackbar({ open: true, message: t("promotions.alerts.deleteSuccess"), severity: "success" });
     } catch (err: unknown) {
-      const errorResponse = err as { response?: { data?: { message?: string } } };
       setSnackbar({
         open: true,
-        message: errorResponse.response?.data?.message || "Failed to delete promotion.",
+        message: err instanceof ApiError ? err.message : t("promotions.alerts.deleteError"),
         severity: "error",
       });
     }
@@ -127,12 +131,12 @@ export default function PromotionManager({ categoryId }: { readonly categoryId: 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!formData.name.trim() || formData.discountPercentage <= 0) {
-      setSnackbar({ open: true, message: "Please fill out required fields correctly.", severity: "error" });
+      setSnackbar({ open: true, message: t("promotions.alerts.requiredFields"), severity: "error" });
       return;
     }
 
     if (new Date(formData.startDate) >= new Date(formData.endDate)) {
-      setSnackbar({ open: true, message: "End date must be after start date.", severity: "error" });
+      setSnackbar({ open: true, message: t("promotions.alerts.dateOrderError"), severity: "error" });
       return;
     }
 
@@ -146,16 +150,28 @@ export default function PromotionManager({ categoryId }: { readonly categoryId: 
       }
       setFormOpen(false);
       void fetchPromotions();
-      setSnackbar({ open: true, message: "Promotion saved successfully.", severity: "success" });
+      setSnackbar({ open: true, message: t("promotions.alerts.saveSuccess"), severity: "success" });
     } catch (err: unknown) {
-      const errorResponse = err as { response?: { data?: { message?: string } } };
       setSnackbar({
         open: true,
-        message: errorResponse.response?.data?.message || "Failed to save promotion.",
+        message: err instanceof ApiError ? err.message : t("promotions.alerts.saveError"),
         severity: "error",
       });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "Active":
+        return t("promotions.form.statusOptions.active");
+      case "Inactive":
+        return t("promotions.form.statusOptions.inactive");
+      case "Expired":
+        return t("promotions.form.statusOptions.expired");
+      default:
+        return status;
     }
   };
 
@@ -193,19 +209,19 @@ export default function PromotionManager({ categoryId }: { readonly categoryId: 
           <Stack direction="row" spacing={1} sx={{ alignItems: "center", color: "text.secondary" }}>
             <PromoIcon fontSize="small" />
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              Active & Scheduled
+              {t("promotions.activeScheduled")}
             </Typography>
           </Stack>
           <Button size="small" startIcon={<AddIcon />} onClick={handleCreate} sx={{ fontWeight: 700 }}>
-            Add
+            {t("promotions.addBtn")}
           </Button>
         </Box>
         <Box sx={{ p: 2 }}>
           {error ? (
             <Alert severity="error">{error}</Alert>
-          ) : promotions.length > 0 ? (
+          ) : ((promotions as Promotion[] | null) ?? []).length > 0 ? (
             <Stack spacing={2}>
-              {promotions.map(promo => (
+              {((promotions as Promotion[] | null) ?? []).map(promo => (
                 <Paper
                   key={promo.id}
                   elevation={0}
@@ -221,16 +237,17 @@ export default function PromotionManager({ categoryId }: { readonly categoryId: 
                     <Box>
                       <Typography sx={{ fontWeight: 700, color: "primary.main" }}>{promo.name}</Typography>
                       <Typography variant="h6" sx={{ fontWeight: 800, mt: 0.5 }}>
-                        {promo.discountPercentage}% OFF
+                        {promo.discountPercentage}
+                        {t("promotions.percentOff")}
                       </Typography>
                       <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
-                        {new Date(promo.startDate).toLocaleDateString()} -{" "}
-                        {new Date(promo.endDate).toLocaleDateString()}
+                        {promo.startDate ? new Date(promo.startDate).toLocaleDateString() : ""} -{" "}
+                        {promo.endDate ? new Date(promo.endDate).toLocaleDateString() : ""}
                       </Typography>
                     </Box>
                     <Stack spacing={1} sx={{ alignItems: "flex-end" }}>
                       <Chip
-                        label={promo.status}
+                        label={getStatusLabel(promo.status)}
                         size="small"
                         sx={{
                           height: 20,
@@ -270,7 +287,7 @@ export default function PromotionManager({ categoryId }: { readonly categoryId: 
           ) : (
             <Box sx={{ textAlign: "center", py: 3 }}>
               <Typography variant="body2" color="text.secondary">
-                No promotions found.
+                {t("promotions.empty")}
               </Typography>
             </Box>
           )}
@@ -289,7 +306,9 @@ export default function PromotionManager({ categoryId }: { readonly categoryId: 
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle sx={{ fontWeight: 700 }}>{editingPromotion ? "Edit Promotion" : "Add Promotion"}</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>
+          {editingPromotion ? t("promotions.form.editTitle") : t("promotions.form.addTitle")}
+        </DialogTitle>
         <form
           onSubmit={e => {
             void handleSubmit(e);
@@ -298,7 +317,7 @@ export default function PromotionManager({ categoryId }: { readonly categoryId: 
           <DialogContent dividers>
             <Stack spacing={3}>
               <TextField
-                label="Promotion Name"
+                label={t("promotions.form.name")}
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
@@ -307,7 +326,7 @@ export default function PromotionManager({ categoryId }: { readonly categoryId: 
                 disabled={submitting}
               />
               <TextField
-                label="Discount"
+                label={t("promotions.form.discount")}
                 name="discountPercentage"
                 type="number"
                 value={formData.discountPercentage}
@@ -323,7 +342,7 @@ export default function PromotionManager({ categoryId }: { readonly categoryId: 
                 }}
               />
               <TextField
-                label="Start Date"
+                label={t("promotions.form.startDate")}
                 name="startDate"
                 type="datetime-local"
                 value={formData.startDate}
@@ -334,7 +353,7 @@ export default function PromotionManager({ categoryId }: { readonly categoryId: 
                 slotProps={{ inputLabel: { shrink: true } }}
               />
               <TextField
-                label="End Date"
+                label={t("promotions.form.endDate")}
                 name="endDate"
                 type="datetime-local"
                 value={formData.endDate}
@@ -346,16 +365,16 @@ export default function PromotionManager({ categoryId }: { readonly categoryId: 
               />
               <TextField
                 select
-                label="Status"
+                label={t("promotions.form.status")}
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
                 fullWidth
                 disabled={submitting}
               >
-                <MenuItem value="Active">Active</MenuItem>
-                <MenuItem value="Inactive">Inactive</MenuItem>
-                <MenuItem value="Expired">Expired</MenuItem>
+                <MenuItem value="Active">{t("promotions.form.statusOptions.active")}</MenuItem>
+                <MenuItem value="Inactive">{t("promotions.form.statusOptions.inactive")}</MenuItem>
+                <MenuItem value="Expired">{t("promotions.form.statusOptions.expired")}</MenuItem>
               </TextField>
             </Stack>
           </DialogContent>
@@ -367,10 +386,10 @@ export default function PromotionManager({ categoryId }: { readonly categoryId: 
               disabled={submitting}
               color="inherit"
             >
-              Cancel
+              {tc("cancel")}
             </Button>
             <Button type="submit" variant="contained" disabled={submitting} sx={{ fontWeight: 700 }}>
-              {submitting ? <CircularProgress size={24} color="inherit" /> : "Save"}
+              {submitting ? <CircularProgress size={24} color="inherit" /> : tc("save")}
             </Button>
           </DialogActions>
         </form>

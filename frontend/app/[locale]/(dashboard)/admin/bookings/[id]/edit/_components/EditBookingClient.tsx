@@ -24,6 +24,7 @@ import {
   DirectionsCarFilledTwoTone as CarIcon,
 } from "@mui/icons-material";
 import { useRouter } from "@/shared/i18n/routing";
+import { useTranslations, useLocale } from "next-intl";
 import { useSession } from "next-auth/react";
 import { getAdminBookingDetails, updateBooking, type Booking } from "@/api-clients/bookings/bookings";
 import { logger } from "@/utils/logger";
@@ -31,9 +32,13 @@ import { toImageUrl } from "@/utils/image-url";
 
 const OPERATIONAL_STATUSES = ["PaymentPending", "Confirmed", "Active", "Completed", "Cancelled"] as const;
 
-const formatCurrency = (n?: number | null) => {
-  if (n == null || isNaN(n)) return "$0.00";
-  return `$${n.toFixed(2)}`;
+const formatCurrency = (n?: number | null, locale = "en") => {
+  if (n == null || isNaN(n)) return "—";
+  try {
+    return new Intl.NumberFormat(locale === "ar" ? "ar-EG" : "en-US", { style: "currency", currency: "USD" }).format(n);
+  } catch {
+    return `$${n.toFixed(2)}`;
+  }
 };
 
 const toLocalDateInput = (value?: string | null) => {
@@ -53,6 +58,8 @@ interface FormState {
 }
 
 export default function EditBookingClient({ bookingId }: { readonly bookingId: string }) {
+  const t = useTranslations("dashboardAdmin.editBooking");
+  const locale = useLocale();
   const router = useRouter();
   const theme = useTheme();
   const { data: session } = useSession();
@@ -88,13 +95,13 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
         });
       } catch (e) {
         logger.error("Failed to load booking details", e);
-        setError(e instanceof Error ? e.message : "Failed to load booking details.");
+        setError(e instanceof Error ? e.message : t("errors.loadFailed"));
       } finally {
         setLoading(false);
       }
     };
     void run();
-  }, [bookingId, session?.accessToken]);
+  }, [bookingId, session?.accessToken, t]);
 
   // ── Derived: terminal state ─────────────────────────────────────────
   const isTerminal = useMemo(() => {
@@ -116,9 +123,8 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
 
   const totalDaysLabel = useMemo(() => {
     if (!datesValid) return "—";
-    const suffix = totalDays === 1 ? "" : "s";
-    return `${String(totalDays)} day${suffix}`;
-  }, [datesValid, totalDays]);
+    return t("pricingSummary.daysValue", { count: totalDays });
+  }, [datesValid, totalDays, t]);
 
   const isDirty = useMemo(() => {
     if (!booking) return false;
@@ -136,7 +142,7 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
     void (async () => {
       if (!session?.accessToken || !booking) return;
       if (!datesValid) {
-        setError("Pickup date must be before return date.");
+        setError(t("errors.dateError"));
         return;
       }
 
@@ -172,7 +178,7 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
         router.push(`/admin/bookings/${bookingId}`);
       } catch (e) {
         logger.error("Failed to update booking", e);
-        setError(e instanceof Error ? e.message : "Failed to save changes.");
+        setError(e instanceof Error ? e.message : t("errors.saveFailed"));
       } finally {
         setSaving(false);
       }
@@ -190,7 +196,7 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
   if (!booking) {
     return (
       <Box sx={{ p: 3, maxWidth: 900, mx: "auto" }}>
-        <Alert severity="error">{error ?? "Booking not found."}</Alert>
+        <Alert severity="error">{error ?? t("errors.notFound")}</Alert>
         <Button
           sx={{ mt: 2 }}
           variant="outlined"
@@ -199,7 +205,7 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
             router.push("/admin/bookings");
           }}
         >
-          Back to Bookings
+          {t("buttons.backToBookings")}
         </Button>
       </Box>
     );
@@ -225,7 +231,7 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
           </IconButton>
           <Box>
             <Typography variant="h4" sx={{ fontWeight: 800 }}>
-              Edit Booking
+              {t("pageTitle")}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               #{booking.bookingNumber ?? booking.id.split("-")[0]}
@@ -242,7 +248,7 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
             sx={{ borderRadius: 2 }}
             disabled={saving}
           >
-            Cancel
+            {t("buttons.cancel")}
           </Button>
           <Button
             variant="contained"
@@ -251,7 +257,7 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
             disabled={!isDirty || !datesValid || isTerminal || saving}
             sx={{ borderRadius: 2, fontWeight: 700, minWidth: 160 }}
           >
-            {saving ? <CircularProgress size={22} color="inherit" /> : "Save Changes"}
+            {saving ? <CircularProgress size={22} color="inherit" /> : t("buttons.saveChanges")}
           </Button>
         </Stack>
       </Stack>
@@ -264,7 +270,7 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
 
       {isTerminal && (
         <Alert severity="info" sx={{ mb: 3 }}>
-          This booking is {booking.status.toLowerCase()} and its details can no longer be edited.
+          {t("notices.terminal", { status: booking.status.toLowerCase() })}
         </Alert>
       )}
 
@@ -288,7 +294,7 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
             }}
           >
             <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2 }}>
-              Booking Summary
+              {t("bookingSummary.title")}
             </Typography>
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ alignItems: { sm: "center" } }}>
               <Avatar
@@ -306,15 +312,15 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
               <Box sx={{ flex: 1 }}>
                 <Typography sx={{ fontWeight: 700 }}>{booking.car?.name ?? "—"}</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Plate: {booking.car?.plateNumber ?? "—"}
+                  {t("bookingSummary.plate", { plate: booking.car?.plateNumber ?? "—" })}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Supplier: {booking.supplier?.name ?? booking.supplier?.fullName ?? "—"}
+                  {t("bookingSummary.supplier", { name: booking.supplier?.name ?? booking.supplier?.fullName ?? "—" })}
                 </Typography>
               </Box>
               <Box sx={{ minWidth: 200 }}>
                 <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                  Customer
+                  {t("bookingSummary.customer")}
                 </Typography>
                 <Typography sx={{ fontWeight: 600 }}>
                   {booking.customer?.fullName ?? booking.customerName ?? "—"}
@@ -328,12 +334,12 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
             <Stack direction="row" spacing={3} sx={{ flexWrap: "wrap" }}>
               <Box>
                 <Typography variant="caption" color="text.secondary">
-                  Payment Status
+                  {t("bookingSummary.paymentStatus")}
                 </Typography>
                 <Box>
                   <Chip
                     size="small"
-                    label={booking.paymentStatus ?? "Unpaid"}
+                    label={booking.paymentStatus ?? t("bookingSummary.unpaid")}
                     color={booking.paymentStatus === "Paid" ? "success" : "default"}
                     sx={{ fontWeight: 600, mt: 0.5 }}
                   />
@@ -341,9 +347,9 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
               </Box>
               <Box>
                 <Typography variant="caption" color="text.secondary">
-                  Daily Rate
+                  {t("bookingSummary.dailyRate")}
                 </Typography>
-                <Typography sx={{ fontWeight: 700 }}>{formatCurrency(dailyRate)}</Typography>
+                <Typography sx={{ fontWeight: 700 }}>{formatCurrency(dailyRate, locale)}</Typography>
               </Box>
             </Stack>
           </Paper>
@@ -359,7 +365,7 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
             }}
           >
             <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2 }}>
-              Editable Booking Information
+              {t("editableInfo.title")}
             </Typography>
             <Box
               sx={{
@@ -370,7 +376,7 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
             >
               <TextField
                 type="date"
-                label="Pickup Date"
+                label={t("editableInfo.pickupDate")}
                 value={form.pickupDate}
                 onChange={e => {
                   setForm(prev => ({ ...prev, pickupDate: e.target.value }));
@@ -381,7 +387,7 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
               />
               <TextField
                 type="date"
-                label="Return Date"
+                label={t("editableInfo.returnDate")}
                 value={form.returnDate}
                 onChange={e => {
                   setForm(prev => ({ ...prev, returnDate: e.target.value }));
@@ -390,35 +396,33 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
                 disabled={editableFieldsDisabled}
                 error={!datesValid && form.pickupDate !== "" && form.returnDate !== ""}
                 helperText={
-                  !datesValid && form.pickupDate !== "" && form.returnDate !== ""
-                    ? "Return date must be after pickup date"
-                    : ""
+                  !datesValid && form.pickupDate !== "" && form.returnDate !== "" ? t("errors.returnDateError") : ""
                 }
                 fullWidth
               />
               <TextField
-                label="Pickup Location"
+                label={t("editableInfo.pickupLocation")}
                 value={form.pickupLocation}
                 onChange={e => {
                   setForm(prev => ({ ...prev, pickupLocation: e.target.value }));
                 }}
                 disabled={editableFieldsDisabled}
-                placeholder="e.g. Cairo International Airport"
+                placeholder={locale === "ar" ? "مثال: مطار القاهرة الدولي" : "e.g. Cairo International Airport"}
                 fullWidth
               />
               <TextField
-                label="Dropoff Location"
+                label={t("editableInfo.dropoffLocation")}
                 value={form.dropOffLocation}
                 onChange={e => {
                   setForm(prev => ({ ...prev, dropOffLocation: e.target.value }));
                 }}
                 disabled={editableFieldsDisabled}
-                placeholder="e.g. Downtown Office"
+                placeholder={locale === "ar" ? "مثال: مكتب وسط المدينة" : "e.g. Downtown Office"}
                 fullWidth
               />
               <TextField
                 select
-                label="Booking Status"
+                label={t("editableInfo.bookingStatus")}
                 value={form.status}
                 onChange={e => {
                   setForm(prev => ({ ...prev, status: e.target.value }));
@@ -448,33 +452,33 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
           }}
         >
           <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2 }}>
-            Pricing Summary
+            {t("pricingSummary.title")}
           </Typography>
           <Stack spacing={1.5}>
             <Stack direction="row" sx={{ justifyContent: "space-between" }}>
               <Typography variant="body2" color="text.secondary">
-                Daily Rate
+                {t("pricingSummary.dailyRate")}
               </Typography>
-              <Typography sx={{ fontWeight: 600 }}>{formatCurrency(dailyRate)}</Typography>
+              <Typography sx={{ fontWeight: 600 }}>{formatCurrency(dailyRate, locale)}</Typography>
             </Stack>
             <Stack direction="row" sx={{ justifyContent: "space-between" }}>
               <Typography variant="body2" color="text.secondary">
-                Total Days
+                {t("pricingSummary.totalDays")}
               </Typography>
               <Typography sx={{ fontWeight: 600 }}>{totalDaysLabel}</Typography>
             </Stack>
             <Divider />
             <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
               <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                Total Price
+                {t("pricingSummary.totalPrice")}
               </Typography>
               <Typography variant="h6" sx={{ fontWeight: 800, color: "success.main" }}>
-                {formatCurrency(totalPrice)}
+                {formatCurrency(totalPrice, locale)}
               </Typography>
             </Stack>
           </Stack>
           <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 2, lineHeight: 1.5 }}>
-            Total price is recalculated automatically when dates change and confirmed by the server on save.
+            {t("notices.priceCalculation")}
           </Typography>
         </Paper>
       </Box>
