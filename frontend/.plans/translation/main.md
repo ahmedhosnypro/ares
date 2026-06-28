@@ -3,14 +3,14 @@
 ## Overall Progress
 
 - Total Pages: 94
-- Completed Pages: 24
-- Progress: 26%
+- Completed Pages: 45
+- Progress: 48%
 
 ## Messages Structure Progress
 
-- **Types**: 24/94 split (common, auth, errors + 7 auth + 7 customer + 6 admin page types done; 70 remaining)
-- **English**: 24/94 split (common, auth, errors + 7 auth + 7 customer + 6 admin page translations done; 70 remaining)
-- **Arabic**: 24/94 split (common, auth, errors + 7 auth + 7 customer + 6 admin page translations done; 70 remaining)
+- **Types**: 45/94 split (common, auth, errors + 6 auth + 10 customer + 6 admin + 7 driver + 4 inspector + 9 supplier page types done; 49 remaining)
+- **English**: 45/94 split (common, auth, errors + 6 auth + 10 customer + 6 admin + 7 driver + 4 inspector + 9 supplier page translations done; 49 remaining)
+- **Arabic**: 45/94 split (common, auth, errors + 6 auth + 10 customer + 6 admin + 7 driver + 4 inspector + 9 supplier page translations done; 49 remaining)
 
 > See `shared/Messages_README.md` for messages directory conventions.
 
@@ -46,12 +46,12 @@
 - [x] [Bank Details](pages/dashboard/admin/bank-details.md) — `/(dashboard)/admin/bank-details`
 - [x] [Admin Bookings](pages/dashboard/admin/bookings.md) — `/(dashboard)/admin/bookings`
 - [x] [Create Booking](pages/dashboard/admin/bookings/create.md) — `/(dashboard)/admin/bookings/create`
-- [x] [Booking Detail](pages/dashboard/admin/bookings/_id.md) — `/(dashboard)/admin/bookings/[id]`
-- [x] [Edit Booking](pages/dashboard/admin/bookings/_id/edit.md) — `/(dashboard)/admin/bookings/[id]/edit`
-- [x] [Categories](pages/dashboard/admin/categories.md) — `/(dashboard)/admin/categories`
-- [x] [Category Detail](pages/dashboard/admin/categories/_id.md) — `/(dashboard)/admin/categories/[id]`
-- [x] [Countries](pages/dashboard/admin/countries.md) — `/(dashboard)/admin/countries`
-- [x] [Create Country](pages/dashboard/admin/countries/create.md) — `/(dashboard)/admin/countries/create`
+- [ ] [Booking Detail](pages/dashboard/admin/bookings/_id.md) — `/(dashboard)/admin/bookings/[id]`
+- [ ] [Edit Booking](pages/dashboard/admin/bookings/_id/edit.md) — `/(dashboard)/admin/bookings/[id]/edit`
+- [ ] [Categories](pages/dashboard/admin/categories.md) — `/(dashboard)/admin/categories`
+- [ ] [Category Detail](pages/dashboard/admin/categories/_id.md) — `/(dashboard)/admin/categories/[id]`
+- [ ] [Countries](pages/dashboard/admin/countries.md) — `/(dashboard)/admin/countries`
+- [ ] [Create Country](pages/dashboard/admin/countries/create.md) — `/(dashboard)/admin/countries/create`
 - [ ] [Country Detail](pages/dashboard/admin/countries/_id.md) — `/(dashboard)/admin/countries/[id]`
 - [ ] [Edit Country](pages/dashboard/admin/countries/_id/edit.md) — `/(dashboard)/admin/countries/[id]/edit`
 - [ ] [Admin Drivers](pages/dashboard/admin/drivers.md) — `/(dashboard)/admin/drivers`
@@ -90,26 +90,26 @@
 
 ## Dashboard - Inspector Pages (4)
 
-- [ ] [Inspector History](pages/dashboard/inspector/history.md) — `/(dashboard)/inspector/history`
-- [ ] [Inspector Inspections](pages/dashboard/inspector/inspections.md) — `/(dashboard)/inspector/inspections`
-- [ ] [Inspection Detail](pages/dashboard/inspector/inspections/_id.md) — `/(dashboard)/inspector/inspections/[id]`
-- [ ] [Inspector Profile](pages/dashboard/inspector/profile.md) — `/(dashboard)/inspector/profile`
+- [x] [Inspector History](pages/dashboard/inspector/history.md) — `/(dashboard)/inspector/history`
+- [x] [Inspector Inspections](pages/dashboard/inspector/inspections.md) — `/(dashboard)/inspector/inspections`
+- [x] [Inspection Detail](pages/dashboard/inspector/inspections/_id.md) — `/(dashboard)/inspector/inspections/[id]`
+- [x] [Inspector Profile](pages/dashboard/inspector/profile.md) — `/(dashboard)/inspector/profile`
 
 ## Dashboard - Supplier Pages (9)
 
-- [ ] [Supplier Bookings](pages/dashboard/supplier/bookings.md) — `/(dashboard)/supplier/bookings`
-- [ ] [Supplier Booking Detail](pages/dashboard/supplier/bookings/_id.md) — `/(dashboard)/supplier/bookings/[id]`
-- [ ] [Supplier Dashboard](pages/dashboard/supplier/dashboard.md) — `/(dashboard)/supplier/dashboard`
-- [ ] [Supplier Earnings](pages/dashboard/supplier/earnings.md) — `/(dashboard)/supplier/earnings`
-- [ ] [Supplier Notifications](pages/dashboard/supplier/notifications.md) — `/(dashboard)/supplier/notifications`
-- [ ] [Supplier Reviews](pages/dashboard/supplier/reviews.md) — `/(dashboard)/supplier/reviews`
-- [ ] [Supplier Vehicles](pages/dashboard/supplier/vehicles.md) — `/(dashboard)/supplier/vehicles`
-- [ ] [Create Supplier Vehicle](pages/dashboard/supplier/vehicles/create.md) — `/(dashboard)/supplier/vehicles/create`
-- [ ] [Supplier Vehicle Detail](pages/dashboard/supplier/vehicles/_id.md) — `/(dashboard)/supplier/vehicles/[id]`
+- [x] [Supplier Bookings](pages/dashboard/supplier/bookings.md) — `/(dashboard)/supplier/bookings`
+- [x] [Supplier Booking Detail](pages/dashboard/supplier/bookings/_id.md) — `/(dashboard)/supplier/bookings/[id]`
+- [x] [Supplier Dashboard](pages/dashboard/supplier/dashboard.md) — `/(dashboard)/supplier/dashboard`
+- [x] [Supplier Earnings](pages/dashboard/supplier/earnings.md) — `/(dashboard)/supplier/earnings`
+- [x] [Supplier Notifications](pages/dashboard/supplier/notifications.md) — `/(dashboard)/supplier/notifications`
+- [x] [Supplier Reviews](pages/dashboard/supplier/reviews.md) — `/(dashboard)/supplier/reviews`
+- [x] [Supplier Vehicles](pages/dashboard/supplier/vehicles.md) — `/(dashboard)/supplier/vehicles`
+- [x] [Create Supplier Vehicle](pages/dashboard/supplier/vehicles/create.md) — `/(dashboard)/supplier/vehicles/create`
+- [x] [Supplier Vehicle Detail](pages/dashboard/supplier/vehicles/_id.md) — `/(dashboard)/supplier/vehicles/[id]`
 
 ## Public Pages (17)
 
-- [ ] [About](pages/public/about.md) — `/(public)/about`
+- [x] [About](pages/public/about.md) — `/(public)/about`
 - [ ] [Public Bookings](pages/public/bookings.md) — `/(public)/bookings`
 - [ ] [Booking Confirmation](pages/public/bookings/confirmation/_bookingId.md) — `/(public)/bookings/confirmation/[bookingId]`
 - [ ] [Checkout](pages/public/checkout/_id.md) — `/(public)/checkout/[id]`
@@ -118,11 +118,11 @@
 - [ ] [Cookie Policy](pages/public/cookie-policy.md) — `/(public)/cookie-policy`
 - [ ] [FAQ](pages/public/faq.md) — `/(public)/faq`
 - [ ] [Locations](pages/public/locations.md) — `/(public)/locations`
-- [ ] [Privacy](pages/public/privacy.md) — `/(public)/privacy`
+- [x] [Privacy](pages/public/privacy.md) — `/(public)/privacy`
 - [ ] [Search](pages/public/search.md) — `/(public)/search`
 - [ ] [Suppliers](pages/public/suppliers.md) — `/(public)/suppliers`
 - [ ] [Supplier Detail](pages/public/suppliers/_supplierId.md) — `/(public)/suppliers/[supplierId]`
-- [ ] [Terms](pages/public/terms.md) — `/(public)/terms`
+- [x] [Terms](pages/public/terms.md) — `/(public)/terms`
 - [ ] [TOS](pages/public/tos.md) — `/(public)/tos`
 - [ ] [Vehicles](pages/public/vehicles.md) — `/(public)/vehicles`
 - [ ] [Vehicle Detail](pages/public/vehicles/_vehicleId.md) — `/(public)/vehicles/[vehicleId]`

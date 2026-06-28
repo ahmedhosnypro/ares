@@ -19,6 +19,7 @@ export const driverDashboard: DriverDashboardLabels = {
     scheduled: "Scheduled",
     rating: "Rating",
     ratingFormat: "{value} / 5.0",
+    availableBalance: "Available Balance",
   },
   activeAssignment: {
     activeRentalAssignment: "Active Rental Assignment",

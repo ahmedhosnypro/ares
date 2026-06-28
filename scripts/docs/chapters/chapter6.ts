@@ -16,6 +16,7 @@ export const chapter6: ChapterConfig = {
     "at Al-Azhar University. Output raw Markdown only.",
     "ALL diagrams MUST be in Mermaid syntax inside codeblocks, referencing Figure X.x.",
   ].join(" "),
+  includeDiagrams: true,
   userPrompt: [
     "Generate CHAPTER 6: TESTING & QUALITY ASSURANCE (20 A4 pages)",
     "",

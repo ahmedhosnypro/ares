@@ -9,6 +9,7 @@ import type {
   BookingLocationOption,
   VehicleDetailsViewModel,
 } from "@/app/[locale]/(public)/vehicles/[vehicleId]/_components/vehicle-details/types";
+import { getTranslations } from "next-intl/server";
 
 interface ApiLocationsResponse {
   readonly resultData?: readonly {
@@ -42,7 +43,11 @@ async function fetchLocations(): Promise<readonly BookingLocationOption[]> {
 }
 
 export default async function CreateSupplierVehiclePage() {
-  const [session, locations] = await Promise.all([getServerSession(authOptions), fetchLocations()]);
+  const [session, locations, t] = await Promise.all([
+    getServerSession(authOptions),
+    fetchLocations(),
+    getTranslations("dashboard.createSupplierVehicle"),
+  ]);
 
   const emptyVehicle: VehicleDetailsViewModel = {
     vehicleId: "",
@@ -84,7 +89,7 @@ export default async function CreateSupplierVehiclePage() {
             </IconButton>
           </Link>
           <Typography variant="h5" sx={{ fontWeight: 700 }}>
-            Create New Vehicle
+            {t("title")}
           </Typography>
         </Stack>
       </Container>

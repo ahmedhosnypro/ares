@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
+import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { Box, Typography, Container, IconButton, Stack } from "@mui/material";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+import { getTranslations } from "next-intl/server";
 import SupplierVehicleDetailsClient from "./SupplierVehicleDetailsClient";
 import {
   type BookingLocationOption,
@@ -125,10 +127,13 @@ function normalizeVehicle(vehicle: ApiVehicleDto): VehicleDetailsViewModel {
   };
 }
 
-function normalizeReviews(reviews: readonly ApiReviewDto[]): readonly VehicleReviewViewModel[] {
+function normalizeReviews(
+  reviews: readonly ApiReviewDto[],
+  customerDefault: string
+): readonly VehicleReviewViewModel[] {
   return reviews.map(review => ({
     reviewId: asString(review.reviewId),
-    userName: asString(review.userName, "Customer"),
+    userName: asString(review.userName, customerDefault),
     rating: asNumber(review.rating),
     comment: asString(review.comment),
     supplierReply: review.supplierReply ? asString(review.supplierReply) : undefined,
@@ -156,7 +161,10 @@ async function fetchVehicleDetails(vehicleId: string): Promise<VehicleDetailsVie
   return normalizeVehicle(payload);
 }
 
-async function fetchVehicleReviews(vehicleId: string): Promise<readonly VehicleReviewViewModel[]> {
+async function fetchVehicleReviews(
+  vehicleId: string,
+  customerDefault: string
+): Promise<readonly VehicleReviewViewModel[]> {
   const response = await fetch(toApiUrl(`/api/vehicles/${vehicleId}/reviews?page=1&pageSize=8&sortBy=date`), {
     cache: "no-store",
   });
@@ -165,7 +173,7 @@ async function fetchVehicleReviews(vehicleId: string): Promise<readonly VehicleR
   }
   const payload = (await response.json()) as ApiPagedResponse<ApiReviewDto>;
   const reviews = payload.data ?? payload.resultData ?? [];
-  return normalizeReviews(reviews);
+  return normalizeReviews(reviews, customerDefault);
 }
 
 async function fetchLocations(): Promise<readonly BookingLocationOption[]> {
@@ -177,8 +185,19 @@ async function fetchLocations(): Promise<readonly BookingLocationOption[]> {
   return normalizeLocations(payload);
 }
 
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("dashboard.supplierVehicleDetail");
+  return {
+    title: t("metaTitle"),
+    description: t("metaDescription"),
+  };
+}
+
 export default async function SupplierVehicleDetailsPage({ params }: PageProps) {
   const { id } = await params;
+  const t = await getTranslations("dashboard.supplierVehicleDetail");
+
+  const customerDefault = t("customerDefault");
 
   const [session, pageData] = await Promise.all([
     getServerSession(authOptions).catch(() => null),
@@ -186,7 +205,7 @@ export default async function SupplierVehicleDetailsPage({ params }: PageProps) 
       try {
         const [vehicle, reviews, locations] = await Promise.all([
           fetchVehicleDetails(id),
-          fetchVehicleReviews(id),
+          fetchVehicleReviews(id, customerDefault),
           fetchLocations(),
         ]);
         return { vehicle, reviews, locations };
@@ -201,7 +220,7 @@ export default async function SupplierVehicleDetailsPage({ params }: PageProps) 
     return (
       <Box component="main" sx={{ minHeight: "60vh", display: "grid", placeItems: "center", px: 2 }}>
         <Typography variant="h6" color="text.secondary" sx={{ textAlign: "center" }}>
-          We were unable to load this vehicle right now.
+          {t("loadUnavailable")}
         </Typography>
       </Box>
     );
@@ -235,7 +254,7 @@ export default async function SupplierVehicleDetailsPage({ params }: PageProps) 
             </IconButton>
           </Link>
           <Typography variant="h5" sx={{ fontWeight: 700 }}>
-            Vehicle Details
+            {t("pageTitle")}
           </Typography>
         </Stack>
       </Container>

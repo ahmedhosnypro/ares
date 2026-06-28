@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import VehicleDetailsClient, {
   type FormValues,
 } from "@/app/[locale]/(public)/vehicles/[vehicleId]/_components/vehicle-details/VehicleDetailsClient";
@@ -27,10 +28,11 @@ export default function SupplierVehicleDetailsClient({
   canEdit,
 }: SupplierVehicleDetailsClientProps) {
   const { data: session } = useSession();
+  const t = useTranslations("dashboard.supplierVehicleDetail");
 
   const handleSave = async (values: FormValues) => {
     if (!session?.accessToken) {
-      throw new Error("You must be signed in to save changes.");
+      throw new Error(t("errors.notSignedInToSave"));
     }
 
     // 1. Upload new files if any
@@ -46,7 +48,7 @@ export default function SupplierVehicleDetailsClient({
             return { url: res.url, isPrimary: img.isPrimary };
           } catch (uploadErr) {
             logger.error("Failed to upload image during update", uploadErr);
-            throw new Error("Failed to upload one or more images. Please try again.", { cause: uploadErr });
+            throw new Error(t("errors.imageUploadFailed"), { cause: uploadErr });
           }
         }
         return { url: img.url, isPrimary: img.isPrimary };
@@ -76,7 +78,6 @@ export default function SupplierVehicleDetailsClient({
       locations={locations}
       canEdit={canEdit}
       onSave={handleSave}
-      mode="edit"
     />
   );
 }

@@ -17,6 +17,7 @@ export interface DriverDashboardLabels {
     scheduled: string;
     rating: string;
     ratingFormat: string;
+    availableBalance: string;
   };
   activeAssignment: {
     activeRentalAssignment: string;

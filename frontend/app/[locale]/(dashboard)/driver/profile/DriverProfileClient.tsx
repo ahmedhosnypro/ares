@@ -1,11 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
-import { Alert, Box, CircularProgress, Container, Typography, Chip, Stack, Grid, CardContent } from "@mui/material";
-import { Badge as BadgeIcon, DirectionsCar as DirectionsCarIcon } from "@mui/icons-material";
+import {
+  Alert,
+  Box,
+  CircularProgress,
+  Container,
+  Typography,
+  Chip,
+  Stack,
+  Grid,
+  CardContent,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+} from "@mui/material";
+import {
+  Badge as BadgeIcon,
+  DirectionsCar as DirectionsCarIcon,
+  AccountBalanceWallet as AccountBalanceWalletIcon,
+} from "@mui/icons-material";
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
 import { useDateFnsLocale } from "@/hooks/useDateFnsLocale";
@@ -39,6 +59,55 @@ interface DriverProfileDetails {
   workAreas: ServiceAreaDto[];
 }
 
+interface PayoutInfoDto {
+  walletPhoneNumber: string;
+  isWalletVerified: boolean;
+}
+
+function buildProfileData(
+  profile: DriverProfileDetails,
+  session: { user: { id: string } },
+  t: (key: string) => string,
+  currentLocale: string
+): ProfileData {
+  const addressParts = profile.address ? profile.address.split(",").map(p => p.trim()) : [];
+  const mappedAddress = {
+    street: addressParts[0] || "",
+    city: addressParts[1] || "",
+    state: addressParts[2] || "",
+    postalCode: addressParts[3] || "",
+    country: addressParts[4] || "",
+  };
+  const isVerified = profile.status === "Verified";
+
+  return {
+    userId: session.user.id || "",
+    firstName: profile.firstName ?? "",
+    lastName: profile.lastName ?? "",
+    email: profile.email ?? "",
+    emailVerified: isVerified,
+    phone: profile.phoneNumber ?? "",
+    phoneVerified: isVerified,
+    profileCompleteness: isVerified ? 100 : profile.licenseNumber ? 80 : 40,
+    profilePhotoUrl: profile.profilePictureUrl,
+    address: mappedAddress,
+    emergencyContact: {
+      name: profile.emergencyContactName ?? "",
+      phone: profile.emergencyContactPhone ?? "",
+      relationship: t("emergencyContactRelationship"),
+    },
+    verificationStatus: {
+      email: isVerified,
+      phone: isVerified,
+      driverLicense: isVerified,
+      kyc: isVerified ? t("kycApproved") : t("kycPending"),
+    },
+    dateOfBirth: "",
+    languagePreference: currentLocale,
+    currencyPreference: "USD",
+  };
+}
+
 export default function DriverProfileClient() {
   const { data: session } = useSession();
   const t = useTranslations("dashboard.driverProfile");
@@ -49,6 +118,26 @@ export default function DriverProfileClient() {
   const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState<DriverProfileDetails | null>(null);
   const [error, setError] = useState("");
+
+  const [payoutInfo, setPayoutInfo] = useState<PayoutInfoDto | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [walletPhone, setWalletPhone] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const fetchPayoutInfo = useCallback(async () => {
+    if (!session?.accessToken) return;
+    try {
+      const res = await fetch(toApiUrl("/api/driver/profile/payout-info"), {
+        headers: { Authorization: `Bearer ${session.accessToken}` },
+      });
+      if (res.ok) {
+        const data = (await res.json()) as PayoutInfoDto;
+        setPayoutInfo(data);
+      }
+    } catch (err) {
+      logger.error("Error fetching payout info", err);
+    }
+  }, [session?.accessToken]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -74,6 +163,38 @@ export default function DriverProfileClient() {
     void fetchProfile();
   }, [session, t]);
 
+  useEffect(() => {
+    void fetchPayoutInfo();
+  }, [fetchPayoutInfo]);
+
+  const handleOpenEditDialog = () => {
+    setWalletPhone(payoutInfo?.walletPhoneNumber ?? "");
+    setEditDialogOpen(true);
+  };
+
+  const handleSavePayoutInfo = async () => {
+    if (!session?.accessToken) return;
+    setSaving(true);
+    try {
+      const res = await fetch(toApiUrl("/api/driver/profile/payout-info"), {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${session.accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ walletPhoneNumber: walletPhone }),
+      });
+      if (res.ok) {
+        setEditDialogOpen(false);
+        await fetchPayoutInfo();
+      }
+    } catch (err) {
+      logger.error("Error saving payout info", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
@@ -90,41 +211,7 @@ export default function DriverProfileClient() {
     );
   }
 
-  const addressParts = profile.address ? profile.address.split(",").map(p => p.trim()) : [];
-  const mappedAddress = {
-    street: addressParts[0] || "",
-    city: addressParts[1] || "",
-    state: addressParts[2] || "",
-    postalCode: addressParts[3] || "",
-    country: addressParts[4] || "",
-  };
-
-  const profileData: ProfileData = {
-    userId: session.user.id || "",
-    firstName: profile.firstName ?? "",
-    lastName: profile.lastName ?? "",
-    email: profile.email ?? "",
-    emailVerified: profile.status === "Verified",
-    phone: profile.phoneNumber ?? "",
-    phoneVerified: profile.status === "Verified",
-    profileCompleteness: profile.status === "Verified" ? 100 : profile.licenseNumber ? 80 : 40,
-    profilePhotoUrl: profile.profilePictureUrl,
-    address: mappedAddress,
-    emergencyContact: {
-      name: profile.emergencyContactName ?? "",
-      phone: profile.emergencyContactPhone ?? "",
-      relationship: t("emergencyContactRelationship"),
-    },
-    verificationStatus: {
-      email: profile.status === "Verified",
-      phone: profile.status === "Verified",
-      driverLicense: profile.status === "Verified",
-      kyc: profile.status === "Verified" ? t("kycApproved") : t("kycPending"),
-    },
-    dateOfBirth: "",
-    languagePreference: currentLocale,
-    currencyPreference: "USD",
-  };
+  const profileData = buildProfileData(profile, session, t, currentLocale);
 
   return (
     <SharedProfileContainer session={session} profileData={profileData} showVerification={true} showPreferences={false}>
@@ -186,6 +273,104 @@ export default function DriverProfileClient() {
           </Grid>
         </CardContent>
       </ProfileCard>
+
+      <ProfileCard>
+        <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
+          <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 1 }}>
+              <AccountBalanceWalletIcon color="primary" /> {t("payoutInfo")}
+            </Typography>
+            <Button variant="outlined" size="small" onClick={handleOpenEditDialog}>
+              {payoutInfo ? t("editPayoutInfo") : t("setupPayoutInfo")}
+            </Button>
+          </Stack>
+
+          {payoutInfo ? (
+            <Stack spacing={2}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ textTransform: "uppercase", fontWeight: 700 }}
+                >
+                  {t("walletPhoneNumber")}
+                </Typography>
+                <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                  {payoutInfo.walletPhoneNumber}
+                </Typography>
+                {payoutInfo.isWalletVerified ? (
+                  <Chip
+                    label={t("verified")}
+                    size="small"
+                    sx={{
+                      bgcolor: "status.active.main",
+                      color: "status.active.contrastText",
+                      fontWeight: 600,
+                    }}
+                  />
+                ) : (
+                  <Chip
+                    label={t("pendingVerification")}
+                    size="small"
+                    sx={{
+                      bgcolor: "status.pending.main",
+                      color: "status.pending.contrastText",
+                      fontWeight: 600,
+                    }}
+                  />
+                )}
+              </Box>
+              <Typography variant="body2" color="text.secondary">
+                {payoutInfo.isWalletVerified ? t("walletSetupComplete") : t("walletNeedsVerification")}
+              </Typography>
+            </Stack>
+          ) : (
+            <Typography color="text.secondary">{t("payoutInfoDescription")}</Typography>
+          )}
+        </CardContent>
+      </ProfileCard>
+
+      <Dialog
+        open={editDialogOpen}
+        onClose={() => {
+          setEditDialogOpen(false);
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>{payoutInfo ? t("editPayoutInfo") : t("setupPayoutInfo")}</DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth
+            label={t("walletPhoneNumber")}
+            placeholder={t("walletPhonePlaceholder")}
+            value={walletPhone}
+            onChange={e => {
+              setWalletPhone(e.target.value);
+            }}
+            margin="normal"
+            slotProps={{ htmlInput: { autoComplete: "off" } }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setEditDialogOpen(false);
+            }}
+          >
+            {tc("cancel")}
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              void handleSavePayoutInfo();
+            }}
+            disabled={saving || !walletPhone.trim()}
+          >
+            {t("save")}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </SharedProfileContainer>
   );
 }

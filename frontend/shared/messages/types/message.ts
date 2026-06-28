@@ -20,7 +20,11 @@ import type { HeaderLabels } from "./header";
 import type { AdminSidebarLabels } from "./dashboard/admin-sidebar";
 import type { DriverSidebarLabels } from "./dashboard/driver-sidebar";
 import type { SupplierSidebarLabels } from "./dashboard/supplier-sidebar";
+import type { InspectorInspectionsLabels } from "./dashboard/inspector/inspections";
+import type { InspectionDetailLabels } from "./dashboard/inspector/inspections/_id";
 import type { InspectorSidebarLabels } from "./dashboard/inspector-sidebar";
+import type { InspectorProfileLabels } from "./dashboard/inspector/profile";
+import type { InspectorHistoryLabels } from "./dashboard/inspector/history";
 import type { DashboardLabels } from "./dashboard/shell";
 import type { DriverCompleteProfileLabels } from "./dashboard/driver-complete-profile";
 import type { DriverDashboardLabels } from "./dashboard/driver-dashboard";
@@ -28,6 +32,15 @@ import type { DriverEarningsLabels } from "./dashboard/driver-earnings";
 import type { DriverNotificationsLabels } from "./dashboard/driver-notifications";
 import type { DriverProfileLabels } from "./dashboard/driver-profile";
 import type { DriverTripsLabels } from "./dashboard/driver-trips";
+import type { SupplierNotificationsLabels } from "./dashboard/supplier/notifications";
+import type { SupplierDashboardLabels } from "./dashboard/supplier/dashboard";
+import type { SupplierEarningsLabels } from "./dashboard/supplier/earnings";
+import type { SupplierReviewsLabels } from "./dashboard/supplier/reviews";
+import type { SupplierBookingsLabels } from "./dashboard/supplier/bookings";
+import type { SupplierBookingDetailLabels } from "./dashboard/supplier/bookings/_id";
+import type { SupplierVehiclesLabels } from "./dashboard/supplier/vehicles";
+import type { CreateSupplierVehicleLabels } from "./dashboard/supplier/vehicles/create";
+import type { SupplierVehicleDetailLabels } from "./dashboard/supplier/vehicles/_id";
 import type { LogoutDialogLabels } from "./dashboard/logout-dialog";
 import type { DeleteNotificationDialogLabels } from "./delete-notification-dialog";
 import type { AdminComplianceLabels } from "./dashboard/admin/admin/compliance";
@@ -69,7 +82,11 @@ export type {
   AdminSidebarLabels,
   DriverSidebarLabels,
   SupplierSidebarLabels,
+  InspectorHistoryLabels,
+  InspectorProfileLabels,
   InspectorSidebarLabels,
+  InspectorInspectionsLabels,
+  InspectionDetailLabels,
   DashboardLabels,
   LogoutDialogLabels,
   DeleteNotificationDialogLabels,
@@ -83,6 +100,15 @@ export type {
   DriverEarningsLabels,
   DriverNotificationsLabels,
   DriverProfileLabels,
+  SupplierNotificationsLabels,
+  SupplierDashboardLabels,
+  SupplierEarningsLabels,
+  SupplierReviewsLabels,
+  SupplierBookingsLabels,
+  SupplierBookingDetailLabels,
+  SupplierVehiclesLabels,
+  CreateSupplierVehicleLabels,
+  SupplierVehicleDetailLabels,
   BookingDetailsLabels,
   EditBookingLabels,
   CategoriesLabels,
@@ -123,12 +149,25 @@ export type DashboardSchema = {
   readonly driverSidebar: DriverSidebarLabels;
   readonly supplierSidebar: SupplierSidebarLabels;
   readonly inspectorSidebar: InspectorSidebarLabels;
+  readonly inspectorInspections: InspectorInspectionsLabels;
+  readonly inspectionDetail: InspectionDetailLabels;
+  readonly inspectorProfile: InspectorProfileLabels;
+  readonly inspectorHistory: InspectorHistoryLabels;
   readonly driverCompleteProfile: DriverCompleteProfileLabels;
   readonly driverDashboard: DriverDashboardLabels;
   readonly driverEarnings: DriverEarningsLabels;
   readonly driverNotifications: DriverNotificationsLabels;
   readonly driverProfile: DriverProfileLabels;
   readonly driverTrips: DriverTripsLabels;
+  readonly supplierDashboard: SupplierDashboardLabels;
+  readonly supplierEarnings: SupplierEarningsLabels;
+  readonly supplierNotifications: SupplierNotificationsLabels;
+  readonly supplierReviews: SupplierReviewsLabels;
+  readonly supplierBookings: SupplierBookingsLabels;
+  readonly supplierBookingDetail: SupplierBookingDetailLabels;
+  readonly supplierVehicles: SupplierVehiclesLabels;
+  readonly createSupplierVehicle: CreateSupplierVehicleLabels;
+  readonly supplierVehicleDetail: SupplierVehicleDetailLabels;
   readonly logoutDialog: LogoutDialogLabels;
 };
 

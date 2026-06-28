@@ -18,12 +18,20 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "tsgo -b --noEmit --extendedDiagnostics"
+    "typecheck": "tsgo -b --noEmit --extendedDiagnostics",
+    "validate-mermaid": "bun run validate-mermaid.ts",
+    "mermaid-compile": "bun run validate-mermaid.ts",
+    "mermaid-check": "bun run validate-mermaid.ts",
+    "mermaid-iterate": "bun run mermaid-iterate.ts",
+    "pdf": "bun run pdf.ts",
+    "pdf:count": "bun run pdf.ts --count-only",
+    "pdf:clean": "bun run pdf.ts --clean"
   },
   "dependencies": {
     "chalk": "^5.6.2",
+    "glob": "^13.0.6",
     "openai": "^4.104.0",
-    "ora": "^9.3.0",
+    "ora": "^9.4.1",
     "repomix": "^1.3.0",
     "zod": "^4.3.6"
   },
@@ -31,6 +39,7 @@
     "@cspell/dict-ar": "^1.1.7",
     "@cspell/eslint-plugin": "^10.0.0",
     "@eslint/js": "^10.0.1",
+    "@mermaid-js/mermaid-cli": "^11.15.0",
     "@types/bun": "latest",
     "@typescript-eslint/eslint-plugin": "^8.58.2",
     "@typescript-eslint/parser": "^8.58.2",
