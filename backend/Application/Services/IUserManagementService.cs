@@ -9,13 +9,13 @@ namespace Backend.Application.Services;
 public interface IUserManagementService
 {
     /// <summary>
-    /// Gets paginated list of users
+    /// Gets paginated list of users along with statistics
     /// </summary>
     /// <param name="page">Page number (1-based)</param>
     /// <param name="pageSize">Number of items per page</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Paginated list of users</returns>
-    Task<PagedResult<UserManagementDto>> GetUsersAsync(
+    /// <returns>Paginated list of users and statistics</returns>
+    Task<UserManagementListResponse> GetUsersAsync(
         int page = 1,
         int pageSize = 20,
         UserFilterRequest? filter = null,

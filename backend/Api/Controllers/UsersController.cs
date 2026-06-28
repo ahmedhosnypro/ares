@@ -266,12 +266,12 @@ public class AdminUsersController : ControllerBase
     /// <param name="size">Page size</param>
     /// <param name="request">Optional filter request</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Paginated list of users</returns>
+    /// <returns>Paginated list of users and statistics</returns>
     [HttpPost("{page}/{size}")]
-    [ProducesResponseType(typeof(PagedResult<UserManagementDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UserManagementListResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<PagedResult<UserManagementDto>>> GetUsers(
+    public async Task<ActionResult<UserManagementListResponse>> GetUsers(
         int page,
         int size,
         [FromBody(EmptyBodyBehavior = Microsoft.AspNetCore.Mvc.ModelBinding.EmptyBodyBehavior.Allow)] UserFilterRequest? request,
@@ -283,7 +283,7 @@ public class AdminUsersController : ControllerBase
 
         _logger.LogInformation(
             "Successfully retrieved {Count} users from page {Page} of {TotalPages}",
-            result.Data.Count,
+            result.Items.Count,
             page,
             result.TotalPages);
 
