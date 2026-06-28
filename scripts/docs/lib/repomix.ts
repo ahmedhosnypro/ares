@@ -37,7 +37,7 @@ export async function packRepository(
   forceCompress = false,
   includePatterns?: string[]
 ): Promise<PackResult> {
-  const budget = calculateTokenBudget(config.MAX_INPUT_TOKENS);
+  const budget = calculateTokenBudget(config.MAX_INPUT_TOKENS, config.MAX_OUTPUT_TOKENS);
   const outputDir = resolve(import.meta.dirname, config.OUTPUT_DIR);
   const outputPath = join(outputDir, TEMP_OUTPUT_FILENAME);
   const repoRoot = resolve(import.meta.dirname, "../../..");

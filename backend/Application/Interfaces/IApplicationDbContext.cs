@@ -25,6 +25,7 @@ public interface IApplicationDbContext
     IQueryable<SystemSetting> SystemSettings { get; }
     IQueryable<TermsSection> TermsSections { get; }
     IQueryable<AboutSection> AboutSections { get; }
+    IQueryable<PrivacySection> PrivacySections { get; }
     IQueryable<Driver> Drivers { get; }
     // Driver Module (Phase 1+) — additive, see DriverProfile entity.
     IQueryable<DriverProfile> DriverProfiles { get; }

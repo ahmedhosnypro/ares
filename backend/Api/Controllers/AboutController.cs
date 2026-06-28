@@ -14,14 +14,17 @@ public class AboutController : ControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(List<AboutSectionDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll(CancellationToken ct) =>
-        Ok(await _about.GetAllAsync(ct));
+    public async Task<IActionResult> GetAll([FromQuery] string? locale, [FromQuery] bool includeLocalizations = false, CancellationToken ct = default)
+    {
+        var effectiveLocale = includeLocalizations ? null : locale;
+        return Ok(await _about.GetAllAsync(effectiveLocale, ct));
+    }
 
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(AboutSectionDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetById(Guid id, CancellationToken ct) =>
-        Ok(await _about.GetByIdAsync(id, ct));
+    public async Task<IActionResult> GetById(Guid id, [FromQuery] string? locale, CancellationToken ct = default) =>
+        Ok(await _about.GetByIdAsync(id, locale, ct));
 
     [HttpPost]
     [Authorize(Roles = "Admin")]
@@ -36,7 +39,7 @@ public class AboutController : ControllerBase
     [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(AboutSectionDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateAboutSectionRequest request, CancellationToken ct) =>
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateAboutSectionRequest request, CancellationToken ct = default) =>
         Ok(await _about.UpdateAsync(id, request, ct));
 
     [HttpDelete("{id:guid}")]

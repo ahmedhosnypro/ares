@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   Box,
@@ -63,7 +63,7 @@ export default function CustomerDriverSelectionSection({
   const [changeReason, setChangeReason] = useState("");
   const [isChanging, setIsChanging] = useState(false);
 
-  const fetchDrivers = async () => {
+  const fetchDrivers = useCallback(async () => {
     setIsLoading(true);
     setError("");
     try {
@@ -79,7 +79,7 @@ export default function CustomerDriverSelectionSection({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [accessToken, bookingId, t]);
 
   useEffect(() => {
     // Only fetch the interested-driver list when no driver is currently
@@ -87,8 +87,7 @@ export default function CustomerDriverSelectionSection({
     if (!assignedDriverProfile) {
       void fetchDrivers();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookingId, accessToken, assignedDriverProfile]);
+  }, [bookingId, accessToken, assignedDriverProfile, fetchDrivers]);
 
   const handleSelectDriver = async (driverId: string) => {
     setIsSelecting(true);

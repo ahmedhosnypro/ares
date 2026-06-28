@@ -35,6 +35,9 @@ import compliance from "./ar/dashboard/admin/admin/compliance";
 import security from "./ar/dashboard/admin/admin/security";
 import vehicles from "./ar/dashboard/admin/admin/vehicles";
 import bankDetails from "./ar/dashboard/admin/bank-details";
+import about from "./ar/public/about";
+import privacy from "./ar/public/privacy";
+import terms from "./ar/public/terms";
 
 const ar: MessageSchema = {
   common,
@@ -83,6 +86,11 @@ const ar: MessageSchema = {
     bankDetails,
   },
   deleteNotificationDialog,
+  publicPages: {
+    about,
+    privacy,
+    terms,
+  },
 };
 
 export default ar;

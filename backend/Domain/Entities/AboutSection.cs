@@ -6,4 +6,5 @@ public class AboutSection : AuditableEntity
     public string Content { get; set; } = null!;
     public int Order { get; set; }
     public string SectionType { get; set; } = "story";
+    public Dictionary<string, SectionLocalization> Localizations { get; set; } = new();
 }

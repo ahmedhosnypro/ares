@@ -35,6 +35,9 @@ import compliance from "./en/dashboard/admin/admin/compliance";
 import security from "./en/dashboard/admin/admin/security";
 import vehicles from "./en/dashboard/admin/admin/vehicles";
 import bankDetails from "./en/dashboard/admin/bank-details";
+import about from "./en/public/about";
+import privacy from "./en/public/privacy";
+import terms from "./en/public/terms";
 
 const en: MessageSchema = {
   common,
@@ -83,6 +86,11 @@ const en: MessageSchema = {
     bankDetails,
   },
   deleteNotificationDialog,
+  publicPages: {
+    about,
+    privacy,
+    terms,
+  },
 };
 
 export default en;

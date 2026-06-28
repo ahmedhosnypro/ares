@@ -1,5 +1,6 @@
 import { Box, Container, Divider, Typography } from "@mui/material";
 import { apiFetchJson } from "@/utils/api-client";
+import { getTranslations } from "next-intl/server";
 
 interface TermsSection {
   id: string;
@@ -9,35 +10,39 @@ interface TermsSection {
   updatedAt: string;
 }
 
-async function getTerms(): Promise<TermsSection[]> {
+async function getTerms(locale: string): Promise<TermsSection[]> {
   try {
-    return await apiFetchJson<TermsSection[]>("/api/terms");
+    return await apiFetchJson<TermsSection[]>(`/api/terms?locale=${locale}`);
   } catch {
     return [];
   }
 }
 
-export default async function TermsPage() {
-  const sections = await getTerms();
+export default async function TermsPage({ params }: Readonly<{ params: Promise<{ locale: string }> }>) {
+  const { locale } = await params;
+  const sections = await getTerms(locale);
   const lastUpdated = sections[0]?.updatedAt
-    ? new Date(sections[0].updatedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
+    ? new Intl.DateTimeFormat(locale, { year: "numeric", month: "long", day: "numeric" }).format(
+        new Date(sections[0].updatedAt)
+      )
     : null;
+  const t = await getTranslations("publicPages.terms");
 
   return (
     <Container maxWidth="md" sx={{ py: { xs: 6, md: 10 } }}>
       <Box sx={{ mb: 6 }}>
         <Typography variant="h3" sx={{ fontWeight: 800, mb: 1 }}>
-          Terms of Service
+          {t("title")}
         </Typography>
         {lastUpdated && (
           <Typography variant="body2" color="text.secondary">
-            Last updated: {lastUpdated}
+            {t("lastUpdated")} {lastUpdated}
           </Typography>
         )}
       </Box>
 
       {sections.length === 0 ? (
-        <Typography color="text.secondary">Terms of Service content is not available at this time.</Typography>
+        <Typography color="text.secondary">{t("emptyState")}</Typography>
       ) : (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 5 }}>
           {sections.map((section, index) => (
