@@ -25,7 +25,7 @@ export function validateChapterOutput(content: string, expectedHeading: string):
   return firstHeading.toLowerCase().includes(expectedHeading.toLowerCase());
 }
 
-export async function writeChapterFile(outputDir: string, filename: string, content: string): Promise<WriteResult> {
+async function writeMarkdownFile(outputDir: string, filename: string, content: string): Promise<WriteResult> {
   const dir = resolve(import.meta.dirname, outputDir);
   const filePath = join(dir, filename);
 
@@ -38,6 +38,21 @@ export async function writeChapterFile(outputDir: string, filename: string, cont
   const sizeBytes = file.size;
 
   return { filePath, sizeBytes, lineCount };
+}
+
+export async function writeChapterFile(outputDir: string, filename: string, content: string): Promise<WriteResult> {
+  return writeMarkdownFile(outputDir, filename, content);
+}
+
+export async function writeChapterPartFile(
+  outputDir: string,
+  baseFilename: string,
+  partIndex: number,
+  content: string
+): Promise<WriteResult> {
+  const baseName = baseFilename.replace(/\.md$/, "");
+  const partFilename = `${baseName}.part${String(partIndex + 1)}.md`;
+  return writeMarkdownFile(outputDir, partFilename, content);
 }
 
 export function formatFileSize(bytes: number): string {

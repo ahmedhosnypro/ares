@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -740,27 +740,29 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const loadBooking = async (showFullSpinner = true) => {
-    if (!session?.accessToken) return;
-    if (showFullSpinner) setLoading(true);
-    else setRefreshing(true);
-    setError(null);
-    try {
-      const data = await getAdminBookingDetails(session.accessToken, bookingId);
-      setBooking(data);
-    } catch (e) {
-      logger.error("Failed to load booking details", e);
-      setError(e instanceof Error ? e.message : "Failed to load booking details.");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+  const loadBooking = useCallback(
+    async (showFullSpinner = true) => {
+      if (!session?.accessToken) return;
+      if (showFullSpinner) setLoading(true);
+      else setRefreshing(true);
+      setError(null);
+      try {
+        const data = await getAdminBookingDetails(session.accessToken, bookingId);
+        setBooking(data);
+      } catch (e) {
+        logger.error("Failed to load booking details", e);
+        setError(e instanceof Error ? e.message : "Failed to load booking details.");
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [bookingId, session?.accessToken]
+  );
 
   useEffect(() => {
     void loadBooking(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookingId, session?.accessToken]);
+  }, [bookingId, loadBooking, session?.accessToken]);
 
   const handleDelete = () => {
     void (async () => {

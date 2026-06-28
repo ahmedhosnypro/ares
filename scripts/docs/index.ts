@@ -1,9 +1,13 @@
 import { loadConfig, validateConfig, type DocEnvConfig } from "./lib/config";
 import { packRepository, type PackResult } from "./lib/repomix";
-import { generateChapter, type GenerateChapterResult } from "./lib/ai-client";
-import { writeChapterFile, logWriteResult, validateChapterOutput } from "./lib/output";
+import { generateChapter } from "./lib/ai-client";
+import { writeChapterFile, writeChapterPartFile, logWriteResult, validateChapterOutput } from "./lib/output";
 import { calculateTokenBudget, formatTokenCount } from "./lib/token-utils";
+import { splitChapterIntoParts, type ChapterSplit } from "./lib/chapter-splitter";
+import { aggregateChapterParts } from "./lib/aggregate";
 import { CHAPTERS, getChapterById, getChaptersByIds, type ChapterConfig } from "./chapters";
+import { resolve, join } from "node:path";
+import { readdir, unlink } from "node:fs/promises";
 import {
   printBanner,
   logStep,
@@ -25,10 +29,54 @@ export interface GenerateOptions {
   debug: boolean;
   forceCompress: boolean;
   help: boolean;
+  keepParts: boolean;
+  splitThreshold: number | null;
+  timeout: number | null;
+  aggregateOnly: boolean;
+  aggregateFile: string | null;
+  aggregateParts: number | null;
+  includeDiagrams: boolean | null;
+  pageTarget: number | null;
 }
 
 function parseArgs(): GenerateOptions {
   const args = process.argv.slice(2);
+
+  let splitThreshold: number | null = null;
+  let timeout: number | null = null;
+  let aggregateFile: string | null = null;
+  let aggregateParts: number | null = null;
+  let includeDiagrams: boolean | null = null;
+  let pageTarget: number | null = null;
+
+  for (let i = 0; i < args.length; i++) {
+    const nextArg = args[i + 1];
+    if (args[i] === "--split-threshold" && nextArg) {
+      splitThreshold = parseFloat(nextArg);
+    }
+    if (args[i] === "--timeout" && nextArg) {
+      timeout = parseInt(nextArg, 10);
+    }
+    if (args[i] === "--aggregate" && nextArg) {
+      aggregateFile = nextArg;
+      const partsIdx = args.indexOf("--parts");
+      const partsVal = partsIdx !== -1 ? args[partsIdx + 1] : undefined;
+      if (partsVal) {
+        aggregateParts = parseInt(partsVal, 10);
+      }
+    }
+    if (args[i] === "--include-diagrams") {
+      includeDiagrams = true;
+    }
+    if (args[i] === "--no-diagrams") {
+      includeDiagrams = false;
+    }
+    if (args[i] === "--page-target" && nextArg) {
+      pageTarget = parseInt(nextArg, 10);
+    }
+  }
+
+  const aggregateOnly = args.includes("--aggregate") && !args.includes("--all") && parseChapterArgs(args).length === 0;
 
   return {
     all: args.includes("--all"),
@@ -37,6 +85,14 @@ function parseArgs(): GenerateOptions {
     debug: args.includes("--debug"),
     forceCompress: args.includes("--compress"),
     help: args.includes("--help") || args.includes("-h"),
+    keepParts: args.includes("--keep-parts"),
+    splitThreshold,
+    timeout,
+    aggregateOnly,
+    aggregateFile,
+    aggregateParts,
+    includeDiagrams,
+    pageTarget,
   };
 }
 
@@ -62,13 +118,21 @@ Usage:
   bun run generate.ts [options]
 
 Options:
-  --all              Generate all chapters
-  --chapter <id>     Generate specific chapter (1-5, appendix-a, appendix-b)
-                     Can be used multiple times: --chapter 3 --chapter 4
-  --compress         Force code compression in repomix output
-  --dry-run          Pack repository and count tokens without calling AI
-  --debug            Enable debug logging
-  --help, -h         Show this help message
+  --all                      Generate all chapters
+  --chapter <id>             Generate specific chapter (1-5, appendix-a, appendix-b)
+                            Can be used multiple times: --chapter 3 --chapter 4
+  --compress                 Force code compression in repomix output
+  --dry-run                  Pack repository and count tokens without calling AI
+  --debug                    Enable debug logging
+  --keep-parts               Keep intermediate .partN.md files after aggregation
+  --split-threshold <ratio>  Adjust token estimation per section (default: 0.15)
+  --timeout <minutes>        Override streaming timeout per part (default: 10)
+  --include-diagrams         Enable Mermaid diagram generation in chapters
+  --no-diagrams              Disable Mermaid diagram generation
+  --page-target <n>          Target A4 page count for validation (default: 200)
+  --aggregate <filename>     Aggregate existing part files into a final chapter
+  --parts <n>                Expected number of parts (used with --aggregate)
+  --help, -h                 Show this help message
 
 Chapter IDs:
   1          Chapter 1: Introduction
@@ -85,10 +149,14 @@ Examples:
   bun run generate.ts --chapter 3 --chapter 4     # Generate chapters 3 and 4
   bun run generate.ts --dry-run                   # Check token counts only
   bun run generate.ts --compress --debug         # Compress with debug info
+  bun run generate.ts --chapter 3 --keep-parts    # Keep part files after aggregation
+  bun run generate.ts --all --include-diagrams    # Generate all with Mermaid diagrams
+  bun run generate.ts --aggregate chapter_3_system_design.md --parts 2
 
 Configuration:
   Copy .env.example to .env and fill in your API credentials.
   Set MAX_INPUT_TOKENS to match your AI model's context window.
+  Set MAX_OUTPUT_TOKENS to control output length per part (default: 65536).
 `);
 }
 
@@ -122,44 +190,148 @@ async function packForChapter(
   return packResult;
 }
 
+async function cleanupOrphanPartFiles(outputDir: string, baseFilename: string, partCount: number): Promise<void> {
+  const dir = resolve(import.meta.dirname, outputDir);
+  const baseName = baseFilename.replace(/\.md$/, "");
+
+  try {
+    const entries = await readdir(dir);
+    const promises: Promise<void>[] = [];
+
+    for (const entry of entries) {
+      for (let i = 1; i <= partCount; i++) {
+        const partName = `${baseName}.part${String(i)}.md`;
+        if (entry === partName) {
+          promises.push(unlink(join(dir, partName)).catch(() => {}));
+        }
+      }
+    }
+
+    await Promise.all(promises);
+    logInfo(`Cleaned up orphan part files for ${baseFilename}`);
+  } catch {
+    logWarn(`Failed to clean up orphan part files for ${baseFilename}`);
+  }
+}
+
+async function generateOnePart(
+  config: DocEnvConfig,
+  split: ChapterSplit,
+  context: string,
+  timeoutMinutes?: number
+): Promise<{ success: boolean; content?: string; error?: string }> {
+  startSpinner(`Streaming part ${String(split.index + 1)}/${String(split.total)}...`);
+
+  try {
+    const result = await generateChapter(
+      config,
+      split.systemPrompt,
+      split.userPrompt,
+      context,
+      timeoutMinutes
+    );
+
+    stopSpinner(true, `Part ${String(split.index + 1)} done (${result.finishReason}, ${String(result.content.length)} chars)`);
+    return { success: true, content: result.content };
+  } catch (error) {
+    stopSpinner(false, `Part ${String(split.index + 1)} failed`);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    logError(`Failed to generate part ${String(split.index + 1)}: ${message}`);
+    if (error instanceof Error && error.stack) {
+      logDebug(error.stack);
+    }
+    return { success: false, error: message };
+  }
+}
+
 async function generateOneChapter(
   config: DocEnvConfig,
   chapter: ChapterConfig,
-  packResult: PackResult
+  packResult: PackResult,
+  options: GenerateOptions
 ): Promise<{ success: boolean; error?: string }> {
   logStep(`Generating ${chapter.title}`);
 
-  startSpinner(`Calling AI for ${chapter.heading}...`);
+  const splits = splitChapterIntoParts(chapter, config, packResult);
 
-  try {
-    const result: GenerateChapterResult = await generateChapter(
-      config,
-      chapter.systemPrompt,
-      chapter.userPrompt,
-      packResult.content
-    );
+  const timeoutMinutes = options.timeout ?? config.GENERATION_TIMEOUT;
 
-    stopSpinner(true, `AI responded (${result.finishReason})`);
+  if (splits.length === 1) {
+    const split = splits[0];
+    if (!split) throw new Error("Split array reported length 1 but element is undefined");
+    logInfo("Single part — generating directly...");
 
-    const writeResult = await writeChapterFile(config.OUTPUT_DIR, chapter.filename, result.content);
+    const partResult = await generateOnePart(config, split, packResult.content, timeoutMinutes);
+
+    if (!partResult.success || !partResult.content) {
+      return { success: false, error: partResult.error };
+    }
+
+    const writeResult = await writeChapterFile(config.OUTPUT_DIR, chapter.filename, partResult.content);
 
     const headingPart = chapter.heading.split(":")[0] ?? "";
-    const isValid = validateChapterOutput(result.content, headingPart);
+    const isValid = validateChapterOutput(partResult.content, headingPart);
     if (!isValid) {
       logWarn(`Output heading may not match expected: '${chapter.heading}'`);
     }
 
     logWriteResult(writeResult);
     return { success: true };
-  } catch (error) {
-    stopSpinner(false, "Generation failed");
-    const message = error instanceof Error ? error.message : "Unknown error";
-    logError(`Failed to generate ${chapter.title}: ${message}`);
-    if (error instanceof Error && error.stack) {
-      logDebug(error.stack);
-    }
-    return { success: false, error: message };
   }
+
+  logInfo(`Chapter split into ${String(splits.length)} parts — generating each with streaming...`);
+
+  const partResults: { success: boolean; content?: string; error?: string }[] = [];
+
+  for (const split of splits) {
+    logSubstep(`Part ${String(split.index + 1)}/${String(splits.length)}: ${split.sections.join(", ")}`);
+    const result = await generateOnePart(config, split, packResult.content, timeoutMinutes);
+    partResults.push(result);
+
+    if (result.success && result.content) {
+      const writeResult = await writeChapterPartFile(config.OUTPUT_DIR, chapter.filename, split.index, result.content);
+      logWriteResult(writeResult);
+    }
+  }
+
+  const failCount = partResults.filter(r => !r.success).length;
+  if (failCount > 0) {
+    logError(`${String(failCount)} of ${String(splits.length)} parts failed for ${chapter.title}`);
+    const failedPartIndices = partResults
+      .map((r, i) => (!r.success ? i : -1))
+      .filter(i => i >= 0);
+    logWarn(`Failed parts: ${failedPartIndices.map(i => String(i + 1)).join(", ")}`);
+
+    await cleanupOrphanPartFiles(config.OUTPUT_DIR, chapter.filename, splits.length);
+    return { success: false, error: `${String(failCount)} parts failed` };
+  }
+
+  logInfo("All parts generated — aggregating...");
+
+  try {
+    const aggregateResult = await aggregateChapterParts(
+      config.OUTPUT_DIR,
+      chapter.filename,
+      splits.length,
+      options.keepParts
+    );
+
+    logSuccess(
+      `Aggregated ${String(aggregateResult.partsAggregated)} parts → ${chapter.filename} ` +
+        `(${String(aggregateResult.lineCount)} lines)`
+    );
+
+    if (!options.keepParts && aggregateResult.partsDeleted > 0) {
+      logInfo(`Cleaned up ${String(aggregateResult.partsDeleted)} part files`);
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    logError(`Aggregation failed: ${message}`);
+    logWarn("Part files remain in output directory for manual inspection");
+    return { success: false, error: `Aggregation failed: ${message}` };
+  }
+
+  return { success: true };
 }
 
 async function dryRunChapter(
@@ -171,32 +343,27 @@ async function dryRunChapter(
   return packForChapter(config, chapter, forceCompress);
 }
 
-interface ConcurrencyLimit {
-  active: number;
-  queue: Array<() => Promise<void>>;
-}
-
 async function runWithConcurrency<T>(
   tasks: Array<() => Promise<T>>,
   maxConcurrency: number
 ): Promise<T[]> {
   if (tasks.length === 0) return [];
 
-  const results: T[] = new Array(tasks.length);
+  const results: T[] = new Array(tasks.length).fill(undefined) as T[];
   let nextIndex = 0;
-  let activeCount = 0;
 
   async function runNext(): Promise<void> {
     while (nextIndex < tasks.length) {
       const index = nextIndex++;
-      const task = tasks[index]!;
+      const task = tasks[index];
+
+      if (!task) continue;
 
       try {
         results[index] = await task();
       } finally {
-        activeCount--;
         if (nextIndex < tasks.length) {
-          runNext();
+          void runNext();
         }
       }
     }
@@ -223,9 +390,6 @@ async function main(): Promise<void> {
 
   printBanner();
 
-  // Load and validate configuration
-  logStep("Configuration");
-
   let config: DocEnvConfig;
   try {
     config = loadConfig();
@@ -235,8 +399,19 @@ async function main(): Promise<void> {
     logInfo(`Model: ${config.AI_MODEL}`);
     logInfo(`Max input tokens: ${String(config.MAX_INPUT_TOKENS)}`);
     logInfo(`Max output tokens: ${String(config.MAX_OUTPUT_TOKENS)}`);
+    logInfo(`Generation timeout: ${String(config.GENERATION_TIMEOUT)}min`);
     logInfo(`Output directory: ${config.OUTPUT_DIR}`);
     logInfo(`Concurrency: ${String(config.CONCURRENCY)}`);
+    if (options.splitThreshold !== null) {
+      logInfo(`Split threshold: ${String(options.splitThreshold)}`);
+    }
+    if (options.keepParts) {
+      logInfo("Keep parts: yes");
+    }
+    const effectiveDiagrams = options.includeDiagrams ?? config.INCLUDE_DIAGRAMS;
+    logInfo(`Include diagrams: ${effectiveDiagrams ? "yes" : "no"}`);
+    const effectivePageTarget = options.pageTarget ?? config.PAGE_TARGET;
+    logInfo(`Page target: ${String(effectivePageTarget)} A4 pages`);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     logError(`Configuration error: ${message}`);
@@ -244,7 +419,24 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  // Select chapters
+  if (options.aggregateOnly && options.aggregateFile) {
+    logStep("Aggregation Mode");
+    try {
+      const result = await aggregateChapterParts(
+        config.OUTPUT_DIR,
+        options.aggregateFile,
+        options.aggregateParts ?? undefined,
+        options.keepParts
+      );
+      logSuccess(`Aggregated: ${String(result.partsAggregated)} parts → ${result.filePath}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      logError(`Aggregation failed: ${message}`);
+      process.exit(1);
+    }
+    return;
+  }
+
   const chapters = selectChapters(options);
   if (chapters.length === 0) {
     logError("No chapters selected. Use --all or --chapter <id>");
@@ -256,9 +448,8 @@ async function main(): Promise<void> {
     logSubstep(`${ch.id}: ${ch.title}`);
   }
 
-  // Dry run mode: pack and show token counts for each chapter's context
   if (options.dryRun) {
-    const budget = calculateTokenBudget(config.MAX_INPUT_TOKENS);
+    const budget = calculateTokenBudget(config.MAX_INPUT_TOKENS, config.MAX_OUTPUT_TOKENS);
     logStep("Dry Run - Packing Per-Chapter Context");
 
     for (const chapter of chapters) {
@@ -271,15 +462,19 @@ async function main(): Promise<void> {
       if (!fits) {
         logWarn(`  Chapter ${chapter.id} context exceeds budget. Consider more specific include patterns.`);
       }
+
+      const splits = splitChapterIntoParts(chapter, config, packResult);
+      if (splits.length > 1) {
+        logInfo(`  Will split into ${String(splits.length)} parts for generation`);
+      }
     }
 
     process.exit(0);
   }
 
-  // Generate chapters with concurrency
   logStep("Packing All Chapter Contexts");
 
-  const packResults: (PackResult | null)[] = new Array(chapters.length);
+  const packResults: (PackResult | null)[] = new Array<PackResult | null>(chapters.length).fill(null);
   const packTasks = chapters.map(
     async (chapter, index) => {
       try {
@@ -294,7 +489,6 @@ async function main(): Promise<void> {
 
   await Promise.all(packTasks);
 
-  // Check how many contexts were successfully packed
   const successfulPacks = packResults.filter((r) => r !== null).length;
   if (successfulPacks === 0) {
     logError("No chapter contexts were packed successfully. Aborting.");
@@ -309,10 +503,9 @@ async function main(): Promise<void> {
       logError(`Skipping ${chapter.title} - context packing failed`);
       return { success: false, error: "Context packing failed" };
     }
-    return generateOneChapter(config, chapter, packResult);
+    return generateOneChapter(config, chapter, packResult, options);
   });
 
-  // Run with concurrency limit
   const results = await runWithConcurrency(generationTasks, config.CONCURRENCY);
 
   const successCount = results.filter((r) => r.success).length;
@@ -331,6 +524,33 @@ async function main(): Promise<void> {
     }
   }
   logInfo(`Output directory: ${config.OUTPUT_DIR}`);
+
+  const effectivePageTarget = options.pageTarget ?? config.PAGE_TARGET;
+  if (effectivePageTarget > 0) {
+    logStep("Page Count Estimation");
+    const outputDir = resolve(import.meta.dirname, config.OUTPUT_DIR);
+    try {
+      const entries = await readdir(outputDir);
+      const mdFiles = entries.filter(e => e.endsWith(".md") && !e.includes(".part"));
+      let totalChars = 0;
+      for (const f of mdFiles) {
+        const filePath = join(outputDir, f);
+        const file = Bun.file(filePath);
+        const text = await file.text();
+        totalChars += text.length;
+      }
+      const estimatedPages = Math.round(totalChars / 3000);
+      logInfo(`Total characters across ${String(mdFiles.length)} files: ${totalChars.toLocaleString()}`);
+      logInfo(`Estimated A4 pages (approx 3000 chars/page): ${String(estimatedPages)}`);
+      if (estimatedPages < effectivePageTarget) {
+        logWarn(`Estimated ${String(estimatedPages)} pages is below target of ${String(effectivePageTarget)}. Consider increasing MAX_OUTPUT_TOKENS or expanding chapter prompts.`);
+      } else {
+        logSuccess(`Estimated ${String(estimatedPages)} pages meets target of ${String(effectivePageTarget)}`);
+      }
+    } catch {
+      logWarn("Could not estimate page count from output files");
+    }
+  }
 }
 
 try {

@@ -10,6 +10,7 @@ public class AboutSectionDto
     public int Order { get; set; }
     public string SectionType { get; set; } = null!;
     public DateTime UpdatedAt { get; set; }
+    public Dictionary<string, SectionLocalizationDto> Localizations { get; set; } = new();
 }
 
 public class CreateAboutSectionRequest
@@ -21,6 +22,7 @@ public class CreateAboutSectionRequest
     public int Order { get; set; }
     [Required, MaxLength(50)]
     public string SectionType { get; set; } = "story";
+    public Dictionary<string, SectionLocalizationDto> Localizations { get; set; } = new();
 }
 
 public class UpdateAboutSectionRequest
@@ -32,4 +34,5 @@ public class UpdateAboutSectionRequest
     public int Order { get; set; }
     [Required, MaxLength(50)]
     public string SectionType { get; set; } = "story";
+    public Dictionary<string, SectionLocalizationDto> Localizations { get; set; } = new();
 }

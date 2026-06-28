@@ -9,6 +9,7 @@ public class TermsSectionDto
     public string Content { get; set; } = null!;
     public int Order { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public Dictionary<string, SectionLocalizationDto> Localizations { get; set; } = new();
 }
 
 public class CreateTermsSectionRequest
@@ -18,6 +19,7 @@ public class CreateTermsSectionRequest
     [Required]
     public string Content { get; set; } = null!;
     public int Order { get; set; }
+    public Dictionary<string, SectionLocalizationDto> Localizations { get; set; } = new();
 }
 
 public class UpdateTermsSectionRequest
@@ -27,4 +29,5 @@ public class UpdateTermsSectionRequest
     [Required]
     public string Content { get; set; } = null!;
     public int Order { get; set; }
+    public Dictionary<string, SectionLocalizationDto> Localizations { get; set; } = new();
 }

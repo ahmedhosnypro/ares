@@ -5,13 +5,15 @@ import { Box, Stack, Tab, Tabs, Typography } from "@mui/material";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import GavelRoundedIcon from "@mui/icons-material/GavelRounded";
 import InfoRoundedIcon from "@mui/icons-material/InfoRounded";
+import ShieldRoundedIcon from "@mui/icons-material/ShieldRounded";
 import GeneralSettingsTab from "./_components/GeneralSettingsTab";
 import TermsSettingsTab from "./_components/TermsSettingsTab";
 import AboutSettingsTab from "./_components/AboutSettingsTab";
 import CommissionSettingsTab from "./_components/CommissionSettingsTab";
+import PrivacySettingsTab from "./_components/PrivacySettingsTab";
 import AccountBalanceRoundedIcon from "@mui/icons-material/AccountBalanceRounded";
 
-type SettingsTabKey = "general" | "terms" | "about" | "commission";
+type SettingsTabKey = "general" | "terms" | "privacy" | "about" | "commission";
 
 export default function AdminSettingsPage() {
   const [tab, setTab] = useState<SettingsTabKey>("general");
@@ -49,6 +51,12 @@ export default function AdminSettingsPage() {
             label="Terms of Service"
             value="terms"
           />
+          <Tab
+            icon={<ShieldRoundedIcon fontSize="small" />}
+            iconPosition="start"
+            label="Privacy Policy"
+            value="privacy"
+          />
           <Tab icon={<InfoRoundedIcon fontSize="small" />} iconPosition="start" label="About Page" value="about" />
         </Tabs>
       </Box>
@@ -56,6 +64,7 @@ export default function AdminSettingsPage() {
       {tab === "general" && <GeneralSettingsTab />}
       {tab === "commission" && <CommissionSettingsTab />}
       {tab === "terms" && <TermsSettingsTab />}
+      {tab === "privacy" && <PrivacySettingsTab />}
       {tab === "about" && <AboutSettingsTab />}
     </Box>
   );
