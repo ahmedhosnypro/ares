@@ -237,7 +237,7 @@ export default function SuppliersTab() {
           borderRadius: 2,
           border: "1px solid",
           borderColor: "divider",
-          overflow: "hidden"
+          overflow: "hidden",
         }}
       >
         <Stack
@@ -289,13 +289,10 @@ export default function SuppliersTab() {
           borderRadius: 2,
           border: "1px solid",
           borderColor: "divider",
-          overflow: "hidden"
+          overflow: "hidden",
         }}
       >
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          sx={{ spacing: 2, p: 2, alignItems: "center" }}
-        >
+        <Stack direction={{ xs: "column", sm: "row" }} sx={{ spacing: 2, p: 2, alignItems: "center" }}>
           <TextField
             fullWidth
             placeholder={t("table.searchSuppliersPlaceholder")}
@@ -402,7 +399,9 @@ export default function SuppliersTab() {
                   <TableCell sx={{ pl: 3 }}>{t("table.supplierName")}</TableCell>
                   <TableCell>{t("table.company")}</TableCell>
                   <TableCell>{t("table.status")}</TableCell>
-                  <TableCell align="right" sx={{ pr: 3 }}>{t("table.actions")}</TableCell>
+                  <TableCell align="right" sx={{ pr: 3 }}>
+                    {t("table.actions")}
+                  </TableCell>
                 </TableRow>
               </TableHead>
 
@@ -422,7 +421,16 @@ export default function SuppliersTab() {
                       >
                         <TableCell sx={{ pl: 3 }}>
                           <Stack direction="row" sx={{ spacing: 2, alignItems: "center" }}>
-                            <Avatar sx={{ bgcolor: (t: Theme) => alpha(t.palette.primary.main, 0.08), color: "primary.main", fontWeight: 700, width: 40, height: 40, fontSize: 16 }}>
+                            <Avatar
+                              sx={{
+                                bgcolor: (t: Theme) => alpha(t.palette.primary.main, 0.08),
+                                color: "primary.main",
+                                fontWeight: 700,
+                                width: 40,
+                                height: 40,
+                                fontSize: 16,
+                              }}
+                            >
                               {s.firstName[0]}
                               {s.lastName[0]}
                             </Avatar>
@@ -471,12 +479,22 @@ export default function SuppliersTab() {
                         <TableCell align="right" sx={{ pr: 3 }}>
                           <Stack direction="row" sx={{ spacing: 0.5, justifyContent: "flex-end" }}>
                             <Tooltip title={t("table.viewDetails")}>
-                              <IconButton component={Link} href={`/admin/suppliers/${s.id}`} size="small" sx={{ color: "text.secondary" }}>
+                              <IconButton
+                                component={Link}
+                                href={`/admin/suppliers/${s.id}`}
+                                size="small"
+                                sx={{ color: "text.secondary" }}
+                              >
                                 <VisibilityOutlinedIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
                             <Tooltip title={t("table.editProfile")}>
-                              <IconButton component={Link} href={`/admin/suppliers/${s.id}/edit`} size="small" sx={{ color: "text.secondary" }}>
+                              <IconButton
+                                component={Link}
+                                href={`/admin/suppliers/${s.id}/edit`}
+                                size="small"
+                                sx={{ color: "text.secondary" }}
+                              >
                                 <EditOutlinedIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>

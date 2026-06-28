@@ -332,7 +332,11 @@ export default function UsersTab() {
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await getUsers(page, PAGE_SIZE, { searchTerm: debouncedSearch, role: roleFilter, status: statusFilter });
+      const data = await getUsers(page, PAGE_SIZE, {
+        searchTerm: debouncedSearch,
+        role: roleFilter,
+        status: statusFilter,
+      });
 
       const normalized: User[] = (data.items || []).map(u => ({
         ...u,
@@ -406,7 +410,9 @@ export default function UsersTab() {
     }
   }, [deleteTarget, fetchUsers, t]);
 
-  const adminsCount = stats ? stats.totalUsers - stats.customers - stats.suppliers - stats.drivers - stats.inspectors : 0;
+  const adminsCount = stats
+    ? stats.totalUsers - stats.customers - stats.suppliers - stats.drivers - stats.inspectors
+    : 0;
 
   return (
     <Box>
@@ -520,7 +526,7 @@ export default function UsersTab() {
           borderRadius: 2,
           border: "1px solid",
           borderColor: "divider",
-          overflow: "hidden"
+          overflow: "hidden",
         }}
       >
         <Stack
@@ -668,7 +674,9 @@ export default function UsersTab() {
                     <TableCell>{t("table.contact")}</TableCell>
                     <TableCell>{t("table.roles")}</TableCell>
                     <TableCell>{t("table.status")}</TableCell>
-                    <TableCell align="right" sx={{ pr: 3 }}>{t("table.actions")}</TableCell>
+                    <TableCell align="right" sx={{ pr: 3 }}>
+                      {t("table.actions")}
+                    </TableCell>
                   </TableRow>
                 </TableHead>
 
@@ -724,7 +732,9 @@ export default function UsersTab() {
                           </TableCell>
 
                           <TableCell sx={{ py: 2 }}>
-                            <Typography variant="body2" color="text.secondary">{u.phoneNumber || "—"}</Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {u.phoneNumber || "—"}
+                            </Typography>
                           </TableCell>
 
                           <TableCell sx={{ py: 2 }}>

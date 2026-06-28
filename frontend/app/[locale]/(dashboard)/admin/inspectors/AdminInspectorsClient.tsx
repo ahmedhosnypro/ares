@@ -284,7 +284,9 @@ export default function InspectorsPage() {
                   <TableCell>{t("table.employeeCode")}</TableCell>
                   <TableCell>{t("table.availability")}</TableCell>
                   <TableCell>{t("table.status")}</TableCell>
-                  <TableCell align="right" sx={{ pr: 3 }}>{t("table.actions")}</TableCell>
+                  <TableCell align="right" sx={{ pr: 3 }}>
+                    {t("table.actions")}
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -331,11 +333,7 @@ export default function InspectorsPage() {
                         </Stack>
                       </TableCell>
                       <TableCell>
-                        <Chip
-                          label={i.employeeCode}
-                          size="small"
-                          sx={{ fontWeight: 700, borderRadius: 1.5 }}
-                        />
+                        <Chip label={i.employeeCode} size="small" sx={{ fontWeight: 700, borderRadius: 1.5 }} />
                       </TableCell>
                       <TableCell>
                         <Chip

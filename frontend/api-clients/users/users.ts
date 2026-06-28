@@ -52,7 +52,6 @@ export async function getUsers(
   });
 }
 
-
 // create new user
 export const createUser = async (payload: {
   email: string;

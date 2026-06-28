@@ -33,8 +33,8 @@ public class UserManagementServiceTests
         _roleManagerMock = CreateMockRoleManager();
         _loggerMock = new Mock<ILogger<UserManagementService>>();
 
-        var emptyUsers = new List<ApplicationUser>().AsQueryable().BuildMock();
-        _userManagerMock.SetupGet(x => x.Users).Returns(emptyUsers);
+        var emptyUsers = new List<ApplicationUser>().AsQueryable().BuildMockDbSet();
+        _userManagerMock.Setup(x => x.Users).Returns(emptyUsers.Object);
 
         _userManagementService = new UserManagementService(
             _userRepositoryMock.Object,
@@ -70,8 +70,8 @@ public class UserManagementServiceTests
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(pagedResult);
 
-        var emptyUsers = new List<ApplicationUser>().AsQueryable().BuildMock();
-        _userManagerMock.SetupGet(x => x.Users).Returns(emptyUsers);
+        var emptyUsers = new List<ApplicationUser>().AsQueryable().BuildMockDbSet();
+        _userManagerMock.Setup(x => x.Users).Returns(emptyUsers.Object);
 
         // Setup roles for each user
         foreach (var user in users.Take(pageSize))
