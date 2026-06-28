@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Container,
@@ -24,13 +24,14 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "@/shared/i18n/routing";
 import { useFormUndoRedo } from "./useFormUndoRedo";
 import Gallery from "./Gallery";
-import GalleryEditor from "./GalleryEditor";
+import GalleryEditor, { type GalleryEditorLabels } from "./GalleryEditor";
 import VehicleInfo from "./VehicleInfo";
-import VehicleInfoEditor from "./VehicleInfoEditor";
+import VehicleInfoEditor, { type VehicleInfoEditorLabels } from "./VehicleInfoEditor";
 import ReviewSection from "./ReviewSection";
 import BookingCard from "./BookingCard";
 import VerificationRequiredCard from "./VerificationRequiredCard";
 import { useVerificationStatus } from "@/hooks/useVerificationStatus";
+import type { VehicleFormValidationLabels } from "@/app/[locale]/(dashboard)/supplier/vehicles/_components/VehicleForm.schema";
 import {
   updateVehicle,
   updateSupplierVehicle,
@@ -43,42 +44,102 @@ import { logger } from "@/utils/logger";
 import { ApiError } from "@/utils/api-client";
 import type { VehicleDetailsViewModel, VehicleReviewViewModel, BookingLocationOption } from "./types";
 
-const schema = z.object({
-  make: z.string().trim().min(2, "Make is required"),
-  model: z.string().trim().min(2, "Model is required"),
-  year: z
-    .number()
-    .int()
-    .min(1900)
-    .max(new Date().getFullYear() + 1),
-  color: z.string().trim().min(2, "Color is required"),
-  licensePlate: z.string().trim().min(2, "License plate is required"),
-  transmission: z.string().min(1, "Transmission is required"),
-  fuelType: z.string().min(1, "Fuel type is required"),
-  seats: z.number().int().min(1, "At least 1 seat required").max(50),
-  pricePerDay: z.number().min(0.01, "Price must be greater than 0"),
-  locationCity: z.string().trim().min(2, "City is required"),
-  description: z.string().optional(),
-  images: z.array(
-    z.object({
-      url: z.string().min(1, "Image URL is required"),
-      isPrimary: z.boolean(),
-      file: z.instanceof(File).optional(),
-    })
-  ),
-  features: z.array(
-    z.object({
-      featureName: z.string().min(1, "Feature name is required"),
-      featureDescription: z.string().optional(),
-      featureCategory: z.string().optional(),
-    })
-  ),
-  status: z.string().optional(),
-  availabilityStatus: z.string().optional(),
-  categoryId: z.string().min(1, "Category is required"),
-});
+export interface VehicleDetailsLabels {
+  readonly fab: {
+    readonly undo: string;
+    readonly create: string;
+    readonly saveAll: string;
+    readonly redo: string;
+  };
+  readonly toast: {
+    readonly created: string;
+    readonly updated: string;
+  };
+  readonly errors: {
+    readonly unknownUpdateError: string;
+    readonly validationFailed: string;
+  };
+  readonly galleryEditor?: GalleryEditorLabels;
+  readonly vehicleInfoEditor?: VehicleInfoEditorLabels;
+  readonly validation?: VehicleFormValidationLabels;
+}
 
-export type FormValues = z.infer<typeof schema>;
+const DEFAULT_LABELS: VehicleDetailsLabels = {
+  fab: {
+    undo: "Undo",
+    create: "Create Vehicle",
+    saveAll: "Save All Changes",
+    redo: "Redo",
+  },
+  toast: {
+    created: "Vehicle created successfully",
+    updated: "Vehicle updated successfully",
+  },
+  errors: {
+    unknownUpdateError: "Unknown error occurred while updating the vehicle",
+    validationFailed: "Validation failed",
+  },
+};
+
+function buildSchema(v?: VehicleFormValidationLabels) {
+  return z.object({
+    make: z
+      .string()
+      .trim()
+      .min(2, v?.makeRequired ?? "Make is required"),
+    model: z
+      .string()
+      .trim()
+      .min(2, v?.modelRequired ?? "Model is required"),
+    year: z
+      .number()
+      .int(v?.yearWholeNumber)
+      .min(1900, v?.yearMin)
+      .max(new Date().getFullYear() + 1, v?.yearMax),
+    color: z
+      .string()
+      .trim()
+      .min(2, v?.colorRequired ?? "Color is required"),
+    licensePlate: z
+      .string()
+      .trim()
+      .min(2, v?.licensePlateRequired ?? "License plate is required"),
+    transmission: z.string().min(1, v?.transmissionRequired ?? "Transmission is required"),
+    fuelType: z.string().min(1, v?.fuelTypeRequired ?? "Fuel type is required"),
+    seats: z
+      .number()
+      .int()
+      .min(1, v?.seatsMin ?? "At least 1 seat required")
+      .max(50, v?.seatsMax),
+    pricePerDay: z.number().min(0.01, v?.priceMin ?? "Price must be greater than 0"),
+    locationCity: z
+      .string()
+      .trim()
+      .min(2, v?.cityRequired ?? "City is required"),
+    description: z.string().optional(),
+    images: z.array(
+      z.object({
+        url: z.string().min(1, "Image URL is required"),
+        isPrimary: z.boolean(),
+        file: z.instanceof(File).optional(),
+      })
+    ),
+    features: z.array(
+      z.object({
+        featureName: z.string().min(1, "Feature name is required"),
+        featureDescription: z.string().optional(),
+        featureCategory: z.string().optional(),
+      })
+    ),
+    status: z.string().optional(),
+    availabilityStatus: z.string().optional(),
+    categoryId: z.string().min(1, v?.categoryRequired ?? "Category is required"),
+  });
+}
+
+const _defaultSchema = buildSchema();
+
+export type FormValues = z.infer<typeof _defaultSchema>;
 
 interface VehicleDetailsClientProps {
   readonly vehicle: VehicleDetailsViewModel;
@@ -87,7 +148,7 @@ interface VehicleDetailsClientProps {
   readonly canEdit: boolean;
   readonly isCreateMode?: boolean;
   readonly onSave?: (values: FormValues) => Promise<void>;
-  readonly mode?: "create" | "edit" | "details";
+  readonly labels?: VehicleDetailsLabels;
 }
 
 export default function VehicleDetailsClient({
@@ -97,7 +158,7 @@ export default function VehicleDetailsClient({
   canEdit,
   isCreateMode = false,
   onSave,
-  mode = "details",
+  labels = DEFAULT_LABELS,
 }: VehicleDetailsClientProps) {
   const theme = useTheme();
   const router = useRouter();
@@ -105,6 +166,8 @@ export default function VehicleDetailsClient({
   const [submitting, setSubmitting] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [successToastOpen, setSuccessToastOpen] = useState(false);
+
+  const schema = useMemo(() => buildSchema(labels.validation), [labels.validation]);
 
   const isAdmin = session?.user.roles.includes("Admin") ?? false;
 
@@ -148,7 +211,7 @@ export default function VehicleDetailsClient({
     })),
     status: vehicle.status,
     availabilityStatus: vehicle.availabilityStatus,
-    categoryId: vehicle.categoryId ?? "",
+    categoryId: "",
   };
 
   const methods = useForm<FormValues>({
@@ -158,25 +221,21 @@ export default function VehicleDetailsClient({
 
   useEffect(() => {
     if (categories.length > 0) {
-      if (vehicle.categoryId) {
-        methods.setValue("categoryId", vehicle.categoryId);
-      } else {
-        const matched = categories.find(
-          c => c.name.toLowerCase() === vehicle.status.toLowerCase() || c.id === vehicle.status
-        );
-        if (matched) {
-          methods.setValue("categoryId", matched.id);
-        } else if (isCreateMode && !methods.getValues("categoryId")) {
-          const sedan = categories.find(c => c.name.toLowerCase() === "sedan");
-          if (sedan) {
-            methods.setValue("categoryId", sedan.id);
-          } else if (categories[0]) {
-            methods.setValue("categoryId", categories[0].id);
-          }
+      const matched = categories.find(
+        c => c.name.toLowerCase() === vehicle.status.toLowerCase() || c.id === vehicle.status
+      );
+      if (matched) {
+        methods.setValue("categoryId", matched.id);
+      } else if (isCreateMode && !methods.getValues("categoryId")) {
+        const sedan = categories.find(c => c.name.toLowerCase() === "sedan");
+        if (sedan) {
+          methods.setValue("categoryId", sedan.id);
+        } else if (categories[0]) {
+          methods.setValue("categoryId", categories[0].id);
         }
       }
     }
-  }, [categories, vehicle.categoryId, vehicle.status, isCreateMode, methods]);
+  }, [categories, vehicle.status, isCreateMode, methods]);
 
   const { undo, redo, canUndo, canRedo } = useFormUndoRedo(methods, initialValues);
 
@@ -310,7 +369,7 @@ export default function VehicleDetailsClient({
         const validationErrors = errorData.errors ? Object.values(errorData.errors).flat().join(", ") : null;
 
         if (validationErrors) {
-          msg = `Validation failed: ${validationErrors}`;
+          msg = `${labels.errors.validationFailed}: ${validationErrors}`;
         } else if (detail) {
           msg = detail;
         }
@@ -325,12 +384,11 @@ export default function VehicleDetailsClient({
       setSaveError(err.message);
     } else {
       logger.error("Failed to update vehicle", "Unknown error");
-      setSaveError("Unknown error occurred while updating the vehicle");
+      setSaveError(labels.errors.unknownUpdateError);
     }
   };
 
   const verification = useVerificationStatus();
-  const isDetails = mode === "details";
 
   return (
     <FormProvider {...methods}>
@@ -355,7 +413,7 @@ export default function VehicleDetailsClient({
 
                 <Paper elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: 2 }}>
                   {canEdit ? (
-                    <GalleryEditor />
+                    <GalleryEditor labels={labels.galleryEditor} />
                   ) : (
                     <Gallery images={vehicle.images} vehicleLabel={`${vehicle.make} ${vehicle.model}`} />
                   )}
@@ -366,20 +424,18 @@ export default function VehicleDetailsClient({
                   sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: { xs: 2, md: 3 } }}
                 >
                   {canEdit ? (
-                    <VehicleInfoEditor isAdmin={isAdmin} categories={categories} />
+                    <VehicleInfoEditor isAdmin={isAdmin} categories={categories} labels={labels.vehicleInfoEditor} />
                   ) : (
                     <VehicleInfo vehicle={vehicle} />
                   )}
                 </Paper>
 
-                {isDetails && (
-                  <Paper
-                    elevation={0}
-                    sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: { xs: 2, md: 3 } }}
-                  >
-                    <ReviewSection reviews={reviews} />
-                  </Paper>
-                )}
+                <Paper
+                  elevation={0}
+                  sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: { xs: 2, md: 3 } }}
+                >
+                  <ReviewSection reviews={reviews} />
+                </Paper>
               </Stack>
             </Grid>
 
@@ -416,7 +472,7 @@ export default function VehicleDetailsClient({
                 sx={{ px: 3, fontWeight: 700, boxShadow: theme.shadows[10] }}
               >
                 <UndoRoundedIcon sx={{ mr: 1 }} />
-                Undo
+                {labels.fab.undo}
               </Fab>
 
               <Fab
@@ -438,7 +494,7 @@ export default function VehicleDetailsClient({
                 ) : (
                   <SaveRoundedIcon sx={{ mr: 1 }} />
                 )}
-                {isCreateMode ? "Create Vehicle" : "Save All Changes"}
+                {isCreateMode ? labels.fab.create : labels.fab.saveAll}
               </Fab>
 
               <Fab
@@ -448,7 +504,7 @@ export default function VehicleDetailsClient({
                 disabled={!canRedo || submitting}
                 sx={{ px: 3, fontWeight: 700, boxShadow: theme.shadows[10] }}
               >
-                Redo
+                {labels.fab.redo}
                 <RedoRoundedIcon sx={{ ml: 1 }} />
               </Fab>
             </Stack>
@@ -471,7 +527,7 @@ export default function VehicleDetailsClient({
           variant="filled"
           sx={{ width: "100%", borderRadius: 2 }}
         >
-          {isCreateMode ? "Vehicle created successfully" : "Vehicle updated successfully"}
+          {isCreateMode ? labels.toast.created : labels.toast.updated}
         </Alert>
       </Snackbar>
     </FormProvider>

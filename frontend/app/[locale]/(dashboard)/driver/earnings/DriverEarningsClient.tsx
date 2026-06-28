@@ -1,225 +1,496 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Alert, Box, Button, Card, CardContent, Grid, Typography } from "@mui/material";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useLocale } from "next-intl";
-import {
-  Alert,
-  Box,
-  CircularProgress,
-  Container,
-  Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Grid,
-} from "@mui/material";
-import { useTheme } from "@mui/material/styles";
-import {
-  AccountBalanceWallet as WalletIcon,
-  TrendingUp as TrendingUpIcon,
-  EventAvailable as EventAvailableIcon,
-} from "@mui/icons-material";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { toApiUrl } from "@/utils/api-client";
+import {
+  getDriverEarningsStats,
+  getDriverEarningsChart,
+  getDriverTopBookings,
+  getDriverEarningsHistory,
+  getDriverPayouts,
+  type DriverEarningsStats,
+  type DriverMonthlyEarningPoint,
+  type DriverTopBooking,
+  type DriverEarningRow,
+  type DriverPayout,
+} from "@/api-clients/driver-earnings/driver-earnings";
 import { logger } from "@/utils/logger";
-import { isSameMonth } from "date-fns";
-import { useDateFnsLocale } from "@/hooks/useDateFnsLocale";
-import StatCard from "../../_components/StatCard";
 
-interface DriverAssignment {
-  bookingId: string;
-  bookingNumber: string;
-  pickupDate: string;
-  returnDate: string;
-  vehicleName: string;
-  earnings: number;
-  status: string;
+import EarningsStatsRow from "./_components/EarningsStatsRow";
+import MonthlyEarningsChart from "./_components/MonthlyEarningsChart";
+import TopBookingsList from "./_components/TopBookingsList";
+import EarningsHistoryTable from "./_components/EarningsHistoryTable";
+import PayoutRequestModal from "./_components/PayoutRequestModal";
+import PayoutHistory from "./_components/PayoutHistory";
+import PayoutInfoPrompt from "./_components/PayoutInfoPrompt";
+
+function safeNum(v: unknown): number {
+  return typeof v === "number" && Number.isFinite(v) ? v : 0;
 }
 
 export default function DriverEarningsClient() {
-  const { data: session } = useSession();
-  const theme = useTheme();
+  const { data: session, status: sessionStatus } = useSession();
   const t = useTranslations("dashboard.driverEarnings");
-  const { formatLocalized } = useDateFnsLocale();
-  const locale = useLocale();
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat(locale, {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
+  const currentYear = useMemo(() => new Date().getUTCFullYear(), []);
+  const yearOptions = useMemo(() => [currentYear, currentYear - 1, currentYear - 2, currentYear - 3], [currentYear]);
+  const [year, setYear] = useState<number>(currentYear);
 
-  const formatCurrencyWithSign = (amount: number) =>
-    new Intl.NumberFormat(locale, {
-      style: "currency",
-      currency: "USD",
-      signDisplay: "always",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
+  const [stats, setStats] = useState<DriverEarningsStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsError, setStatsError] = useState<string | null>(null);
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [assignments, setAssignments] = useState<DriverAssignment[]>([]);
-  const [error, setError] = useState("");
+  const [chart, setChart] = useState<DriverMonthlyEarningPoint[] | null>(null);
+  const [chartLoading, setChartLoading] = useState(true);
+  const [chartError, setChartError] = useState<string | null>(null);
+
+  const [topBookings, setTopBookings] = useState<DriverTopBooking[] | null>(null);
+  const [topLoading, setTopLoading] = useState(true);
+  const [topError, setTopError] = useState<string | null>(null);
+
+  const [history, setHistory] = useState<DriverEarningRow[] | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const [payouts, setPayouts] = useState<DriverPayout[] | null>(null);
+  const [payoutsLoading, setPayoutsLoading] = useState(true);
+  const [payoutsError, setPayoutsError] = useState<string | null>(null);
+
+  const [payoutModalOpen, setPayoutModalOpen] = useState(false);
+
+  const [payoutInfo, setPayoutInfo] = useState<{
+    walletPhoneNumber: string | null;
+    payoutMethod: string;
+    isVerified: boolean;
+  } | null>(null);
+
+  const [mounted, setMounted] = useState(false);
+
+  const accessToken = session?.accessToken;
 
   useEffect(() => {
-    const fetchAssignments = async () => {
-      if (!session?.accessToken) return;
+    const timer = setTimeout(() => {
+      setMounted(true);
+    }, 100);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (sessionStatus === "loading" || !accessToken) return;
+    const abortState = { cancelled: false };
+    void (async () => {
       try {
-        const res = await fetch(toApiUrl("/api/driver/assignments"), {
-          headers: {
-            Authorization: `Bearer ${session.accessToken}`,
-          },
+        const res = await fetch(toApiUrl("/api/driver/profile/payout-info"), {
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
-
-        if (!res.ok) throw new Error(t("errors.failedToLoadEarningsData"));
-
-        const data = (await res.json()) as DriverAssignment[];
-        setAssignments(data);
-      } catch (err) {
-        logger.error("Error fetching driver assignments for earnings", err);
-        setError(t("couldNotLoadEarningsData"));
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    void fetchAssignments();
-  }, [session, t]);
-
-  const { totalEarnings, monthlyEarnings, completedTripEarnings, recentEarnings } = useMemo(() => {
-    let total = 0;
-    let monthly = 0;
-    let completed = 0;
-    const now = new Date();
-
-    // Recent earnings sorted by most recent return date
-    const completedAssignments = assignments
-      .filter(a => a.status === "Completed")
-      .sort((a, b) => new Date(b.returnDate).getTime() - new Date(a.returnDate).getTime());
-
-    assignments.forEach(a => {
-      // Total earnings typically refers to all completed, or anything they've been paid for.
-      // We'll consider earnings for completed trips as guaranteed.
-      if (a.status === "Completed") {
-        total += a.earnings;
-        completed += a.earnings;
-
-        if (isSameMonth(new Date(a.returnDate), now)) {
-          monthly += a.earnings;
+        if (res.ok && !abortState.cancelled) {
+          const data = (await res.json()) as {
+            walletPhoneNumber: string | null;
+            payoutMethod: string;
+            isVerified: boolean;
+          };
+          setPayoutInfo(data);
         }
+      } catch {
+        /* best-effort */
       }
-    });
-
-    return {
-      totalEarnings: total,
-      monthlyEarnings: monthly,
-      completedTripEarnings: completed,
-      recentEarnings: completedAssignments.slice(0, 10), // last 10 trips
+    })();
+    return () => {
+      abortState.cancelled = true;
     };
-  }, [assignments]);
+  }, [accessToken, sessionStatus]);
 
-  if (isLoading) {
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
+  useEffect(() => {
+    if (sessionStatus === "loading") return;
+    if (!accessToken) {
+      setStatsLoading(false);
+      setStatsError("You must be signed in to view earnings.");
+      return;
+    }
+
+    const abortState = { cancelled: false };
+    setStatsLoading(true);
+    setStatsError(null);
+
+    void (async () => {
+      try {
+        const data = await getDriverEarningsStats(accessToken);
+        if (!abortState.cancelled) setStats(data);
+      } catch (err) {
+        if (abortState.cancelled) return;
+        logger.error("Failed to load driver earnings stats", err);
+        setStatsError("Could not load your earnings stats. Please try again shortly.");
+      } finally {
+        if (!abortState.cancelled) setStatsLoading(false);
+      }
+    })();
+
+    return () => {
+      abortState.cancelled = true;
+    };
+  }, [accessToken, sessionStatus]);
+
+  useEffect(() => {
+    if (sessionStatus === "loading") return;
+    if (!accessToken) {
+      setTopLoading(false);
+      setTopError("You must be signed in to view earnings.");
+      return;
+    }
+
+    const abortState = { cancelled: false };
+    setTopLoading(true);
+    setTopError(null);
+
+    void (async () => {
+      try {
+        const data = await getDriverTopBookings(accessToken);
+        if (!abortState.cancelled) setTopBookings(data);
+      } catch (err) {
+        if (abortState.cancelled) return;
+        logger.error("Failed to load driver top bookings", err);
+        setTopError("Could not load your top bookings. Please try again shortly.");
+      } finally {
+        if (!abortState.cancelled) setTopLoading(false);
+      }
+    })();
+
+    return () => {
+      abortState.cancelled = true;
+    };
+  }, [accessToken, sessionStatus]);
+
+  useEffect(() => {
+    if (sessionStatus === "loading") return;
+    if (!accessToken) {
+      setChartLoading(false);
+      setChartError("You must be signed in to view earnings.");
+      return;
+    }
+
+    const abortState = { cancelled: false };
+    setChartLoading(true);
+    setChartError(null);
+
+    void (async () => {
+      try {
+        const data = await getDriverEarningsChart(accessToken, year);
+        if (!abortState.cancelled) setChart(data);
+      } catch (err) {
+        if (abortState.cancelled) return;
+        logger.error("Failed to load driver earnings chart", err);
+        setChartError("Could not load the monthly chart. Please try again shortly.");
+      } finally {
+        if (!abortState.cancelled) setChartLoading(false);
+      }
+    })();
+
+    return () => {
+      abortState.cancelled = true;
+    };
+  }, [accessToken, sessionStatus, year]);
+
+  useEffect(() => {
+    if (sessionStatus === "loading") return;
+    if (!accessToken) {
+      setHistoryLoading(false);
+      setHistoryError("You must be signed in to view earnings.");
+      return;
+    }
+
+    const abortState = { cancelled: false };
+    setHistoryLoading(true);
+    setHistoryError(null);
+
+    void (async () => {
+      try {
+        const data = await getDriverEarningsHistory(accessToken, page, 10);
+        if (!abortState.cancelled) {
+          setHistory(data);
+          const hasMorePages = data.length >= 10;
+          setTotalPages(hasMorePages ? page + 1 : page);
+        }
+      } catch (err) {
+        if (abortState.cancelled) return;
+        logger.error("Failed to load driver earnings history", err);
+        setHistoryError("Could not load your earnings history. Please try again shortly.");
+      } finally {
+        if (!abortState.cancelled) setHistoryLoading(false);
+      }
+    })();
+
+    return () => {
+      abortState.cancelled = true;
+    };
+  }, [accessToken, sessionStatus, page]);
+
+  useEffect(() => {
+    if (sessionStatus === "loading") return;
+    if (!accessToken) {
+      setPayoutsLoading(false);
+      setPayoutsError("You must be signed in to view earnings.");
+      return;
+    }
+
+    const abortState = { cancelled: false };
+    setPayoutsLoading(true);
+    setPayoutsError(null);
+
+    void (async () => {
+      try {
+        const data = await getDriverPayouts(accessToken);
+        if (!abortState.cancelled) setPayouts(data);
+      } catch (err) {
+        if (abortState.cancelled) return;
+        logger.error("Failed to load driver payouts", err);
+        setPayoutsError("Could not load your payout history. Please try again shortly.");
+      } finally {
+        if (!abortState.cancelled) setPayoutsLoading(false);
+      }
+    })();
+
+    return () => {
+      abortState.cancelled = true;
+    };
+  }, [accessToken, sessionStatus]);
+
+  const handleYearChange = useCallback((next: number) => {
+    setYear(next);
+  }, []);
+
+  const handlePageChange = useCallback((next: number) => {
+    setPage(next);
+  }, []);
+
+  const handlePayoutSuccess = useCallback(() => {
+    if (accessToken) {
+      void getDriverEarningsStats(accessToken)
+        .then(setStats)
+        .catch(() => {});
+      void getDriverPayouts(accessToken)
+        .then(setPayouts)
+        .catch(() => {});
+    }
+  }, [accessToken]);
+
+  const statLabels = useMemo(
+    () => ({
+      totalEarnings: t("totalEarnings"),
+      thisMonth: t("thisMonth"),
+      lastMonth: t("lastMonth"),
+      availableBalance: t("availableBalance"),
+    }),
+    [t]
+  );
+
+  const chartLabels = useMemo(
+    () => ({
+      monthlyEarnings: t("monthlyEarnings"),
+      noRevenueRecorded: t("noRevenueRecorded"),
+      completedBookingsWillAppear: t("completedBookingsWillAppear"),
+    }),
+    [t]
+  );
+
+  const topBookingsLabels = useMemo(
+    () => ({
+      topBookings: t("topBookings"),
+      noTopBookings: t("noTopBookings"),
+      topBookingsWillAppear: t("topBookingsWillAppear"),
+    }),
+    [t]
+  );
+
+  const historyLabels = useMemo(
+    () => ({
+      date: t("date"),
+      bookingId: t("bookingId"),
+      grossEarning: t("grossEarning"),
+      platformDeduction: t("platformDeduction"),
+      netEarning: t("netEarning"),
+      status: t("status"),
+      page: t("page"),
+      of: t("of"),
+      available: t("available"),
+      pendingPayoutStatus: t("pendingPayoutStatus"),
+      paid: t("paid"),
+      reversed: t("reversed"),
+    }),
+    [t]
+  );
+
+  const payoutModalLabels = useMemo(
+    () => ({
+      requestPayout: t("requestPayout"),
+      availablePayoutBalance: t("availablePayoutBalance"),
+      minimumPayout: t("minimumPayout"),
+      amountToWithdraw: t("amountToWithdraw"),
+      cancel: t("cancel"),
+      confirm: t("confirm"),
+      payoutRequested: t("payoutRequested"),
+      amountExceedsBalance: t("amountExceedsBalance"),
+      amountBelowMinimum: t("amountBelowMinimum"),
+      payoutInfoNotVerified: t("payoutInfoNotVerified"),
+      payoutInfoMissing: t("payoutInfoMissing"),
+    }),
+    [t]
+  );
+
+  const payoutInfoLabels = useMemo(
+    () => ({
+      payoutInfoMissing: t("payoutInfoMissing"),
+      payoutInfoNotVerified: t("payoutInfoNotVerified"),
+      completePayoutSetup: t("completePayoutSetup"),
+      goToProfile: t("goToProfile"),
+    }),
+    [t]
+  );
+
+  const payoutHistoryLabels = useMemo(
+    () => ({
+      payoutHistory: t("payoutHistory"),
+      noPayoutHistory: t("noPayoutHistory"),
+      requested: t("requested"),
+      approved: t("approved"),
+      processing: t("processing"),
+      completed: t("completed"),
+      rejected: t("rejected"),
+      failed: t("failed"),
+    }),
+    [t]
+  );
+
+  const availableBalance = stats ? safeNum(stats.availableBalance) : 0;
+  const isMissing = !payoutInfo || !payoutInfo.walletPhoneNumber;
+  const isUnverified = payoutInfo?.walletPhoneNumber != null && !payoutInfo.isVerified;
+  const showPayoutInfoPrompt = isMissing || isUnverified;
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h4" component="h1" sx={{ fontWeight: 800, mb: 1 }}>
-        {t("earningsOverview")}
-      </Typography>
-      <Typography color="text.secondary" sx={{ mb: 4 }}>
-        {t("trackYourIncome")}
-      </Typography>
+    <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: "background.default", fontFamily: "inherit" }}>
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: "-0.4px" }}>
+          {t("earningsOverview")}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+          {t("trackYourIncome")}
+        </Typography>
+      </Box>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 4 }}>
-          {error}
+      {statsError && (
+        <Alert severity="error" sx={{ mb: 2 }} variant="outlined">
+          {statsError}
         </Alert>
       )}
 
-      <Grid container spacing={3} sx={{ mb: 6 }}>
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <StatCard
-            title={t("totalEarnings")}
-            value={formatCurrency(totalEarnings)}
-            icon={<WalletIcon sx={{ color: "primary.main" }} />}
-            trend={{ value: 0, label: t("lifetimeEarnings") }}
+      <EarningsStatsRow stats={stats} loading={statsLoading} labels={statLabels} />
+
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid size={{ xs: 12, lg: 7 }}>
+          <MonthlyEarningsChart
+            data={chart}
+            loading={chartLoading}
+            error={chartError}
+            currentYear={currentYear}
+            yearOptions={yearOptions}
+            year={year}
+            onYearChange={handleYearChange}
+            mounted={mounted}
+            labels={chartLabels}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <StatCard
-            title={t("thisMonth")}
-            value={formatCurrency(monthlyEarnings)}
-            icon={<TrendingUpIcon sx={{ color: "success.main" }} />}
-            trend={{ value: 0, label: formatLocalized(new Date(), "MMMM yyyy") }}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <StatCard
-            title={t("completedTrips")}
-            value={formatCurrency(completedTripEarnings)}
-            icon={<EventAvailableIcon sx={{ color: "info.main" }} />}
-            trend={{ value: 0, label: t("earningsFromFinishedTrips") }}
-          />
+
+        <Grid size={{ xs: 12, lg: 5 }}>
+          <TopBookingsList bookings={topBookings} loading={topLoading} error={topError} labels={topBookingsLabels} />
         </Grid>
       </Grid>
 
-      <Typography variant="h5" sx={{ fontWeight: 800, mb: 3 }}>
-        {t("recentEarningsHistory")}
-      </Typography>
+      <Box sx={{ mb: 3 }}>
+        <EarningsHistoryTable
+          rows={history}
+          loading={historyLoading}
+          error={historyError}
+          page={page}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          labels={historyLabels}
+        />
+      </Box>
 
-      {recentEarnings.length === 0 ? (
-        <Paper
-          elevation={0}
-          sx={{ p: 4, textAlign: "center", border: `1px dashed ${theme.palette.divider}`, borderRadius: 2 }}
-        >
-          <Typography color="text.secondary">{t("noCompletedTrips")}</Typography>
-        </Paper>
-      ) : (
-        <TableContainer
-          component={Paper}
-          elevation={0}
-          sx={{ borderRadius: 2, border: `1px solid ${theme.palette.divider}` }}
-        >
-          <Table sx={{ minWidth: 650 }} aria-label={t("earningsAriaLabel")}>
-            <TableHead sx={{ bgcolor: "background.default" }}>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 700 }}>{t("date")}</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>{t("bookingId")}</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>{t("vehicle")}</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700 }}>
-                  {t("earnings")}
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {recentEarnings.map(row => (
-                <TableRow key={row.bookingId} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
-                  <TableCell component="th" scope="row">
-                    {formatLocalized(new Date(row.returnDate), "MMM dd, yyyy")}
-                  </TableCell>
-                  <TableCell>{row.bookingNumber}</TableCell>
-                  <TableCell>{row.vehicleName}</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 800, color: "success.main" }}>
-                    {formatCurrencyWithSign(row.earnings)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          {showPayoutInfoPrompt && (
+            <Box sx={{ mb: 2 }}>
+              <PayoutInfoPrompt variant={isMissing ? "missing" : "unverified"} labels={payoutInfoLabels} />
+            </Box>
+          )}
+
+          <Card
+            elevation={0}
+            sx={{
+              borderRadius: 2,
+              border: "1px solid",
+              borderColor: "divider",
+            }}
+          >
+            <CardContent
+              sx={{
+                p: { xs: 2, sm: 3 },
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 2,
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <AccountBalanceWalletIcon sx={{ color: "primary.main" }} />
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                    {t("payoutRequest")}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Available: ${availableBalance.toFixed(2)}
+                  </Typography>
+                </Box>
+              </Box>
+              <Button
+                variant="contained"
+                disabled={availableBalance <= 0}
+                onClick={() => {
+                  setPayoutModalOpen(true);
+                }}
+                sx={{ fontWeight: 700 }}
+              >
+                {t("requestPayout")}
+              </Button>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 6 }}>
+          <PayoutHistory payouts={payouts} loading={payoutsLoading} error={payoutsError} labels={payoutHistoryLabels} />
+        </Grid>
+      </Grid>
+
+      {accessToken && (
+        <PayoutRequestModal
+          open={payoutModalOpen}
+          onClose={() => {
+            setPayoutModalOpen(false);
+          }}
+          onSuccess={handlePayoutSuccess}
+          availableBalance={availableBalance}
+          accessToken={accessToken}
+          labels={payoutModalLabels}
+        />
       )}
-    </Container>
+    </Box>
   );
 }

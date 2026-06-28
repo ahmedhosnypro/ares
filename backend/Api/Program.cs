@@ -151,9 +151,12 @@ try
     builder.Services.AddScoped<IDriverDashboardService, DriverDashboardService>();
     builder.Services.AddScoped<IAdminDriverService, AdminDriverService>();
     builder.Services.AddScoped<IServiceAreaService, ServiceAreaService>();
-    builder.Services.AddScoped<IDriverNotificationService, DriverNotificationService>();
-    builder.Services.AddScoped<IDriverPricingService, DriverPricingService>();
-    builder.Services.AddScoped<Backend.Application.Services.ISettingsService, Backend.Infrastructure.Services.SettingsService>();
+        builder.Services.AddScoped<IDriverNotificationService, DriverNotificationService>();
+        builder.Services.AddScoped<IDriverPricingService, DriverPricingService>();
+        builder.Services.AddScoped<Backend.Application.Services.ISettingsService, Backend.Infrastructure.Services.SettingsService>();
+        builder.Services.AddScoped<IDriverEarningsService, DriverEarningsService>();
+        builder.Services.AddScoped<IDriverPayoutRepository, DriverPayoutRepository>();
+    builder.Services.AddScoped<IDriverEarningsAdminService, DriverEarningsAdminService>();
     builder.Services.AddScoped<Backend.Application.Services.ITermsService, Backend.Application.Services.TermsService>();
     builder.Services.AddScoped<Backend.Application.Services.IAboutService, Backend.Application.Services.AboutService>();
     builder.Services.AddScoped<Backend.Application.Services.IPrivacyService, Backend.Application.Services.PrivacyService>();

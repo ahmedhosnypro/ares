@@ -9,6 +9,7 @@ using Backend.Domain.Entities.Enums;
 using Backend.Application.Exceptions;
 using Microsoft.AspNetCore.Http;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Application.Services
 {
@@ -22,11 +23,13 @@ namespace Backend.Application.Services
 
         private readonly IDriverProfileRepository _driverProfileRepository;
         private readonly IServiceAreaRepository _serviceAreaRepository;
+        private readonly IApplicationDbContext _context;
 
-        public DriverProfileService(IDriverProfileRepository driverProfileRepository, IServiceAreaRepository serviceAreaRepository)
+        public DriverProfileService(IDriverProfileRepository driverProfileRepository, IServiceAreaRepository serviceAreaRepository, IApplicationDbContext context)
         {
             _driverProfileRepository = driverProfileRepository;
             _serviceAreaRepository = serviceAreaRepository;
+            _context = context;
         }
 
         public async Task<DriverProfileStatusDto> GetStatusAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -180,6 +183,58 @@ namespace Backend.Application.Services
         }
 
         // ── Upload helpers (mirror DriverLicenseService policy) ──────────────
+
+        public async Task<DriverPaymentInfoDto> GetPayoutInfoAsync(Guid userId, CancellationToken ct = default)
+        {
+            var profile = await _driverProfileRepository.GetByUserIdAsync(userId, ct);
+            if (profile == null) throw new NotFoundException("Driver profile not found.");
+
+            var paymentInfo = await _context.DriverPaymentInfo
+                .FirstOrDefaultAsync(p => p.DriverProfileId == profile.Id, ct);
+
+            if (paymentInfo == null)
+                return new DriverPaymentInfoDto(null, DriverPayoutMethod.Wallet.ToString(), false);
+
+            return new DriverPaymentInfoDto(
+                paymentInfo.WalletPhoneNumber,
+                paymentInfo.PayoutMethod.ToString(),
+                paymentInfo.IsVerified
+            );
+        }
+
+        public async Task<DriverPaymentInfoDto> UpdatePayoutInfoAsync(Guid userId, UpdatePayoutInfoRequest request, CancellationToken ct = default)
+        {
+            var profile = await _driverProfileRepository.GetByUserIdAsync(userId, ct);
+            if (profile == null) throw new NotFoundException("Driver profile not found.");
+
+            var paymentInfo = await _context.DriverPaymentInfo
+                .FirstOrDefaultAsync(p => p.DriverProfileId == profile.Id, ct);
+
+            if (paymentInfo != null)
+            {
+                paymentInfo.WalletPhoneNumber = request.WalletPhoneNumber;
+                paymentInfo.IsVerified = false;
+            }
+            else
+            {
+                paymentInfo = new DriverPaymentInfo
+                {
+                    DriverProfileId = profile.Id,
+                    PayoutMethod = DriverPayoutMethod.Wallet,
+                    WalletPhoneNumber = request.WalletPhoneNumber,
+                    IsVerified = false
+                };
+                _context.AddDriverPaymentInfo(paymentInfo);
+            }
+
+            await _context.SaveChangesAsync(ct);
+
+            return new DriverPaymentInfoDto(
+                paymentInfo.WalletPhoneNumber,
+                paymentInfo.PayoutMethod.ToString(),
+                paymentInfo.IsVerified
+            );
+        }
 
         private static void ValidateImage(IFormFile? file, string field, bool required)
         {

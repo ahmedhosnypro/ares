@@ -5,6 +5,7 @@ export type AdminSidebarLabels = {
   readonly categories: string;
   readonly users: string;
   readonly verifications: string;
+  readonly driverEarnings: string;
   readonly locations: string;
   readonly countries: string;
   readonly notifications: string;

@@ -19,6 +19,7 @@ export const chapter7: ChapterConfig = {
     "Output raw Markdown only.",
     "ALL infrastructure diagrams MUST be in Mermaid syntax inside codeblocks, referencing Figure 7.x.",
   ].join(" "),
+  includeDiagrams: true,
   userPrompt: [
     "Generate CHAPTER 7: DEPLOYMENT & OPERATIONS - The DevOps Manual (15-20 A4 pages)",
     "",

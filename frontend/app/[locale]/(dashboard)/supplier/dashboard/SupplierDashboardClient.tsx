@@ -20,8 +20,11 @@ import {
   Card,
   CardContent,
   Typography,
+  Avatar,
+  Chip,
   IconButton,
   Stack,
+  Button,
   Divider,
   Alert,
   alpha,
@@ -33,6 +36,12 @@ import HourglassTopIcon from "@mui/icons-material/HourglassTop";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import EventAvailableOutlinedIcon from "@mui/icons-material/EventAvailableOutlined";
+import PaymentIcon from "@mui/icons-material/Payment";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import VerifiedOutlinedIcon from "@mui/icons-material/VerifiedOutlined";
+import PriorityHighIcon from "@mui/icons-material/PriorityHigh";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { DirectionsCarFilledTwoTone as CarIcon } from "@mui/icons-material";
 import {
   Area,
@@ -50,8 +59,10 @@ import {
   Cell,
 } from "recharts";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { toImageUrl } from "@/utils/image-url";
+import DemoDataBadge from "../_components/DemoDataBadge";
 import {
   getSupplierDashboardStats,
   getSupplierDashboardBookingsByStatus,
@@ -84,7 +95,36 @@ const itemVariants = {
   },
 };
 
-// ── Number formatting helpers ────────────────────────────────────────────────
+interface ActivityItem {
+  id: string;
+  type: "booking" | "payment" | "user" | "vehicle";
+  messageKey: string;
+  timeKey: string;
+}
+
+interface PendingAction {
+  id: string;
+  titleKey: string;
+  descriptionKey: string;
+  severity: "warning" | "info" | "error";
+  actionLabelKey: string;
+}
+
+const ACTIVITY_META: Record<
+  ActivityItem["type"],
+  { color: "primary" | "success" | "warning" | "info"; icon: React.ReactNode }
+> = {
+  booking: { color: "primary", icon: <EventAvailableOutlinedIcon fontSize="small" /> },
+  payment: { color: "success", icon: <PaymentIcon fontSize="small" /> },
+  user: { color: "info", icon: <PersonAddIcon fontSize="small" /> },
+  vehicle: { color: "warning", icon: <DirectionsCarIcon fontSize="small" /> },
+};
+
+const ACTION_META: Record<PendingAction["severity"], { color: "warning" | "info" | "error"; icon: React.ReactNode }> = {
+  warning: { color: "warning", icon: <HourglassTopIcon fontSize="small" /> },
+  info: { color: "info", icon: <VerifiedOutlinedIcon fontSize="small" /> },
+  error: { color: "error", icon: <PriorityHighIcon fontSize="small" /> },
+};
 
 function formatCount(value: number): string {
   return Number.isFinite(value) ? Math.trunc(value).toLocaleString() : "0";
@@ -92,24 +132,66 @@ function formatCount(value: number): string {
 
 function formatCurrency(value: number): string {
   if (!Number.isFinite(value)) return "$0";
-  // Hide decimals for whole-dollar values to keep cards uncluttered, mirror
-  // the admin dashboard's currency rendering style.
   return `$${value.toLocaleString(undefined, {
     minimumFractionDigits: Number.isInteger(value) ? 0 : 2,
     maximumFractionDigits: 2,
   })}`;
 }
 
+const DEMO_ACTIVITY_ITEMS: { id: string; type: ActivityItem["type"]; messageKey: string; timeKey: string }[] = [
+  { id: "a1", type: "booking", messageKey: "newBooking", timeKey: "minutesAgo" },
+  { id: "a2", type: "payment", messageKey: "payoutProcessed", timeKey: "hoursAgo" },
+  { id: "a3", type: "vehicle", messageKey: "listingApproved", timeKey: "fiveHoursAgo" },
+  { id: "a4", type: "booking", messageKey: "bookingCompleted", timeKey: "yesterday" },
+  { id: "a5", type: "user", messageKey: "customerReview", timeKey: "yesterday" },
+];
+
+const DEMO_PENDING_ACTION_ITEMS: {
+  id: string;
+  severity: PendingAction["severity"];
+  titleKey: string;
+  descriptionKey: string;
+  actionLabelKey: string;
+}[] = [
+  {
+    id: "p1",
+    severity: "warning",
+    titleKey: "vehiclesAwaitingApproval.title",
+    descriptionKey: "vehiclesAwaitingApproval.description",
+    actionLabelKey: "vehiclesAwaitingApproval.actionLabel",
+  },
+  {
+    id: "p2",
+    severity: "error",
+    titleKey: "bookingNeedsConfirmation.title",
+    descriptionKey: "bookingNeedsConfirmation.description",
+    actionLabelKey: "bookingNeedsConfirmation.actionLabel",
+  },
+  {
+    id: "p3",
+    severity: "info",
+    titleKey: "completeProfile.title",
+    descriptionKey: "completeProfile.description",
+    actionLabelKey: "completeProfile.actionLabel",
+  },
+];
+
 export default function SupplierDashboardClient() {
   const theme = useTheme();
   const { data: session, status: sessionStatus } = useSession({
     required: true,
   });
+  const t = useTranslations("dashboard.supplierDashboard");
 
-  // ── Live stats state ──────────────────────────────────────────────────────
   const [stats, setStats] = useState<SupplierDashboardStats | null>(null);
   const [earningsChartData, setEarningsChartData] = useState<MonthlyRevenuePoint[] | null>(null);
-  const [bookingsChartData, setBookingsChartData] = useState<{ status: string; count: number }[] | null>(null);
+  const [bookingsChartRaw, setBookingsChartRaw] = useState<{
+    pending: number;
+    confirmed: number;
+    active: number;
+    completed: number;
+    cancelled: number;
+  } | null>(null);
   const [topVehicles, setTopVehicles] = useState<SupplierTopVehicle[] | null>(null);
   const [vehicleStatusChartData, setVehicleStatusChartData] = useState<
     { name: string; value: number; color: string }[] | null
@@ -141,7 +223,7 @@ export default function SupplierDashboardClient() {
       const accessToken = session.accessToken;
       if (!accessToken) {
         setStatsLoading(false);
-        setStatsError("You must be signed in to view dashboard stats.");
+        setStatsError(t("errors.notSignedIn"));
         return;
       }
 
@@ -160,15 +242,7 @@ export default function SupplierDashboardClient() {
         setStats(statsData);
         setEarningsChartData(earningsData);
         setTopVehicles(topVehiclesData);
-
-        // Map backend DTO to chart format
-        setBookingsChartData([
-          { status: "Pending", count: bookingsData.pending },
-          { status: "Confirmed", count: bookingsData.confirmed },
-          { status: "Active", count: bookingsData.active },
-          { status: "Completed", count: bookingsData.completed },
-          { status: "Cancelled", count: bookingsData.cancelled },
-        ]);
+        setBookingsChartRaw(bookingsData);
 
         const statusColors: Record<string, string> = {
           Available: theme.palette.success.main,
@@ -190,7 +264,7 @@ export default function SupplierDashboardClient() {
       } catch (err: unknown) {
         if (cancelled) return;
         logger.error("Failed to load supplier dashboard stats", err);
-        setStatsError("Could not load your dashboard stats. Please try again shortly.");
+        setStatsError(t("errors.loadFailed"));
       } finally {
         if (!cancelled) {
           setStatsLoading(false);
@@ -203,53 +277,60 @@ export default function SupplierDashboardClient() {
     return () => {
       cancelled = true;
     };
-  }, [session?.accessToken, sessionStatus, theme]);
+  }, [session?.accessToken, sessionStatus, t, theme]);
 
-  // Defensive coercion — backend can in theory send null/undefined for any
-  // field; we never want the cards to render `NaN` or crash on `.toLocaleString`.
+  const bookingsChartData = useMemo(() => {
+    if (!bookingsChartRaw) return null;
+    return [
+      { status: t("charts.bookingStatus.pending"), count: bookingsChartRaw.pending },
+      { status: t("charts.bookingStatus.confirmed"), count: bookingsChartRaw.confirmed },
+      { status: t("charts.bookingStatus.active"), count: bookingsChartRaw.active },
+      { status: t("charts.bookingStatus.completed"), count: bookingsChartRaw.completed },
+      { status: t("charts.bookingStatus.cancelled"), count: bookingsChartRaw.cancelled },
+    ];
+  }, [bookingsChartRaw, t]);
+
   const safeNum = (v: unknown): number => (typeof v === "number" && Number.isFinite(v) ? v : 0);
 
   const summaryData = useMemo<StatItem[]>(
     () => [
       {
-        label: "Total Vehicles",
+        label: t("stats.totalVehicles"),
         value: stats ? formatCount(safeNum(stats.totalVehicles)) : "—",
         icon: <DirectionsCarIcon fontSize="medium" />,
         color: "primary",
       },
       {
-        label: "Pending Vehicles",
+        label: t("stats.pendingVehicles"),
         value: stats ? formatCount(safeNum(stats.pendingVehicles)) : "—",
         icon: <HourglassTopIcon fontSize="medium" />,
         color: "warning",
       },
       {
-        label: "Active Bookings",
+        label: t("stats.activeBookings"),
         value: stats ? formatCount(safeNum(stats.activeBookings)) : "—",
         icon: <EventAvailableIcon fontSize="medium" />,
         color: "info",
       },
       {
-        label: "Total Earnings",
+        label: t("stats.totalEarnings"),
         value: stats ? formatCurrency(safeNum(stats.totalEarnings)) : "—",
         icon: <AttachMoneyIcon fontSize="medium" />,
         color: "success",
       },
     ],
-    [stats]
+    [stats, t]
   );
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: "background.default", fontFamily: "inherit" }}>
-      {/* Greeting */}
       <Box sx={{ mb: 3 }}>
         <Typography variant="body1" color="text.secondary">
-          Welcome back{session?.user.firstName ? `, ${session.user.firstName}` : ""}. Here&apos;s a snapshot of your
-          fleet&apos;s performance.
+          {t("greeting.welcomeBack")}
+          {session?.user.firstName ? `, ${session.user.firstName}` : ""}. {t("greeting.fleetPerformance")}
         </Typography>
       </Box>
 
-      {/* ── Inline stats error banner ───────────────────────────────────── */}
       {statsError && (
         <Alert severity="warning" variant="outlined" sx={{ mb: 2.5, borderRadius: 2 }}>
           {statsError}
@@ -257,12 +338,10 @@ export default function SupplierDashboardClient() {
       )}
 
       <motion.div variants={containerVariants} initial="hidden" animate="visible">
-        {/* ── Stats cards (live data) ───────────────────────────────────── */}
         <motion.div variants={itemVariants}>
           <VehicleStats items={summaryData} loading={statsLoading} sx={{ mb: 3 }} />
         </motion.div>
 
-        {/* ── Analytics charts row ──────────────────────────────────────── */}
         <Grid container spacing={3} sx={{ mb: 3 }}>
           <Grid size={{ xs: 12, lg: 7 }}>
             <motion.div variants={itemVariants} style={{ height: "100%", width: "100%" }}>
@@ -280,7 +359,7 @@ export default function SupplierDashboardClient() {
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2.5, gap: 1 }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
                       <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                        Earnings Overview
+                        {t("charts.earningsOverview")}
                       </Typography>
                     </Box>
                     <IconButton size="small">
@@ -311,7 +390,10 @@ export default function SupplierDashboardClient() {
                             tickFormatter={(value: number) => `$${value.toLocaleString()}`}
                           />
                           <Tooltip
-                            formatter={(value: unknown) => [`$${(value as number).toLocaleString()}`, "Earnings"]}
+                            formatter={(value: unknown) => [
+                              `$${(value as number).toLocaleString()}`,
+                              t("charts.earnings"),
+                            ]}
                             contentStyle={{
                               borderRadius: 8,
                               border: `1px solid ${theme.palette.divider}`,
@@ -351,7 +433,7 @@ export default function SupplierDashboardClient() {
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2.5, gap: 1 }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
                       <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                        Bookings by Status
+                        {t("charts.bookingsByStatus")}
                       </Typography>
                     </Box>
                     <IconButton size="small">
@@ -400,7 +482,6 @@ export default function SupplierDashboardClient() {
           </Grid>
         </Grid>
 
-        {/* ── Top Vehicles & Vehicle Status row ─────────────────────── */}
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, lg: 7 }}>
             <motion.div variants={itemVariants} style={{ height: "100%" }}>
@@ -418,7 +499,7 @@ export default function SupplierDashboardClient() {
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2.5, gap: 1 }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
                       <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                        Top Performing Vehicles
+                        {t("topVehicles.heading")}
                       </Typography>
                     </Box>
                     <IconButton size="small">
@@ -444,7 +525,7 @@ export default function SupplierDashboardClient() {
                             borderRadius: 2,
                             overflow: "hidden",
                             flexShrink: 0,
-                            bgcolor: t => alpha(t.palette.primary.main, 0.08),
+                            bgcolor: th => alpha(th.palette.primary.main, 0.08),
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -467,14 +548,14 @@ export default function SupplierDashboardClient() {
                             {vehicle.make} {vehicle.model}
                           </Typography>
                           <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-                            {formatCount(vehicle.completedBookingsCount)} completed bookings
+                            {formatCount(vehicle.completedBookingsCount)} {t("topVehicles.completedBookings")}
                           </Typography>
                         </Box>
                       </Box>
                     ))}
                     {topVehicles?.length === 0 && (
                       <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: "center" }}>
-                        No completed bookings yet.
+                        {t("topVehicles.noCompletedBookings")}
                       </Typography>
                     )}
                   </Stack>
@@ -499,7 +580,7 @@ export default function SupplierDashboardClient() {
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2.5, gap: 1 }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
                       <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                        Vehicle Status
+                        {t("vehicleStatus.heading")}
                       </Typography>
                     </Box>
                   </Box>
@@ -553,6 +634,159 @@ export default function SupplierDashboardClient() {
                         ))}
                     </Box>
                   )}
+                </CardContent>
+              </Card>
+            </motion.div>
+          </Grid>
+        </Grid>
+
+        <Grid container spacing={3} sx={{ mt: 0 }}>
+          <Grid size={{ xs: 12, lg: 7 }}>
+            <motion.div variants={itemVariants} style={{ height: "100%" }}>
+              <Card
+                elevation={0}
+                sx={theme => ({
+                  borderRadius: 2,
+                  border: "1px solid",
+                  borderColor: theme.palette.border.main,
+                  height: "100%",
+                  boxShadow: theme.palette.shadow.card,
+                })}
+              >
+                <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2.5, gap: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+                      <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                        {t("recentActivity")}
+                      </Typography>
+                      <DemoDataBadge />
+                    </Box>
+                    <IconButton size="small">
+                      <MoreVertIcon />
+                    </IconButton>
+                  </Box>
+
+                  <Stack divider={<Divider flexItem />} spacing={0}>
+                    {DEMO_ACTIVITY_ITEMS.map(item => {
+                      const meta = ACTIVITY_META[item.type];
+                      return (
+                        <Box
+                          key={item.id}
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 2,
+                            py: 1.5,
+                          }}
+                        >
+                          <Avatar
+                            sx={{
+                              width: 40,
+                              height: 40,
+                              bgcolor: alpha(theme.palette[meta.color].main, 0.12),
+                              color: `${meta.color}.main`,
+                            }}
+                          >
+                            {meta.icon}
+                          </Avatar>
+                          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>
+                              {t(`demoActivity.${item.messageKey}`)}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                              {t(`demoActivityTime.${item.timeKey}`)}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      );
+                    })}
+                  </Stack>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </Grid>
+
+          <Grid size={{ xs: 12, lg: 5 }}>
+            <motion.div variants={itemVariants} style={{ height: "100%" }}>
+              <Card
+                elevation={0}
+                sx={theme => ({
+                  borderRadius: 2,
+                  border: "1px solid",
+                  borderColor: theme.palette.border.main,
+                  height: "100%",
+                  boxShadow: theme.palette.shadow.card,
+                })}
+              >
+                <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2.5, gap: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+                      <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                        {t("pendingActions")}
+                      </Typography>
+                      <DemoDataBadge />
+                    </Box>
+                    <Chip
+                      label={DEMO_PENDING_ACTION_ITEMS.length.toString()}
+                      size="small"
+                      color="warning"
+                      sx={{ fontWeight: 700, borderRadius: 2 }}
+                    />
+                  </Box>
+
+                  <Stack spacing={1.5}>
+                    {DEMO_PENDING_ACTION_ITEMS.map(action => {
+                      const meta = ACTION_META[action.severity];
+                      return (
+                        <Box
+                          key={action.id}
+                          sx={{
+                            display: "flex",
+                            alignItems: "flex-start",
+                            gap: 1.5,
+                            p: 1.75,
+                            borderRadius: 2,
+                            border: "1px solid",
+                            borderColor: alpha(theme.palette[meta.color].main, 0.25),
+                            bgcolor: alpha(theme.palette[meta.color].main, 0.05),
+                          }}
+                        >
+                          <Avatar
+                            sx={{
+                              width: 36,
+                              height: 36,
+                              bgcolor: alpha(theme.palette[meta.color].main, 0.18),
+                              color: `${meta.color}.main`,
+                            }}
+                          >
+                            {meta.icon}
+                          </Avatar>
+                          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary" }}>
+                              {t(`demoPendingActions.${action.titleKey}`)}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.25 }}>
+                              {t(`demoPendingActions.${action.descriptionKey}`)}
+                            </Typography>
+                          </Box>
+                          <Button
+                            size="small"
+                            color={meta.color}
+                            endIcon={<ChevronRightIcon />}
+                            disabled
+                            sx={{
+                              flexShrink: 0,
+                              fontWeight: 700,
+                              textTransform: "none",
+                              borderRadius: 2,
+                            }}
+                          >
+                            {t(`demoPendingActions.${action.actionLabelKey}`)}
+                          </Button>
+                        </Box>
+                      );
+                    })}
+                  </Stack>
                 </CardContent>
               </Card>
             </motion.div>

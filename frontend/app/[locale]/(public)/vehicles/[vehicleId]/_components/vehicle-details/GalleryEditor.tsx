@@ -10,7 +10,7 @@ import StarOutlinedRoundedIcon from "@mui/icons-material/StarOutlineRounded";
 import { useFormContext, useFieldArray } from "react-hook-form";
 import { toImageUrl } from "@/utils/image-url";
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 interface ImageFormItem {
   url: string;
@@ -22,7 +22,27 @@ interface FormValues {
   images: ImageFormItem[];
 }
 
-export default function GalleryEditor() {
+export interface GalleryEditorLabels {
+  readonly alt: string;
+  readonly noImageSelected: string;
+  readonly featuredImage: string;
+  readonly setAsFeatured: string;
+  readonly noPreview: string;
+  readonly add: string;
+  readonly fileSizeError: string;
+}
+
+const DEFAULT_LABELS: GalleryEditorLabels = {
+  alt: "Vehicle",
+  noImageSelected: "No image selected",
+  featuredImage: "Featured Image",
+  setAsFeatured: "Set as Featured",
+  noPreview: "No Preview",
+  add: "Add",
+  fileSizeError: "File size exceeds 10MB limit.",
+};
+
+export default function GalleryEditor({ labels = DEFAULT_LABELS }: { readonly labels?: GalleryEditorLabels }) {
   const { control, watch, setValue } = useFormContext<FormValues>();
   const { append, remove } = useFieldArray({
     control,
@@ -30,11 +50,11 @@ export default function GalleryEditor() {
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const images = watch("images") ?? [];
+  const images = watch("images");
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [fileError, setFileError] = useState<string | null>(null);
 
-  const activeImage: ImageFormItem | undefined = images[activeIndex];
+  const activeImage = images[activeIndex];
 
   const handleSetPrimary = (index: number) => {
     const updatedImages = images.map((img: ImageFormItem, i: number) => ({
@@ -45,7 +65,6 @@ export default function GalleryEditor() {
   };
 
   const handleRemove = (index: number) => {
-    // If it's a blob URL, we should revoke it to avoid memory leaks
     if (images[index]?.url.startsWith("blob:")) {
       URL.revokeObjectURL(images[index].url);
     }
@@ -65,7 +84,7 @@ export default function GalleryEditor() {
     if (!file) return;
 
     if (file.size > MAX_FILE_SIZE) {
-      setFileError("File size exceeds 10MB limit.");
+      setFileError(labels.fileSizeError);
       return;
     }
 
@@ -80,7 +99,6 @@ export default function GalleryEditor() {
 
     setActiveIndex(images.length);
 
-    // Reset input so the same file can be selected again
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -100,10 +118,10 @@ export default function GalleryEditor() {
           bgcolor: "action.hover",
         }}
       >
-        {activeImage?.url && (activeImage.url.startsWith("blob:") || toImageUrl(activeImage.url)) ? (
+        {activeImage.url && (activeImage.url.startsWith("blob:") || toImageUrl(activeImage.url)) ? (
           <Image
             src={activeImage.url.startsWith("blob:") ? activeImage.url : (toImageUrl(activeImage.url) as string)}
-            alt="Vehicle"
+            alt={labels.alt}
             fill
             sizes="(max-width: 1200px) 100vw, 60vw"
             priority
@@ -111,27 +129,27 @@ export default function GalleryEditor() {
           />
         ) : (
           <Box sx={{ display: "grid", placeItems: "center", height: "100%" }}>
-            <Typography color="text.secondary">No image selected</Typography>
+            <Typography color="text.secondary">{labels.noImageSelected}</Typography>
           </Box>
         )}
 
         {images[activeIndex] ? (
           <Box sx={{ position: "absolute", bottom: 16, right: 16, display: "flex", gap: 1 }}>
-            <Tooltip title={images[activeIndex]?.isPrimary ? "Featured Image" : "Set as Featured"}>
+            <Tooltip title={images[activeIndex].isPrimary ? labels.featuredImage : labels.setAsFeatured}>
               <IconButton
                 onClick={() => {
                   handleSetPrimary(activeIndex);
                 }}
                 sx={{
-                  bgcolor: images[activeIndex]?.isPrimary ? "primary.main" : "background.paper",
-                  color: images[activeIndex]?.isPrimary ? "primary.contrastText" : "text.primary",
+                  bgcolor: images[activeIndex].isPrimary ? "primary.main" : "background.paper",
+                  color: images[activeIndex].isPrimary ? "primary.contrastText" : "text.primary",
                   "&:hover": {
-                    bgcolor: images[activeIndex]?.isPrimary ? "primary.dark" : "action.hover",
+                    bgcolor: images[activeIndex].isPrimary ? "primary.dark" : "action.hover",
                   },
                   boxShadow: 2,
                 }}
               >
-                {images[activeIndex]?.isPrimary ? <StarRoundedIcon /> : <StarOutlinedRoundedIcon />}
+                {images[activeIndex].isPrimary ? <StarRoundedIcon /> : <StarOutlinedRoundedIcon />}
               </IconButton>
             </Tooltip>
             <IconButton
@@ -169,9 +187,9 @@ export default function GalleryEditor() {
               }}
             >
               {url ? (
-                <Image src={url} alt="Vehicle" fill sizes="120px" style={{ objectFit: "cover" }} />
+                <Image src={url} alt={labels.alt} fill sizes="120px" style={{ objectFit: "cover" }} />
               ) : (
-                <Typography variant="caption">No Preview</Typography>
+                <Typography variant="caption">{labels.noPreview}</Typography>
               )}
               {img.isPrimary ? (
                 <Box
@@ -198,7 +216,7 @@ export default function GalleryEditor() {
           onClick={handleAddClick}
           sx={{ minWidth: 120, height: 76, borderRadius: 1.5, borderStyle: "dashed" }}
         >
-          Add
+          {labels.add}
         </Button>
       </Box>
 

@@ -6,6 +6,7 @@ export interface ChapterConfig {
   systemPrompt: string;
   userPrompt: string;
   includePatterns: string[];
+  includeDiagrams?: boolean;
 }
 
 import { chapter1 } from "./chapters/chapter1";
