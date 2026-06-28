@@ -29,14 +29,6 @@ export interface TopVehicle {
   trendPercentage?: number;
 }
 
-export interface AlertActivity {
-  id: string;
-  title: string;
-  description: string;
-  timestamp: string;
-  type: "info" | "warning" | "error" | "success";
-}
-
 export const mockRevenueData: RevenueDataPoint[] = [
   { date: "May 1", revenue: 45000, bookings: 58000, refunds: 5000 },
   { date: "May 6", revenue: 52000, bookings: 72000, refunds: 8000 },
@@ -76,10 +68,11 @@ export const mockCityVehicleData: Record<string, VehicleStatusData[]> = {
 };
 
 export const mockQuickActions: QuickAction[] = [
-  { label: "Assign Inspector", icon: "AssignmentInd", path: "/admin/bookings", color: "primary" },
-  { label: "Review Verifications", icon: "Shield", path: "/admin/verifications", color: "warning" },
-  { label: "Review Inspections", icon: "FactCheck", path: "/admin/inspections", color: "info" },
+  { label: "Create Booking", icon: "AddBox", path: "/admin/bookings/create", color: "primary" },
+  { label: "Add User", icon: "PersonAdd", path: "/admin/users/create", color: "info" },
   { label: "Add Vehicle", icon: "Car", path: "/admin/vehicles/create", color: "success" },
+  { label: "Review Verifications", icon: "Shield", path: "/admin/verifications", color: "warning" },
+  { label: "Assign Inspector", icon: "AssignmentInd", path: "/admin/bookings", color: "secondary" },
 ];
 
 export const mockTopVehicles: TopVehicle[] = [
@@ -115,46 +108,12 @@ export const mockTopVehicles: TopVehicle[] = [
   },
 ];
 
-export interface DashboardAlert {
-  id: string;
-  message: string;
-  timestamp: string;
-  type: "error" | "warning" | "info" | "success";
-}
-
 export interface DashboardActivity {
   id: string;
   description: string;
   timeAgo: string;
   type: "booking" | "registration" | "inspection" | "refund";
 }
-
-export const mockAlerts: DashboardAlert[] = [
-  {
-    id: "al1",
-    message: "3 driver licenses will expire in 7 days",
-    timestamp: "May 25, 2024 • 10:30 AM",
-    type: "warning",
-  },
-  {
-    id: "al2",
-    message: "Database backup completed successfully",
-    timestamp: "May 24, 2024 • 03:00 AM",
-    type: "success",
-  },
-  {
-    id: "al3",
-    message: "Payment gateway timeout for booking #BK-8A2F",
-    timestamp: "May 24, 2024 • 02:15 PM",
-    type: "error",
-  },
-  {
-    id: "al4",
-    message: "New policy update pending approval",
-    timestamp: "May 23, 2024 • 09:00 AM",
-    type: "info",
-  },
-];
 
 export const mockActivities: DashboardActivity[] = [
   {

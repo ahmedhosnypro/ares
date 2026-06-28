@@ -6,15 +6,8 @@ import AdminDashboardView from "./_components/AdminDashboardView";
 import { apiFetchJson } from "@/utils/api-client";
 import { DashboardSummary, RecentSummaryItem } from "./types";
 import { SummaryItem } from "./_components/StatCardGrid";
-import { BookingListItem } from "./_components/RecentBookingsTable";
-import {
-  DashboardAlert,
-  mockAlerts,
-  mockActivities,
-  QuickAction,
-  mockQuickActions,
-  TopVehicle,
-} from "./_components/mockData";
+import { BookingListItem } from "./_components/RecentBookings";
+import { mockActivities, QuickAction, mockQuickActions, TopVehicle } from "./_components/mockData";
 import { logger } from "@/utils/logger";
 import { redirect } from "@/shared/i18n/routing";
 
@@ -29,22 +22,22 @@ const safeNum = (v: unknown): number => (typeof v === "number" && Number.isFinit
 
 const MOCK_RECENT_BOOKINGS: readonly BookingListItem[] = [
   {
-    id: "BK-8A2F",
-    customer: "John Doe",
-    customerAvatar: "https://ui-avatars.com/api/?name=John+Doe&background=random",
-    car: "BMW X7",
-    date: new Date().toLocaleDateString(),
-    status: "Completed",
-    amount: "$350",
+    bookingId: "BKG-001",
+    bookingNumber: "BKG-001",
+    customerName: "Ahmed Ali",
+    vehicleName: "Mercedes S-Class",
+    vehicleImage: null,
+    bookingDate: new Date().toISOString(),
+    status: "Active",
   },
   {
-    id: "BK-9B3C",
-    customer: "Sarah Smith",
-    customerAvatar: "https://ui-avatars.com/api/?name=Sarah+Smith&background=random",
-    car: "Mercedes S-Class",
-    date: new Date().toLocaleDateString(),
-    status: "Active",
-    amount: "$420",
+    bookingId: "BKG-002",
+    bookingNumber: "BKG-002",
+    customerName: "Sara Mahmoud",
+    vehicleName: "BMW X5",
+    vehicleImage: null,
+    bookingDate: new Date().toISOString(),
+    status: "Completed",
   },
 ];
 
@@ -61,6 +54,7 @@ async function getSummary(
         isUp: true,
         iconName: "PeopleAlt",
         color: "primary",
+        href: "/admin/users",
       },
       {
         title: "Active Bookings",
@@ -69,6 +63,7 @@ async function getSummary(
         isUp: true,
         iconName: "EventAvailable",
         color: "primary",
+        href: "/admin/bookings",
       },
       {
         title: "Pending Verifications",
@@ -77,6 +72,7 @@ async function getSummary(
         isUp: false,
         iconName: "GppMaybe",
         color: "warning",
+        href: "/admin/verifications",
       },
       {
         title: "Available Vehicles",
@@ -85,6 +81,7 @@ async function getSummary(
         isUp: true,
         iconName: "DirectionsCar",
         color: "info",
+        href: "/admin/vehicles",
       },
       {
         title: "Pending Inspections",
@@ -93,103 +90,96 @@ async function getSummary(
         isUp: false,
         iconName: "BuildCircle",
         color: "error",
-      },
-      {
-        title: "Total Categories",
-        value: safeNum(data.totalCategories).toLocaleString(),
-        change: "",
-        isUp: true,
-        iconName: "Category",
-        color: "secondary",
-      },
-      {
-        title: "Active Promotions",
-        value: safeNum(data.activePromotions).toLocaleString(),
-        change: "",
-        isUp: true,
-        iconName: "LocalOffer",
-        color: "success",
+        href: "/admin/vehicle-inspections",
       },
     ];
     return { summary, rawData: data };
   } catch (error) {
     logger.warn(`Failed to fetch real summary data: ${error instanceof Error ? error.message : String(error)}`);
     const defaultSummary: readonly SummaryItem[] = [
-      { title: "Total Users", value: "0", change: "0%", isUp: true, iconName: "PeopleAlt", color: "primary" },
-      { title: "Active Bookings", value: "0", change: "0%", isUp: true, iconName: "EventAvailable", color: "primary" },
-      { title: "Pending Verifications", value: "0", change: "0%", isUp: false, iconName: "GppMaybe", color: "warning" },
-      { title: "Available Vehicles", value: "0", change: "0%", isUp: true, iconName: "DirectionsCar", color: "info" },
-      { title: "Pending Inspections", value: "0", change: "0%", isUp: false, iconName: "BuildCircle", color: "error" },
-      { title: "Total Categories", value: "0", change: "", isUp: true, iconName: "Category", color: "secondary" },
-      { title: "Active Promotions", value: "0", change: "", isUp: true, iconName: "LocalOffer", color: "success" },
+      {
+        title: "Total Users",
+        value: "0",
+        change: "0%",
+        isUp: true,
+        iconName: "PeopleAlt",
+        color: "primary",
+        href: "/admin/users",
+      },
+      {
+        title: "Active Bookings",
+        value: "0",
+        change: "0%",
+        isUp: true,
+        iconName: "EventAvailable",
+        color: "primary",
+        href: "/admin/bookings",
+      },
+      {
+        title: "Pending Verifications",
+        value: "0",
+        change: "0%",
+        isUp: false,
+        iconName: "GppMaybe",
+        color: "warning",
+        href: "/admin/verifications",
+      },
+      {
+        title: "Available Vehicles",
+        value: "0",
+        change: "0%",
+        isUp: true,
+        iconName: "DirectionsCar",
+        color: "info",
+        href: "/admin/vehicles",
+      },
+      {
+        title: "Pending Inspections",
+        value: "0",
+        change: "0%",
+        isUp: false,
+        iconName: "BuildCircle",
+        color: "error",
+        href: "/admin/vehicle-inspections",
+      },
     ];
     return { summary: defaultSummary, rawData: null };
   }
 }
 
-interface BookingFromApi {
-  id?: string | number;
-  _id?: string | number;
-  driver?: { fullName?: string };
-  car?: { name?: string };
-  from?: string;
-  status?: string;
-  price?: number;
+interface RecentBookingFromApi {
+  bookingId: string;
+  bookingNumber: string;
+  customerName: string;
+  vehicleName: string;
+  vehicleImage?: string | null;
+  bookingDate: string;
+  status: string;
 }
 
-interface BookingApiResponse {
-  resultData?: BookingFromApi[];
-  data?: BookingFromApi[];
-  items?: BookingFromApi[];
-}
-
-async function getRecentBookings(
-  accessToken: string,
-  userId: string,
-  roles: readonly string[]
-): Promise<readonly BookingListItem[]> {
+async function getRecentBookings(accessToken: string): Promise<readonly BookingListItem[]> {
   try {
-    const bookingsData = await apiFetchJson<BookingApiResponse>("api/admin/bookings/search/1/5", {
-      method: "POST",
+    const bookingsData = await apiFetchJson<RecentBookingFromApi[]>("api/dashboard/recent-bookings", {
+      method: "GET",
       accessToken,
-      body: JSON.stringify({
-        userId: null,
-        suppliers: roles.includes("Supplier") ? [userId] : null,
-        statuses: null,
-        carId: null,
-        filter: { from: null, to: null, keyword: null, pickupLocation: null, dropOffLocation: null },
-        page: 1,
-        size: 5,
-        language: "en",
-      }),
     });
 
-    const bookingsList = bookingsData.resultData ?? bookingsData.data ?? bookingsData.items;
-    if (!bookingsList || bookingsList.length === 0) {
+    if (bookingsData.length === 0) {
       return MOCK_RECENT_BOOKINGS;
     }
 
-    return bookingsList.map(b => ({
-      id: String(b.id ?? b._id ?? ""),
-      customer: b.driver?.fullName ?? "Guest",
-      customerAvatar: undefined, // Let client-side Avatar handle themed fallback
-      car: b.car?.name ?? "Vehicle",
-      date: b.from ? new Date(b.from).toLocaleDateString() : "",
-      status: b.status ?? "Pending",
-      amount: `$${String(b.price ?? 0)}`,
+    return bookingsData.map(b => ({
+      bookingId: b.bookingId,
+      bookingNumber: b.bookingNumber,
+      customerName: b.customerName,
+      vehicleName: b.vehicleName,
+      vehicleImage: b.vehicleImage,
+      bookingDate: b.bookingDate,
+      status: b.status,
     }));
   } catch (error) {
     logger.warn(`Failed to fetch recent bookings: ${error instanceof Error ? error.message : String(error)}`);
     return MOCK_RECENT_BOOKINGS;
-  }
-}
-
-async function getAlerts(accessToken: string): Promise<readonly DashboardAlert[]> {
-  try {
-    const data = await apiFetchJson<DashboardAlert[]>("api/dashboard/alerts", { accessToken });
-    return data.length > 0 ? data : mockAlerts;
-  } catch {
-    return mockAlerts;
   }
 }
 
@@ -233,9 +223,8 @@ export default async function AdminDashboardPage() {
 
   const accessToken = session.accessToken;
   const { summary, rawData: rawSummaryData } = await getSummary(accessToken);
-  const [recentBookings, alerts, activities, quickActions, topVehicles] = await Promise.all([
-    getRecentBookings(accessToken, session.user.id, session.user.roles),
-    getAlerts(accessToken),
+  const [recentBookings, activities, quickActions, topVehicles] = await Promise.all([
+    getRecentBookings(accessToken),
     getActivities(accessToken),
     getQuickActions(accessToken),
     getTopVehicles(accessToken),
@@ -245,7 +234,6 @@ export default async function AdminDashboardPage() {
     <AdminDashboardView
       summary={summary}
       recentBookings={recentBookings}
-      alerts={alerts}
       activities={activities}
       quickActions={quickActions}
       topVehicles={topVehicles}

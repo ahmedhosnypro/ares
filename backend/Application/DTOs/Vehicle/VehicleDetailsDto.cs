@@ -26,4 +26,6 @@ public record VehicleDetailsDto(
     List<VehicleFeatureDto> Features,
     SupplierDto Supplier,
     double AverageRating,
-    int ReviewCount);
+    int ReviewCount,
+    Guid? CategoryId = null,
+    string? CategoryName = null);

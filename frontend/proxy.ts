@@ -54,7 +54,7 @@ export async function proxy(request: NextRequest) {
   }
 
   if (cleanPath.startsWith("/driver")) {
-    if (!token || !(token.roles as string[])?.includes("Driver")) {
+    if (!token || !token.roles.includes("Driver")) {
       const url = request.nextUrl.clone();
       url.pathname = "/sign-in";
       return NextResponse.redirect(url);
@@ -62,14 +62,13 @@ export async function proxy(request: NextRequest) {
   }
 
   if (cleanPath.startsWith("/inspector")) {
-    if (!token || !(token.roles as string[])?.includes("Inspector")) {
+    if (!token || !token.roles.includes("Inspector")) {
       const url = request.nextUrl.clone();
       url.pathname = "/sign-in";
       return NextResponse.redirect(url);
     }
   }
 
-  // If already has locale prefix, serve as-is
   // If already has locale prefix, redirect to clean path and set NEXT_LOCALE cookie
   if (hasLocalePrefix) {
     const locale = pathname.split("/")[1];

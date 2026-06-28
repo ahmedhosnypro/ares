@@ -43,6 +43,7 @@ export interface DriverKpiMetrics {
   readonly tripsCompleted: number;
   readonly activeUpcomingCount: number;
   readonly rating: string;
+  readonly availableBalance?: string;
 }
 
 export interface DriverDashboardSummaryDto {

@@ -7,6 +7,7 @@ const adminSidebar: AdminSidebarLabels = {
   categories: "الفئات",
   users: "المستخدمون",
   verifications: "التوثيقات",
+  driverEarnings: "أرباح السائقين",
   locations: "المواقع",
   countries: "الدول",
   notifications: "الإشعارات",

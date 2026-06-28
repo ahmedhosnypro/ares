@@ -102,6 +102,7 @@ public class SupplierEarningsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<IReadOnlyList<SupplierTopVehicleDto>>> GetTopVehicles(
+        [FromQuery] string sortBy = "earnings",
         CancellationToken cancellationToken = default)
     {
         if (!TryGetSupplierId(out var supplierId, out var unauthorized))
@@ -109,7 +110,7 @@ public class SupplierEarningsController : ControllerBase
             return unauthorized!;
         }
 
-        var top = await _earningsService.GetTopVehiclesAsync(supplierId, cancellationToken);
+        var top = await _earningsService.GetTopVehiclesAsync(supplierId, sortBy, cancellationToken);
 
         _logger.LogInformation(
             "Supplier {SupplierId} fetched top vehicles ({Count} returned)",

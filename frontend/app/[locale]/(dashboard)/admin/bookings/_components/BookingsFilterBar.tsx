@@ -38,7 +38,7 @@ export default function BookingsFilterBar({
   t,
   tCommon,
 }: BookingsFilterBarProps) {
-  const handleStatusChange = (e: SelectChangeEvent<string>) => {
+  const handleStatusChange = (e: SelectChangeEvent) => {
     onStatusFilterChange(e.target.value);
   };
 
@@ -88,7 +88,9 @@ export default function BookingsFilterBar({
         size="small"
         slotProps={{ inputLabel: { shrink: true } }}
         value={fromDate}
-        onChange={e => onFromDateChange(e.target.value)}
+        onChange={e => {
+          onFromDateChange(e.target.value);
+        }}
         sx={{ minWidth: 150, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
       />
       <TextField
@@ -97,7 +99,9 @@ export default function BookingsFilterBar({
         size="small"
         slotProps={{ inputLabel: { shrink: true } }}
         value={toDate}
-        onChange={e => onToDateChange(e.target.value)}
+        onChange={e => {
+          onToDateChange(e.target.value);
+        }}
         sx={{ minWidth: 150, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
       />
     </Stack>

@@ -1,130 +1,131 @@
 "use client";
 
+import { Link } from "@/shared/i18n/routing";
+import { toImageUrl } from "@/utils/image-url";
 import {
   Card,
   CardContent,
   Typography,
   Box,
-  IconButton,
-  Table,
-  TableBody,
-  TableCell,
+  Button,
   TableContainer,
+  Table,
   TableHead,
   TableRow,
+  TableCell,
+  TableBody,
   Chip,
+  Avatar,
   alpha,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
+import LaunchOutlinedIcon from "@mui/icons-material/LaunchOutlined";
 
-const mockRecentBookings = [
-  {
-    id: "BKG-001",
-    customer: "Ahmed Ali",
-    car: "Mercedes S-Class",
-    date: "Oct 24, 2026",
-    status: "Active",
-    amount: "$450",
-  },
-  { id: "BKG-002", customer: "Sara Mahmoud", car: "BMW X5", date: "Oct 23, 2026", status: "Completed", amount: "$320" },
-  {
-    id: "BKG-003",
-    customer: "Omar Hassan",
-    car: "Audi A6",
-    date: "Oct 22, 2026",
-    status: "PaymentPending",
-    amount: "$280",
-  },
-  {
-    id: "BKG-004",
-    customer: "Nour Youssef",
-    car: "Range Rover",
-    date: "Oct 21, 2026",
-    status: "Cancelled",
-    amount: "$500",
-  },
-  {
-    id: "BKG-005",
-    customer: "Khaled Saed",
-    car: "Porsche 911",
-    date: "Oct 20, 2026",
-    status: "Completed",
-    amount: "$850",
-  },
-];
+export interface BookingListItem {
+  readonly bookingId: string;
+  readonly bookingNumber: string;
+  readonly customerName: string;
+  readonly vehicleName: string;
+  readonly vehicleImage?: string | null;
+  readonly bookingDate: string;
+  readonly status: string;
+}
 
-const getStatusColor = (status: string): "primary" | "success" | "warning" | "error" | "default" => {
-  switch (status) {
-    case "Active":
-      return "primary";
-    case "Completed":
-      return "success";
-    case "Pending":
-    case "PaymentPending":
-      return "warning";
-    case "Cancelled":
-      return "error";
-    default:
-      return "default";
-  }
-};
+interface RecentBookingsProps {
+  readonly bookings?: readonly BookingListItem[];
+}
 
-export default function RecentBookings() {
+export default function RecentBookings({ bookings = [] }: RecentBookingsProps) {
   return (
     <Card
       elevation={0}
-      sx={{
-        borderRadius: "16px",
-        bgcolor: "background.paper",
+      sx={theme => ({
+        borderRadius: 2,
         border: "1px solid",
-        borderColor: "divider",
-        boxShadow: theme => `0 4px 6px -1px ${alpha(theme.palette.common.black, 0.05)}`,
+        borderColor: theme.palette.border.main,
         height: "100%",
-      }}
+        boxShadow: theme.palette.shadow.card,
+        bgcolor: theme.palette.background.paper,
+      })}
     >
-      {" "}
       <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-          <Typography variant="h6" sx={{ fontWeight: "800" }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            justifyContent: "space-between",
+            alignItems: { xs: "flex-start", sm: "center" },
+            gap: { xs: 2, sm: 0 },
+            mb: 3,
+          }}
+        >
+          <Typography variant="h6" sx={{ fontWeight: "700" }}>
             Recent Bookings
           </Typography>
-          <IconButton size="small">
-            <MoreVertIcon />
-          </IconButton>
+          <Button
+            component={Link}
+            href="/admin/bookings"
+            variant="text"
+            size="small"
+            sx={{
+              fontWeight: 600,
+              textTransform: "none",
+              color: "primary.main",
+              alignSelf: { xs: "flex-end", sm: "auto" },
+            }}
+          >
+            View All
+          </Button>
         </Box>
         <TableContainer>
           <Table sx={{ minWidth: 600 }}>
             <TableHead>
               <TableRow>
                 <TableCell
-                  sx={{ color: "text.secondary", fontWeight: "700", borderBottom: "2px solid", borderColor: "divider" }}
+                  sx={{
+                    color: "text.secondary",
+                    fontWeight: "600",
+                    borderBottom: "2px solid",
+                    borderColor: "divider",
+                  }}
                 >
-                  Booking ID
-                </TableCell>
-                <TableCell
-                  sx={{ color: "text.secondary", fontWeight: "700", borderBottom: "2px solid", borderColor: "divider" }}
-                >
-                  Customer
-                </TableCell>
-                <TableCell
-                  sx={{ color: "text.secondary", fontWeight: "700", borderBottom: "2px solid", borderColor: "divider" }}
-                >
-                  Vehicle
-                </TableCell>
-                <TableCell
-                  sx={{ color: "text.secondary", fontWeight: "700", borderBottom: "2px solid", borderColor: "divider" }}
-                >
-                  Date
-                </TableCell>
-                <TableCell
-                  sx={{ color: "text.secondary", fontWeight: "700", borderBottom: "2px solid", borderColor: "divider" }}
-                >
-                  Amount
+                  Booking Number
                 </TableCell>
                 <TableCell
                   sx={{
                     color: "text.secondary",
-                    fontWeight: "700",
+                    fontWeight: "600",
+                    borderBottom: "2px solid",
+                    borderColor: "divider",
+                  }}
+                >
+                  Customer
+                </TableCell>
+                <TableCell
+                  sx={{
+                    color: "text.secondary",
+                    fontWeight: "600",
+                    borderBottom: "2px solid",
+                    borderColor: "divider",
+                  }}
+                >
+                  Vehicle
+                </TableCell>
+                <TableCell
+                  sx={{
+                    color: "text.secondary",
+                    fontWeight: "600",
+                    borderBottom: "2px solid",
+                    borderColor: "divider",
+                  }}
+                >
+                  Date
+                </TableCell>
+                <TableCell
+                  sx={{
+                    color: "text.secondary",
+                    fontWeight: "600",
                     borderBottom: "2px solid",
                     borderColor: "divider",
                     textAlign: "right",
@@ -132,24 +133,81 @@ export default function RecentBookings() {
                 >
                   Status
                 </TableCell>
+                <TableCell
+                  sx={{
+                    borderBottom: "2px solid",
+                    borderColor: "divider",
+                  }}
+                />
               </TableRow>
             </TableHead>
             <TableBody>
-              {mockRecentBookings.map(row => (
-                <TableRow key={row.id} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
-                  <TableCell sx={{ fontWeight: "700" }}>{row.id}</TableCell>
-                  <TableCell sx={{ fontWeight: "500" }}>{row.customer}</TableCell>
-                  <TableCell>{row.car}</TableCell>
-                  <TableCell>{row.date}</TableCell>
-                  <TableCell sx={{ fontWeight: "800" }}>{row.amount}</TableCell>
+              {bookings.map(row => (
+                <TableRow key={row.bookingId} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
+                  <TableCell sx={{ fontWeight: "600" }}>{row.bookingNumber}</TableCell>
+                  <TableCell sx={{ fontWeight: "500" }}>{row.customerName}</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                      <Avatar
+                        src={row.vehicleImage ? (toImageUrl(row.vehicleImage) as string) : undefined}
+                        alt={row.vehicleName}
+                        sx={theme => ({
+                          width: 32,
+                          height: 32,
+                          fontSize: "0.875rem",
+                          fontWeight: 700,
+                          bgcolor: alpha(theme.palette.primary.main, 0.1),
+                          color: theme.palette.primary.main,
+                        })}
+                      >
+                        {!row.vehicleImage && row.vehicleName.charAt(0).toUpperCase()}
+                      </Avatar>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {row.vehicleName}
+                      </Typography>
+                    </Box>
+                  </TableCell>
+                  <TableCell>{new Date(row.bookingDate).toLocaleDateString()}</TableCell>
                   <TableCell sx={{ textAlign: "right" }}>
                     <Chip
                       label={row.status}
-                      color={getStatusColor(row.status)}
                       size="small"
-                      variant="filled"
-                      sx={{ fontWeight: "700", borderRadius: 2 }}
+                      sx={theme => {
+                        const status = row.status.toLowerCase();
+                        const statusKey: "active" | "completed" | "pending" | "cancelled" | "confirmed" | "blocked" =
+                          status === "active"
+                            ? "active"
+                            : status === "completed"
+                              ? "completed"
+                              : status === "pending" || status === "paymentpending"
+                                ? "pending"
+                                : status === "confirmed"
+                                  ? "confirmed"
+                                  : "cancelled";
+
+                        const colorMain = theme.palette.status[statusKey].main;
+
+                        return {
+                          fontWeight: "700",
+                          borderRadius: 2,
+                          bgcolor: alpha(colorMain, 0.12),
+                          color: colorMain,
+                          "& .MuiChip-label": { px: 2 },
+                        };
+                      }}
                     />
+                  </TableCell>
+                  <TableCell sx={{ textAlign: "right" }}>
+                    <Tooltip title="View Details">
+                      <IconButton
+                        component={Link}
+                        href={`/admin/bookings/${row.bookingId}`}
+                        size="small"
+                        sx={{ color: "text.secondary" }}
+                      >
+                        <LaunchOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
                   </TableCell>
                 </TableRow>
               ))}

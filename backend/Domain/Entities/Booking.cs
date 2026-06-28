@@ -108,7 +108,10 @@ namespace Backend.Domain.Entities
         [Column(TypeName = "decimal(18,2)")]
         public decimal? SupplierAmount { get; set; }
 
-        [Timestamp]
-        public byte[]? RowVersion { get; set; }
+    [Timestamp]
+    public byte[]? RowVersion { get; set; }
+
+    // ── Driver Earnings ────────────────────────────────────────────
+    public DriverEarning? DriverEarning { get; set; }
     }
 }

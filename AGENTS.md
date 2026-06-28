@@ -1,4 +1,5 @@
 Frontend project's rules: Read frontend/AGENTS.md
+Docs generation pipeline rules: Read scripts/docs/AGENTS.md
 
 ## AI Agent Communication Rules
 

@@ -44,8 +44,6 @@ import {
   SearchRounded as SearchIcon,
   CheckCircleOutlineRounded as AvailableIcon,
   BuildOutlined as MaintenanceIcon,
-  TrendingUp as TrendingUpIcon,
-  TrendingDown as TrendingDownIcon,
 } from "@mui/icons-material";
 import { useRouter } from "@/shared/i18n/routing";
 import Image from "next/image";
@@ -54,6 +52,7 @@ import {
   useVehicles,
   useAdminVehicleStats,
   deleteCar,
+  VehicleStatus,
   type Vehicle,
   type AdminVehicleFilter,
   type VehicleStatusFilter,
@@ -64,8 +63,19 @@ import { getCategories, bulkAssignVehicles, type Category } from "@/api-clients/
 import VisibilityOutlinedIcon from "@mui/icons-material/LaunchOutlined";
 import { toImageUrl } from "@/utils/image-url";
 import { logger } from "@/utils/logger";
+// eslint-disable-next-line sonarjs/deprecation
+import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
+import { StatCard } from "@/app/[locale]/(dashboard)/_components/VehicleStats";
 
 // ── Types ──
+interface VehicleStatusChartDataItem {
+  readonly name: string;
+  readonly value: number;
+  readonly percentage: number;
+  readonly color: string;
+  readonly isEmpty: boolean;
+}
+
 interface FleetOverviewProps {
   /** Total vehicles in the fleet */
   readonly total: number;
@@ -83,75 +93,90 @@ interface FleetOverviewProps {
   };
 }
 
-// ── Donut chart drawn with SVG ──
-function DonutChart({
-  available,
-  booked,
-  maintenance,
-  total,
-}: Readonly<{
-  available: number;
-  booked: number;
-  maintenance: number;
-  total: number;
-}>): JSX.Element {
-  const theme = useTheme();
-
-  // Compute percentages
-  const safeTotal = total || 1;
-  const availPct = (available / safeTotal) * 100;
-  const bookedPct = (booked / safeTotal) * 100;
-  const maintenancePct = (maintenance / safeTotal) * 100;
-
-  // SVG donut via stroke-dasharray on a circle
-  const radius = 42;
-  const circumference = 2 * Math.PI * radius;
-
-  interface Segment {
-    pct: number;
-    color: string;
-    offset: number;
+// ── Helper for dynamic colors and labels ──
+const getStatusThemeColor = (status: VehicleStatus, theme: Theme) => {
+  switch (status) {
+    case VehicleStatus.Available:
+      return theme.palette.success.main;
+    case VehicleStatus.FullyBooked:
+      return theme.palette.primary.main;
+    case VehicleStatus.Maintenance:
+      return theme.palette.warning.main;
+    case VehicleStatus.Retired:
+      return theme.palette.text.disabled;
+    case VehicleStatus.ComingSoon:
+      return theme.palette.secondary.main;
+    case VehicleStatus.Unavailable:
+      return theme.palette.error.main;
+    default:
+      return theme.palette.grey[500];
   }
+};
 
-  const segments: Segment[] = useMemo(() => {
-    const segmentsData: { pct: number; color: string }[] = [
-      { pct: availPct, color: theme.palette.success.main },
-      { pct: bookedPct, color: theme.palette.primary.main },
-      { pct: maintenancePct, color: theme.palette.warning.main },
-    ];
-    let cumulative = 0;
-    return segmentsData.map(s => {
-      const offset = (cumulative / 100) * circumference;
-      cumulative += s.pct;
-      return { ...s, offset };
-    });
-  }, [availPct, bookedPct, maintenancePct, circumference, theme]);
+const getStatusLabel = (status: VehicleStatus) => {
+  switch (status) {
+    case VehicleStatus.FullyBooked:
+      return "Booked";
+    case VehicleStatus.ComingSoon:
+      return "Pending";
+    default:
+      return status;
+  }
+};
 
+// ── Recharts Donut Chart ──
+function VehicleStatusDonut({
+  data,
+  total,
+}: {
+  readonly data: readonly VehicleStatusChartDataItem[];
+  readonly total: number;
+}) {
   return (
-    <Box sx={{ position: "relative", width: 110, height: 110, flexShrink: 0 }}>
-      <svg width="110" height="110" viewBox="0 0 110 110">
-        {/* Background track */}
-        <circle cx="55" cy="55" r={radius} fill="none" stroke={alpha(theme.palette.divider, 0.4)} strokeWidth="10" />
-        {/* Segments — rotate so first segment starts at top */}
-        <g transform="rotate(-90 55 55)">
-          {segments.map((seg, i) => (
-            <circle
-              key={i}
-              cx="55"
-              cy="55"
-              r={radius}
-              fill="none"
-              stroke={seg.color}
-              strokeWidth="10"
-              strokeDasharray={`${(seg.pct / 100) * circumference} ${circumference}`}
-              strokeDashoffset={-seg.offset}
-              strokeLinecap="butt"
-            />
-          ))}
-        </g>
-      </svg>
-
-      {/* Center label */}
+    <Box sx={{ position: "relative", width: 150, height: 150, flexShrink: 0 }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius={55}
+            outerRadius={70}
+            paddingAngle={2}
+            dataKey="value"
+            stroke="none"
+          >
+            {data.map((entry, index) => (
+              // eslint-disable-next-line @typescript-eslint/no-deprecated, sonarjs/deprecation
+              <Cell key={`cell-${index}`} fill={entry.color} opacity={entry.isEmpty ? 0.3 : 1} />
+            ))}
+          </Pie>
+          <RechartsTooltip
+            content={({ active, payload }) => {
+              if (active && payload.length > 0) {
+                const itemData = payload[0].payload as VehicleStatusChartDataItem;
+                return (
+                  <Paper
+                    elevation={3}
+                    sx={{ p: 1.5, borderRadius: 2, display: "flex", flexDirection: "column", gap: 0.5 }}
+                  >
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: itemData.color }}>
+                      {itemData.name}
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      Count: {itemData.value}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {itemData.percentage}%
+                    </Typography>
+                  </Paper>
+                );
+              }
+              return null;
+            }}
+          />
+        </PieChart>
+      </ResponsiveContainer>
       <Box
         sx={{
           position: "absolute",
@@ -160,120 +185,45 @@ function DonutChart({
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
+          pointerEvents: "none",
         }}
       >
-        <Typography sx={{ fontWeight: 800, fontSize: 22, lineHeight: 1 }}>{total}</Typography>
+        <Typography sx={{ fontWeight: 800, fontSize: 24, lineHeight: 1 }}>{total}</Typography>
+        <Typography variant="caption" color="text.secondary" sx={{ fontSize: 10, mt: 0.5, fontWeight: 700 }}>
+          TOTAL
+        </Typography>
       </Box>
     </Box>
   );
 }
 
-// ── Trend badge ──
-function TrendBadge({ value }: Readonly<{ value?: number }>): JSX.Element | null {
-  if (value === undefined) return null;
-  const isUp = value >= 0;
-  return (
-    <Stack direction="row" spacing={0.3} sx={{ alignItems: "center" }}>
-      {isUp ? (
-        <TrendingUpIcon sx={{ fontSize: 13, color: "success.main" }} />
-      ) : (
-        <TrendingDownIcon sx={{ fontSize: 13, color: "error.main" }} />
-      )}
-      <Typography
-        variant="caption"
-        sx={{
-          fontWeight: 700,
-          fontSize: 11,
-          color: isUp ? "success.main" : "error.main",
-        }}
-      >
-        {isUp ? "+" : ""}
-        {value}%
-      </Typography>
-    </Stack>
-  );
-}
-
-// ── Stat card ──
-function StatCard({
-  icon,
-  label,
-  value,
-  trend,
-  iconColor,
-}: Readonly<{
-  icon: JSX.Element;
-  label: string;
-  value: number;
-  trend?: number;
-  iconColor: string;
-}>): JSX.Element {
-  return (
-    <Paper
-      elevation={0}
-      sx={{
-        p: { xs: 2, sm: 2.5 },
-        borderRadius: 2,
-        border: "1px solid",
-        borderColor: "divider",
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        gap: 0.5,
-      }}
-    >
-      <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "flex-start" }}>
-        <Box
-          sx={{
-            width: 34,
-            height: 34,
-            borderRadius: 2,
-            bgcolor: alpha(iconColor, 0.12),
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          {icon}
-        </Box>
-        <TrendBadge value={trend} />
-      </Stack>
-
-      <Typography
-        variant="caption"
-        color="text.secondary"
-        sx={{ fontWeight: 600, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", mt: 1 }}
-      >
-        {label}
-      </Typography>
-      <Typography sx={{ fontWeight: 800, fontSize: { xs: 26, sm: 32 }, lineHeight: 1.1 }}>
-        {value.toLocaleString()}
-      </Typography>
-    </Paper>
-  );
-}
-
 // ── Legend item ──
-function LegendItem({ color, label, pct }: Readonly<{ color: string; label: string; pct: number }>): JSX.Element {
+function LegendItem({
+  color,
+  label,
+  count,
+  isEmpty,
+}: Readonly<{ color: string; label: string; count: number; isEmpty: boolean }>): JSX.Element {
   return (
-    <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}>
+    <Stack
+      direction="row"
+      spacing={1}
+      sx={{ alignItems: "center", justifyContent: "space-between", opacity: isEmpty ? 0.6 : 1 }}
+    >
       <Stack direction="row" spacing={0.8} sx={{ alignItems: "center" }}>
         <Box
           sx={{
-            width: 9,
-            height: 9,
+            width: 10,
+            height: 10,
             borderRadius: "50%",
             bgcolor: color,
             flexShrink: 0,
           }}
         />
-        <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
-          {label}
+        <Typography variant="caption" color="text.secondary" sx={{ fontSize: 13, fontWeight: isEmpty ? 500 : 600 }}>
+          {label} ({count})
         </Typography>
       </Stack>
-      <Typography variant="caption" sx={{ fontWeight: 700, fontSize: 12, minWidth: 32, textAlign: "right" }}>
-        {pct}%
-      </Typography>
     </Stack>
   );
 }
@@ -287,16 +237,34 @@ function FleetOverview({
   trends,
 }: FleetOverviewProps): JSX.Element {
   const theme = useTheme();
-
   const safeTotal = total || 1;
-  const availPct = Math.round((availableCount / safeTotal) * 100);
-  const bookedPct = Math.round((rentalCount / safeTotal) * 100);
-  const maintenancePct = Math.round((maintenanceCount / safeTotal) * 100);
+
+  // Map known counts from the API. For others, default to 0 as required.
+  const countMap: Record<VehicleStatus, number> = {
+    [VehicleStatus.Available]: availableCount,
+    [VehicleStatus.FullyBooked]: rentalCount,
+    [VehicleStatus.Maintenance]: maintenanceCount,
+    [VehicleStatus.Unavailable]: 0,
+    [VehicleStatus.ComingSoon]: 0,
+    [VehicleStatus.Retired]: 0,
+  };
+
+  const chartData = Object.values(VehicleStatus).map(status => {
+    const count = countMap[status] || 0;
+    const pct = Math.round((count / safeTotal) * 100);
+    return {
+      name: getStatusLabel(status),
+      value: count,
+      percentage: pct,
+      color: getStatusThemeColor(status, theme),
+      isEmpty: count === 0,
+    };
+  });
 
   return (
     <Grid container spacing={2} sx={{ mb: 3 }}>
       {/* Donut chart card */}
-      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+      <Grid size={{ xs: 12, lg: 5 }}>
         <Paper
           elevation={0}
           sx={{
@@ -310,48 +278,79 @@ function FleetOverview({
             justifyContent: "center",
           }}
         >
-          <Stack direction="row" spacing={2.5} sx={{ alignItems: "center" }}>
-            <DonutChart available={availableCount} booked={rentalCount} maintenance={maintenanceCount} total={total} />
-            <Stack spacing={1} sx={{ flex: 1 }}>
-              <LegendItem color={theme.palette.success.main} label="Available" pct={availPct} />
-              <LegendItem color={theme.palette.primary.main} label="Booked" pct={bookedPct} />
-              <LegendItem color={theme.palette.warning.main} label="Maintenance" pct={maintenancePct} />
-            </Stack>
+          <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700 }}>
+            Vehicle Status Overview
+          </Typography>
+          <Stack
+            direction="row"
+            spacing={{ xs: 2, sm: 4 }}
+            sx={{ alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}
+          >
+            <VehicleStatusDonut data={chartData} total={total} />
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: x => x.spacing(1, 2) }}>
+              {chartData.map(item => (
+                <LegendItem
+                  key={item.name}
+                  color={item.color}
+                  label={item.name}
+                  count={item.value}
+                  isEmpty={item.isEmpty}
+                />
+              ))}
+            </Box>
           </Stack>
         </Paper>
       </Grid>
 
-      {/* Total Assets */}
-      <Grid size={{ xs: 6, sm: 3, md: 3 }}>
-        <StatCard
-          icon={<CarIcon sx={{ fontSize: 18, color: theme.palette.primary.main }} />}
-          label="Total Assets"
-          value={total}
-          trend={trends?.totalAssets}
-          iconColor={theme.palette.primary.main}
-        />
-      </Grid>
+      {/* Stat Cards */}
+      <Grid size={{ xs: 12, lg: 7 }}>
+        <Grid container spacing={2} sx={{ height: "100%" }}>
+          {/* Total Assets */}
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <StatCard
+              icon={<CarIcon fontSize="small" />}
+              label="Total Assets"
+              value={total}
+              change={
+                trends?.totalAssets !== undefined
+                  ? `${trends.totalAssets > 0 ? "+" : ""}${trends.totalAssets}%`
+                  : undefined
+              }
+              isUp={trends?.totalAssets !== undefined ? trends.totalAssets >= 0 : undefined}
+              color="primary"
+            />
+          </Grid>
 
-      {/* Available Now */}
-      <Grid size={{ xs: 6, sm: 3, md: 3 }}>
-        <StatCard
-          icon={<AvailableIcon sx={{ fontSize: 18, color: theme.palette.success.main }} />}
-          label="Available Now"
-          value={availableCount}
-          trend={trends?.available}
-          iconColor={theme.palette.success.main}
-        />
-      </Grid>
+          {/* Available Now */}
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <StatCard
+              icon={<AvailableIcon fontSize="small" />}
+              label="Available Now"
+              value={availableCount}
+              change={
+                trends?.available !== undefined ? `${trends.available > 0 ? "+" : ""}${trends.available}%` : undefined
+              }
+              isUp={trends?.available !== undefined ? trends.available >= 0 : undefined}
+              color="success"
+            />
+          </Grid>
 
-      {/* In Maintenance */}
-      <Grid size={{ xs: 6, sm: 3, md: 3 }}>
-        <StatCard
-          icon={<MaintenanceIcon sx={{ fontSize: 18, color: theme.palette.warning.main }} />}
-          label="In Maintenance"
-          value={maintenanceCount}
-          trend={trends?.maintenance}
-          iconColor={theme.palette.warning.main}
-        />
+          {/* In Maintenance */}
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <StatCard
+              icon={<MaintenanceIcon fontSize="small" />}
+              label="In Maintenance"
+              value={maintenanceCount}
+              change={
+                trends?.maintenance !== undefined
+                  ? `${trends.maintenance > 0 ? "+" : ""}${trends.maintenance}%`
+                  : undefined
+              }
+              isUp={trends?.maintenance !== undefined ? trends.maintenance >= 0 : undefined}
+              color="warning"
+            />
+          </Grid>
+        </Grid>
       </Grid>
     </Grid>
   );
@@ -364,10 +363,10 @@ function FleetOverview({
 
 const STATUS_OPTIONS: readonly { value: VehicleStatusFilter; label: string }[] = [
   { value: "", label: "All statuses" },
-  { value: "Available", label: "Available" },
-  { value: "FullyBooked", label: "Fully Booked (On Rental)" },
-  { value: "Maintenance", label: "Maintenance" },
-  { value: "Retired", label: "Retired" },
+  { value: VehicleStatus.Available, label: "Available" },
+  { value: VehicleStatus.FullyBooked, label: "Fully Booked (On Rental)" },
+  { value: VehicleStatus.Maintenance, label: "Maintenance" },
+  { value: VehicleStatus.Retired, label: "Retired" },
 ];
 
 const TRANSMISSION_OPTIONS: readonly { value: string; label: string }[] = [

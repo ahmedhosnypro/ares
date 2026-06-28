@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Box, InputAdornment, Paper, Skeleton, Stack, TextField, Typography, useTheme, alpha } from "@mui/material";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import SearchIcon from "@mui/icons-material/Search";
@@ -9,17 +10,6 @@ import TodayTaskCard from "./TodayTaskCard";
 
 type FilterType = "All" | InspectionTaskType;
 
-interface FilterTab {
-  label: string;
-  value: FilterType;
-}
-
-const FILTER_TABS: FilterTab[] = [
-  { label: "All", value: "All" },
-  { label: "Check-Outs 🟢", value: "CheckOut" },
-  { label: "Check-Ins 🔴", value: "CheckIn" },
-];
-
 interface TodaysTasksListProps {
   readonly tasks: InspectorTask[];
   readonly loading: boolean;
@@ -27,19 +17,26 @@ interface TodaysTasksListProps {
 
 export default function TodayTasksList({ tasks, loading }: TodaysTasksListProps) {
   const theme = useTheme();
+  const t = useTranslations("dashboard.inspectorInspections.tasksList");
   const [activeFilter, setActiveFilter] = useState<FilterType>("All");
   const [plateSearch, setPlateSearch] = useState("");
+
+  const FILTER_TABS: readonly { label: string; value: FilterType }[] = [
+    { label: t("filterAll"), value: "All" },
+    { label: t("filterCheckOuts"), value: "CheckOut" },
+    { label: t("filterCheckIns"), value: "CheckIn" },
+  ];
 
   const filteredTasks = useMemo(() => {
     let result = tasks;
 
     if (activeFilter !== "All") {
-      result = result.filter(t => t.inspectionType === activeFilter);
+      result = result.filter(task => task.inspectionType === activeFilter);
     }
 
     const trimmedPlate = plateSearch.trim().toUpperCase();
     if (trimmedPlate) {
-      result = result.filter(t => t.plateNumber.toUpperCase().includes(trimmedPlate));
+      result = result.filter(task => task.plateNumber.toUpperCase().includes(trimmedPlate));
     }
 
     return result;
@@ -87,7 +84,7 @@ export default function TodayTasksList({ tasks, loading }: TodaysTasksListProps)
       {/* Plate number search */}
       <TextField
         id="plate-search"
-        placeholder="Search by plate number…"
+        placeholder={t("searchPlaceholder")}
         value={plateSearch}
         onChange={e => {
           setPlateSearch(e.target.value);
@@ -103,7 +100,7 @@ export default function TodayTasksList({ tasks, loading }: TodaysTasksListProps)
             ),
           },
         }}
-        aria-label="Search by plate number"
+        aria-label={t("searchAriaLabel")}
       />
 
       {/* Task list */}
@@ -127,6 +124,7 @@ export default function TodayTasksList({ tasks, loading }: TodaysTasksListProps)
 }
 
 function EmptyState({ hasSearch }: { readonly hasSearch: boolean }) {
+  const emptyT = useTranslations("dashboard.inspectorInspections.emptyState");
   return (
     <Paper
       elevation={0}
@@ -141,10 +139,10 @@ function EmptyState({ hasSearch }: { readonly hasSearch: boolean }) {
     >
       <AssignmentIcon sx={{ fontSize: 56, mb: 2, color: "text.disabled" }} />
       <Typography variant="h6" sx={{ fontWeight: 700 }}>
-        {hasSearch ? "No matching tasks" : "All caught up!"}
+        {hasSearch ? emptyT("noMatchingTasks") : emptyT("allCaughtUp")}
       </Typography>
       <Typography variant="body2" sx={{ color: "text.secondary" }}>
-        {hasSearch ? "Try adjusting the filter or search term." : "You have no pending tasks for today."}
+        {hasSearch ? emptyT("tryAdjusting") : emptyT("noPendingTasks")}
       </Typography>
     </Paper>
   );

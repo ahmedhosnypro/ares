@@ -55,3 +55,14 @@ export async function getSupplierDashboardBookingsByStatus(accessToken: string):
     accessToken,
   });
 }
+
+/**
+ * Fetch the authenticated supplier's vehicle status distribution.
+ * Returns a dictionary mapping actual vehicle statuses to their counts.
+ */
+export async function getSupplierVehicleStatusDistribution(accessToken: string): Promise<Record<string, number>> {
+  return apiFetchJson<Record<string, number>>("/api/supplier/dashboard/vehicle-status-distribution", {
+    method: "GET",
+    accessToken,
+  });
+}

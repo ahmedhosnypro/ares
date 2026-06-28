@@ -45,7 +45,16 @@ interface VehicleResponse {
 
 // ── Filter shape forwarded to the backend admin search endpoint ──────────────
 
-export type VehicleStatusFilter = "" | "Available" | "FullyBooked" | "Maintenance" | "Retired";
+export enum VehicleStatus {
+  Available = "Available",
+  Unavailable = "Unavailable",
+  FullyBooked = "FullyBooked",
+  ComingSoon = "ComingSoon",
+  Maintenance = "Maintenance",
+  Retired = "Retired",
+}
+
+export type VehicleStatusFilter = "" | VehicleStatus;
 export type VehicleSortBy = "newest" | "oldest" | "priceHigh" | "priceLow";
 
 export interface AdminVehicleFilter {
@@ -59,13 +68,13 @@ export interface AdminVehicleFilter {
 function mapStatusToBackend(status: VehicleStatusFilter | undefined): string | undefined {
   if (!status) return undefined;
   switch (status) {
-    case "FullyBooked":
+    case VehicleStatus.FullyBooked:
       return "OnRental";
-    case "Retired":
+    case VehicleStatus.Retired:
       return "Inactive";
-    case "Maintenance":
+    case VehicleStatus.Maintenance:
       return "Maintenance";
-    case "Available":
+    case VehicleStatus.Available:
       return "Available";
     default:
       return undefined;

@@ -65,9 +65,60 @@ namespace Backend.Api.Controllers
 
             return Ok(new { GlobalCommissionPercentage = request.Percentage });
         }
+        [HttpGet("driver-global")]
+        public async Task<IActionResult> GetDriverGlobalCommission(CancellationToken cancellationToken)
+        {
+            var setting = await _context.SystemSettings
+                .FirstOrDefaultAsync(s => s.Key == "driver.commission_percentage", cancellationToken);
+
+            decimal percentage = 0.0m;
+            if (setting != null && decimal.TryParse(setting.Value, out var parsed))
+            {
+                percentage = parsed;
+            }
+
+            return Ok(new { DriverCommissionPercentage = percentage });
+        }
+
+        [HttpPut("driver-global")]
+        public async Task<IActionResult> UpdateDriverGlobalCommission([FromBody] UpdateDriverCommissionRequest request, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var setting = await _context.SystemSettings
+                .FirstOrDefaultAsync(s => s.Key == "driver.commission_percentage", cancellationToken);
+
+            if (setting == null)
+            {
+                setting = new SystemSetting
+                {
+                    Key = "driver.commission_percentage",
+                    Value = request.Percentage.ToString()
+                };
+                _context.AddSystemSetting(setting);
+            }
+            else
+            {
+                setting.Value = request.Percentage.ToString();
+            }
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            return Ok(new { DriverCommissionPercentage = request.Percentage });
+        }
     }
 
     public class UpdateGlobalCommissionRequest
+    {
+        [Required]
+        [Range(0, 100)]
+        public decimal Percentage { get; set; }
+    }
+
+    public class UpdateDriverCommissionRequest
     {
         [Required]
         [Range(0, 100)]

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Box,
   Typography,
@@ -169,6 +170,8 @@ async function mockFetchPaginatedData(
 export default function InspectionHistoryPage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const t = useTranslations("dashboard.inspectorHistory");
+  const tc = useTranslations("common");
   const [items, setItems] = useState<InspectionSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -209,10 +212,10 @@ export default function InspectionHistoryPage() {
     <Box sx={{ maxWidth: 1200, mx: "auto" }}>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" sx={{ fontWeight: 800 }}>
-          Inspection History
+          {t("title")}
         </Typography>
         <Typography color="text.secondary" variant="body2">
-          View all your submitted inspections.
+          {t("description")}
         </Typography>
       </Box>
 
@@ -232,7 +235,7 @@ export default function InspectionHistoryPage() {
             <Box sx={{ flexGrow: 1 }}>
               <TextField
                 fullWidth
-                placeholder="Search by Booking Number, Vehicle, or Status..."
+                placeholder={t("search.placeholder")}
                 value={search}
                 onChange={e => {
                   setSearch(e.target.value);
@@ -253,13 +256,13 @@ export default function InspectionHistoryPage() {
             <Box sx={{ minWidth: { xs: "100%", md: 240 } }}>
               <FormControl fullWidth>
                 <InputLabel id="status-filter-label" sx={{ color: "text.secondary" }}>
-                  Status
+                  {t("filter.statusLabel")}
                 </InputLabel>
                 <Select
                   labelId="status-filter-label"
                   id="status-filter"
                   value={statusFilter}
-                  label="Status"
+                  label={t("filter.statusLabel")}
                   onChange={(e: SelectChangeEvent) => {
                     setStatusFilter(e.target.value);
                     setPage(1);
@@ -271,10 +274,10 @@ export default function InspectionHistoryPage() {
                   }
                   sx={{ borderRadius: 2, bgcolor: "background.default" }}
                 >
-                  <MenuItem value="All">All Statuses</MenuItem>
-                  <MenuItem value="Approved">Approved</MenuItem>
-                  <MenuItem value="Rejected">Rejected</MenuItem>
-                  <MenuItem value="Pending">Pending</MenuItem>
+                  <MenuItem value="All">{t("filter.allStatuses")}</MenuItem>
+                  <MenuItem value="Approved">{t("filter.approved")}</MenuItem>
+                  <MenuItem value="Rejected">{t("filter.rejected")}</MenuItem>
+                  <MenuItem value="Pending">{t("filter.pending")}</MenuItem>
                 </Select>
               </FormControl>
             </Box>
@@ -302,10 +305,10 @@ export default function InspectionHistoryPage() {
             }}
           >
             <Typography variant="h6" sx={{ fontWeight: 700 }}>
-              No results found
+              {t("emptySearch.title")}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Try adjusting your search query or status filter.
+              {t("emptySearch.description")}
             </Typography>
           </Paper>
         ) : (
@@ -322,10 +325,10 @@ export default function InspectionHistoryPage() {
           >
             <HistoryIcon sx={{ fontSize: 60, mb: 2, color: "text.disabled" }} />
             <Typography variant="h6" sx={{ fontWeight: 800 }}>
-              No history yet
+              {t("emptyState.title")}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Submitted inspections will appear here.
+              {t("emptyState.description")}
             </Typography>
           </Paper>
         )
@@ -354,10 +357,12 @@ export default function InspectionHistoryPage() {
               </Typography>
               <Stack spacing={0.5} sx={{ mb: 2 }}>
                 <Typography variant="caption" color="text.secondary">
-                  Photos: {i.imageCount}
+                  {t("mobileCard.photos", { count: i.imageCount })}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Submitted: {i.submittedAt ? new Date(i.submittedAt).toLocaleString() : "—"}
+                  {i.submittedAt
+                    ? t("mobileCard.submittedDate", { date: new Date(i.submittedAt).toLocaleString() })
+                    : t("mobileCard.submittedFallback")}
                 </Typography>
               </Stack>
               <Button
@@ -368,7 +373,7 @@ export default function InspectionHistoryPage() {
                 startIcon={<VisibilityOutlinedIcon />}
                 sx={{ borderRadius: 2, fontWeight: 600 }}
               >
-                View Report
+                {t("mobileCard.viewReport")}
               </Button>
             </Paper>
           ))}
@@ -378,13 +383,13 @@ export default function InspectionHistoryPage() {
           <Table>
             <TableHead sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700 }}>Booking</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Vehicle</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Submitted At</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Photos</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{t("table.booking")}</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{t("table.vehicle")}</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{t("table.submittedAt")}</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{t("table.photos")}</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{tc("status")}</TableCell>
                 <TableCell align="right" sx={{ fontWeight: 700 }}>
-                  Action
+                  {tc("actions")}
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -396,7 +401,7 @@ export default function InspectionHistoryPage() {
                   </TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>{i.vehicleDisplayName}</TableCell>
                   <TableCell color="text.secondary">
-                    {i.submittedAt ? new Date(i.submittedAt).toLocaleString() : "—"}
+                    {i.submittedAt ? new Date(i.submittedAt).toLocaleString() : t("mobileCard.submittedFallback")}
                   </TableCell>
                   <TableCell>{i.imageCount}</TableCell>
                   <TableCell>
@@ -411,7 +416,7 @@ export default function InspectionHistoryPage() {
                       startIcon={<VisibilityOutlinedIcon />}
                       sx={{ borderRadius: 2, fontWeight: 600 }}
                     >
-                      View Details
+                      {t("table.viewDetails")}
                     </Button>
                   </TableCell>
                 </TableRow>

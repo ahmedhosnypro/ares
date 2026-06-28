@@ -30,6 +30,7 @@ import {
 } from "@mui/icons-material";
 import type { Booking } from "@/api-clients/bookings/bookings";
 import { toImageUrl } from "@/utils/image-url";
+import { useTranslations } from "next-intl";
 
 interface BookingsTableProps {
   readonly bookings: readonly Booking[];
@@ -40,8 +41,8 @@ interface BookingsTableProps {
   readonly onPageChange: (page: number) => void;
   readonly statusOverrides: Record<string, string>;
   readonly onOpenMenu: (e: React.MouseEvent<HTMLElement>, booking: Booking) => void;
-  readonly t: any;
-  readonly tCommon: any;
+  readonly t: ReturnType<typeof useTranslations>;
+  readonly tCommon: ReturnType<typeof useTranslations>;
 }
 
 const getStatusConfig = (status?: string, t?: (key: string) => string) => {
@@ -142,176 +143,187 @@ export default function BookingsTable({
       );
     }
 
-    return bookings.map((booking: Booking) => {
-      const effectiveStatus = statusOverrides[booking.id] ?? booking.status;
-      const statusConfig = getStatusConfig(effectiveStatus, t);
-      const statusColor = theme.palette[statusConfig.colorKey].main;
+    return (
+      <>
+        {bookings.map((booking: Booking) => {
+          const effectiveStatus = statusOverrides[booking.id] ?? booking.status;
+          const statusConfig = getStatusConfig(effectiveStatus, t);
+          const statusColor = theme.palette[statusConfig.colorKey].main;
 
-      return (
-        <TableRow
-          key={booking.id}
-          hover
-          sx={{
-            transition: "background 0.15s",
-            "&:last-child td": { border: 0 },
-            "&:hover": { bgcolor: theme => alpha(theme.palette.primary.main, 0.03) },
-          }}
-        >
-          {/* Booking */}
-          <TableCell sx={{ pl: 3 }}>
-            <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-              <Avatar
-                sx={{
-                  width: 36,
-                  height: 36,
-                  bgcolor: theme => alpha(theme.palette.primary.main, 0.08),
-                  color: "primary.main",
-                  fontWeight: 700,
-                  fontSize: 14,
-                }}
-              >
-                {getInitials(booking.customerName ?? booking.customer?.fullName ?? "Unknown Customer")}
-              </Avatar>
-              <Box>
-                <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
-                  {booking.customerName ?? booking.customer?.fullName ?? "Unknown Customer"}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  #{booking.bookingNumber ?? booking.id.split("-")[0]}
-                </Typography>
-              </Box>
-            </Stack>
-          </TableCell>
-
-          {/* Vehicle */}
-          <TableCell>
-            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-              <Avatar
-                variant="rounded"
-                src={toImageUrl(booking.car?.image)}
-                sx={{
-                  width: 36,
-                  height: 36,
-                  bgcolor: alpha(theme.palette.primary.main, 0.1),
-                  color: "primary.main",
-                }}
-              >
-                <CarIcon fontSize="small" />
-              </Avatar>
-              <Box>
-                <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{booking.car?.name ?? "Unknown Vehicle"}</Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {booking.car?.plateNumber ?? "No Plate"}
-                </Typography>
-              </Box>
-            </Stack>
-          </TableCell>
-
-          {/* Supplier */}
-          <TableCell>
-            <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
-              <PersonIcon sx={{ fontSize: 16, color: "text.secondary" }} />
-              <Typography variant="body2" noWrap>
-                {booking.supplier?.name ?? booking.supplier?.fullName ?? "—"}
-              </Typography>
-            </Stack>
-          </TableCell>
-
-          {/* Period — compact */}
-          <TableCell>
-            <Typography variant="body2" sx={{ fontSize: 13, fontWeight: 600 }}>
-              {formatCompactDate(booking.from)} → {formatCompactDate(booking.to)}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {booking.totalDays ? t("table.daysCount", { count: booking.totalDays }) : "—"}
-            </Typography>
-          </TableCell>
-
-          {/* Status */}
-          <TableCell>
-            <Chip
-              label={statusConfig.label}
-              size="small"
+          return (
+            <TableRow
+              key={booking.id}
+              hover
               sx={{
-                textTransform: "capitalize",
-                borderRadius: 1.5,
-                bgcolor: alpha(statusColor, 0.15),
-                color: statusColor,
-                fontWeight: 700,
-                fontSize: 11,
+                transition: "background 0.15s",
+                "&:last-child td": { border: 0 },
+                "&:hover": { bgcolor: theme => alpha(theme.palette.primary.main, 0.03) },
               }}
-            />
-          </TableCell>
-
-          {/* Payment Method */}
-          <TableCell>
-            <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
-              <PaymentIcon sx={{ fontSize: 14, color: "text.secondary" }} />
-              <Typography variant="body2" sx={{ fontSize: 13, fontWeight: 500, textTransform: "capitalize" }}>
-                {booking.paymentMethod ?? "None"}
-              </Typography>
-            </Stack>
-          </TableCell>
-
-          {/* Payment Status */}
-          <TableCell>
-            {(() => {
-              const statusConfig = getPaymentStatusConfig(booking.paymentStatus, t);
-              if (statusConfig.colorKey === null) {
-                return (
-                  <Chip
-                    label={statusConfig.label}
-                    size="small"
+            >
+              {/* Booking */}
+              <TableCell sx={{ pl: 3 }}>
+                <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                  <Avatar
                     sx={{
-                      textTransform: "capitalize",
-                      borderRadius: 1.5,
-                      bgcolor: "transparent",
-                      color: "text.secondary",
+                      width: 36,
+                      height: 36,
+                      bgcolor: theme => alpha(theme.palette.primary.main, 0.08),
+                      color: "primary.main",
                       fontWeight: 700,
-                      fontSize: 11,
-                      border: "1px solid",
-                      borderColor: "divider",
+                      fontSize: 14,
                     }}
-                  />
-                );
-              }
-              const colorVal = theme.palette[statusConfig.colorKey].main;
-              return (
+                  >
+                    {getInitials(booking.customerName ?? booking.customer?.fullName ?? "Unknown Customer")}
+                  </Avatar>
+                  <Box>
+                    <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
+                      {booking.customerName ?? booking.customer?.fullName ?? "Unknown Customer"}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      #{booking.bookingNumber ?? booking.id.split("-")[0]}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </TableCell>
+
+              {/* Vehicle */}
+              <TableCell>
+                <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+                  <Avatar
+                    variant="rounded"
+                    src={toImageUrl(booking.car?.image)}
+                    sx={{
+                      width: 36,
+                      height: 36,
+                      bgcolor: alpha(theme.palette.primary.main, 0.1),
+                      color: "primary.main",
+                    }}
+                  >
+                    <CarIcon fontSize="small" />
+                  </Avatar>
+                  <Box>
+                    <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+                      {booking.car?.name ?? "Unknown Vehicle"}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {booking.car?.plateNumber ?? "No Plate"}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </TableCell>
+
+              {/* Supplier */}
+              <TableCell>
+                <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+                  <PersonIcon sx={{ fontSize: 16, color: "text.secondary" }} />
+                  <Typography variant="body2" noWrap>
+                    {booking.supplier?.name ?? booking.supplier?.fullName ?? "—"}
+                  </Typography>
+                </Stack>
+              </TableCell>
+
+              {/* Period — compact */}
+              <TableCell>
+                <Typography variant="body2" sx={{ fontSize: 13, fontWeight: 600 }}>
+                  {formatCompactDate(booking.from)} → {formatCompactDate(booking.to)}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {booking.totalDays ? t("table.daysCount", { count: booking.totalDays }) : "—"}
+                </Typography>
+              </TableCell>
+
+              {/* Status */}
+              <TableCell>
                 <Chip
                   label={statusConfig.label}
                   size="small"
                   sx={{
                     textTransform: "capitalize",
                     borderRadius: 1.5,
-                    bgcolor: alpha(colorVal, 0.15),
-                    color: colorVal,
+                    bgcolor: alpha(statusColor, 0.15),
+                    color: statusColor,
                     fontWeight: 700,
                     fontSize: 11,
                   }}
                 />
-              );
-            })()}
-          </TableCell>
+              </TableCell>
 
-          {/* Total */}
-          <TableCell>
-            <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
-              <PriceIcon sx={{ fontSize: 14, color: "success.main" }} />
-              <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                ${(booking.price ?? 0).toFixed(2)}
-              </Typography>
-            </Stack>
-          </TableCell>
+              {/* Payment Method */}
+              <TableCell>
+                <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+                  <PaymentIcon sx={{ fontSize: 14, color: "text.secondary" }} />
+                  <Typography variant="body2" sx={{ fontSize: 13, fontWeight: 500, textTransform: "capitalize" }}>
+                    {booking.paymentMethod ?? "None"}
+                  </Typography>
+                </Stack>
+              </TableCell>
 
-          {/* Actions */}
-          <TableCell align="right" sx={{ pr: 3 }}>
-            <IconButton size="small" onClick={e => onOpenMenu(e, booking)}>
-              <MoreVertIcon fontSize="small" />
-            </IconButton>
-          </TableCell>
-        </TableRow>
-      );
-    });
+              {/* Payment Status */}
+              <TableCell>
+                {(() => {
+                  const statusConfig = getPaymentStatusConfig(booking.paymentStatus, t);
+                  if (statusConfig.colorKey === null) {
+                    return (
+                      <Chip
+                        label={statusConfig.label}
+                        size="small"
+                        sx={{
+                          textTransform: "capitalize",
+                          borderRadius: 1.5,
+                          bgcolor: "transparent",
+                          color: "text.secondary",
+                          fontWeight: 700,
+                          fontSize: 11,
+                          border: "1px solid",
+                          borderColor: "divider",
+                        }}
+                      />
+                    );
+                  }
+                  const colorVal = theme.palette[statusConfig.colorKey].main;
+                  return (
+                    <Chip
+                      label={statusConfig.label}
+                      size="small"
+                      sx={{
+                        textTransform: "capitalize",
+                        borderRadius: 1.5,
+                        bgcolor: alpha(colorVal, 0.15),
+                        color: colorVal,
+                        fontWeight: 700,
+                        fontSize: 11,
+                      }}
+                    />
+                  );
+                })()}
+              </TableCell>
+
+              {/* Total */}
+              <TableCell>
+                <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+                  <PriceIcon sx={{ fontSize: 14, color: "success.main" }} />
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                    ${(booking.price ?? 0).toFixed(2)}
+                  </Typography>
+                </Stack>
+              </TableCell>
+
+              {/* Actions */}
+              <TableCell align="right" sx={{ pr: 3 }}>
+                <IconButton
+                  size="small"
+                  onClick={e => {
+                    onOpenMenu(e, booking);
+                  }}
+                >
+                  <MoreVertIcon fontSize="small" />
+                </IconButton>
+              </TableCell>
+            </TableRow>
+          );
+        })}
+      </>
+    );
   };
 
   return (
@@ -366,7 +378,9 @@ export default function BookingsTable({
                   <Pagination
                     count={totalPages}
                     page={page + 1}
-                    onChange={(_, v) => onPageChange(v - 1)}
+                    onChange={(_, v) => {
+                      onPageChange(v - 1);
+                    }}
                     size="small"
                     sx={{ "& .MuiPaginationItem-root": { borderRadius: 2 } }}
                   />

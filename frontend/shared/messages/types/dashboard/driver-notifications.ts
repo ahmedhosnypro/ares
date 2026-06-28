@@ -1,3 +1,12 @@
+export interface DriverNotificationTypeLabels {
+  readonly earningReceivedTitle: string;
+  readonly earningReceivedMessage: string;
+  readonly payoutCompletedTitle: string;
+  readonly payoutCompletedMessage: string;
+  readonly payoutRejectedTitle: string;
+  readonly payoutRejectedMessage: string;
+}
+
 export interface DriverNotificationsLabels {
   title: string;
   description: string;
@@ -13,4 +22,5 @@ export interface DriverNotificationsLabels {
   loading: string;
   empty: string;
   markAllAsReadTooltip: string;
+  types: DriverNotificationTypeLabels;
 }

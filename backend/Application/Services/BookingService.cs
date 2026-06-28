@@ -9,6 +9,7 @@ using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace Backend.Application.Services;
 
@@ -32,6 +33,7 @@ public class BookingService : IBookingService
     private readonly IApplicationDbContext _context;
     private readonly INotificationService? _notificationService;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly ILogger<BookingService>? _logger;
     // Optional + nullable so the existing unit / property test suites that
     // instantiate BookingService with positional args keep compiling without
     // changes. Production DI always provides a real implementation, so the
@@ -40,6 +42,7 @@ public class BookingService : IBookingService
     private readonly IDriverPricingService? _driverPricingService;
     private readonly IDriverProfileRepository? _driverProfileRepository;
     private readonly ICommissionService? _commissionService;
+    private readonly IDriverEarningsService? _driverEarningsService;
     private readonly IPricingService _pricingService;
     private readonly IMediator _mediator;
     private readonly IConfiguration _configuration;
@@ -52,11 +55,13 @@ public class BookingService : IBookingService
         IPricingService pricingService,
         IMediator mediator,
         IConfiguration configuration,
+        ILogger<BookingService>? logger = null,
         INotificationService? notificationService = null,
         IVerificationService? verificationService = null,
         IDriverPricingService? driverPricingService = null,
         IDriverProfileRepository? driverProfileRepository = null,
-        ICommissionService? commissionService = null)
+        ICommissionService? commissionService = null,
+        IDriverEarningsService? driverEarningsService = null)
     {
         _bookingRepository = bookingRepository;
         _vehicleRepository = vehicleRepository;
@@ -65,11 +70,13 @@ public class BookingService : IBookingService
         _pricingService = pricingService;
         _mediator = mediator;
         _configuration = configuration;
+        _logger = logger;
         _notificationService = notificationService;
         _verificationService = verificationService;
         _driverPricingService = driverPricingService;
         _driverProfileRepository = driverProfileRepository;
         _commissionService = commissionService;
+        _driverEarningsService = driverEarningsService;
     }
 
     public async Task<BookingResponse> CreateBookingAsync(
@@ -623,6 +630,18 @@ public class BookingService : IBookingService
         // Requirement 20.2: Save all changes
         await _context.SaveChangesAsync(cancellationToken);
 
+        if (_driverEarningsService != null)
+        {
+            try
+            {
+                await _driverEarningsService.ReverseEarningForBookingAsync(booking.Id, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Failed to reverse driver earning for booking {BookingId}", booking.Id);
+            }
+        }
+
         return true;
     }
 
@@ -874,6 +893,30 @@ public class BookingService : IBookingService
         }
 
         await _bookingRepository.SaveChangesAsync(cancellationToken);
+
+        if (parsedStatus == BookingStatus.Completed && booking.AssignedDriverProfileId.HasValue && _driverEarningsService != null)
+        {
+            try
+            {
+                await _driverEarningsService.CreateEarningForBookingAsync(booking, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Failed to create driver earning for booking {BookingId}", booking.Id);
+            }
+        }
+
+        if ((parsedStatus == BookingStatus.Cancelled || parsedStatus == BookingStatus.CancelledByAdmin) && _driverEarningsService != null)
+        {
+            try
+            {
+                await _driverEarningsService.ReverseEarningForBookingAsync(booking.Id, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Failed to reverse driver earning for booking {BookingId}", booking.Id);
+            }
+        }
 
         // Fire-and-forget notification for the customer (best-effort).
         await NotifyBookingStatusChangeAsync(booking, parsedStatus, cancellationToken);

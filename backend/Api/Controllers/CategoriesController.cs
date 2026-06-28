@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Backend.Application.DTOs.Common;
 
 namespace Backend.Api.Controllers
 {
@@ -52,6 +53,126 @@ namespace Backend.Api.Controllers
                 .ToListAsync(cancellationToken);
 
             return Ok(categories);
+        }
+
+        [HttpGet("summary")]
+        public async Task<IActionResult> GetSummary(CancellationToken cancellationToken)
+        {
+            var totalCategories = await _context.Categories.CountAsync(cancellationToken);
+            var totalVehicles = await _context.Vehicles.CountAsync(cancellationToken);
+            var now = DateTime.UtcNow;
+            var categoriesWithOffers = await _context.Categories.CountAsync(c => c.Offers.Any(o => o.IsActive && o.EndDate >= now), cancellationToken);
+            
+            var averageCommission = totalCategories > 0 
+                ? await _context.Categories.AverageAsync(c => c.CommissionPercentage, cancellationToken)
+                : 0;
+
+            return Ok(new AdminCategoryStatsDto
+            {
+                TotalCategories = totalCategories,
+                TotalVehicles = totalVehicles,
+                CategoriesWithOffers = categoriesWithOffers,
+                AverageCommission = averageCommission
+            });
+        }
+
+        [HttpGet("search")]
+        public async Task<ActionResult<PagedResult<AdminCategoryListDto>>> Search(
+            [FromQuery] string? search,
+            [FromQuery] string? status,
+            [FromQuery] string? offer,
+            [FromQuery] string? sortBy,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            CancellationToken cancellationToken = default)
+        {
+            var query = _context.Categories
+                .AsNoTracking()
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var lowerSearch = search.ToLower();
+                query = query.Where(c => c.Name.ToLower().Contains(lowerSearch) || (c.Description != null && c.Description.ToLower().Contains(lowerSearch)));
+            }
+
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                if (status.Equals("Active", StringComparison.OrdinalIgnoreCase))
+                {
+                    query = query.Where(c => c.IsActive);
+                }
+                else if (status.Equals("Inactive", StringComparison.OrdinalIgnoreCase))
+                {
+                    query = query.Where(c => !c.IsActive);
+                }
+            }
+
+            var now = DateTime.UtcNow;
+            if (!string.IsNullOrWhiteSpace(offer))
+            {
+                if (offer.Equals("Active Offer", StringComparison.OrdinalIgnoreCase))
+                {
+                    query = query.Where(c => c.Offers.Any(o => o.IsActive && o.EndDate >= now));
+                }
+                else if (offer.Equals("No Offer", StringComparison.OrdinalIgnoreCase))
+                {
+                    query = query.Where(c => !c.Offers.Any());
+                }
+                else if (offer.Equals("Expired Offer", StringComparison.OrdinalIgnoreCase))
+                {
+                    query = query.Where(c => c.Offers.Any() && !c.Offers.Any(o => o.IsActive && o.EndDate >= now));
+                }
+            }
+
+            var projectedQuery = query.Select(c => new
+            {
+                Category = c,
+                VehicleCount = c.Vehicles.Count(),
+                LatestOffer = c.Offers.OrderByDescending(o => o.CreatedAt).FirstOrDefault()
+            });
+
+            projectedQuery = sortBy switch
+            {
+                "Name Z-A" => projectedQuery.OrderByDescending(x => x.Category.Name),
+                "Vehicles Count" => projectedQuery.OrderByDescending(x => x.VehicleCount),
+                "Commission" => projectedQuery.OrderByDescending(x => x.Category.CommissionPercentage),
+                "Created Date" => projectedQuery.OrderByDescending(x => x.Category.CreatedAt),
+                _ => projectedQuery.OrderBy(x => x.Category.Name)
+            };
+
+            var totalCount = await projectedQuery.CountAsync(cancellationToken);
+            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+            var items = await projectedQuery
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+
+            var resultItems = items.Select(x => {
+                bool isActiveOffer = x.LatestOffer != null && x.LatestOffer.IsActive && x.LatestOffer.EndDate >= now;
+                bool isExpiredOffer = x.LatestOffer != null && (!x.LatestOffer.IsActive || x.LatestOffer.EndDate < now);
+
+                return new AdminCategoryListDto
+                {
+                    Id = x.Category.Id,
+                    Name = x.Category.Name,
+                    Description = x.Category.Description,
+                    CommissionPercentage = x.Category.CommissionPercentage,
+                    IsActive = x.Category.IsActive,
+                    VehicleCount = x.VehicleCount,
+                    OfferStatus = isActiveOffer ? "Active" : (isExpiredOffer ? "Expired" : "None"),
+                    OfferName = x.LatestOffer?.OfferName,
+                    OfferPercentage = x.LatestOffer?.DiscountPercentage,
+                    OfferEndDate = x.LatestOffer?.EndDate,
+                    ImageUrl = x.Category.ImageUrl,
+                    CreatedAt = x.Category.CreatedAt,
+                    UpdatedAt = x.Category.UpdatedAt
+                };
+            }).ToList();
+
+            var result = new PagedResult<AdminCategoryListDto>(resultItems, page, pageSize, totalCount, totalPages);
+            return Ok(result);
         }
 
         [HttpPost]
@@ -278,5 +399,30 @@ namespace Backend.Api.Controllers
     {
         public Guid CategoryId { get; set; }
         public List<Guid> VehicleIds { get; set; } = new List<Guid>();
+    }
+
+    public class AdminCategoryStatsDto
+    {
+        public int TotalCategories { get; set; }
+        public int TotalVehicles { get; set; }
+        public int CategoriesWithOffers { get; set; }
+        public decimal AverageCommission { get; set; }
+    }
+
+    public class AdminCategoryListDto
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public decimal CommissionPercentage { get; set; }
+        public bool IsActive { get; set; }
+        public int VehicleCount { get; set; }
+        public string OfferStatus { get; set; } = "None";
+        public string? OfferName { get; set; }
+        public decimal? OfferPercentage { get; set; }
+        public DateTime? OfferEndDate { get; set; }
+        public string? ImageUrl { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
     }
 }

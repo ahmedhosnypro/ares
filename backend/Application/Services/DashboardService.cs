@@ -48,12 +48,6 @@ public class DashboardService : IDashboardService
         var pendingInspections = await _context.Bookings
             .CountAsync(b => b.InspectionStatus == InspectionStatus.Pending, cancellationToken);
 
-        var totalCategories = await _context.Categories
-            .CountAsync(c => c.IsActive, cancellationToken);
-
-        var activePromotions = await _context.Promotions
-            .CountAsync(p => p.Status == "Active" && p.StartDate <= DateTime.UtcNow && p.EndDate >= DateTime.UtcNow, cancellationToken);
-
         var vehiclesPerCategoryQuery = await _context.Vehicles
             .Where(v => v.IsActive && v.Category != null)
             .GroupBy(v => v.Category!.Name)
@@ -69,8 +63,6 @@ public class DashboardService : IDashboardService
             PendingVerifications: pendingVerifications,
             AvailableVehicles: availableVehicles,
             PendingInspections: pendingInspections,
-            TotalCategories: totalCategories,
-            ActivePromotions: activePromotions,
             VehiclesPerCategory: vehiclesPerCategory
         );
     }
@@ -241,8 +233,10 @@ public class DashboardService : IDashboardService
     public async Task<IReadOnlyList<RecentBookingDto>> GetRecentBookingsAsync(Guid? supplierId, int limit = 5, CancellationToken cancellationToken = default)
     {
         var query = _context.Bookings
+            .AsNoTracking()
             .Include(b => b.User)
             .Include(b => b.Vehicle)
+            .ThenInclude(v => v.Images)
             .AsQueryable();
 
         if (supplierId.HasValue)
@@ -250,19 +244,23 @@ public class DashboardService : IDashboardService
             query = query.Where(b => b.Vehicle != null && b.Vehicle.UserId == supplierId.Value);
         }
 
-        var recentBookings = await query
+        return (await query
             .OrderByDescending(b => b.CreatedAt)
             .Take(limit)
-            .ToListAsync(cancellationToken);
-
-        return recentBookings.Select(b => new RecentBookingDto(
-            Id: b.BookingNumber ?? b.Id.ToString()[..8].ToUpperInvariant(),
-            Customer: b.User != null ? $"{b.User.FirstName} {b.User.LastName}".Trim() : "Unknown",
-            Car: b.Vehicle != null ? $"{b.Vehicle.Make} {b.Vehicle.Model}".Trim() : "Unknown",
-            Date: b.CreatedAt.ToString("MMM dd, yyyy"),
-            Status: b.Status.ToString(),
-            Amount: b.TotalPrice ?? 0
-        )).ToList().AsReadOnly();
+            .Select(b => new RecentBookingDto(
+                b.Id,
+                b.BookingNumber ?? "",
+                b.User != null ? (b.User.FirstName + " " + b.User.LastName).Trim() : "Unknown",
+                b.Vehicle != null ? (b.Vehicle.Make + " " + b.Vehicle.Model).Trim() : "Unknown",
+                b.Vehicle != null && b.Vehicle.Images.Any()
+                    ? (b.Vehicle.Images.Any(i => i.IsPrimary)
+                        ? b.Vehicle.Images.Where(i => i.IsPrimary).Select(i => i.ImageUrl).FirstOrDefault()
+                        : b.Vehicle.Images.Select(i => i.ImageUrl).FirstOrDefault())
+                    : null,
+                b.CreatedAt,
+                b.Status.ToString()
+            ))
+            .ToListAsync(cancellationToken)).AsReadOnly();
     }
 
     public async Task<IReadOnlyList<UpcomingBookingDto>> GetUpcomingBookingsAsync(Guid? supplierId, int days = 7, CancellationToken cancellationToken = default)

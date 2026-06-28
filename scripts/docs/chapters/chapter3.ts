@@ -25,6 +25,7 @@ export const chapter3: ChapterConfig = {
     "codeblock fences. ALL diagrams MUST be in Mermaid syntax inside codeblocks. Follow proper",
     "Figure X.x referencing for every diagram. Follow UML best practices. Page target: 20-25 A4 pages.",
   ].join(" "),
+  includeDiagrams: true,
   userPrompt: [
     "Generate CHAPTER 3: SYSTEM DESIGN & ARCHITECTURE",
     "",

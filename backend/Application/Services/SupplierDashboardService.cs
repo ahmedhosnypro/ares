@@ -119,4 +119,39 @@ public class SupplierDashboardService : ISupplierDashboardService
             Cancelled: GetCount(BookingStatus.Cancelled, BookingStatus.CancelledByAdmin, BookingStatus.Expired)
         );
     }
+
+    /// <inheritdoc />
+    public async Task<Dictionary<string, int>> GetVehicleStatusDistributionAsync(
+        Guid supplierId,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Computing supplier vehicle status distribution for {SupplierId}", supplierId);
+
+        // Fetch just the AvailabilityStatus field for the supplier's active vehicles
+        var vehicles = await _context.Vehicles
+            .AsNoTracking()
+            .Where(v => v.UserId == supplierId && v.IsActive)
+            .Select(v => new { v.AvailabilityStatus })
+            .ToListAsync(cancellationToken);
+
+        var statuses = Enum.GetNames<VehicleStatus>();
+        var distribution = statuses.ToDictionary(s => s, s => 0);
+
+        foreach (var v in vehicles)
+        {
+            var availability = v.AvailabilityStatus ?? nameof(VehicleStatus.Available);
+
+            if (distribution.ContainsKey(availability))
+            {
+                distribution[availability]++;
+            }
+            else
+            {
+                // Fallback for unexpected values
+                distribution[nameof(VehicleStatus.Available)]++;
+            }
+        }
+
+        return distribution;
+    }
 }

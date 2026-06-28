@@ -13,5 +13,7 @@ namespace Backend.Application.Interfaces
         Task<DriverProfileDetailsDto> GetProfileAsync(Guid userId, CancellationToken cancellationToken = default);
         Task<DriverProfileDetailsDto> CompleteProfileAsync(Guid userId, CompleteDriverProfileRequest request, CancellationToken cancellationToken = default);
         Task<DriverProfileStatusDto> UpdateAvailabilityAsync(Guid userId, UpdateDriverAvailabilityRequest request, CancellationToken cancellationToken = default);
+        Task<DriverPaymentInfoDto> GetPayoutInfoAsync(Guid userId, CancellationToken ct = default);
+        Task<DriverPaymentInfoDto> UpdatePayoutInfoAsync(Guid userId, UpdatePayoutInfoRequest request, CancellationToken ct = default);
     }
 }

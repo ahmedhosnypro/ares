@@ -62,6 +62,22 @@ namespace Backend.Api.Controllers
             return Ok(await _service.UpdateAvailabilityAsync(userId.Value, request, ct));
         }
 
+        [HttpGet("payout-info")]
+        public async Task<IActionResult> GetPayoutInfo(CancellationToken ct)
+        {
+            var userId = TryGetUserId();
+            if (userId is null) return Unauthorized();
+            return Ok(await _service.GetPayoutInfoAsync(userId.Value, ct));
+        }
+
+        [HttpPut("payout-info")]
+        public async Task<IActionResult> UpdatePayoutInfo([FromBody] UpdatePayoutInfoRequest request, CancellationToken ct)
+        {
+            var userId = TryGetUserId();
+            if (userId is null) return Unauthorized();
+            return Ok(await _service.UpdatePayoutInfoAsync(userId.Value, request, ct));
+        }
+
         private Guid? TryGetUserId()
         {
             var claim = User.FindFirst(ClaimTypes.NameIdentifier);

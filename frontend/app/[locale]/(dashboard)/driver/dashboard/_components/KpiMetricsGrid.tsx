@@ -7,6 +7,7 @@ import {
   AssignmentTurnedIn as VerifiedIcon,
   AccessTime as ActiveTripsIcon,
   Star as StarIcon,
+  AccountBalanceWallet as AccountBalanceWalletIcon,
 } from "@mui/icons-material";
 
 interface KpiMetricsGridProps {
@@ -14,9 +15,16 @@ interface KpiMetricsGridProps {
   readonly tripsCompleted: number;
   readonly activeUpcomingCount: number;
   readonly rating: string;
+  readonly availableBalance?: string;
 }
 
-export default function KpiMetricsGrid({ earnings, tripsCompleted, activeUpcomingCount, rating }: KpiMetricsGridProps) {
+export default function KpiMetricsGrid({
+  earnings,
+  tripsCompleted,
+  activeUpcomingCount,
+  rating,
+  availableBalance,
+}: KpiMetricsGridProps) {
   const t = useTranslations("dashboard.driverDashboard.kpiMetrics");
 
   return (
@@ -30,7 +38,7 @@ export default function KpiMetricsGrid({ earnings, tripsCompleted, activeUpcomin
       </Typography>
       <Grid container spacing={3}>
         {/* Earnings Card */}
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: availableBalance ? 2.4 : 3 }}>
           <Card
             sx={{
               borderRadius: 4,
@@ -63,7 +71,7 @@ export default function KpiMetricsGrid({ earnings, tripsCompleted, activeUpcomin
         </Grid>
 
         {/* Trips Completed Card */}
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: availableBalance ? 2.4 : 3 }}>
           <Card
             sx={{
               borderRadius: 4,
@@ -96,7 +104,7 @@ export default function KpiMetricsGrid({ earnings, tripsCompleted, activeUpcomin
         </Grid>
 
         {/* Active/Upcoming Card */}
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: availableBalance ? 2.4 : 3 }}>
           <Card
             sx={{
               borderRadius: 4,
@@ -129,7 +137,7 @@ export default function KpiMetricsGrid({ earnings, tripsCompleted, activeUpcomin
         </Grid>
 
         {/* Rating Card */}
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: availableBalance ? 2.4 : 3 }}>
           <Card
             sx={{
               borderRadius: 4,
@@ -160,6 +168,48 @@ export default function KpiMetricsGrid({ earnings, tripsCompleted, activeUpcomin
             </CardContent>
           </Card>
         </Grid>
+
+        {/* Available Balance Card */}
+        {availableBalance && (
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <Card
+              sx={{
+                borderRadius: 4,
+                border: "1px solid",
+                borderColor: "border.light",
+                bgcolor: "background.paper",
+                boxShadow: theme => theme.palette.shadow.card,
+              }}
+            >
+              <CardContent sx={{ p: 2.5 }}>
+                <Stack direction="row" spacing={2} sx={{ alignItems: "center", justifyContent: "space-between" }}>
+                  <Box>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px" }}
+                    >
+                      {t("availableBalance")}
+                    </Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: "text.primary", mt: 0.5 }}>
+                      {availableBalance}
+                    </Typography>
+                  </Box>
+                  <Avatar
+                    sx={{
+                      bgcolor: "status.confirmed.main",
+                      color: "status.confirmed.contrastText",
+                      width: 42,
+                      height: 42,
+                    }}
+                  >
+                    <AccountBalanceWalletIcon fontSize="medium" />
+                  </Avatar>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
       </Grid>
     </Box>
   );

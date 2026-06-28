@@ -2,6 +2,7 @@ using Backend.Application.Interfaces;
 using Backend.Domain.Entities;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Backend.Infrastructure.Data.Interceptors;
 
 namespace Backend.Infrastructure.Data
@@ -38,6 +39,10 @@ namespace Backend.Infrastructure.Data
         public DbSet<ServiceArea> ServiceAreas { get; set; }
         public DbSet<DriverReview> DriverReviews { get; set; }
         public DbSet<Booking> Bookings { get; set; }
+        public DbSet<DriverEarning> DriverEarnings { get; set; }
+        public DbSet<DriverPayout> DriverPayouts { get; set; }
+        public DbSet<DriverPayoutTransaction> DriverPayoutTransactions { get; set; }
+        public DbSet<DriverPaymentInfo> DriverPaymentInfo { get; set; }
         public DbSet<BookingPayment> Payments { get; set; }
         public DbSet<Inspector> Inspectors { get; set; }
         public DbSet<VehicleInspection> VehicleInspections { get; set; }
@@ -77,11 +82,16 @@ namespace Backend.Infrastructure.Data
         IQueryable<TermsSection> IApplicationDbContext.TermsSections => TermsSections;
         IQueryable<AboutSection> IApplicationDbContext.AboutSections => AboutSections;
         IQueryable<PrivacySection> IApplicationDbContext.PrivacySections => PrivacySections;
-        IQueryable<Driver> IApplicationDbContext.Drivers => Drivers;
-        IQueryable<DriverProfile> IApplicationDbContext.DriverProfiles => DriverProfiles;
-        IQueryable<DriverWorkArea> IApplicationDbContext.DriverWorkAreas => DriverWorkAreas;
-        IQueryable<ServiceArea> IApplicationDbContext.ServiceAreas => ServiceAreas;
-        IQueryable<DriverReview> IApplicationDbContext.DriverReviews => DriverReviews;
+    IQueryable<Driver> IApplicationDbContext.Drivers => Drivers;
+    // Driver Module (Phase 1+) — additive, see DriverProfile entity.
+        DbSet<DriverProfile> IApplicationDbContext.DriverProfiles => DriverProfiles;
+        DbSet<DriverWorkArea> IApplicationDbContext.DriverWorkAreas => DriverWorkAreas;
+        DbSet<ServiceArea> IApplicationDbContext.ServiceAreas => ServiceAreas;
+        DbSet<DriverReview> IApplicationDbContext.DriverReviews => DriverReviews;
+        DbSet<DriverEarning> IApplicationDbContext.DriverEarnings => DriverEarnings;
+        DbSet<DriverPayout> IApplicationDbContext.DriverPayouts => DriverPayouts;
+        DbSet<DriverPayoutTransaction> IApplicationDbContext.DriverPayoutTransactions => DriverPayoutTransactions;
+        DbSet<DriverPaymentInfo> IApplicationDbContext.DriverPaymentInfo => DriverPaymentInfo;
         IQueryable<VehicleInspection> IApplicationDbContext.VehicleInspections => VehicleInspections;
         IQueryable<InspectionImage> IApplicationDbContext.InspectionImages => InspectionImages;
         IQueryable<Inspector> IApplicationDbContext.Inspectors => Inspectors;
@@ -128,6 +138,11 @@ namespace Backend.Infrastructure.Data
         public void AddDriverProfile(DriverProfile driverProfile)
         {
             DriverProfiles.Add(driverProfile);
+        }
+
+        public void AddDriverPaymentInfo(DriverPaymentInfo driverPaymentInfo)
+        {
+            DriverPaymentInfo.Add(driverPaymentInfo);
         }
 
         public void AddVehicleImage(VehicleImage image)
@@ -185,9 +200,18 @@ namespace Backend.Infrastructure.Data
             CategoryOffers.Remove(offer);
         }
 
+        public Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
+        {
+            return Database.BeginTransactionAsync(cancellationToken);
+        }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+            builder.Entity<DriverPayoutTransaction>(entity =>
+            {
+                entity.HasKey(e => new { e.DriverPayoutId, e.DriverEarningId });
+            });
             builder.ApplyConfigurationsFromAssembly(System.Reflection.Assembly.GetExecutingAssembly());
         }
     }

@@ -61,6 +61,7 @@ import {
 } from "@mui/icons-material";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 
 import {
   getSupplierReviews,
@@ -85,26 +86,17 @@ import VehicleStats from "@/app/[locale]/(dashboard)/_components/VehicleStats";
 
 // ── Filter dropdown options — kept in sync with the backend ──────────────────
 
-const RATING_OPTIONS: readonly { label: string; value: string }[] = [
-  { label: "All ratings", value: "" },
-  { label: "5 stars", value: "5" },
-  { label: "4 stars", value: "4" },
-  { label: "3 stars", value: "3" },
-  { label: "2 stars", value: "2" },
-  { label: "1 star", value: "1" },
+const REPLY_STATUS_VALUES: readonly { labelKey: string; value: SupplierReviewReplyStatus }[] = [
+  { labelKey: "filters.allReplies", value: "" },
+  { labelKey: "filters.replied", value: "replied" },
+  { labelKey: "filters.notReplied", value: "unReplied".toLowerCase() as SupplierReviewReplyStatus },
 ];
 
-const REPLY_STATUS_OPTIONS: readonly { label: string; value: SupplierReviewReplyStatus }[] = [
-  { label: "All replies", value: "" },
-  { label: "Replied", value: "replied" },
-  { label: "Not replied", value: "unReplied".toLowerCase() as SupplierReviewReplyStatus },
-];
-
-const SORT_OPTIONS: readonly { label: string; value: SupplierReviewSortBy }[] = [
-  { label: "Newest first", value: "newest" },
-  { label: "Oldest first", value: "oldest" },
-  { label: "Highest rating", value: "highest" },
-  { label: "Lowest rating", value: "lowest" },
+const SORT_VALUES: readonly { labelKey: string; value: SupplierReviewSortBy }[] = [
+  { labelKey: "filters.newestFirst", value: "newest" },
+  { labelKey: "filters.oldestFirst", value: "oldest" },
+  { labelKey: "filters.highestRating", value: "highest" },
+  { labelKey: "filters.lowestRating", value: "lowest" },
 ];
 
 const PAGE_SIZE = 10;
@@ -133,6 +125,7 @@ export default function SupplierReviewsClient() {
   const theme = useTheme();
   const { data: session, status: sessionStatus } = useSession();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const t = useTranslations("dashboard.supplierReviews");
 
   // ── Filter state ────────────────────────────────────────────────────────────
   const [vehicleFilter, setVehicleFilter] = useState<string>("");
@@ -179,7 +172,7 @@ export default function SupplierReviewsClient() {
     const accessToken = session?.accessToken;
     if (!accessToken) {
       setLoading(false);
-      setError("You must be signed in to view your reviews.");
+      setError(t("errors.notSignedInReviews"));
       return;
     }
 
@@ -202,7 +195,7 @@ export default function SupplierReviewsClient() {
       setData(result);
     } catch (err) {
       logger.error("Failed to load supplier reviews", err);
-      setError("Could not load your reviews. Please try again shortly.");
+      setError(t("errors.loadReviewsFailed"));
       setData(null);
     } finally {
       setLoading(false);
@@ -210,6 +203,7 @@ export default function SupplierReviewsClient() {
   }, [
     session?.accessToken,
     sessionStatus,
+    t,
     vehicleFilter,
     ratingFilter,
     replyStatusFilter,
@@ -224,7 +218,7 @@ export default function SupplierReviewsClient() {
     const accessToken = session?.accessToken;
     if (!accessToken) {
       setStatsLoading(false);
-      setStatsError("You must be signed in to view review statistics.");
+      setStatsError(t("errors.notSignedInStats"));
       return;
     }
     setStatsLoading(true);
@@ -234,12 +228,12 @@ export default function SupplierReviewsClient() {
       setStats(result);
     } catch (err) {
       logger.error("Failed to load supplier review stats", err);
-      setStatsError("Could not load review statistics.");
+      setStatsError(t("errors.loadStatsFailed"));
       setStats(null);
     } finally {
       setStatsLoading(false);
     }
-  }, [session?.accessToken, sessionStatus]);
+  }, [session?.accessToken, sessionStatus, t]);
 
   // Pull the supplier's vehicles for the filter dropdown.
   const fetchVehicles = useCallback(async () => {
@@ -288,19 +282,19 @@ export default function SupplierReviewsClient() {
       try {
         const updated = await saveSupplierReply(accessToken, reviewId, { reply: replyText });
         replaceLocalRow(updated);
-        showToast(replyTarget?.hasReply ? "Reply updated." : "Reply submitted.", "success");
+        showToast(replyTarget?.hasReply ? t("toasts.replyUpdated") : t("toasts.replySubmitted"), "success");
         setReplyTarget(null);
         // Refresh stats — pendingReplies may have changed.
         void fetchStats();
       } catch (err) {
         logger.error("Failed to save supplier reply", err);
-        const msg = err instanceof Error ? err.message : "Failed to save reply.";
+        const msg = err instanceof Error ? err.message : t("toasts.failedToSaveReply");
         showToast(msg, "error");
       } finally {
         setSubmittingReply(false);
       }
     },
-    [session?.accessToken, replyTarget?.hasReply, replaceLocalRow, showToast, fetchStats]
+    [session?.accessToken, replyTarget?.hasReply, replaceLocalRow, showToast, fetchStats, t]
   );
 
   const handleSubmitReport = useCallback(
@@ -311,17 +305,17 @@ export default function SupplierReviewsClient() {
       try {
         const updated = await reportSupplierReview(accessToken, reviewId, { reason });
         replaceLocalRow(updated);
-        showToast(reportTarget?.isReported ? "Report updated." : "Review reported.", "success");
+        showToast(reportTarget?.isReported ? t("toasts.reportUpdated") : t("toasts.reviewReported"), "success");
         setReportTarget(null);
       } catch (err) {
         logger.error("Failed to report supplier review", err);
-        const msg = err instanceof Error ? err.message : "Failed to report review.";
+        const msg = err instanceof Error ? err.message : t("toasts.failedToReportReview");
         showToast(msg, "error");
       } finally {
         setSubmittingReport(false);
       }
     },
-    [session?.accessToken, reportTarget?.isReported, replaceLocalRow, showToast]
+    [session?.accessToken, reportTarget?.isReported, replaceLocalRow, showToast, t]
   );
 
   // ── Derived helpers ─────────────────────────────────────────────────────────
@@ -342,35 +336,35 @@ export default function SupplierReviewsClient() {
 
     return [
       {
-        label: "Average Rating",
+        label: t("stats.averageRating"),
         value: averageRatingStr,
         color: "warning",
         icon: <StarIcon fontSize="medium" />,
-        subtitle: "Across all your vehicles",
+        subtitle: t("stats.acrossAllVehicles"),
       },
       {
-        label: "Total Reviews",
+        label: t("stats.totalReviews"),
         value: stats ? Math.max(0, Math.trunc(stats.totalReviews || 0)).toLocaleString() : "—",
         color: "primary",
         icon: <ReviewIcon fontSize="medium" />,
-        subtitle: "Lifetime customer reviews",
+        subtitle: t("stats.lifetimeCustomerReviews"),
       },
       {
-        label: "5-Star Reviews",
+        label: t("stats.fiveStarReviews"),
         value: stats ? Math.max(0, Math.trunc(stats.fiveStarReviews || 0)).toLocaleString() : "—",
         color: "success",
         icon: <TopRatedIcon fontSize="medium" />,
-        subtitle: "Top-rated bookings",
+        subtitle: t("stats.topRatedBookings"),
       },
       {
-        label: "Pending Replies",
+        label: t("stats.pendingReplies"),
         value: stats ? Math.max(0, Math.trunc(stats.pendingReplies || 0)).toLocaleString() : "—",
         color: "info",
         icon: <PendingIcon fontSize="medium" />,
-        subtitle: "Reviews awaiting your reply",
+        subtitle: t("stats.reviewsAwaitingReply"),
       },
     ];
-  }, [stats]);
+  }, [stats, t]);
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
@@ -382,10 +376,10 @@ export default function SupplierReviewsClient() {
       >
         <Box>
           <Typography variant="h4" sx={{ fontWeight: 800, fontSize: { xs: "1.5rem", sm: "1.6rem", md: "2rem" } }}>
-            Reviews
+            {t("title")}
           </Typography>
           <Typography color="text.secondary" variant="body2">
-            Monitor customer feedback, reply to reviews, and flag inappropriate content.
+            {t("description")}
           </Typography>
         </Box>
       </Stack>
@@ -405,14 +399,14 @@ export default function SupplierReviewsClient() {
             select
             fullWidth
             size="small"
-            label="Vehicle"
+            label={t("filters.vehicle")}
             value={vehicleFilter}
             onChange={e => {
               setVehicleFilter(e.target.value);
             }}
             sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "background.paper" } }}
           >
-            <MenuItem value="">All vehicles</MenuItem>
+            <MenuItem value="">{t("filters.allVehicles")}</MenuItem>
             {vehicles.map(v => (
               <MenuItem key={v.vehicleId} value={v.vehicleId}>
                 {v.make} {v.model}
@@ -426,18 +420,19 @@ export default function SupplierReviewsClient() {
             select
             fullWidth
             size="small"
-            label="Rating"
+            label={t("filters.rating")}
             value={ratingFilter}
             onChange={e => {
               setRatingFilter(e.target.value);
             }}
             sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "background.paper" } }}
           >
-            {RATING_OPTIONS.map(opt => (
-              <MenuItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </MenuItem>
-            ))}
+            <MenuItem value="">{t("filters.allRatings")}</MenuItem>
+            <MenuItem value="5">{t("filters.fiveStars")}</MenuItem>
+            <MenuItem value="4">{t("filters.fourStars")}</MenuItem>
+            <MenuItem value="3">{t("filters.threeStars")}</MenuItem>
+            <MenuItem value="2">{t("filters.twoStars")}</MenuItem>
+            <MenuItem value="1">{t("filters.oneStar")}</MenuItem>
           </TextField>
         </Grid>
         <Grid size={{ xs: 6, sm: 3, md: 2 }}>
@@ -445,16 +440,16 @@ export default function SupplierReviewsClient() {
             select
             fullWidth
             size="small"
-            label="Reply"
+            label={t("filters.reply")}
             value={replyStatusFilter}
             onChange={e => {
               setReplyStatusFilter(e.target.value as SupplierReviewReplyStatus);
             }}
             sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "background.paper" } }}
           >
-            {REPLY_STATUS_OPTIONS.map(opt => (
+            {REPLY_STATUS_VALUES.map(opt => (
               <MenuItem key={opt.value} value={opt.value}>
-                {opt.label}
+                {t(opt.labelKey)}
               </MenuItem>
             ))}
           </TextField>
@@ -464,7 +459,7 @@ export default function SupplierReviewsClient() {
             fullWidth
             size="small"
             type="date"
-            label="From"
+            label={t("filters.from")}
             value={fromDate}
             onChange={e => {
               setFromDate(e.target.value);
@@ -478,7 +473,7 @@ export default function SupplierReviewsClient() {
             fullWidth
             size="small"
             type="date"
-            label="To"
+            label={t("filters.to")}
             value={toDate}
             onChange={e => {
               setToDate(e.target.value);
@@ -492,16 +487,16 @@ export default function SupplierReviewsClient() {
             select
             fullWidth
             size="small"
-            label="Sort"
+            label={t("filters.sort")}
             value={sortBy}
             onChange={e => {
               setSortBy(e.target.value as SupplierReviewSortBy);
             }}
             sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "background.paper" } }}
           >
-            {SORT_OPTIONS.map(opt => (
+            {SORT_VALUES.map(opt => (
               <MenuItem key={opt.value} value={opt.value}>
-                {opt.label}
+                {t(opt.labelKey)}
               </MenuItem>
             ))}
           </TextField>
@@ -543,18 +538,16 @@ export default function SupplierReviewsClient() {
                   height: 64,
                   mx: "auto",
                   mb: 2,
-                  bgcolor: t => alpha(t.palette.text.disabled, 0.1),
+                  bgcolor: thm => alpha(thm.palette.text.disabled, 0.1),
                 }}
               >
                 <ReviewIcon sx={{ fontSize: 32, color: "text.disabled" }} />
               </Avatar>
               <Typography variant="h6" sx={{ fontWeight: 700 }} color="text.secondary">
-                {filtersActive ? "No reviews match these filters" : "You don't have any reviews yet"}
+                {filtersActive ? t("empty.noReviewsMatchFilters") : t("empty.noReviewsYet")}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                {filtersActive
-                  ? "Try clearing filters or adjusting your search."
-                  : "Reviews appear here once customers complete a trip and leave feedback."}
+                {filtersActive ? t("empty.tryClearingFilters") : t("empty.reviewsWillAppear")}
               </Typography>
             </Paper>
           );
@@ -570,7 +563,7 @@ export default function SupplierReviewsClient() {
                 <TableHead>
                   <TableRow
                     sx={{
-                      bgcolor: t => alpha(t.palette.primary.main, 0.04),
+                      bgcolor: thm => alpha(thm.palette.primary.main, 0.04),
                       "& .MuiTableCell-head": {
                         fontWeight: 700,
                         fontSize: 12,
@@ -583,14 +576,14 @@ export default function SupplierReviewsClient() {
                       },
                     }}
                   >
-                    <TableCell sx={{ pl: 3 }}>Customer</TableCell>
-                    <TableCell>Vehicle</TableCell>
-                    <TableCell>Rating</TableCell>
-                    <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Comment</TableCell>
-                    <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Date</TableCell>
-                    <TableCell>Reply</TableCell>
+                    <TableCell sx={{ pl: 3 }}>{t("table.customer")}</TableCell>
+                    <TableCell>{t("table.vehicle")}</TableCell>
+                    <TableCell>{t("table.rating")}</TableCell>
+                    <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{t("table.comment")}</TableCell>
+                    <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{t("table.date")}</TableCell>
+                    <TableCell>{t("table.reply")}</TableCell>
                     <TableCell align="right" sx={{ pr: 3 }}>
-                      Actions
+                      {t("table.actions")}
                     </TableCell>
                   </TableRow>
                 </TableHead>
@@ -620,7 +613,7 @@ export default function SupplierReviewsClient() {
               }}
             >
               <Typography variant="caption" color="text.secondary">
-                Showing <strong>{rows.length}</strong> of {totalCount} reviews
+                {t("table.showing")} <strong>{rows.length}</strong> {t("table.of")} {totalCount} {t("table.reviews")}
               </Typography>
               {totalPages > 1 && (
                 <Pagination
@@ -712,6 +705,7 @@ interface ReviewTableRowProps {
 
 function ReviewTableRow({ row, onView, onReply, onReport }: ReviewTableRowProps) {
   const theme = useTheme();
+  const t = useTranslations("dashboard.supplierReviews");
   const vehicleImage = toImageUrl(row.vehicleImageUrl);
 
   return (
@@ -719,7 +713,7 @@ function ReviewTableRow({ row, onView, onReply, onReport }: ReviewTableRowProps)
       hover
       sx={{
         "&:last-child td": { border: 0 },
-        "&:hover": { bgcolor: t => alpha(t.palette.primary.main, 0.03) },
+        "&:hover": { bgcolor: thm => alpha(thm.palette.primary.main, 0.03) },
       }}
     >
       <TableCell sx={{ py: 1.8, pl: 3 }}>
@@ -738,12 +732,12 @@ function ReviewTableRow({ row, onView, onReply, onReport }: ReviewTableRowProps)
           </Avatar>
           <Box sx={{ minWidth: 0 }}>
             <Typography sx={{ fontWeight: 700, fontSize: 14 }} noWrap>
-              {row.customerName || "Customer"}
+              {row.customerName || t("table.customerDefault")}
             </Typography>
             {row.isReported && (
               <Chip
                 size="small"
-                label="Reported"
+                label={t("table.reported")}
                 sx={{
                   mt: 0.25,
                   fontWeight: 700,
@@ -768,7 +762,7 @@ function ReviewTableRow({ row, onView, onReply, onReport }: ReviewTableRowProps)
               borderRadius: 2,
               overflow: "hidden",
               flexShrink: 0,
-              bgcolor: t => alpha(t.palette.primary.main, 0.08),
+              bgcolor: thm => alpha(thm.palette.primary.main, 0.08),
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -803,7 +797,7 @@ function ReviewTableRow({ row, onView, onReply, onReport }: ReviewTableRowProps)
 
       <TableCell sx={{ display: { xs: "none", md: "table-cell" }, maxWidth: 320 }}>
         <Typography variant="body2" color={row.comment ? "text.primary" : "text.disabled"}>
-          {row.comment ? truncate(row.comment) : "No comment"}
+          {row.comment ? truncate(row.comment) : t("table.noComment")}
         </Typography>
       </TableCell>
 
@@ -818,7 +812,7 @@ function ReviewTableRow({ row, onView, onReply, onReport }: ReviewTableRowProps)
           <Stack spacing={0.5} sx={{ alignItems: "flex-start" }}>
             <Chip
               size="small"
-              label="Replied"
+              label={t("table.replied")}
               sx={{
                 fontWeight: 700,
                 bgcolor: alpha(theme.palette.success.main, 0.12),
@@ -835,7 +829,7 @@ function ReviewTableRow({ row, onView, onReply, onReport }: ReviewTableRowProps)
         ) : (
           <Chip
             size="small"
-            label="Pending"
+            label={t("table.pending")}
             sx={{
               fontWeight: 700,
               bgcolor: alpha(theme.palette.warning.main, 0.12),
@@ -848,7 +842,7 @@ function ReviewTableRow({ row, onView, onReply, onReport }: ReviewTableRowProps)
 
       <TableCell align="right" sx={{ pr: 3 }}>
         <Stack direction="row" spacing={0.5} sx={{ justifyContent: "flex-end" }}>
-          <Tooltip title="View details">
+          <Tooltip title={t("table.viewDetails")}>
             <IconButton
               size="small"
               sx={{ borderRadius: 2 }}
@@ -859,7 +853,7 @@ function ReviewTableRow({ row, onView, onReply, onReport }: ReviewTableRowProps)
               <ViewIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-          <Tooltip title={row.hasReply ? "Edit reply" : "Reply"}>
+          <Tooltip title={row.hasReply ? t("table.editReply") : t("table.replyAction")}>
             <IconButton
               size="small"
               sx={{
@@ -873,14 +867,14 @@ function ReviewTableRow({ row, onView, onReply, onReport }: ReviewTableRowProps)
               {row.hasReply ? <EditIcon fontSize="small" /> : <ReplyIcon fontSize="small" />}
             </IconButton>
           </Tooltip>
-          <Tooltip title={row.isReported ? "Update report" : "Report review"}>
+          <Tooltip title={row.isReported ? t("table.updateReport") : t("table.reportReview")}>
             <IconButton
               size="small"
               sx={{
                 borderRadius: 2,
                 color: row.isReported ? "error.main" : "text.secondary",
                 "&:hover": {
-                  bgcolor: t => alpha(t.palette.error.main, 0.1),
+                  bgcolor: thm => alpha(thm.palette.error.main, 0.1),
                   color: "error.main",
                 },
               }}

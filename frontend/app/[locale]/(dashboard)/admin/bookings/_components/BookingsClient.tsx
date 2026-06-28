@@ -278,7 +278,9 @@ export default function BookingsClient({ initialBookings, initialAnalytics }: Bo
       <DeleteBookingDialog
         open={openDelete}
         isDeleting={isDeleting}
-        onClose={() => setOpenDelete(false)}
+        onClose={() => {
+          setOpenDelete(false);
+        }}
         onConfirm={confirmDelete}
         t={t}
         tCommon={tCommon}

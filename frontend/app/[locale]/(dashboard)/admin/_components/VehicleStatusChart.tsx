@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, Typography, Box, useTheme, Select, MenuItem, FormControl } from "@mui/material";
-import { ResponsiveContainer, PieChart, Pie, Tooltip, Legend, Label, Sector } from "recharts";
+import { ResponsiveContainer, PieChart, Pie, Tooltip, Label, Sector } from "recharts";
 import { VehicleStatusData, mockCityVehicleData } from "./mockData";
 
 export default function VehicleStatusChart({ data }: { readonly data: readonly VehicleStatusData[] }) {
@@ -50,7 +50,9 @@ export default function VehicleStatusChart({ data }: { readonly data: readonly V
         flexDirection: "column",
       }}
     >
-      <CardContent sx={{ p: { xs: 2, sm: 3 }, flexGrow: 1, minWidth: 0 }}>
+      <CardContent
+        sx={{ p: 2, "&:last-child": { pb: 2 }, flexGrow: 1, minWidth: 0, display: "flex", flexDirection: "column" }}
+      >
         <Box
           sx={{
             display: "flex",
@@ -58,7 +60,7 @@ export default function VehicleStatusChart({ data }: { readonly data: readonly V
             justifyContent: "space-between",
             alignItems: { xs: "flex-start", sm: "center" },
             gap: { xs: 2, sm: 0 },
-            mb: 3,
+            mb: 2,
           }}
         >
           <Typography variant="h6" sx={{ fontWeight: 700 }}>
@@ -81,66 +83,84 @@ export default function VehicleStatusChart({ data }: { readonly data: readonly V
             </Select>
           </FormControl>
         </Box>
-        <Box sx={{ width: "100%", height: 300, minWidth: 0, minHeight: 0 }}>
+        <Box
+          sx={{
+            width: "100%",
+            flexGrow: 1,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            minWidth: 0,
+            minHeight: 0,
+          }}
+        >
           {mounted && (
-            <ResponsiveContainer width="100%" height={300} minWidth={0}>
-              <PieChart>
-                <Pie
-                  data={displayData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={80}
-                  outerRadius={110}
-                  paddingAngle={2}
-                  dataKey="value"
-                  stroke="none"
-                  shape={(props: unknown) => {
-                    const p = props as { payload: { color: string } } & Record<string, unknown>;
-                    return <Sector {...p} fill={getThemeColor(p.payload.color)} />;
-                  }}
-                >
-                  <Label
-                    content={props => {
-                      const viewBox = props.viewBox;
-                      if (
-                        viewBox &&
-                        "cx" in viewBox &&
-                        "cy" in viewBox &&
-                        typeof viewBox.cx === "number" &&
-                        typeof viewBox.cy === "number"
-                      ) {
-                        return (
-                          <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="central">
-                            <tspan x={viewBox.cx} y={viewBox.cy - 10} fontSize="14" fill={theme.palette.text.secondary}>
-                              Total
-                            </tspan>
-                            <tspan
-                              x={viewBox.cx}
-                              y={viewBox.cy + 18}
-                              fontSize="28"
-                              fontWeight="bold"
-                              fill={theme.palette.text.primary}
-                            >
-                              {totalVehicles}
-                            </tspan>
-                          </text>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    borderRadius: 12,
-                    border: `1px solid ${theme.palette.border.main}`,
-                    boxShadow: theme.palette.shadow.card,
-                    backgroundColor: theme.palette.background.paper,
-                  }}
-                />
-                <Legend verticalAlign="bottom" height={36} />
-              </PieChart>
-            </ResponsiveContainer>
+            <>
+              <Box sx={{ height: 280, width: "100%" }}>
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                  <PieChart>
+                    <Pie
+                      data={displayData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={100}
+                      outerRadius={135}
+                      paddingAngle={2}
+                      dataKey="value"
+                      stroke="none"
+                      shape={(props: unknown) => {
+                        const p = props as { payload: { color: string } } & Record<string, unknown>;
+                        return <Sector {...p} fill={getThemeColor(p.payload.color)} />;
+                      }}
+                    >
+                      <Label
+                        content={props => {
+                          const viewBox = props.viewBox;
+                          if (
+                            viewBox &&
+                            "cx" in viewBox &&
+                            "cy" in viewBox &&
+                            typeof viewBox.cx === "number" &&
+                            typeof viewBox.cy === "number"
+                          ) {
+                            return (
+                              <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="central">
+                                <tspan
+                                  x={viewBox.cx}
+                                  y={viewBox.cy - 10}
+                                  fontSize="14"
+                                  fill={theme.palette.text.secondary}
+                                >
+                                  Total
+                                </tspan>
+                                <tspan
+                                  x={viewBox.cx}
+                                  y={viewBox.cy + 18}
+                                  fontSize="28"
+                                  fontWeight="bold"
+                                  fill={theme.palette.text.primary}
+                                >
+                                  {totalVehicles}
+                                </tspan>
+                              </text>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: 12,
+                        border: `1px solid ${theme.palette.border.main}`,
+                        boxShadow: theme.palette.shadow.card,
+                        backgroundColor: theme.palette.background.paper,
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </Box>
+            </>
           )}
         </Box>
       </CardContent>

@@ -152,26 +152,38 @@ public class SupplierEarningsService : ISupplierEarningsService
         return points;
     }
 
-    /// <inheritdoc />
     public async Task<IReadOnlyList<SupplierTopVehicleDto>> GetTopVehiclesAsync(
         Guid supplierId,
+        string sortBy = "earnings",
         CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Building supplier top vehicles for {SupplierId}", supplierId);
 
         // Step 1: aggregate earnings-eligible booking earnings per vehicle
-        // in a single GroupBy query, ordered by revenue desc and capped at
+        // in a single GroupBy query, ordered by revenue or bookings desc and capped at
         // the top N. Ownership + status + refund filters are all baked
         // into EarningsEligibleBookings(), so this query stays simple.
-        var aggregates = await EarningsEligibleBookings(supplierId)
+        var baseQuery = EarningsEligibleBookings(supplierId)
             .GroupBy(b => b.VehicleId)
             .Select(g => new
             {
                 VehicleId = g.Key,
                 TotalEarnings = g.Sum(b => b.SupplierAmount ?? 0m),
                 CompletedBookingsCount = g.Count(),
-            })
-            .OrderByDescending(x => x.TotalEarnings)
+            });
+
+        if (sortBy.ToLower() == "bookings")
+        {
+            baseQuery = baseQuery.OrderByDescending(x => x.CompletedBookingsCount)
+                                 .ThenByDescending(x => x.TotalEarnings);
+        }
+        else
+        {
+            baseQuery = baseQuery.OrderByDescending(x => x.TotalEarnings)
+                                 .ThenByDescending(x => x.CompletedBookingsCount);
+        }
+
+        var aggregates = await baseQuery
             .Take(TopVehiclesLimit)
             .ToListAsync(cancellationToken);
 

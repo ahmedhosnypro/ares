@@ -30,4 +30,12 @@ public interface ISupplierDashboardService
     Task<BookingsByStatusDto> GetBookingsByStatusAsync(
         Guid supplierId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns vehicle counts grouped by their actual AvailabilityStatus for the authenticated supplier.
+    /// Used for the Vehicle Status Distribution chart.
+    /// </summary>
+    Task<Dictionary<string, int>> GetVehicleStatusDistributionAsync(
+        Guid supplierId,
+        CancellationToken cancellationToken = default);
 }

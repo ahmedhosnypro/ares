@@ -44,19 +44,8 @@ interface ActiveAssignmentCardProps {
 }
 
 export default function ActiveAssignmentCard({ assignment }: ActiveAssignmentCardProps) {
-
   const t = useTranslations("dashboard.driverDashboard.activeAssignment");
 
-// Empty state - no active assignment
-if (!assignment) {
-    return (
-        <Card ...>
-            ... وكل كود الكارد بتاعك لغاية القوس الـ قفل }
-        </Card>
-    );
-}
-  
-  // Empty state — no active assignment
   if (!assignment) {
     return (
       <Card
@@ -89,10 +78,10 @@ if (!assignment) {
               <CarIcon fontSize="small" />
             </Avatar>
             <Typography variant="h6" sx={{ fontWeight: 700, color: "text.primary" }}>
-              Active Rental Assignment
+              {t("activeRentalAssignment")}
             </Typography>
           </Stack>
-          <Chip label="No Assignment" size="small" sx={{ fontWeight: 700, borderRadius: 2 }} />
+          <Chip label={t("noAssignment")} size="small" sx={{ fontWeight: 700, borderRadius: 2 }} />
         </Box>
         <CardContent
           sx={{
@@ -107,18 +96,15 @@ if (!assignment) {
         >
           <CarIcon sx={{ fontSize: 64, color: "text.disabled", opacity: 0.3 }} />
           <Typography variant="body1" sx={{ fontWeight: 600, color: "text.secondary" }}>
-            No active assignment
+            {t("noActiveAssignment")}
           </Typography>
           <Typography variant="caption" color="text.disabled" sx={{ textAlign: "center", maxWidth: 280 }}>
-            You have no ongoing trip at the moment. Check your upcoming schedule for future assignments.
+            {t("noAssignmentDescription")}
           </Typography>
         </CardContent>
       </Card>
     );
   }
-
-  const t = useTranslations("dashboard.driverDashboard.activeAssignment");
-
 
   return (
     <Card
@@ -484,9 +470,9 @@ if (!assignment) {
                     icon={<DurationIcon />}
                     label={(() => {
                       const d = assignment.rentalDuration;
-                      const drm = d.match(/^(\d+)\s+Days?\s+Remaining$/i);
+                      const drm = /^(\d+)\s+Days?\s+Remaining$/i.exec(d);
                       if (drm) return t("daysRemaining", { count: Number(drm[1]) });
-                      const dm = d.match(/^(\d+)\s+Days?$/i);
+                      const dm = /^(\d+)\s+Days?$/i.exec(d);
                       if (dm) {
                         const c = Number(dm[1]);
                         return c === 1 ? t("day") : t("days", { count: c });

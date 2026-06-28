@@ -17,6 +17,7 @@ export interface DriverDashboardLabels {
     scheduled: string;
     rating: string;
     ratingFormat: string;
+    availableBalance: string;
   };
   activeAssignment: {
     activeRentalAssignment: string;
@@ -37,6 +38,9 @@ export interface DriverDashboardLabels {
     day: string;
     days: string;
     daysRemaining: string;
+    noAssignment: string;
+    noActiveAssignment: string;
+    noAssignmentDescription: string;
   };
   upcomingSchedule: {
     calendarAndShiftSchedule: string;

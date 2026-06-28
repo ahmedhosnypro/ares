@@ -7,6 +7,7 @@ import {
   SyncAltOutlined as ChangeStatusIcon,
   DeleteOutlined as DeleteIcon,
 } from "@mui/icons-material";
+import { useTranslations } from "next-intl";
 
 interface BookingActionsMenuProps {
   readonly anchorEl: HTMLElement | null;
@@ -15,7 +16,7 @@ interface BookingActionsMenuProps {
   readonly onEdit: () => void;
   readonly onChangeStatus: () => void;
   readonly onDelete: () => void;
-  readonly t: any;
+  readonly t: ReturnType<typeof useTranslations>;
 }
 
 export default function BookingActionsMenu({

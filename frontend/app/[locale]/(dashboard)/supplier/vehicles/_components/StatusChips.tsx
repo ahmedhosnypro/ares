@@ -9,6 +9,7 @@
  */
 
 import { Chip, alpha, useTheme } from "@mui/material";
+import { useTranslations } from "next-intl";
 
 type StatusKey = "pending" | "approved" | "rejected" | "deleted" | "default";
 type AvailabilityKey = "available" | "unavailable" | "fullybooked" | "default";
@@ -32,6 +33,7 @@ function availabilityKey(av: string | null | undefined): AvailabilityKey {
 
 export function StatusChip({ status }: { readonly status: string | null | undefined }) {
   const theme = useTheme();
+  const t = useTranslations("dashboard.supplierVehicles");
   const palette = {
     pending: theme.palette.warning.main,
     approved: theme.palette.success.main,
@@ -40,7 +42,15 @@ export function StatusChip({ status }: { readonly status: string | null | undefi
     default: theme.palette.text.secondary,
   } as const;
   const colour = palette[statusKey(status)];
-  const label = status?.trim() ? status : "Unknown";
+
+  const chipLabels: Record<StatusKey, string> = {
+    pending: t("chips.pending"),
+    approved: t("chips.approved"),
+    rejected: t("chips.rejected"),
+    deleted: t("chips.unknown"),
+    default: t("chips.unknown"),
+  };
+  const label = chipLabels[statusKey(status)];
 
   return (
     <Chip
@@ -60,6 +70,7 @@ export function StatusChip({ status }: { readonly status: string | null | undefi
 
 export function AvailabilityChip({ availability }: { readonly availability: string | null | undefined }) {
   const theme = useTheme();
+  const t = useTranslations("dashboard.supplierVehicles");
   const palette = {
     available: theme.palette.success.main,
     unavailable: theme.palette.text.secondary,
@@ -67,7 +78,14 @@ export function AvailabilityChip({ availability }: { readonly availability: stri
     default: theme.palette.text.secondary,
   } as const;
   const colour = palette[availabilityKey(availability)];
-  const label = availability?.trim() ? availability : "Unknown";
+
+  const chipLabels: Record<AvailabilityKey, string> = {
+    available: t("chips.available"),
+    unavailable: t("chips.unavailable"),
+    fullybooked: t("chips.fullyBooked"),
+    default: t("chips.unknown"),
+  };
+  const label = chipLabels[availabilityKey(availability)];
 
   return (
     <Chip
