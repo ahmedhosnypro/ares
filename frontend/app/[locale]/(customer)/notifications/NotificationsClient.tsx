@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {
   Alert,
+  Avatar,
   Box,
   Card,
   Chip,
@@ -28,6 +29,7 @@ import {
   type NotificationItem,
 } from "@/api-clients/notfications/notfications";
 import { logger } from "@/utils/logger";
+import { getNotificationTypeConfig } from "@/utils/notification-type-config";
 import DeleteNotificationDialog from "@/components/notifications/DeleteNotificationDialog";
 import { useTranslations } from "next-intl";
 
@@ -147,6 +149,10 @@ export default function NotificationsClient() {
         ) {
           router.push(`/booking/${entityId}`);
         }
+      }
+
+      if (["DriverEarningReceived", "DriverPayoutCompleted", "DriverPayoutRejected"].includes(tag)) {
+        router.push("/driver/earnings");
       }
     }
   };
@@ -276,6 +282,9 @@ export default function NotificationsClient() {
                 void handleItemClick(n);
               }}
             >
+              <Avatar sx={{ width: 36, height: 36, flexShrink: 0, ...getNotificationTypeConfig(n.type).avatarSx }}>
+                {React.createElement(getNotificationTypeConfig(n.type).icon, { fontSize: "small" })}
+              </Avatar>
               <Box sx={{ flex: 1 }}>
                 <Typography
                   variant="subtitle1"

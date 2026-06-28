@@ -17,5 +17,8 @@ namespace Backend.Application.Interfaces
         Task NotifyCustomerNoDriverAvailableAsync(Guid customerId, Booking booking, CancellationToken cancellationToken = default);
         Task NotifyOtherDriversNotSelectedAsync(IEnumerable<Guid> otherDriverUserIds, Booking booking, CancellationToken cancellationToken = default);
         Task NotifyCustomerDriverAcceptedAsync(Guid customerId, Booking booking, CancellationToken cancellationToken = default);
+        Task NotifyDriverEarningReceivedAsync(Guid driverUserId, decimal netEarning, string bookingNumber, CancellationToken cancellationToken = default);
+        Task NotifyDriverPayoutCompletedAsync(Guid driverUserId, decimal amount, CancellationToken cancellationToken = default);
+        Task NotifyDriverPayoutRejectedAsync(Guid driverUserId, decimal amount, string reason, CancellationToken cancellationToken = default);
     }
 }

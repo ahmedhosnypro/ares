@@ -38,6 +38,10 @@ namespace Backend.Infrastructure.Data
         public DbSet<ServiceArea> ServiceAreas { get; set; }
         public DbSet<DriverReview> DriverReviews { get; set; }
         public DbSet<Booking> Bookings { get; set; }
+        public DbSet<DriverEarning> DriverEarnings { get; set; }
+        public DbSet<DriverPayout> DriverPayouts { get; set; }
+        public DbSet<DriverPayoutTransaction> DriverPayoutTransactions { get; set; }
+        public DbSet<DriverPaymentInfo> DriverPaymentInfo { get; set; }
         public DbSet<BookingPayment> Payments { get; set; }
         public DbSet<Inspector> Inspectors { get; set; }
         public DbSet<VehicleInspection> VehicleInspections { get; set; }
@@ -82,6 +86,9 @@ namespace Backend.Infrastructure.Data
         IQueryable<DriverWorkArea> IApplicationDbContext.DriverWorkAreas => DriverWorkAreas;
         IQueryable<ServiceArea> IApplicationDbContext.ServiceAreas => ServiceAreas;
         IQueryable<DriverReview> IApplicationDbContext.DriverReviews => DriverReviews;
+        IQueryable<DriverEarning> IApplicationDbContext.DriverEarnings => DriverEarnings;
+        IQueryable<DriverPayout> IApplicationDbContext.DriverPayouts => DriverPayouts;
+        IQueryable<DriverPaymentInfo> IApplicationDbContext.DriverPaymentInfo => DriverPaymentInfo;
         IQueryable<VehicleInspection> IApplicationDbContext.VehicleInspections => VehicleInspections;
         IQueryable<InspectionImage> IApplicationDbContext.InspectionImages => InspectionImages;
         IQueryable<Inspector> IApplicationDbContext.Inspectors => Inspectors;
@@ -128,6 +135,11 @@ namespace Backend.Infrastructure.Data
         public void AddDriverProfile(DriverProfile driverProfile)
         {
             DriverProfiles.Add(driverProfile);
+        }
+
+        public void AddDriverPaymentInfo(DriverPaymentInfo driverPaymentInfo)
+        {
+            DriverPaymentInfo.Add(driverPaymentInfo);
         }
 
         public void AddVehicleImage(VehicleImage image)

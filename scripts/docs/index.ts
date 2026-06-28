@@ -8,6 +8,7 @@ import { aggregateChapterParts } from "./lib/aggregate";
 import { CHAPTERS, getChapterById, getChaptersByIds, type ChapterConfig } from "./chapters";
 import { resolve, join } from "node:path";
 import { readdir, unlink } from "node:fs/promises";
+import { existsSync, readFileSync } from "node:fs";
 import {
   printBanner,
   logStep,
@@ -129,7 +130,7 @@ Options:
   --timeout <minutes>        Override streaming timeout per part (default: 10)
   --include-diagrams         Enable Mermaid diagram generation in chapters
   --no-diagrams              Disable Mermaid diagram generation
-  --page-target <n>          Target A4 page count for validation (default: 200)
+  --page-target <n>          Target A4 page count for validation (default: 200, uses PDF if available)
   --aggregate <filename>     Aggregate existing part files into a final chapter
   --parts <n>                Expected number of parts (used with --aggregate)
   --help, -h                 Show this help message
@@ -152,6 +153,11 @@ Examples:
   bun run generate.ts --chapter 3 --keep-parts    # Keep part files after aggregation
   bun run generate.ts --all --include-diagrams    # Generate all with Mermaid diagrams
   bun run generate.ts --aggregate chapter_3_system_design.md --parts 2
+
+PDF Generation (accurate page count):
+  bun run pdf                                    # Render all chapters to PDF via Quarto
+  bun run pdf --count-only                       # Count pages of existing PDF only
+  bun run pdf --clean                            # Clean rebuild
 
 Configuration:
   Copy .env.example to .env and fill in your API credentials.
@@ -346,10 +352,10 @@ async function dryRunChapter(
 async function runWithConcurrency<T>(
   tasks: Array<() => Promise<T>>,
   maxConcurrency: number
-): Promise<T[]> {
+): Promise<(T | undefined)[]> {
   if (tasks.length === 0) return [];
 
-  const results: T[] = new Array(tasks.length).fill(undefined) as T[];
+  const results: (T | undefined)[] = Array.from({ length: tasks.length }, () => undefined as T | undefined);
   let nextIndex = 0;
 
   async function runNext(): Promise<void> {
@@ -361,10 +367,13 @@ async function runWithConcurrency<T>(
 
       try {
         results[index] = await task();
-      } finally {
-        if (nextIndex < tasks.length) {
-          void runNext();
-        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Unknown error";
+        logError(`Task ${String(index)} failed: ${message}`);
+      }
+
+      if (nextIndex < tasks.length) {
+        void runNext();
       }
     }
   }
@@ -400,7 +409,8 @@ async function main(): Promise<void> {
     logInfo(`Max input tokens: ${String(config.MAX_INPUT_TOKENS)}`);
     logInfo(`Max output tokens: ${String(config.MAX_OUTPUT_TOKENS)}`);
     logInfo(`Generation timeout: ${String(config.GENERATION_TIMEOUT)}min`);
-    logInfo(`Output directory: ${config.OUTPUT_DIR}`);
+  logInfo(`Output directory: ${config.OUTPUT_DIR}`);
+
     logInfo(`Concurrency: ${String(config.CONCURRENCY)}`);
     if (options.splitThreshold !== null) {
       logInfo(`Split threshold: ${String(options.splitThreshold)}`);
@@ -474,7 +484,7 @@ async function main(): Promise<void> {
 
   logStep("Packing All Chapter Contexts");
 
-  const packResults: (PackResult | null)[] = new Array<PackResult | null>(chapters.length).fill(null);
+  const packResults: (PackResult | null)[] = Array.from({ length: chapters.length }, () => null as PackResult | null);
   const packTasks = chapters.map(
     async (chapter, index) => {
       try {
@@ -508,14 +518,19 @@ async function main(): Promise<void> {
 
   const results = await runWithConcurrency(generationTasks, config.CONCURRENCY);
 
-  const successCount = results.filter((r) => r.success).length;
-  const failCount = results.filter((r) => !r.success).length;
+  type GenResult = { success: boolean; error?: string };
+  const typedResults: GenResult[] = results.map((r) =>
+    r ?? { success: false, error: "Task returned undefined" }
+  );
+  const successCount = typedResults.filter((r) => r.success).length;
+  const failCount = typedResults.filter((r) => !r.success).length;
+  const undefCount = results.filter((r) => r === undefined).length;
 
   logStep("Generation Summary");
   logSuccess(`Generated: ${String(successCount)} chapter(s)`);
   if (failCount > 0) {
     logError(`Failed: ${String(failCount)} chapter(s)`);
-    const failedChapters = chapters.filter((_, i) => !results[i]?.success);
+    const failedChapters = chapters.filter((_, i) => !typedResults[i]?.success);
     if (failedChapters.length > 0) {
       logWarn("Failed chapters:");
       for (const ch of failedChapters) {
@@ -525,30 +540,50 @@ async function main(): Promise<void> {
   }
   logInfo(`Output directory: ${config.OUTPUT_DIR}`);
 
+  if (undefCount > 0) {
+    logWarn(`${String(undefCount)} chapter(s) did not return a result. Check error logs above.`);
+  }
+
   const effectivePageTarget = options.pageTarget ?? config.PAGE_TARGET;
   if (effectivePageTarget > 0) {
-    logStep("Page Count Estimation");
-    const outputDir = resolve(import.meta.dirname, config.OUTPUT_DIR);
+    logStep("Page Count Check (PDF-based)");
+    const pdfFile = resolve(import.meta.dirname, "_pdf", "ares-docs.pdf");
     try {
-      const entries = await readdir(outputDir);
-      const mdFiles = entries.filter(e => e.endsWith(".md") && !e.includes(".part"));
-      let totalChars = 0;
-      for (const f of mdFiles) {
-        const filePath = join(outputDir, f);
-        const file = Bun.file(filePath);
-        const text = await file.text();
-        totalChars += text.length;
-      }
-      const estimatedPages = Math.round(totalChars / 3000);
-      logInfo(`Total characters across ${String(mdFiles.length)} files: ${totalChars.toLocaleString()}`);
-      logInfo(`Estimated A4 pages (approx 3000 chars/page): ${String(estimatedPages)}`);
-      if (estimatedPages < effectivePageTarget) {
-        logWarn(`Estimated ${String(estimatedPages)} pages is below target of ${String(effectivePageTarget)}. Consider increasing MAX_OUTPUT_TOKENS or expanding chapter prompts.`);
+      if (existsSync(pdfFile)) {
+        const buf = readFileSync(pdfFile);
+        const text = buf.toString("latin1");
+        const pageMatches = text.match(/\/Type\s*\/Page\b(?!\s*s)/g);
+        const pageCount = pageMatches ? pageMatches.length : 0;
+        logInfo(`Accurate A4 page count (from PDF): ${String(pageCount)}`);
+        if (pageCount < effectivePageTarget) {
+          logWarn(`Actual ${String(pageCount)} pages is below target of ${String(effectivePageTarget)}. Consider increasing MAX_OUTPUT_TOKENS or expanding chapter prompts.`);
+        } else {
+          logSuccess(`Actual ${String(pageCount)} pages meets target of ${String(effectivePageTarget)}`);
+        }
       } else {
-        logSuccess(`Estimated ${String(estimatedPages)} pages meets target of ${String(effectivePageTarget)}`);
+        logWarn("PDF not found at _pdf/ares-docs.pdf. Run `bun run pdf` first to get an accurate page count.");
+        logInfo("Falling back to character-based estimation...");
+        const outputDir = resolve(import.meta.dirname, config.OUTPUT_DIR);
+        const entries = await readdir(outputDir);
+        const mdFiles = entries.filter(e => e.endsWith(".md") && !e.includes(".part"));
+        let totalChars = 0;
+        for (const f of mdFiles) {
+          const filePath = join(outputDir, f);
+          const file = Bun.file(filePath);
+          const text = await file.text();
+          totalChars += text.length;
+        }
+        const estimatedPages = Math.round(totalChars / 3000);
+        logInfo(`Total characters across ${String(mdFiles.length)} files: ${totalChars.toLocaleString()}`);
+        logInfo(`Estimated A4 pages (approx 3000 chars/page): ${String(estimatedPages)}`);
+        if (estimatedPages < effectivePageTarget) {
+          logWarn(`Estimated ${String(estimatedPages)} pages is below target of ${String(effectivePageTarget)}. Consider increasing MAX_OUTPUT_TOKENS or expanding chapter prompts.`);
+        } else {
+          logSuccess(`Estimated ${String(estimatedPages)} pages meets target of ${String(effectivePageTarget)}`);
+        }
       }
     } catch {
-      logWarn("Could not estimate page count from output files");
+      logWarn("Could not read PDF page count. Run `bun run pdf` first for accurate results.");
     }
   }
 }

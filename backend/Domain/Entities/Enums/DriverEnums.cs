@@ -2,64 +2,144 @@ using System.Text.Json.Serialization;
 
 namespace Backend.Domain.Entities.Enums
 {
+/// <summary>
+/// Lifecycle status of a <see cref="DriverProfile"/>. Persisted as a 
+/// string in the <c>driver_profiles.Status</c> column so adding new
+/// values is safe and ordering does not matter on disk.
+/// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum DriverProfileStatus
+{
     /// <summary>
-    /// Lifecycle status of a <see cref="DriverProfile"/>. Persisted as a
-    /// string in the <c>driver_profiles.Status</c> column so adding new
-    /// values is safe and ordering does not matter on disk.
+    /// Profile row created by registration but the driver has not yet
+    /// submitted license + ID + work areas. Driver cannot receive
+    /// requests; UI must force completion.
     /// </summary>
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public enum DriverProfileStatus
-    {
-        /// <summary>
-        /// Profile row created by registration but the driver has not yet
-        /// submitted license + ID + work areas. Driver cannot receive
-        /// requests; UI must force completion.
-        /// </summary>
-        Incomplete,
-
-        /// <summary>
-        /// Driver has submitted the complete profile and is waiting for an
-        /// admin decision. Driver can log in but cannot receive requests,
-        /// cannot appear in search, cannot be assigned.
-        /// </summary>
-        PendingVerification,
-
-        /// <summary>
-        /// Admin approved the driver. Together with
-        /// <see cref="DriverAvailability.Available"/> and
-        /// <c>IsActive = true</c> the driver becomes eligible for requests.
-        /// </summary>
-        Verified,
-
-        /// <summary>
-        /// Admin rejected the driver. <c>RejectionReason</c> is set. Driver
-        /// may resubmit which flips the status back to PendingVerification.
-        /// </summary>
-        Rejected,
-
-        /// <summary>
-        /// Admin has disabled the driver account. Treated like Rejected for
-        /// eligibility purposes but preserved separately for audit.
-        /// </summary>
-        Suspended
-    }
+    Incomplete,
 
     /// <summary>
-    /// Real-time availability flag the driver can toggle from their dashboard.
-    /// <see cref="Reserved"/> is set by the system while a driver is assigned
-    /// to an active booking and is not user-toggleable.
+    /// Driver has submitted the complete profile and is waiting for an
+    /// admin decision. Driver can log in but cannot receive requests,
+    /// cannot appear in search, cannot be assigned.
     /// </summary>
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public enum DriverAvailability
-    {
-        /// <summary>Default. Driver does not appear in matching results.</summary>
-        Unavailable,
+    PendingVerification,
 
-        /// <summary>Driver opted in and can receive new requests.</summary>
-        Available,
+    /// <summary>
+    /// Admin approved the driver. Together with 
+    /// <see cref="DriverAvailability.Available"/> and
+    /// <c>IsActive = true</c> the driver becomes eligible for requests.
+    /// </summary>
+    Verified,
 
-        /// <summary>System-managed — set while a booking is active.</summary>
-        Reserved
-    }
+    /// <summary>
+    /// Admin rejected the driver. <c>RejectionReason</c> is set. Driver
+    /// may resubmit which flips the status back to PendingVerification.
+    /// </summary>
+    Rejected,
+
+    /// <summary>
+    /// Admin has disabled the driver account. Treated like Rejected for
+    /// eligibility purposes but preserved separately for audit.
+    /// </summary>
+    Suspended
+}
+
+/// <summary>
+/// Real-time availability flag the driver can toggle from their dashboard.
+/// <see cref="Reserved"/> is set by the system while a driver is assigned
+/// to an active booking and is not user-toggleable.
+/// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum DriverAvailability
+{
+    /// <summary>Default. Driver does not appear in matching results.</summary>
+    Unavailable,
+
+    /// <summary>Driver opted in and can receive new requests.</summary>
+    Available,
+
+    /// <summary>System-managed — set while a booking is active.</summary>
+    Reserved
+}
+
+/// <summary>
+/// Status of a <see cref="DriverEarning"/> ledger entry.
+/// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum DriverEarningStatus
+{
+    /// <summary>
+    /// Earning is available for payout request.
+    /// Set when booking completes.
+    /// </summary>
+    Available,
+
+    /// <summary>
+    /// Earning is part of a pending payout request.
+    /// Set when driver requests a payout.
+    /// </summary>
+    PendingPayout,
+
+    /// <summary>
+    /// Earning has been paid out.
+    /// Set when admin approves a payout.
+    /// </summary>
+    Paid,
+
+    /// <summary>
+    /// Earning was reversed due to booking cancellation/refund.
+    /// </summary>
+    Reversed
+}
+
+/// <summary>
+/// Status of a <see cref="DriverPayout"/> withdrawal request.
+/// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum DriverPayoutStatus
+{
+    /// <summary>
+    /// Driver submitted the withdrawal request.
+    /// </summary>
+    Requested,
+
+    /// <summary>
+    /// Admin approved the request, but Paymob transfer not yet initiated.
+    /// </summary>
+    Approved,
+
+    /// <summary>
+    /// Paymob transfer initiated.
+    /// </summary>
+    Processing,
+
+    /// <summary>
+    /// Paymob transfer completed successfully.
+    /// </summary>
+    Completed,
+
+    /// <summary>
+    /// Admin rejected the request.
+    /// </summary>
+    Rejected,
+
+    /// <summary>
+    /// Paymob transfer failed.
+    /// </summary>
+    Failed
+}
+
+/// <summary>
+/// Payout method for driver withdrawals.
+/// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum DriverPayoutMethod
+{
+    /// <summary>
+    /// Paymob wallet (phone-number-based).
+    /// Only supported method initially.
+    /// </summary>
+    Wallet
+}
 
 }

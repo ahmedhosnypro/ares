@@ -12,6 +12,7 @@ using Backend.Domain.Entities;
 using Backend.Domain.Entities.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace Backend.Application.Services
 {
@@ -35,6 +36,8 @@ namespace Backend.Application.Services
         private readonly ICommissionService _commissionService;
         private readonly IPricingService _pricingService;
         private readonly INotificationService? _notificationService;
+        private readonly IDriverEarningsService? _driverEarningsService;
+        private readonly ILogger<CheckoutService>? _logger;
         private readonly IApplicationDbContext _context;
         private readonly IConfiguration _configuration;
 
@@ -53,7 +56,9 @@ namespace Backend.Application.Services
             IPricingService pricingService,
             IApplicationDbContext context,
             IConfiguration configuration,
-            INotificationService? notificationService = null)
+            INotificationService? notificationService = null,
+            IDriverEarningsService? driverEarningsService = null,
+            ILogger<CheckoutService>? logger = null)
         {
             _bookingRepository = bookingRepository;
             _vehicleRepository = vehicleRepository;
@@ -67,6 +72,8 @@ namespace Backend.Application.Services
             _context = context;
             _configuration = configuration;
             _notificationService = notificationService;
+            _driverEarningsService = driverEarningsService;
+            _logger = logger;
         }
 
         /// <summary>
@@ -659,6 +666,18 @@ namespace Backend.Application.Services
                 booking.HoldStartedAt = null;
                 booking.HoldExpiresAt = null; // release the hold immediately
                 await _bookingRepository.SaveChangesAsync(cancellationToken);
+
+                if (_driverEarningsService != null)
+                {
+                    try
+                    {
+                        await _driverEarningsService.ReverseEarningForBookingAsync(booking.Id, cancellationToken);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger?.LogError(ex, "Failed to reverse driver earning for booking {BookingId}", booking.Id);
+                    }
+                }
 
                 return await BuildStateAsync(booking, cancellationToken);
             }

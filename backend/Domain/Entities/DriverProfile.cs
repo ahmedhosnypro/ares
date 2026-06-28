@@ -124,7 +124,10 @@ namespace Backend.Domain.Entities
         [System.ComponentModel.DataAnnotations.Timestamp]
         public byte[]? RowVersion { get; set; }
 
-        // ── Navigation ───────────────────────────────────────────────────
-        public ICollection<DriverWorkArea> WorkAreas { get; set; } = new List<DriverWorkArea>();
-    }
+    // ── Navigation ───────────────────────────────────────────────────
+    public ICollection<DriverWorkArea> WorkAreas { get; set; } = new List<DriverWorkArea>();
+    public ICollection<DriverEarning> Earnings { get; set; } = new List<DriverEarning>();
+    public ICollection<DriverPayout> Payouts { get; set; } = new List<DriverPayout>();
+    public DriverPaymentInfo? PaymentInfo { get; set; }
+}
 }

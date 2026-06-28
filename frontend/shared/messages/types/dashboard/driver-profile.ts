@@ -13,4 +13,15 @@ export interface DriverProfileLabels {
   failedToLoadProfile: string;
   kycApproved: string;
   kycPending: string;
+  payoutInfo: string;
+  walletPhoneNumber: string;
+  verified: string;
+  pendingVerification: string;
+  setupPayoutInfo: string;
+  editPayoutInfo: string;
+  save: string;
+  walletPhonePlaceholder: string;
+  payoutInfoDescription: string;
+  walletSetupComplete: string;
+  walletNeedsVerification: string;
 }

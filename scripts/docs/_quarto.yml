@@ -1,0 +1,84 @@
+project:
+  type: book
+  output-dir: _pdf
+
+book:
+  title: "ares-docs"
+  subtitle: "Ares Car Rental Platform - Graduation Project Documentation"
+  chapters:
+    - index.md
+    - generated/chapter_1_introduction.md
+    - generated/chapter_2_background.md
+    - generated/chapter_3_system_design.md
+    - generated/chapter_4_results.md
+    - generated/chapter_5_conclusion.md
+    - generated/chapter_6_testing.md
+    - generated/chapter_7_deployment.md
+    - generated/appendix_a.md
+    - generated/appendix_b_references.md
+
+format:
+  pdf:
+    documentclass: scrreprt
+    classoption: [oneside]
+    papersize: a4
+    top-margin: 30mm
+    bottom-margin: 25mm
+    left-margin: 38mm
+    right-margin: 25mm
+    mainfont: "Times New Roman"
+    sansfont: "Arial"
+    monofont: "Consolas"
+    fontsize: 12pt
+    linestretch: 1.5
+    par-indent: 4em
+    toc: true
+    toc-depth: 3
+    lot: true
+    lof: true
+    number-sections: true
+    secnumdepth: 3
+    highlight-style: github
+    include-in-header:
+      text: |
+        \usepackage{setspace}
+        \onehalfspacing
+        \usepackage{float}
+        \floatstyle{plain}
+        \usepackage{caption}
+        \captionsetup[table]{skip=6pt}
+        \captionsetup[figure]{skip=6pt}
+        \usepackage{booktabs}
+        \usepackage{longtable}
+        \usepackage{tabu}
+    include-before-body:
+      text: |
+        \thispagestyle{empty}
+        \begin{center}
+        {\Large\bfseries AL-AZHAR UNIVERSITY}\\[4pt]
+        {\large\bfseries Faculty of Engineering}\\[2pt]
+        {\large\bfseries Systems \& Computers Department}\\[12pt]
+        {\large جامعة الأزهر - كلية الهندسه - قسم هندسة النظم والحاسبات}\\[24pt]
+        {\large\bfseries A Project Submitted in partial fulfilment of the requirements\\for the Degree of Bachelor of Science\\in Systems and Computers Engineering}\\[24pt]
+        {\LARGE\bfseries Ares Car Rental Platform}\\[18pt]
+        {\large\bfseries 2025}\\[24pt]
+        {\large\bfseries Submitted By}\\[4pt]
+        \rule{0pt}{0pt}\\[2pt]
+        {\large\bfseries Supervised by}\\[4pt]
+        \rule{0pt}{0pt}\\[18pt]
+        {\large\bfseries 2024–2025}
+        \end{center}
+        \newpage
+        \thispagestyle{empty}
+        \section*{Examiner Committee}
+        \begin{tabular}{l l l}
+        \textbf{Name} & \textbf{Role} & \textbf{Signature} \\[4pt]
+        \rule{4cm}{0.4pt} & President    & \rule{3cm}{0.4pt} \\[4pt]
+        \rule{4cm}{0.4pt} & Supervisor   & \rule{3cm}{0.4pt} \\[4pt]
+        \rule{4cm}{0.4pt} & Member       & \rule{3cm}{0.4pt}
+        \end{tabular}
+        \newpage
+
+execute:
+  echo: false
+  warning: false

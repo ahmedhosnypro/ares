@@ -28,10 +28,13 @@ public interface IApplicationDbContext
     IQueryable<PrivacySection> PrivacySections { get; }
     IQueryable<Driver> Drivers { get; }
     // Driver Module (Phase 1+) — additive, see DriverProfile entity.
-    IQueryable<DriverProfile> DriverProfiles { get; }
-    IQueryable<DriverWorkArea> DriverWorkAreas { get; }
-    IQueryable<ServiceArea> ServiceAreas { get; }
-    IQueryable<DriverReview> DriverReviews { get; }
+        IQueryable<DriverProfile> DriverProfiles { get; }
+        IQueryable<DriverWorkArea> DriverWorkAreas { get; }
+        IQueryable<ServiceArea> ServiceAreas { get; }
+        IQueryable<DriverReview> DriverReviews { get; }
+        IQueryable<DriverEarning> DriverEarnings { get; }
+        IQueryable<DriverPayout> DriverPayouts { get; }
+        IQueryable<DriverPaymentInfo> DriverPaymentInfo { get; }
     IQueryable<VehicleInspection> VehicleInspections { get; }
     IQueryable<InspectionImage> InspectionImages { get; }
     IQueryable<Inspector> Inspectors { get; }
@@ -42,6 +45,7 @@ public interface IApplicationDbContext
     void AddVerification(Verification verification);
     void AddDriver(Driver driver);
     void AddDriverProfile(DriverProfile driverProfile);
+    void AddDriverPaymentInfo(DriverPaymentInfo driverPaymentInfo);
     void AddVehicleImage(VehicleImage image);
     void RemoveVehicleImages(IEnumerable<VehicleImage> images);
     void RemoveVehicleFeatures(IEnumerable<VehicleFeature> features);

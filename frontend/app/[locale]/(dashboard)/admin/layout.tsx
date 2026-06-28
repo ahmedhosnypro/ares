@@ -13,6 +13,7 @@ import {
   Public as CountriesIcon,
   Place as LocationsIcon,
   VerifiedUser as VerifiedUserIcon,
+  AccountBalanceWallet as AccountBalanceWalletIcon,
 } from "@mui/icons-material";
 import DashboardShell, { type DashboardMenuItem } from "../_components/DashboardShell";
 
@@ -25,6 +26,7 @@ export default function AdminLayout({ children }: { readonly children: React.Rea
     { text: t("categories"), icon: <CategoryIcon />, path: "/admin/categories" },
     { text: t("users"), icon: <UsersIcon />, path: "/admin/users" },
     { text: t("verifications"), icon: <VerifiedUserIcon />, path: "/admin/verifications" },
+    { text: t("driverEarnings"), icon: <AccountBalanceWalletIcon />, path: "/admin/driver-earnings" },
     { text: t("locations"), icon: <LocationsIcon />, path: "/admin/locations" },
     { text: t("countries"), icon: <CountriesIcon />, path: "/admin/countries" },
     { text: t("notifications"), icon: <NotificationsIcon />, path: "/admin/notifications" },
