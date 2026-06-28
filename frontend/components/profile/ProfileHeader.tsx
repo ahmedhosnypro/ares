@@ -19,6 +19,18 @@ import { toApiUrl } from "@/utils/api-client";
 import { toImageUrl } from "@/utils/image-url";
 import { logger } from "@/utils/logger";
 
+interface ValidationErrorDetail {
+  readonly Message?: string;
+  readonly message?: string;
+}
+
+interface ApiErrorResponse {
+  readonly validationErrors?: readonly ValidationErrorDetail[];
+  readonly ValidationErrors?: readonly ValidationErrorDetail[];
+  readonly message?: string;
+  readonly Message?: string;
+}
+
 interface ProfileHeaderProps {
   readonly userId: string;
   readonly accessToken: string;
@@ -29,6 +41,43 @@ interface ProfileHeaderProps {
   readonly completeness: number;
   readonly isAdmin?: boolean;
 }
+
+const validateProfilePhoto = (file: File, t: (key: string) => string): string | null => {
+  const allowedExtensions = [".jpg", ".jpeg", ".png"];
+  const fileExtension = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
+  if (!allowedExtensions.includes(fileExtension)) {
+    return t("profileHeader.invalidFileType");
+  }
+
+  const maxFileSize = 5 * 1024 * 1024;
+  if (file.size > maxFileSize) {
+    return t("profileHeader.fileTooLarge");
+  }
+
+  return null;
+};
+
+const getUploadErrorMessage = async (response: Response, fallbackMessage: string): Promise<string> => {
+  try {
+    const errData = (await response.clone().json()) as ApiErrorResponse | null | undefined;
+    if (errData) {
+      const validationErrors = errData.validationErrors ?? errData.ValidationErrors;
+      if (validationErrors && validationErrors.length > 0) {
+        const firstErr = validationErrors[0];
+        return firstErr.message ?? firstErr.Message ?? fallbackMessage;
+      }
+      return errData.message ?? errData.Message ?? fallbackMessage;
+    }
+  } catch {
+    try {
+      const rawText = await response.clone().text();
+      if (rawText) return rawText;
+    } catch {
+      // Return fallback
+    }
+  }
+  return fallbackMessage;
+};
 
 export default function ProfileHeader({
   userId,
@@ -58,6 +107,18 @@ export default function ProfileHeader({
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Validate photo
+    const validationError = validateProfilePhoto(file, t);
+    if (validationError) {
+      setSnackbar({
+        open: true,
+        message: validationError,
+        severity: "error",
+      });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
     setIsUploading(true);
 
     try {
@@ -72,12 +133,16 @@ export default function ProfileHeader({
         },
       });
 
-      if (!response.ok) throw new Error("Upload failed");
+      if (!response.ok) {
+        const fallbackMsg = t("profileHeader.photoUpdatedError");
+        const errorMsg = await getUploadErrorMessage(response, fallbackMsg);
+        throw new Error(errorMsg);
+      }
 
       const data = (await response.json()) as {
-        profilePhotoUrl?: string;
-        ProfilePhotoUrl?: string;
-        photoUrl?: string;
+        readonly profilePhotoUrl?: string;
+        readonly ProfilePhotoUrl?: string;
+        readonly photoUrl?: string;
       };
 
       const newPhotoUrl = data.profilePhotoUrl ?? data.ProfilePhotoUrl ?? data.photoUrl ?? URL.createObjectURL(file);
@@ -88,11 +153,12 @@ export default function ProfileHeader({
         message: t("profileHeader.photoUpdatedSuccess"),
         severity: "success",
       });
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("Upload profile photo error", error);
+      const errorMessage = error instanceof Error ? error.message : t("profileHeader.photoUpdatedError");
       setSnackbar({
         open: true,
-        message: t("profileHeader.photoUpdatedError"),
+        message: errorMessage,
         severity: "error",
       });
     } finally {
