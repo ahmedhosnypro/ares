@@ -1,37 +1,39 @@
 import type { InspectorHistoryLabels } from "../../../types/dashboard/inspector/history";
 
-export const inspectorHistory: InspectorHistoryLabels = {
+const history: InspectorHistoryLabels = {
   title: "سجل الفحوصات",
-  description: "عرض جميع الفحوصات المقدمة.",
-  search: {
-    placeholder: "ابحث برقم الحجز، المركبة، أو الحالة...",
-  },
-  filter: {
-    statusLabel: "الحالة",
-    allStatuses: "جميع الحالات",
-    approved: "مقبول",
-    rejected: "مرفوض",
-    pending: "قيد الانتظار",
-  },
-  emptySearch: {
+  description: "عرض جميع الفحوصات التي قمت بتقديمها.",
+  searchPlaceholder: "البحث برقم الحجز، المركبة، أو الحالة...",
+  filterStatusLabel: "الحالة",
+  filterAllStatuses: "جميع الحالات",
+  noResults: {
     title: "لم يتم العثور على نتائج",
-    description: "حاول تعديل بحثك أو فلتر الحالة.",
+    description: "حاول تعديل مصطلح البحث أو تصفية الحالة.",
   },
-  emptyState: {
+  emptyHistory: {
     title: "لا يوجد سجل بعد",
-    description: "ستظهر الفحوصات المقدمة هنا.",
+    description: "الفحوصات التي يتم تقديمها ستظهر هنا.",
   },
   mobileCard: {
-    photos: "الصور: {count}",
-    submittedDate: "تم الإرسال: {date}",
+    photosCount: "الصور: {count}",
+    submittedAt: "تاريخ التقديم: {date}",
     submittedFallback: "—",
     viewReport: "عرض التقرير",
   },
   table: {
     booking: "الحجز",
     vehicle: "المركبة",
-    submittedAt: "تاريخ الإرسال",
+    submittedAt: "تاريخ التقديم",
     photos: "الصور",
+    status: "الحالة",
+    action: "الإجراء",
     viewDetails: "عرض التفاصيل",
   },
+  status: {
+    pending: "معلق",
+    approved: "مقبول",
+    rejected: "مرفوض",
+  },
 };
+
+export default history;

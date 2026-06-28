@@ -15,6 +15,7 @@ import {
   MenuItem,
 } from "@mui/material";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import axios from "axios";
 import { toApiUrl } from "@/utils/api-client";
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
@@ -27,6 +28,7 @@ interface SettingsResponse {
 
 export default function GeneralSettingsTab() {
   const { data: session } = useSession();
+  const t = useTranslations("dashboardAdmin.settings");
 
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -64,7 +66,7 @@ export default function GeneralSettingsTab() {
   const handleSubmit = async (e: SyntheticEvent) => {
     e.preventDefault();
     if (!session?.accessToken) {
-      setErrorMsg("Unauthorized. Please log in.");
+      setErrorMsg(t("general.unauthorized"));
       return;
     }
     setLoading(true);
@@ -74,9 +76,9 @@ export default function GeneralSettingsTab() {
       await axios.put(toApiUrl("/api/update-settings"), formData, {
         headers: { Authorization: `Bearer ${session.accessToken}` },
       });
-      setSuccessMsg("Settings updated successfully!");
+      setSuccessMsg(t("general.success"));
     } catch (err: unknown) {
-      let message = "Failed to update settings";
+      let message = t("general.error");
       if (axios.isAxiosError(err)) {
         const data = err.response?.data as { message?: string } | undefined;
         message = data?.message ?? err.message;
@@ -110,10 +112,10 @@ export default function GeneralSettingsTab() {
           <Grid container spacing={3}>
             <Grid size={{ xs: 12 }}>
               <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-                Global Configuration
+                {t("general.title")}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Set the default language and currency for the entire platform.
+                {t("general.subtitle")}
               </Typography>
             </Grid>
 
@@ -121,7 +123,7 @@ export default function GeneralSettingsTab() {
               <TextField
                 select
                 fullWidth
-                label="Default Language"
+                label={t("general.languageLabel")}
                 name="language"
                 value={formData.language}
                 onChange={handleChange}
@@ -138,7 +140,7 @@ export default function GeneralSettingsTab() {
               <TextField
                 select
                 fullWidth
-                label="Default Currency"
+                label={t("general.currencyLabel")}
                 name="currency"
                 value={formData.currency}
                 onChange={handleChange}
@@ -162,7 +164,7 @@ export default function GeneralSettingsTab() {
                   startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SaveRoundedIcon />}
                   sx={{ borderRadius: 2, px: 4, fontWeight: 700 }}
                 >
-                  Save Settings
+                  {t("general.saveSettings")}
                 </Button>
               </Stack>
             </Grid>

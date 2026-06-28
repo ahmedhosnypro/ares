@@ -21,6 +21,7 @@ import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import {
   getNotifications,
   markNotificationAsRead,
@@ -46,6 +47,7 @@ interface NotificationResponse {
 
 export default function NotificationsPage() {
   const { data: session, status } = useSession();
+  const t = useTranslations("dashboardAdmin.notifications");
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -81,13 +83,13 @@ export default function NotificationsPage() {
         setNotifications(notificationData);
         setError(null);
       } catch (err) {
-        if (!background) setError("Failed to load notifications. Please try again later.");
+        if (!background) setError(t("loadError"));
         logger.error("Fetch Error", err);
       } finally {
         if (!background) setLoading(false);
       }
     },
-    [token]
+    [token, t]
   );
 
   useEffect(() => {
@@ -158,7 +160,7 @@ export default function NotificationsPage() {
       setNotifications(prev => prev.filter(n => n.id !== deletingNotification.id));
       setToast({
         open: true,
-        message: "Notification deleted successfully.",
+        message: t("deleteSuccess"),
         severity: "success",
       });
       window.dispatchEvent(new CustomEvent("notifications-updated"));
@@ -170,7 +172,7 @@ export default function NotificationsPage() {
         setNotifications(prev => prev.filter(n => n.id !== deletingNotification.id));
         setToast({
           open: true,
-          message: "Notification deleted successfully.",
+          message: t("deleteSuccess"),
           severity: "success",
         });
         window.dispatchEvent(new CustomEvent("notifications-updated"));
@@ -178,7 +180,7 @@ export default function NotificationsPage() {
       } else {
         setToast({
           open: true,
-          message: "Failed to delete notification. Please try again.",
+          message: t("deleteError"),
           severity: "error",
         });
       }
@@ -200,7 +202,7 @@ export default function NotificationsPage() {
   if (status === "unauthenticated") {
     return (
       <Container maxWidth="md" sx={{ py: 4 }}>
-        <Alert severity="info">Please sign in to view your notifications.</Alert>
+        <Alert severity="info">{t("signInPrompt")}</Alert>
       </Container>
     );
   }
@@ -213,7 +215,7 @@ export default function NotificationsPage() {
         <Box sx={{ p: 10, textAlign: "center" }}>
           <CircularProgress size={30} />
           <Typography variant="body2" sx={{ mt: 2, color: "text.secondary" }}>
-            Loading your feed...
+            {t("loadingFeed")}
           </Typography>
         </Box>
       );
@@ -222,7 +224,7 @@ export default function NotificationsPage() {
     if (notifications.length === 0) {
       return (
         <Box sx={{ p: 10, textAlign: "center" }}>
-          <Typography color="text.secondary">You&apos;re all caught up! No notifications.</Typography>
+          <Typography color="text.secondary">{t("allCaughtUp")}</Typography>
         </Box>
       );
     }
@@ -267,7 +269,7 @@ export default function NotificationsPage() {
               {/* Actions */}
               <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 {!n.isRead ? (
-                  <Tooltip title="Mark as Read">
+                  <Tooltip title={t("markAsReadTooltip")}>
                     <IconButton
                       size="small"
                       color="primary"
@@ -282,10 +284,10 @@ export default function NotificationsPage() {
                   </Tooltip>
                 ) : (
                   <Typography variant="caption" color="text.disabled" sx={{ fontStyle: "italic" }}>
-                    Read
+                    {t("readStatus")}
                   </Typography>
                 )}
-                <Tooltip title="Delete">
+                <Tooltip title={t("deleteTooltip")}>
                   <IconButton
                     size="small"
                     color="error"
@@ -311,15 +313,15 @@ export default function NotificationsPage() {
       <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 4 }}>
         <Typography variant="h4" sx={{ fontWeight: "800", display: "flex", alignItems: "center", gap: 2 }}>
           <NotificationsActiveIcon color="primary" fontSize="large" />
-          Notifications
+          {t("title")}
         </Typography>
         <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
           <Chip
-            label={`${unreadCount.toString()} Unread`}
+            label={`${unreadCount.toString()} ${t("unread")}`}
             color={unreadCount > 0 ? "primary" : "default"}
             sx={{ fontWeight: "bold" }}
           />
-          <Tooltip title="Refresh">
+          <Tooltip title={t("refresh")}>
             <span>
               <IconButton
                 onClick={() => {
@@ -333,7 +335,7 @@ export default function NotificationsPage() {
               </IconButton>
             </span>
           </Tooltip>
-          <Tooltip title="Mark all as read">
+          <Tooltip title={t("markAllRead")}>
             <span>
               <Button
                 variant="outlined"
@@ -345,7 +347,7 @@ export default function NotificationsPage() {
                 disabled={markingAll || unreadCount === 0}
                 sx={{ textTransform: "none", fontWeight: 600 }}
               >
-                Mark all as read
+                {t("markAllRead")}
               </Button>
             </span>
           </Tooltip>

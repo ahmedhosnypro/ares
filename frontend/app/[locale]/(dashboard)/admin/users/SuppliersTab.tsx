@@ -37,6 +37,7 @@ import {
 } from "@mui/material";
 
 import { Link } from "@/shared/i18n/routing";
+import { useTranslations } from "next-intl";
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityOutlinedIcon from "@mui/icons-material/LaunchOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
@@ -46,16 +47,19 @@ import BusinessIcon from "@mui/icons-material/Business";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import { deleteSupplier } from "@/api-clients/suppliers/suppliers";
 import { getSuppliers, type Supplier } from "@/api-clients/suppliers/suppliers";
+import { toggleUserStatus } from "@/api-clients/users/users";
 import { logger } from "@/utils/logger";
 import VehicleStats from "@/app/[locale]/(dashboard)/_components/VehicleStats";
 
 interface SupplierMobileCardProps {
   readonly s: Supplier;
   readonly theme: Theme;
+  readonly onToggleStatus: (supplier: Supplier) => void | Promise<void>;
   readonly onDeleteClick: (supplier: Supplier) => void;
 }
 
-function SupplierMobileCard({ s, theme, onDeleteClick }: SupplierMobileCardProps) {
+function SupplierMobileCard({ s, theme, onToggleStatus, onDeleteClick }: SupplierMobileCardProps) {
+  const t = useTranslations("dashboardAdmin.users");
   const isActive = s.status === "active";
   return (
     <Paper elevation={0} sx={{ p: 2, mb: 2, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
@@ -70,12 +74,12 @@ function SupplierMobileCard({ s, theme, onDeleteClick }: SupplierMobileCardProps
               {s.firstName} {s.lastName}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {s.phoneNumber || "No Phone"}
+              {s.phoneNumber || t("table.noPhone")}
             </Typography>
           </Box>
         </Stack>
         <Chip
-          label={s.status}
+          label={isActive ? t("form.active") : t("form.blocked")}
           size="small"
           sx={{
             textTransform: "capitalize",
@@ -89,7 +93,7 @@ function SupplierMobileCard({ s, theme, onDeleteClick }: SupplierMobileCardProps
       <Stack direction="row" sx={{ gap: 0.75, alignItems: "center", mb: 0.5 }}>
         <BusinessIcon fontSize="small" color="disabled" />
         <Typography variant="body2" sx={{ fontWeight: 500 }}>
-          {s.companyProfile?.companyName || "N/A"}
+          {s.companyProfile?.companyName || "—"}
         </Typography>
       </Stack>
 
@@ -98,22 +102,28 @@ function SupplierMobileCard({ s, theme, onDeleteClick }: SupplierMobileCardProps
       </Typography>
 
       <Stack direction="row" spacing={1}>
-        <Tooltip title="View Details">
+        <Tooltip title={t("table.viewDetails")}>
           <IconButton component={Link} href={`/admin/suppliers/${s.id}`} size="small">
             <VisibilityOutlinedIcon fontSize="small" />
           </IconButton>
         </Tooltip>
-        <Tooltip title="Edit">
+        <Tooltip title={t("table.editProfile")}>
           <IconButton component={Link} href={`/admin/suppliers/${s.id}/edit`} size="small">
             <EditOutlinedIcon fontSize="small" />
           </IconButton>
         </Tooltip>
-        <Tooltip title={isActive ? "Block" : "Activate"}>
-          <IconButton size="small" color={isActive ? "error" : "success"}>
+        <Tooltip title={isActive ? t("form.blocked") : t("form.active")}>
+          <IconButton
+            size="small"
+            color={isActive ? "error" : "success"}
+            onClick={() => {
+              void onToggleStatus(s);
+            }}
+          >
             {isActive ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
           </IconButton>
         </Tooltip>
-        <Tooltip title={s.status === "deleted" ? "Already deleted" : "Delete"}>
+        <Tooltip title={s.status === "deleted" ? t("table.alreadyDeleted") : t("table.delete")}>
           <span>
             <IconButton
               size="small"
@@ -135,6 +145,7 @@ function SupplierMobileCard({ s, theme, onDeleteClick }: SupplierMobileCardProps
 export default function SuppliersTab() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const t = useTranslations("dashboardAdmin.users");
 
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
@@ -168,6 +179,15 @@ export default function SuppliersTab() {
     void fetchSuppliers();
   }, []);
 
+  const handleToggleStatus = async (supplier: Supplier) => {
+    try {
+      await toggleUserStatus(supplier.id);
+      await fetchSuppliers();
+    } catch (err) {
+      logger.error("Failed to toggle supplier status", err);
+    }
+  };
+
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
     try {
@@ -198,11 +218,11 @@ export default function SuppliersTab() {
 
   const supplierStatsItems = useMemo(
     () => [
-      { label: "Total Suppliers", value: totalSuppliers, color: "primary", icon: <BusinessIcon fontSize="small" /> },
-      { label: "Active", value: activeSuppliers, color: "success", icon: <CheckCircleIcon fontSize="small" /> },
-      { label: "Blocked", value: blockedSuppliers, color: "error", icon: <BlockIcon fontSize="small" /> },
+      { label: t("stats.suppliers"), value: totalSuppliers, color: "primary", icon: <BusinessIcon fontSize="small" /> },
+      { label: t("form.active"), value: activeSuppliers, color: "success", icon: <CheckCircleIcon fontSize="small" /> },
+      { label: t("form.blocked"), value: blockedSuppliers, color: "error", icon: <BlockIcon fontSize="small" /> },
     ],
-    [totalSuppliers, activeSuppliers, blockedSuppliers]
+    [totalSuppliers, activeSuppliers, blockedSuppliers, t]
   );
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
@@ -217,10 +237,10 @@ export default function SuppliersTab() {
       >
         <Box>
           <Typography variant="h4" sx={{ fontWeight: 800, fontSize: { xs: "1.5rem", sm: "2rem", md: "2.125rem" } }}>
-            Suppliers Directory
+            {t("table.suppliersTitle")}
           </Typography>
           <Typography color="text.secondary" variant="body2">
-            Manage your product providers and partners
+            {t("table.suppliersSubtitle")}
           </Typography>
         </Box>
 
@@ -244,7 +264,7 @@ export default function SuppliersTab() {
                 "&:hover": { transform: "translateY(-2px)", boxShadow: 6 },
               }}
             >
-              + Add New Supplier
+              + {t("table.addSupplierBtn")}
             </Box>
           </Link>
         </Stack>
@@ -257,7 +277,7 @@ export default function SuppliersTab() {
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>
         <TextField
           fullWidth
-          placeholder="Search by name, email or company..."
+          placeholder={t("table.searchSuppliersPlaceholder")}
           value={search}
           onChange={e => {
             setSearch(e.target.value);
@@ -284,9 +304,9 @@ export default function SuppliersTab() {
             }}
             displayEmpty
           >
-            <MenuItem value="all">All Status</MenuItem>
-            <MenuItem value="active">Active</MenuItem>
-            <MenuItem value="blocked">Blocked</MenuItem>
+            <MenuItem value="all">{t("filters.allStatuses")}</MenuItem>
+            <MenuItem value="active">{t("form.active")}</MenuItem>
+            <MenuItem value="blocked">{t("form.blocked")}</MenuItem>
           </Select>
         </FormControl>
       </Stack>
@@ -306,6 +326,7 @@ export default function SuppliersTab() {
                 key={s.id}
                 s={s}
                 theme={theme}
+                onToggleStatus={handleToggleStatus}
                 onDeleteClick={supplier => {
                   setDeleteTarget(supplier);
                 }}
@@ -313,12 +334,12 @@ export default function SuppliersTab() {
             ))
           ) : (
             <Box sx={{ py: 8, textAlign: "center" }}>
-              <Typography color="text.secondary">No suppliers found</Typography>
+              <Typography color="text.secondary">{t("table.noSuppliers")}</Typography>
             </Box>
           )}
           <Stack direction="column" spacing={1} sx={{ alignItems: "center", mt: 2, mb: 1 }}>
             <Typography variant="caption">
-              Showing {pageData.length} of {filtered.length} suppliers
+              {t("table.showingSuppliersCount", { count: pageData.length, total: filtered.length })}
             </Typography>
             <Pagination
               count={totalPages}
@@ -341,11 +362,11 @@ export default function SuppliersTab() {
             <Table sx={{ minWidth: 550 }}>
               <TableHead>
                 <TableRow>
-                  <TableCell>Supplier</TableCell>
-                  <TableCell>Company</TableCell>
-                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Contact</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="right">Actions</TableCell>
+                  <TableCell>{t("table.supplierName")}</TableCell>
+                  <TableCell>{t("table.company")}</TableCell>
+                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{t("table.contact")}</TableCell>
+                  <TableCell>{t("table.status")}</TableCell>
+                  <TableCell align="right">{t("table.actions")}</TableCell>
                 </TableRow>
               </TableHead>
 
@@ -366,7 +387,7 @@ export default function SuppliersTab() {
                                 {s.firstName} {s.lastName}
                               </Typography>
                               <Typography variant="caption" color="text.secondary">
-                                {s.phoneNumber || "No Phone"}
+                                {s.phoneNumber || t("table.noPhone")}
                               </Typography>
                             </Box>
                           </Stack>
@@ -376,7 +397,7 @@ export default function SuppliersTab() {
                           <Stack direction="row" sx={{ gap: 1, alignItems: "center" }}>
                             <BusinessIcon fontSize="small" color="disabled" />
                             <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                              {s.companyProfile?.companyName || "N/A"}
+                              {s.companyProfile?.companyName || "—"}
                             </Typography>
                           </Stack>
                         </TableCell>
@@ -385,7 +406,7 @@ export default function SuppliersTab() {
 
                         <TableCell>
                           <Chip
-                            label={s.status}
+                            label={isActive ? t("form.active") : t("form.blocked")}
                             size="small"
                             sx={{
                               textTransform: "capitalize",
@@ -400,22 +421,28 @@ export default function SuppliersTab() {
 
                         <TableCell align="right">
                           <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end" }}>
-                            <Tooltip title="View Details">
+                            <Tooltip title={t("table.viewDetails")}>
                               <IconButton component={Link} href={`/admin/suppliers/${s.id}`} size="small">
                                 <VisibilityOutlinedIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
-                            <Tooltip title="Edit">
+                            <Tooltip title={t("table.editProfile")}>
                               <IconButton component={Link} href={`/admin/suppliers/${s.id}/edit`} size="small">
                                 <EditOutlinedIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
-                            <Tooltip title={isActive ? "Block" : "Activate"}>
-                              <IconButton size="small" color={isActive ? "error" : "success"}>
+                            <Tooltip title={isActive ? t("form.blocked") : t("form.active")}>
+                              <IconButton
+                                size="small"
+                                color={isActive ? "error" : "success"}
+                                onClick={() => {
+                                  void handleToggleStatus(s);
+                                }}
+                              >
                                 {isActive ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
                               </IconButton>
                             </Tooltip>
-                            <Tooltip title={s.status === "deleted" ? "Already deleted" : "Delete"}>
+                            <Tooltip title={s.status === "deleted" ? t("table.alreadyDeleted") : t("table.delete")}>
                               <span>
                                 <IconButton
                                   size="small"
@@ -437,7 +464,7 @@ export default function SuppliersTab() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={5} align="center" sx={{ py: 10 }}>
-                      <Typography color="text.secondary">No suppliers found</Typography>
+                      <Typography color="text.secondary">{t("table.noSuppliers")}</Typography>
                     </TableCell>
                   </TableRow>
                 )}
@@ -447,7 +474,7 @@ export default function SuppliersTab() {
                 <TableRow>
                   <TableCell colSpan={3}>
                     <Typography variant="caption">
-                      Showing {pageData.length} of {filtered.length} suppliers
+                      {t("table.showingSuppliersCount", { count: pageData.length, total: filtered.length })}
                     </Typography>
                   </TableCell>
                   <TableCell colSpan={2} align="right">
@@ -477,14 +504,12 @@ export default function SuppliersTab() {
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle sx={{ fontWeight: 700 }}>Delete Supplier</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>{t("dialogs.deleteSupplierTitle")}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete{" "}
-            <strong>
-              {deleteTarget?.firstName} {deleteTarget?.lastName}
-            </strong>
-            ? This action cannot be undone.
+            {t("dialogs.deleteSupplierConfirm", {
+              name: `${deleteTarget?.firstName} ${deleteTarget?.lastName}`,
+            })}
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
@@ -495,7 +520,7 @@ export default function SuppliersTab() {
             disabled={deleting}
             variant="outlined"
           >
-            Cancel
+            {t("details.cancel")}
           </Button>
           <Button
             onClick={() => {
@@ -506,7 +531,7 @@ export default function SuppliersTab() {
             color="error"
             startIcon={deleting ? <CircularProgress size={16} color="inherit" /> : <DeleteOutlinedIcon />}
           >
-            {deleting ? "Deleting..." : "Delete"}
+            {deleting ? t("dialogs.deleting") : t("table.delete")}
           </Button>
         </DialogActions>
       </Dialog>

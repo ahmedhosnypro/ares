@@ -79,6 +79,7 @@ export default function CreateVehicleClient({ emptyVehicle, locations }: CreateV
       canEdit
       isCreateMode
       onSave={handleSave}
+      hideReviews
     />
   );
 }

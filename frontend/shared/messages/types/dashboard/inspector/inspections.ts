@@ -1,43 +1,40 @@
-export interface InspectorInspectionsLabels {
-  page: {
-    title: string;
-    subtitle: string;
-    todayTasksTitle: string;
-    todayTasksSubtitle: string;
+export type InspectorInspectionsLabels = {
+  readonly title: string;
+  readonly description: string;
+  readonly checkOuts: string;
+  readonly checkOutsSubtitle: string;
+  readonly checkIns: string;
+  readonly checkInsSubtitle: string;
+  readonly overdue: string;
+  readonly overdueSubtitle: string;
+  readonly completedToday: string;
+  readonly completedTodaySubtitle: string;
+  readonly sectionTitle: string;
+  readonly sectionSubtitle: string;
+  readonly filters: {
+    readonly all: string;
+    readonly checkOuts: string;
+    readonly checkIns: string;
   };
-  stats: {
-    checkOuts: string;
-    checkOutsSubtitle: string;
-    checkIns: string;
-    checkInsSubtitle: string;
-    overdueTasks: string;
-    overdueTasksSubtitle: string;
-    completedToday: string;
-    completedTodaySubtitle: string;
+  readonly searchPlaceholder: string;
+  readonly searchAriaLabel: string;
+  readonly emptyState: {
+    readonly noMatchingTasks: string;
+    readonly allCaughtUp: string;
+    readonly adjustFilter: string;
+    readonly noPendingTasks: string;
   };
-  statusBadge: {
-    pending: string;
-    approved: string;
-    rejected: string;
+  readonly card: {
+    readonly checkOutBadge: string;
+    readonly checkInBadge: string;
+    readonly callTooltip: string;
+    readonly callAriaLabel: string;
+    readonly mapsTooltip: string;
+    readonly mapsAriaLabel: string;
   };
-  taskCard: {
-    checkOut: string;
-    checkIn: string;
-    callCustomer: string;
-    openInMaps: string;
-    openInMapsAriaLabel: string;
+  readonly status: {
+    readonly pending: string;
+    readonly approved: string;
+    readonly rejected: string;
   };
-  tasksList: {
-    filterAll: string;
-    filterCheckOuts: string;
-    filterCheckIns: string;
-    searchPlaceholder: string;
-    searchAriaLabel: string;
-  };
-  emptyState: {
-    noMatchingTasks: string;
-    tryAdjusting: string;
-    allCaughtUp: string;
-    noPendingTasks: string;
-  };
-}
+};

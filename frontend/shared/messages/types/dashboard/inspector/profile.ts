@@ -1,4 +1,4 @@
-export interface InspectorProfileLabels {
-  readonly employeeCredentials: string;
-  readonly assignedEmployeeRoles: string;
-}
+export type InspectorProfileLabels = {
+  readonly credentialsTitle: string;
+  readonly rolesLabel: string;
+};

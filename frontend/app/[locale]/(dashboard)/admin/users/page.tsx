@@ -1,8 +1,8 @@
 "use client";
 
 import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
-import { useRouter } from "@/shared/i18n/routing";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Box, Tabs, Tab, CircularProgress, Paper, useTheme, useMediaQuery } from "@mui/material";
 import PeopleIcon from "@mui/icons-material/People";
 import StorefrontIcon from "@mui/icons-material/Storefront";
@@ -18,11 +18,11 @@ type TabKey = "users" | "suppliers" | "drivers" | "inspectors";
 
 const TAB_ORDER: TabKey[] = ["users", "suppliers", "drivers", "inspectors"];
 
-const TAB_META: Record<TabKey, { label: string; icon: React.ReactElement }> = {
-  users: { label: "Users", icon: <PeopleIcon fontSize="small" /> },
-  suppliers: { label: "Suppliers", icon: <StorefrontIcon fontSize="small" /> },
-  drivers: { label: "Drivers", icon: <AirlineSeatReclineNormalIcon fontSize="small" /> },
-  inspectors: { label: "Inspectors", icon: <ManageSearchIcon fontSize="small" /> },
+const TAB_META: Record<TabKey, { icon: React.ReactElement }> = {
+  users: { icon: <PeopleIcon fontSize="small" /> },
+  suppliers: { icon: <StorefrontIcon fontSize="small" /> },
+  drivers: { icon: <AirlineSeatReclineNormalIcon fontSize="small" /> },
+  inspectors: { icon: <ManageSearchIcon fontSize="small" /> },
 };
 
 function UsersHubInner() {
@@ -30,6 +30,7 @@ function UsersHubInner() {
   const searchParams = useSearchParams();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const t = useTranslations("dashboardAdmin.users");
 
   const rawTab = searchParams.get("tab") as TabKey | null;
   const activeTab: TabKey = rawTab && TAB_ORDER.includes(rawTab) ? rawTab : "users";
@@ -81,7 +82,7 @@ function UsersHubInner() {
               key={key}
               id={`user-hub-tab-${key}`}
               aria-controls={`user-hub-panel-${key}`}
-              label={TAB_META[key].label}
+              label={t(`tabs.${key}`)}
               icon={TAB_META[key].icon}
               iconPosition="start"
             />

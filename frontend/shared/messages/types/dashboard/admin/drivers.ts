@@ -1,0 +1,32 @@
+export type AdminDriversLabels = {
+  readonly title: string;
+  readonly subtitle: string;
+  readonly tabs: {
+    readonly allDrivers: string;
+    readonly pendingVerification: string;
+  };
+  readonly searchPlaceholder: string;
+  readonly status: string;
+  readonly errorLoad: string;
+  readonly noDrivers: string;
+  readonly table: {
+    readonly driver: string;
+    readonly email: string;
+    readonly status: string;
+    readonly availability: string;
+    readonly rating: string;
+    readonly active: string;
+    readonly actions: string;
+    readonly view: string;
+    readonly activeStatus: string;
+    readonly disabledStatus: string;
+  };
+  readonly statuses: {
+    readonly all: string;
+    readonly incomplete: string;
+    readonly pendingVerification: string;
+    readonly verified: string;
+    readonly rejected: string;
+    readonly suspended: string;
+  };
+};

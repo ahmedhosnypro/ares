@@ -63,6 +63,7 @@ export interface AdminVehicleFilter {
   supplierId?: string;
   transmission?: string;
   sortBy?: VehicleSortBy;
+  categoryId?: string;
 }
 
 function mapStatusToBackend(status: VehicleStatusFilter | undefined): string | undefined {
@@ -109,8 +110,9 @@ export function useVehicles(accessToken: string | undefined, filter: AdminVehicl
       supplierId: filter.supplierId ?? "",
       transmission: filter.transmission ?? "",
       sortBy: filter.sortBy ?? "newest",
+      categoryId: filter.categoryId ?? "",
     }),
-    [filter.status, filter.supplierId, filter.transmission, filter.sortBy]
+    [filter.status, filter.supplierId, filter.transmission, filter.sortBy, filter.categoryId]
   );
 
   const firstRun = useRef(true);
@@ -129,8 +131,9 @@ export function useVehicles(accessToken: string | undefined, filter: AdminVehicl
       status: mapStatusToBackend(filter.status) ?? null,
       transmission: filter.transmission ? filter.transmission.trim() : null,
       sortBy: filter.sortBy ?? null,
+      categoryId: filter.categoryId ? filter.categoryId : null,
     }),
-    [debouncedKeyword, filter.status, filter.supplierId, filter.transmission, filter.sortBy]
+    [debouncedKeyword, filter.status, filter.supplierId, filter.transmission, filter.sortBy, filter.categoryId]
   );
 
   const fetchVehicles = useCallback(

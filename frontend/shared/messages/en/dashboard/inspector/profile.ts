@@ -1,6 +1,8 @@
 import type { InspectorProfileLabels } from "../../../types/dashboard/inspector/profile";
 
-export const inspectorProfile: InspectorProfileLabels = {
-  employeeCredentials: "Employee Credentials",
-  assignedEmployeeRoles: "Assigned Employee Roles",
+const profile: InspectorProfileLabels = {
+  credentialsTitle: "Employee Credentials",
+  rolesLabel: "Assigned Employee Roles",
 };
+
+export default profile;

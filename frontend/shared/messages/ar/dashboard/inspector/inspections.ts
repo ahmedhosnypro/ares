@@ -1,45 +1,44 @@
 import type { InspectorInspectionsLabels } from "../../../types/dashboard/inspector/inspections";
 
-export const inspectorInspections: InspectorInspectionsLabels = {
-  page: {
-    title: "لوحة المفتش",
-    subtitle: "نظرة عامة على مهامك ومقاييس اليوم.",
-    todayTasksTitle: "مهام اليوم",
-    todayTasksSubtitle: "اضغط على البطاقة لفتح نموذج الفحص · استخدم أزرار الإجراء للاتصال أو التنقل.",
+const inspections: InspectorInspectionsLabels = {
+  title: "لوحة تحكم الفاحص",
+  description: "نظرة عامة على مهامك ومقاييس اليوم.",
+  checkOuts: "تسليم المركبات",
+  checkOutsSubtitle: "التسليمات اليوم",
+  checkIns: "استلام المركبات",
+  checkInsSubtitle: "المرتجعات اليوم",
+  overdue: "المهام المتأخرة",
+  overdueSubtitle: "تجاوزت الاستحقاق",
+  completedToday: "اكتملت اليوم",
+  completedTodaySubtitle: "أنجزت اليوم",
+  sectionTitle: "مهام اليوم",
+  sectionSubtitle: "اضغط على البطاقة لفتح نموذج الفحص · استخدم أزرار الإجراءات للاتصال أو الانتقال للموقع.",
+  filters: {
+    all: "الكل",
+    checkOuts: "التسليمات 🟢",
+    checkIns: "الاستلامات 🔴",
   },
-  stats: {
-    checkOuts: "التسليمات",
-    checkOutsSubtitle: "تسليمات اليوم",
-    checkIns: "الاستلامات",
-    checkInsSubtitle: "استلامات اليوم",
-    overdueTasks: "مهام متأخرة",
-    overdueTasksSubtitle: "تجاوزت الموعد",
-    completedToday: "مكتمل اليوم",
-    completedTodaySubtitle: "تم إنجازها اليوم",
+  searchPlaceholder: "البحث برقم اللوحة…",
+  searchAriaLabel: "البحث برقم اللوحة",
+  emptyState: {
+    noMatchingTasks: "لا توجد مهام مطابقة",
+    allCaughtUp: "تم إنجاز كل شيء!",
+    adjustFilter: "حاول تعديل خيارات التصفية أو مصطلح البحث.",
+    noPendingTasks: "ليس لديك أي مهام معلقة اليوم.",
   },
-  statusBadge: {
-    pending: "قيد الانتظار",
+  card: {
+    checkOutBadge: "تسليم 🟢",
+    checkInBadge: "استلام 🔴",
+    callTooltip: "الاتصال بـ {customerName}",
+    callAriaLabel: "الاتصال بـ {customerName}",
+    mapsTooltip: "الفتح في خرائط Google",
+    mapsAriaLabel: "فتح الموقع في خرائط Google",
+  },
+  status: {
+    pending: "معلق",
     approved: "مقبول",
     rejected: "مرفوض",
   },
-  taskCard: {
-    checkOut: "تسليم 🟢",
-    checkIn: "استلام 🔴",
-    callCustomer: "اتصل بـ {customerName}",
-    openInMaps: "فتح في خرائط جوجل",
-    openInMapsAriaLabel: "فتح الموقع في خرائط جوجل",
-  },
-  tasksList: {
-    filterAll: "الكل",
-    filterCheckOuts: "تسليمات 🟢",
-    filterCheckIns: "استلامات 🔴",
-    searchPlaceholder: "البحث برقم اللوحة…",
-    searchAriaLabel: "البحث برقم اللوحة",
-  },
-  emptyState: {
-    noMatchingTasks: "لا توجد مهام مطابقة",
-    tryAdjusting: "حاول تعديل الفلتر أو كلمة البحث.",
-    allCaughtUp: "أنجزت كل شيء!",
-    noPendingTasks: "ليس لديك مهام معلقة لليوم.",
-  },
 };
+
+export default inspections;

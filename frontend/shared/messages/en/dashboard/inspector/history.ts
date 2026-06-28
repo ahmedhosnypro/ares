@@ -1,29 +1,22 @@
 import type { InspectorHistoryLabels } from "../../../types/dashboard/inspector/history";
 
-export const inspectorHistory: InspectorHistoryLabels = {
+const history: InspectorHistoryLabels = {
   title: "Inspection History",
   description: "View all your submitted inspections.",
-  search: {
-    placeholder: "Search by Booking Number, Vehicle, or Status...",
-  },
-  filter: {
-    statusLabel: "Status",
-    allStatuses: "All Statuses",
-    approved: "Approved",
-    rejected: "Rejected",
-    pending: "Pending",
-  },
-  emptySearch: {
+  searchPlaceholder: "Search by Booking Number, Vehicle, or Status...",
+  filterStatusLabel: "Status",
+  filterAllStatuses: "All Statuses",
+  noResults: {
     title: "No results found",
     description: "Try adjusting your search query or status filter.",
   },
-  emptyState: {
+  emptyHistory: {
     title: "No history yet",
     description: "Submitted inspections will appear here.",
   },
   mobileCard: {
-    photos: "Photos: {count}",
-    submittedDate: "Submitted: {date}",
+    photosCount: "Photos: {count}",
+    submittedAt: "Submitted: {date}",
     submittedFallback: "—",
     viewReport: "View Report",
   },
@@ -32,6 +25,15 @@ export const inspectorHistory: InspectorHistoryLabels = {
     vehicle: "Vehicle",
     submittedAt: "Submitted At",
     photos: "Photos",
+    status: "Status",
+    action: "Action",
     viewDetails: "View Details",
   },
+  status: {
+    pending: "Pending",
+    approved: "Approved",
+    rejected: "Rejected",
+  },
 };
+
+export default history;

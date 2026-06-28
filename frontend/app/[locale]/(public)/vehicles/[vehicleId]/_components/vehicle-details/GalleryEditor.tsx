@@ -54,7 +54,7 @@ export default function GalleryEditor({ labels = DEFAULT_LABELS }: { readonly la
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [fileError, setFileError] = useState<string | null>(null);
 
-  const activeImage = images[activeIndex];
+  const activeImage = images[activeIndex] as ImageFormItem | undefined;
 
   const handleSetPrimary = (index: number) => {
     const updatedImages = images.map((img: ImageFormItem, i: number) => ({
@@ -118,7 +118,7 @@ export default function GalleryEditor({ labels = DEFAULT_LABELS }: { readonly la
           bgcolor: "action.hover",
         }}
       >
-        {activeImage.url && (activeImage.url.startsWith("blob:") || toImageUrl(activeImage.url)) ? (
+        {activeImage?.url && (activeImage.url.startsWith("blob:") || toImageUrl(activeImage.url)) ? (
           <Image
             src={activeImage.url.startsWith("blob:") ? activeImage.url : (toImageUrl(activeImage.url) as string)}
             alt={labels.alt}

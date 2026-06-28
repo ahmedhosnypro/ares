@@ -55,12 +55,22 @@ import {
   rejectVerification,
 } from "@/api-clients/admin-verifications/admin-verifications";
 import { logger } from "@/utils/logger";
+import { useTranslations } from "next-intl";
 
 const PAGE_SIZE = 10;
+
+const getStatusLabel = (status: string, t: (key: string) => string) => {
+  const s = status.toLowerCase();
+  if (s === "pending") return t("filters.pending");
+  if (s === "approved" || s === "verified") return t("filters.approved");
+  if (s === "rejected") return t("filters.rejected");
+  return status;
+};
 
 export default function IdentityVerificationTab() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const t = useTranslations("dashboardAdmin.verifications");
 
   const [verifications, setVerifications] = useState<AdminVerificationDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,11 +102,11 @@ export default function IdentityVerificationTab() {
       setTotalCount(data.totalCount || 0);
     } catch (err) {
       logger.error("Failed to fetch verifications", err);
-      setToast({ open: true, message: "Failed to fetch verifications", severity: "error" });
+      setToast({ open: true, message: t("alerts.fetchIdentityError"), severity: "error" });
     } finally {
       setLoading(false);
     }
-  }, [page, statusFilter]);
+  }, [page, statusFilter, t]);
 
   useEffect(() => {
     void fetchVerifications();
@@ -105,11 +115,11 @@ export default function IdentityVerificationTab() {
   const handleApprove = async (id: string) => {
     try {
       await approveVerification(id);
-      setToast({ open: true, message: "Verification approved successfully", severity: "success" });
+      setToast({ open: true, message: t("alerts.approveIdentitySuccess"), severity: "success" });
       void fetchVerifications();
     } catch (err) {
       logger.error("Failed to approve verification", err);
-      setToast({ open: true, message: "Failed to approve verification", severity: "error" });
+      setToast({ open: true, message: t("alerts.approveIdentityError"), severity: "error" });
     }
   };
 
@@ -119,13 +129,13 @@ export default function IdentityVerificationTab() {
     setRejectLoading(true);
     try {
       await rejectVerification(selectedVerification.id, rejectReason.trim());
-      setToast({ open: true, message: "Verification rejected successfully", severity: "success" });
+      setToast({ open: true, message: t("alerts.rejectIdentitySuccess"), severity: "success" });
       setRejectModalOpen(false);
       setRejectReason("");
       void fetchVerifications();
     } catch (err) {
       logger.error("Failed to reject verification", err);
-      setToast({ open: true, message: "Failed to reject verification", severity: "error" });
+      setToast({ open: true, message: t("alerts.rejectIdentityError"), severity: "error" });
     } finally {
       setRejectLoading(false);
     }
@@ -162,7 +172,7 @@ export default function IdentityVerificationTab() {
       return (
         <Paper sx={{ borderRadius: 2, p: 4, textAlign: "center", opacity: 0.6 }}>
           <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 700 }}>
-            No verification requests found
+            {t("table.emptyIdentity")}
           </Typography>
         </Paper>
       );
@@ -217,7 +227,7 @@ export default function IdentityVerificationTab() {
                   </Stack>
 
                   <Chip
-                    label={v.status}
+                    label={getStatusLabel(v.status, t)}
                     size="small"
                     sx={{
                       ml: 1,
@@ -232,10 +242,10 @@ export default function IdentityVerificationTab() {
                 </Stack>
 
                 <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
-                  Type: <strong>{v.documentType}</strong>
+                  {t("viewModal.docTypeLabel")}: <strong>{v.documentType}</strong>
                 </Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
-                  Date: {new Date(v.submittedAt).toLocaleDateString()}
+                  {t("table.submittedDate")}: {new Date(v.submittedAt).toLocaleDateString()}
                 </Typography>
 
                 <Stack direction="row" spacing={1}>
@@ -246,7 +256,7 @@ export default function IdentityVerificationTab() {
                       openViewModal(v);
                     }}
                   >
-                    View
+                    {t("table.viewTooltip").split(" ")[0]}
                   </Button>
                   {status === "pending" && (
                     <>
@@ -257,7 +267,7 @@ export default function IdentityVerificationTab() {
                         onClick={() => void handleApprove(v.id)}
                         sx={{ color: "common.white" }}
                       >
-                        Approve
+                        {t("viewModal.approve")}
                       </Button>
                       <Button
                         size="small"
@@ -267,7 +277,7 @@ export default function IdentityVerificationTab() {
                           openRejectModal(v);
                         }}
                       >
-                        Reject
+                        {t("viewModal.reject")}
                       </Button>
                     </>
                   )}
@@ -295,11 +305,11 @@ export default function IdentityVerificationTab() {
           <Table sx={{ minWidth: 700 }}>
             <TableHead>
               <TableRow>
-                <TableCell>User</TableCell>
-                <TableCell>Document Type</TableCell>
-                <TableCell>Submitted Date</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell align="right">Actions</TableCell>
+                <TableCell>{t("table.user")}</TableCell>
+                <TableCell>{t("table.documentType")}</TableCell>
+                <TableCell>{t("table.submittedDate")}</TableCell>
+                <TableCell>{t("table.status")}</TableCell>
+                <TableCell align="right">{t("table.actions")}</TableCell>
               </TableRow>
             </TableHead>
 
@@ -351,7 +361,7 @@ export default function IdentityVerificationTab() {
 
                     <TableCell>
                       <Chip
-                        label={v.status}
+                        label={getStatusLabel(v.status, t)}
                         size="small"
                         sx={{
                           textTransform: "capitalize",
@@ -365,7 +375,7 @@ export default function IdentityVerificationTab() {
 
                     <TableCell align="right">
                       <Stack direction="row" spacing={0.5} sx={{ justifyContent: "flex-end" }}>
-                        <Tooltip title="View Details">
+                        <Tooltip title={t("table.viewTooltip")}>
                           <IconButton
                             onClick={() => {
                               openViewModal(v);
@@ -378,12 +388,12 @@ export default function IdentityVerificationTab() {
 
                         {status === "pending" && (
                           <>
-                            <Tooltip title="Approve">
+                            <Tooltip title={t("table.approveTooltip")}>
                               <IconButton onClick={() => void handleApprove(v.id)} size="small" color="success">
                                 <CheckCircleIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
-                            <Tooltip title="Reject">
+                            <Tooltip title={t("table.rejectTooltip")}>
                               <IconButton
                                 onClick={() => {
                                   openRejectModal(v);
@@ -409,7 +419,9 @@ export default function IdentityVerificationTab() {
           direction={{ xs: "column", sm: "row" }}
           sx={{ gap: 1, justifyContent: "space-between", alignItems: "center", p: 2 }}
         >
-          <Typography variant="caption">Total Records: {totalCount}</Typography>
+          <Typography variant="caption">
+            {t("table.totalRecords")}: {totalCount}
+          </Typography>
           <Pagination
             count={totalPages}
             page={page}
@@ -436,10 +448,10 @@ export default function IdentityVerificationTab() {
             }}
             displayEmpty
           >
-            <MenuItem value="all">All Statuses</MenuItem>
-            <MenuItem value="Pending">Pending</MenuItem>
-            <MenuItem value="Approved">Approved</MenuItem>
-            <MenuItem value="Rejected">Rejected</MenuItem>
+            <MenuItem value="all">{t("filters.allStatuses")}</MenuItem>
+            <MenuItem value="Pending">{t("filters.pending")}</MenuItem>
+            <MenuItem value="Approved">{t("filters.approved")}</MenuItem>
+            <MenuItem value="Rejected">{t("filters.rejected")}</MenuItem>
           </Select>
         </FormControl>
       </Stack>
@@ -456,13 +468,13 @@ export default function IdentityVerificationTab() {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle sx={{ fontWeight: 700 }}>Verification Details</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>{t("viewModal.identityTitle")}</DialogTitle>
         <DialogContent dividers>
           {selectedVerification && (
             <Stack spacing={3}>
               <Box>
                 <Typography variant="subtitle2" color="text.secondary">
-                  User
+                  {t("viewModal.userLabel")}
                 </Typography>
                 <Typography variant="body1" sx={{ fontWeight: 600 }}>
                   {selectedVerification.userFirstName} {selectedVerification.userLastName}
@@ -472,7 +484,7 @@ export default function IdentityVerificationTab() {
 
               <Box>
                 <Typography variant="subtitle2" color="text.secondary">
-                  Document Type
+                  {t("viewModal.docTypeLabel")}
                 </Typography>
                 <Typography variant="body1" sx={{ fontWeight: 600 }}>
                   {selectedVerification.documentType}
@@ -481,10 +493,10 @@ export default function IdentityVerificationTab() {
 
               <Box>
                 <Typography variant="subtitle2" color="text.secondary">
-                  Status
+                  {t("viewModal.statusLabel")}
                 </Typography>
                 <Chip
-                  label={selectedVerification.status}
+                  label={getStatusLabel(selectedVerification.status, t)}
                   size="small"
                   sx={{
                     textTransform: "capitalize",
@@ -499,7 +511,7 @@ export default function IdentityVerificationTab() {
               {selectedVerification.status.toLowerCase() === "rejected" && selectedVerification.rejectionReason && (
                 <Box>
                   <Typography variant="subtitle2" color="error.main">
-                    Rejection Reason
+                    {t("viewModal.rejectReasonLabel")}
                   </Typography>
                   <Typography variant="body1">{selectedVerification.rejectionReason}</Typography>
                 </Box>
@@ -507,7 +519,7 @@ export default function IdentityVerificationTab() {
 
               <Box>
                 <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                  Front Image
+                  {t("viewModal.frontImage")}
                 </Typography>
                 {selectedVerification.documentFrontUrl ? (
                   <Box
@@ -518,14 +530,14 @@ export default function IdentityVerificationTab() {
                   />
                 ) : (
                   <Typography variant="body2" color="text.disabled">
-                    No image provided
+                    {t("viewModal.noImage")}
                   </Typography>
                 )}
               </Box>
 
               <Box>
                 <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                  Back Image
+                  {t("viewModal.backImage")}
                 </Typography>
                 {selectedVerification.documentBackUrl ? (
                   <Box
@@ -536,7 +548,7 @@ export default function IdentityVerificationTab() {
                   />
                 ) : (
                   <Typography variant="body2" color="text.disabled">
-                    No image provided
+                    {t("viewModal.noImage")}
                   </Typography>
                 )}
               </Box>
@@ -549,7 +561,7 @@ export default function IdentityVerificationTab() {
               setViewModalOpen(false);
             }}
           >
-            Close
+            {t("viewModal.close")}
           </Button>
           {selectedVerification?.status.toLowerCase() === "pending" && (
             <>
@@ -561,7 +573,7 @@ export default function IdentityVerificationTab() {
                   openRejectModal(selectedVerification);
                 }}
               >
-                Reject
+                {t("viewModal.reject")}
               </Button>
               <Button
                 variant="contained"
@@ -572,7 +584,7 @@ export default function IdentityVerificationTab() {
                   void handleApprove(selectedVerification.id);
                 }}
               >
-                Approve
+                {t("viewModal.approve")}
               </Button>
             </>
           )}
@@ -588,23 +600,23 @@ export default function IdentityVerificationTab() {
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle sx={{ fontWeight: 700 }}>Reject Verification</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>{t("rejectModal.identityTitle")}</DialogTitle>
         <DialogContent dividers>
           <Typography variant="body2" sx={{ mb: 2 }}>
-            Please provide a reason for rejecting this verification request. This will be visible to the user.
+            {t("rejectModal.description")}
           </Typography>
           <TextField
             fullWidth
             multiline
             rows={3}
-            label="Rejection Reason"
+            label={t("rejectModal.reasonLabel")}
             value={rejectReason}
             onChange={e => {
               setRejectReason(e.target.value);
             }}
             required
             error={rejectReason.trim() === ""}
-            helperText={rejectReason.trim() === "" ? "Reason is required" : ""}
+            helperText={rejectReason.trim() === "" ? t("rejectModal.reasonRequired") : ""}
           />
         </DialogContent>
         <DialogActions>
@@ -614,7 +626,7 @@ export default function IdentityVerificationTab() {
             }}
             disabled={rejectLoading}
           >
-            Cancel
+            {t("rejectModal.cancel")}
           </Button>
           <Button
             variant="contained"
@@ -622,7 +634,7 @@ export default function IdentityVerificationTab() {
             onClick={() => void handleReject()}
             disabled={rejectLoading || rejectReason.trim() === ""}
           >
-            {rejectLoading ? "Rejecting..." : "Confirm Reject"}
+            {rejectLoading ? t("rejectModal.rejecting") : t("rejectModal.confirm")}
           </Button>
         </DialogActions>
       </Dialog>

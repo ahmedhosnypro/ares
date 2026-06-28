@@ -17,11 +17,13 @@ import { useState, type SyntheticEvent } from "react";
 import { Box, Stack, Tab, Tabs, Typography } from "@mui/material";
 import IdentityVerificationTab from "./_components/IdentityVerificationTab";
 import DriverLicenseTab from "./_components/DriverLicenseTab";
+import { useTranslations } from "next-intl";
 
 type VerificationTabKey = "identity" | "driver-license";
 
 export default function AdminVerificationsPage() {
   const [tab, setTab] = useState<VerificationTabKey>("identity");
+  const t = useTranslations("dashboardAdmin.verifications");
 
   const handleTabChange = (_: SyntheticEvent, value: VerificationTabKey) => {
     setTab(value);
@@ -36,10 +38,10 @@ export default function AdminVerificationsPage() {
       >
         <Box>
           <Typography variant="h4" sx={{ fontWeight: 800, fontSize: { xs: "1.5rem", sm: "2rem", md: "2.125rem" } }}>
-            Verification Management
+            {t("title")}
           </Typography>
           <Typography color="text.secondary" variant="body2">
-            Review and manage user identity and driver license verifications
+            {t("subtitle")}
           </Typography>
         </Box>
       </Stack>
@@ -54,8 +56,8 @@ export default function AdminVerificationsPage() {
           scrollButtons="auto"
           allowScrollButtonsMobile
         >
-          <Tab label="Identity Verification" value="identity" />
-          <Tab label="Driver License" value="driver-license" />
+          <Tab label={t("tabs.identity")} value="identity" />
+          <Tab label={t("tabs.driverLicense")} value="driver-license" />
         </Tabs>
       </Box>
 
