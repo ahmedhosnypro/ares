@@ -31,12 +31,15 @@ import { useSession } from "next-auth/react";
 import { getCategoryDetails, CategoryDetails } from "@/api-clients/categories/categories";
 import Alert from "@mui/material/Alert";
 import PromotionManager from "../_components/PromotionManager";
+import { useTranslations } from "next-intl";
+import { ApiError } from "@/utils/api-client";
 
 export default function CategoryDetailsPage({ params }: { readonly params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const router = useRouter();
   const theme = useTheme();
   const { data: session } = useSession();
+  const t = useTranslations("dashboardAdmin.categoryDetails");
 
   const [category, setCategory] = useState<CategoryDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -49,12 +52,15 @@ export default function CategoryDetailsPage({ params }: { readonly params: Promi
       const data = await getCategoryDetails(resolvedParams.id);
       setCategory(data);
     } catch (err: unknown) {
-      const errorResponse = err as { response?: { data?: { message?: string } } };
-      setError(errorResponse.response?.data?.message || "Failed to load category details.");
+      if (err instanceof ApiError && err.status === 404) {
+        setError(t("errors.notFound"));
+      } else {
+        setError(err instanceof ApiError ? err.message : t("errors.loadError"));
+      }
     } finally {
       setLoading(false);
     }
-  }, [resolvedParams.id]);
+  }, [resolvedParams.id, t]);
 
   useEffect(() => {
     if (session?.accessToken) {
@@ -73,14 +79,14 @@ export default function CategoryDetailsPage({ params }: { readonly params: Promi
   if (error || !category) {
     return (
       <Box sx={{ p: 4, textAlign: "center" }}>
-        <Alert severity="error">{error || "Category not found."}</Alert>
+        <Alert severity="error">{error || t("errors.notFound")}</Alert>
         <Button
           onClick={() => {
             router.push("/admin/categories");
           }}
           sx={{ mt: 2 }}
         >
-          Back to Categories
+          {t("backToCategories")}
         </Button>
       </Box>
     );
@@ -102,7 +108,7 @@ export default function CategoryDetailsPage({ params }: { readonly params: Promi
           </Typography>
           <Stack direction="row" spacing={1} sx={{ mt: 0.5, alignItems: "center" }}>
             <Chip
-              label={category.isActive ? "Active" : "Inactive"}
+              label={category.isActive ? t("statusActive") : t("statusInactive")}
               size="small"
               sx={{
                 bgcolor: alpha(category.isActive ? theme.palette.success.main : theme.palette.text.disabled, 0.15),
@@ -140,7 +146,7 @@ export default function CategoryDetailsPage({ params }: { readonly params: Promi
             </Box>
             <Box>
               <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
-                Total Vehicles
+                {t("stats.totalVehicles")}
               </Typography>
               <Typography variant="h5" sx={{ fontWeight: 800 }}>
                 {category.vehicleCount || 0}
@@ -168,10 +174,10 @@ export default function CategoryDetailsPage({ params }: { readonly params: Promi
             </Box>
             <Box>
               <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
-                Total Bookings
+                {t("stats.totalBookings")}
               </Typography>
               <Typography variant="h5" sx={{ fontWeight: 800 }}>
-                {category.bookingCount}
+                {(category.bookingCount as number | null) ?? 0}
               </Typography>
             </Box>
           </Paper>
@@ -196,10 +202,10 @@ export default function CategoryDetailsPage({ params }: { readonly params: Promi
             </Box>
             <Box>
               <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
-                Revenue
+                {t("stats.revenue")}
               </Typography>
               <Typography variant="h5" sx={{ fontWeight: 800 }}>
-                ${category.revenue.toFixed(2)}
+                ${((category.revenue as number | null) ?? 0).toFixed(2)}
               </Typography>
             </Box>
           </Paper>
@@ -209,7 +215,7 @@ export default function CategoryDetailsPage({ params }: { readonly params: Promi
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 8 }}>
           <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-            Vehicles in Category
+            {t("vehiclesTable.title")}
           </Typography>
           <Paper
             elevation={0}
@@ -219,14 +225,14 @@ export default function CategoryDetailsPage({ params }: { readonly params: Promi
               <Table>
                 <TableHead>
                   <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
-                    <TableCell>Make & Model</TableCell>
-                    <TableCell>License Plate</TableCell>
-                    <TableCell align="right">Actions</TableCell>
+                    <TableCell>{t("vehiclesTable.headers.makeModel")}</TableCell>
+                    <TableCell>{t("vehiclesTable.headers.licensePlate")}</TableCell>
+                    <TableCell align="right">{t("vehiclesTable.headers.actions")}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {category.vehicles.length > 0 ? (
-                    category.vehicles.map(v => (
+                  {((category.vehicles as typeof category.vehicles | null) ?? []).length > 0 ? (
+                    ((category.vehicles as typeof category.vehicles | null) ?? []).map(v => (
                       <TableRow key={v.id} hover>
                         <TableCell sx={{ fontWeight: 600 }}>
                           {v.make} {v.model}
@@ -239,7 +245,7 @@ export default function CategoryDetailsPage({ params }: { readonly params: Promi
                               router.push(`/admin/vehicles/${v.id}`);
                             }}
                           >
-                            View
+                            {t("vehiclesTable.viewButton")}
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -247,7 +253,7 @@ export default function CategoryDetailsPage({ params }: { readonly params: Promi
                   ) : (
                     <TableRow>
                       <TableCell colSpan={3} align="center" sx={{ py: 4 }}>
-                        <Typography color="text.secondary">No vehicles assigned to this category.</Typography>
+                        <Typography color="text.secondary">{t("vehiclesTable.empty")}</Typography>
                       </TableCell>
                     </TableRow>
                   )}
@@ -259,7 +265,7 @@ export default function CategoryDetailsPage({ params }: { readonly params: Promi
 
         <Grid size={{ xs: 12, md: 4 }}>
           <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-            Promotions
+            {t("promotions.title")}
           </Typography>
           <PromotionManager categoryId={category.id} />
         </Grid>

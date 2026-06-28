@@ -9,16 +9,22 @@
 
 - [ ] Not started
 - [ ] In progress
-- [ ] Completed
+- [x] Completed
 
 ## Shared Components
 
-(To be filled during execution)
+- `CategoryForm.tsx` (under `_components/`)
 
 ## Component Discovery
 
-(To be filled during execution)
+- `AdminCategoriesPage` (in `page.tsx`): lists categories, handles deletion, and triggers create/edit modal.
+- `CategoryForm` (in `_components/CategoryForm.tsx`): dialog for creating/editing categories and their promotional offers.
 
 ## Translation Tasks
 
-(To be filled during execution)
+- [x] Create message types schema in `shared/messages/types/dashboard/admin/categories.ts`
+- [x] Implement English translations in `shared/messages/en/dashboard/admin/categories.ts`
+- [x] Implement Arabic translations in `shared/messages/ar/dashboard/admin/categories.ts`
+- [x] Register new categories translations in `types/message.ts`, `en.ts`, and `ar.ts`
+- [x] Update `categories/page.tsx` to use next-intl translations
+- [x] Update `CategoryForm.tsx` to use next-intl translations
