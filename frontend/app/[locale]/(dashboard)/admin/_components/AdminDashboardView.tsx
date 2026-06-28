@@ -6,19 +6,14 @@ import StatCardGrid, { SummaryItem } from "./StatCardGrid";
 import RevenueChart from "./RevenueChart";
 import QuickActions from "./QuickActions";
 import TopVehicles from "./TopVehicles";
-import { BookingListItem } from "./RecentBookingsTable";
-import RecentBookings from "./RecentBookings";
-import AlertsCenter from "./AlertsCenter";
+import RecentBookings, { BookingListItem } from "./RecentBookings";
 import LiveActivity from "./LiveActivity";
-import VehiclesPerCategoryCard from "./VehiclesPerCategoryCard";
-import { QuickAction, TopVehicle, DashboardAlert } from "./mockData";
+import { QuickAction, TopVehicle } from "./mockData";
 import { logger } from "@/utils/logger";
-import { DashboardSummary } from "../types";
 
 export interface AdminDashboardViewProps {
   readonly summary: readonly SummaryItem[];
   readonly recentBookings: readonly BookingListItem[];
-  readonly alerts: readonly DashboardAlert[];
   readonly activities: readonly RecentSummaryItem[];
   readonly topVehicles: readonly TopVehicle[];
   readonly quickActions: readonly QuickAction[];
@@ -27,7 +22,7 @@ export interface AdminDashboardViewProps {
 
 export default function AdminDashboardView({
   summary,
-  alerts,
+  recentBookings,
   activities,
   quickActions,
   topVehicles,
@@ -48,35 +43,23 @@ export default function AdminDashboardView({
       </Grid>
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, lg: 12 }}>
-          <RecentBookings />
+        <Grid size={{ xs: 12 }}>
+          <RecentBookings bookings={recentBookings} />
         </Grid>
       </Grid>
 
       <Grid container spacing={3}>
-        <Grid size={{ xs: 12, lg: 6, sm: 6 }}>
+        <Grid size={{ xs: 12, lg: 8, md: 7 }}>
           <TopVehicles vehicles={topVehicles} />
         </Grid>
-        <Grid size={{ xs: 12, lg: 6, sm: 6 }}>
+        <Grid size={{ xs: 12, lg: 4, md: 5 }}>
           <QuickActions actions={quickActions} />
         </Grid>
       </Grid>
 
       <Grid container spacing={3} sx={{ mt: 2 }}>
-        <Grid size={{ xs: 12, lg: 6 }}>
-          <VehiclesPerCategoryCard
-            data={rawSummaryData ? (rawSummaryData as DashboardSummary).vehiclesPerCategory : undefined}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, lg: 6 }}>
-          <Grid container spacing={3}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <AlertsCenter alerts={alerts} />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <LiveActivity activities={activities} />
-            </Grid>
-          </Grid>
+        <Grid size={{ xs: 12 }}>
+          <LiveActivity activities={activities} />
         </Grid>
       </Grid>
     </Box>

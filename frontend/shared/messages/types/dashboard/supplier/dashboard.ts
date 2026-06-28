@@ -23,6 +23,14 @@ export interface SupplierDashboardLabels {
       cancelled: string;
     };
   };
+  topVehicles: {
+    heading: string;
+    noCompletedBookings: string;
+    completedBookings: string;
+  };
+  vehicleStatus: {
+    heading: string;
+  };
   recentActivity: string;
   pendingActions: string;
   demoActivity: {

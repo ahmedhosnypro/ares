@@ -30,11 +30,7 @@ import {
 } from "@mui/icons-material";
 import type { Booking } from "@/api-clients/bookings/bookings";
 import { toImageUrl } from "@/utils/image-url";
-
-type RichValue = string | number | Date | ((chunks: React.ReactNode) => React.ReactNode);
-type TranslateFunction = ((key: string, options?: Record<string, string | number | Date>) => string) & {
-  rich: (key: string, options?: Record<string, RichValue>) => React.ReactNode;
-};
+import { useTranslations } from "next-intl";
 
 interface BookingsTableProps {
   readonly bookings: readonly Booking[];
@@ -45,8 +41,8 @@ interface BookingsTableProps {
   readonly onPageChange: (page: number) => void;
   readonly statusOverrides: Record<string, string>;
   readonly onOpenMenu: (e: React.MouseEvent<HTMLElement>, booking: Booking) => void;
-  readonly t: TranslateFunction;
-  readonly tCommon: TranslateFunction;
+  readonly t: ReturnType<typeof useTranslations>;
+  readonly tCommon: ReturnType<typeof useTranslations>;
 }
 
 const getStatusConfig = (status?: string, t?: (key: string) => string) => {

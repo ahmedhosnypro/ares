@@ -8,8 +8,7 @@ import GppMaybeIcon from "@mui/icons-material/GppMaybe";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import BuildCircleIcon from "@mui/icons-material/BuildCircle";
 import BadgeIcon from "@mui/icons-material/Badge";
-import CategoryIcon from "@mui/icons-material/Category";
-import LocalOfferIcon from "@mui/icons-material/LocalOffer";
+import Link from "next/link";
 import { StatCard } from "../../_components/VehicleStats";
 
 export interface SummaryItem {
@@ -27,9 +26,8 @@ export interface SummaryItem {
     | "GppMaybe"
     | "PersonOutlined"
     | "BuildCircle"
-    | "Badge"
-    | "Category"
-    | "LocalOffer";
+    | "Badge";
+  href?: string;
 }
 
 const IconMap = {
@@ -42,8 +40,6 @@ const IconMap = {
   PersonOutlined: PersonOutlinedIcon,
   BuildCircle: BuildCircleIcon,
   Badge: BadgeIcon,
-  Category: CategoryIcon,
-  LocalOffer: LocalOfferIcon,
 };
 
 export default function StatCardGrid({ items }: { readonly items: readonly SummaryItem[] }) {
@@ -65,8 +61,20 @@ export default function StatCardGrid({ items }: { readonly items: readonly Summa
       {items.map((stat, i) => {
         const Icon = IconMap[stat.iconName];
 
-        return (
-          <Box key={i} sx={{ minWidth: 0, height: "100%" }}>
+        const cardContent = (
+          <Box
+            sx={{
+              minWidth: 0,
+              height: "100%",
+              cursor: stat.href ? "pointer" : "default",
+              transition: "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
+              "&:hover": stat.href
+                ? {
+                    transform: "translateY(-4px) scale(1.02)",
+                  }
+                : {},
+            }}
+          >
             <StatCard
               label={stat.title}
               value={stat.value}
@@ -75,6 +83,25 @@ export default function StatCardGrid({ items }: { readonly items: readonly Summa
               color={stat.color}
               icon={<Icon />}
             />
+          </Box>
+        );
+
+        if (stat.href) {
+          return (
+            <Link
+              key={i}
+              href={stat.href}
+              passHref
+              style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}
+            >
+              {cardContent}
+            </Link>
+          );
+        }
+
+        return (
+          <Box key={i} sx={{ minWidth: 0, height: "100%" }}>
+            {cardContent}
           </Box>
         );
       })}

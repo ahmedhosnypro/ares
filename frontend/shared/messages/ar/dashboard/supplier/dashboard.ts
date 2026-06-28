@@ -25,6 +25,14 @@ export const supplierDashboard: SupplierDashboardLabels = {
       cancelled: "ملغي",
     },
   },
+  topVehicles: {
+    heading: "المركبات الأعلى أداءً",
+    noCompletedBookings: "لا توجد حجوزات مكتملة بعد.",
+    completedBookings: "حجوزات مكتملة",
+  },
+  vehicleStatus: {
+    heading: "حالة المركبات",
+  },
   recentActivity: "النشاط الأخير",
   pendingActions: "الإجراءات المعلقة",
   demoActivity: {

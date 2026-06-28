@@ -41,11 +41,13 @@ public interface ISupplierEarningsService
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Returns the top 5 vehicles owned by the supplier, ranked by
-    /// lifetime completed-booking earnings (descending). Vehicles with
-    /// zero completed bookings are excluded.
+    /// Returns the top 5 vehicles owned by the supplier.
+    /// Ranked by lifetime completed-booking earnings (if sortBy="earnings") 
+    /// or by total completed bookings (if sortBy="bookings").
+    /// Vehicles with zero completed bookings are excluded.
     /// </summary>
     Task<IReadOnlyList<SupplierTopVehicleDto>> GetTopVehiclesAsync(
         Guid supplierId,
+        string sortBy = "earnings",
         CancellationToken cancellationToken = default);
 }

@@ -648,36 +648,34 @@ function timelineColor(type: string): "primary" | "success" | "warning" | "error
   }
 }
 
-function getLocalizedEventContent(
-  evt: BookingTimelineEvent,
-  bookingNumber: string,
-  t: (key: string, options?: Record<string, string | number | Date>) => string
-) {
+type BookingDetailsTranslations = ReturnType<typeof useTranslations<"dashboardAdmin.bookingDetails">>;
+
+function getLocalizedEventContent(evt: BookingTimelineEvent, bookingNumber: string, t: BookingDetailsTranslations) {
   const type = evt.type;
   const desc = evt.description || "";
 
   switch (type) {
     case "BookingCreated": {
-      const match = /Booking #(\S+) was created\./.exec(desc);
-      const number = match ? match[1] : bookingNumber;
+      const execResult = /Booking #(\S+) was created\./.exec(desc);
+      const number = execResult ? execResult[1] : bookingNumber;
       return {
         title: t("timeline.events.bookingCreated.title"),
         description: t("timeline.events.bookingCreated.description", { number }),
       };
     }
     case "InspectorAssigned": {
-      const match = /^([^.]+) was assigned to inspect the vehicle\./.exec(desc);
-      const name = match ? match[1] : desc;
+      const execResult = /(.+) was assigned to inspect the vehicle\./.exec(desc);
+      const name = execResult ? execResult[1] : desc;
       return {
         title: t("timeline.events.inspectorAssigned.title"),
-        description: match ? t("timeline.events.inspectorAssigned.description", { name }) : desc,
+        description: execResult ? t("timeline.events.inspectorAssigned.description", { name }) : desc,
       };
     }
     case "PickupInspectionCompleted": {
-      const match = /Inspection result: ([^.]+)\./.exec(desc);
-      if (match) {
-        const rawStatus = match[1];
-        const localizedStatus = t(`badges.${rawStatus.toLowerCase()}`);
+      const execResult = /Inspection result: (.+)\./.exec(desc);
+      if (execResult) {
+        const rawStatus = execResult[1];
+        const localizedStatus = t(`badges.${rawStatus.toLowerCase()}` as Parameters<typeof t>[0]);
         return {
           title: t("timeline.events.pickupInspectionCompleted.title"),
           description: t("timeline.events.pickupInspectionCompleted.description", { status: localizedStatus }),
@@ -689,10 +687,10 @@ function getLocalizedEventContent(
       };
     }
     case "ReturnInspectionCompleted": {
-      const match = /Inspection result: ([^.]+)\./.exec(desc);
-      if (match) {
-        const rawStatus = match[1];
-        const localizedStatus = t(`badges.${rawStatus.toLowerCase()}`);
+      const execResult = /Inspection result: (.+)\./.exec(desc);
+      if (execResult) {
+        const rawStatus = execResult[1];
+        const localizedStatus = t(`badges.${rawStatus.toLowerCase()}` as Parameters<typeof t>[0]);
         return {
           title: t("timeline.events.returnInspectionCompleted.title"),
           description: t("timeline.events.returnInspectionCompleted.description", { status: localizedStatus }),
@@ -704,11 +702,11 @@ function getLocalizedEventContent(
       };
     }
     case "PaymentCompleted": {
-      const match = /^([\d.]+) (\S+) via ([^.]+)\./.exec(desc);
-      if (match) {
-        const amount = match[1];
-        const currency = match[2];
-        const method = match[3];
+      const execResult = /([0-9.]+) (\S+) via (.+)\./.exec(desc);
+      if (execResult) {
+        const amount = execResult[1];
+        const currency = execResult[2];
+        const method = execResult[3];
         return {
           title: t("timeline.events.paymentCompleted.title"),
           description: t("timeline.events.paymentCompleted.description", { amount, currency, method }),
@@ -732,12 +730,12 @@ function getLocalizedEventContent(
       };
     }
     case "RefundProcessed": {
-      const match = /Refund ([^:]+): ([\d.]+) (\S+)\./.exec(desc);
-      if (match) {
-        const rawStatus = match[1];
-        const amount = match[2];
-        const currency = match[3];
-        const localizedStatus = t(`badges.${rawStatus.toLowerCase()}`);
+      const execResult = /Refund (.+): ([0-9.]+) (\S+)\./.exec(desc);
+      if (execResult) {
+        const rawStatus = execResult[1];
+        const amount = execResult[2];
+        const currency = execResult[3];
+        const localizedStatus = t(`badges.${rawStatus.toLowerCase()}` as Parameters<typeof t>[0]);
         return {
           title: t("timeline.events.refundProcessed.title"),
           description: t("timeline.events.refundProcessed.description", { status: localizedStatus, amount, currency }),
@@ -969,7 +967,7 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
               value={
                 <Chip
                   size="small"
-                  label={t(`badges.${booking.status.toLowerCase()}`)}
+                  label={t(`badges.${booking.status.toLowerCase()}` as Parameters<BookingDetailsTranslations>[0])}
                   color={statusColorKey}
                   sx={{ fontWeight: 700, textTransform: "capitalize" }}
                 />
@@ -1041,7 +1039,9 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
                     <Chip
                       size="small"
                       label={t("customerInfo.idVerification", {
-                        status: (t as (key: string) => string)(`badges.${customerVerificationStatus.toLowerCase()}`),
+                        status: t(
+                          `badges.${customerVerificationStatus.toLowerCase()}` as Parameters<BookingDetailsTranslations>[0]
+                        ),
                       })}
                       color={getStatusConfig(customerVerificationStatus)}
                       variant="outlined"
@@ -1110,7 +1110,9 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
                   {booking.car?.availabilityStatus && (
                     <Chip
                       size="small"
-                      label={(t as (key: string) => string)(`badges.${booking.car.availabilityStatus.toLowerCase()}`)}
+                      label={t(
+                        `badges.${booking.car.availabilityStatus.toLowerCase()}` as Parameters<BookingDetailsTranslations>[0]
+                      )}
                       color={getStatusConfig(booking.car.availabilityStatus)}
                       variant="outlined"
                       sx={{ fontWeight: 600, textTransform: "capitalize" }}
@@ -1130,7 +1132,9 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
                     label={t("vehicleInfo.availability")}
                     value={
                       booking.car?.availabilityStatus
-                        ? (t as (key: string) => string)(`badges.${booking.car.availabilityStatus.toLowerCase()}`)
+                        ? t(
+                            `badges.${booking.car.availabilityStatus.toLowerCase()}` as Parameters<BookingDetailsTranslations>[0]
+                          )
                         : "—"
                     }
                   />
@@ -1180,7 +1184,7 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
             booking.paymentStatus && (
               <Chip
                 size="small"
-                label={(t as (key: string) => string)(`badges.${booking.paymentStatus.toLowerCase()}`)}
+                label={t(`badges.${booking.paymentStatus.toLowerCase()}` as Parameters<BookingDetailsTranslations>[0])}
                 color={getPaymentStatusConfig(booking.paymentStatus)}
                 sx={{ fontWeight: 700, textTransform: "capitalize" }}
               />
@@ -1206,7 +1210,9 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
                   value={
                     <Chip
                       size="small"
-                      label={(t as (key: string) => string)(`badges.${booking.paymentDetails.status.toLowerCase()}`)}
+                      label={t(
+                        `badges.${booking.paymentDetails.status.toLowerCase()}` as Parameters<BookingDetailsTranslations>[0]
+                      )}
                       color={getPaymentStatusConfig(booking.paymentDetails.status)}
                       sx={{ fontWeight: 700, textTransform: "capitalize" }}
                     />
@@ -1293,8 +1299,8 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
                           booking.paymentDetails.refundStatus ? (
                             <Chip
                               size="small"
-                              label={(t as (key: string) => string)(
-                                `badges.${booking.paymentDetails.refundStatus.toLowerCase()}`
+                              label={t(
+                                `badges.${booking.paymentDetails.refundStatus.toLowerCase()}` as Parameters<BookingDetailsTranslations>[0]
                               )}
                               color={getStatusConfig(booking.paymentDetails.refundStatus)}
                               variant="outlined"
@@ -1456,7 +1462,7 @@ function BookingDetailsHeader({
               </Typography>
               <Chip
                 size="small"
-                label={(t as (key: string) => string)(`badges.${booking.status.toLowerCase()}`)}
+                label={t(`badges.${booking.status.toLowerCase()}` as Parameters<BookingDetailsTranslations>[0])}
                 color={statusColorKey}
                 sx={{ fontWeight: 700, textTransform: "capitalize" }}
               />

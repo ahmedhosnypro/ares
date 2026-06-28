@@ -33,6 +33,8 @@ export interface VehicleDetailsViewModel {
   readonly supplierName: string;
   readonly averageRating: number;
   readonly reviewCount: number;
+  readonly categoryId?: string;
+  readonly categoryName?: string;
 }
 
 export interface VehicleReviewViewModel {

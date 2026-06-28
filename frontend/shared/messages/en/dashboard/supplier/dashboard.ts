@@ -25,6 +25,14 @@ export const supplierDashboard: SupplierDashboardLabels = {
       cancelled: "Cancelled",
     },
   },
+  topVehicles: {
+    heading: "Top Performing Vehicles",
+    noCompletedBookings: "No completed bookings yet.",
+    completedBookings: "completed bookings",
+  },
+  vehicleStatus: {
+    heading: "Vehicle Status",
+  },
   recentActivity: "Recent Activity",
   pendingActions: "Pending Actions",
   demoActivity: {

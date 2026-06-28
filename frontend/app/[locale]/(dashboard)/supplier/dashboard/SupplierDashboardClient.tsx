@@ -42,16 +42,39 @@ import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import VerifiedOutlinedIcon from "@mui/icons-material/VerifiedOutlined";
 import PriorityHighIcon from "@mui/icons-material/PriorityHigh";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { DirectionsCarFilledTwoTone as CarIcon } from "@mui/icons-material";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+  PieChart,
+  Pie,
+  // eslint-disable-next-line sonarjs/deprecation
+  Cell,
+} from "recharts";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
+import { toImageUrl } from "@/utils/image-url";
 import DemoDataBadge from "../_components/DemoDataBadge";
 import {
   getSupplierDashboardStats,
   getSupplierDashboardBookingsByStatus,
+  getSupplierVehicleStatusDistribution,
   type SupplierDashboardStats,
 } from "@/api-clients/supplier-dashboard/supplier-dashboard";
-import { getSupplierEarningsChart, type MonthlyRevenuePoint } from "@/api-clients/supplier-earnings/supplier-earnings";
+import {
+  getSupplierEarningsChart,
+  getSupplierTopVehicles,
+  type MonthlyRevenuePoint,
+  type SupplierTopVehicle,
+} from "@/api-clients/supplier-earnings/supplier-earnings";
 import { logger } from "@/utils/logger";
 import VehicleStats, { type StatItem } from "@/app/[locale]/(dashboard)/_components/VehicleStats";
 
@@ -169,6 +192,10 @@ export default function SupplierDashboardClient() {
     completed: number;
     cancelled: number;
   } | null>(null);
+  const [topVehicles, setTopVehicles] = useState<SupplierTopVehicle[] | null>(null);
+  const [vehicleStatusChartData, setVehicleStatusChartData] = useState<
+    { name: string; value: number; color: string }[] | null
+  >(null);
   const [statsLoading, setStatsLoading] = useState(true);
   const [statsError, setStatsError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -204,16 +231,36 @@ export default function SupplierDashboardClient() {
       setStatsError(null);
 
       try {
-        const [statsData, earningsData, bookingsData] = await Promise.all([
+        const [statsData, earningsData, bookingsData, topVehiclesData, vehicleStatusData] = await Promise.all([
           getSupplierDashboardStats(accessToken),
           getSupplierEarningsChart(accessToken),
           getSupplierDashboardBookingsByStatus(accessToken),
+          getSupplierTopVehicles(accessToken, "bookings"),
+          getSupplierVehicleStatusDistribution(accessToken),
         ]);
         if (cancelled) return;
         setStats(statsData);
         setEarningsChartData(earningsData);
-
+        setTopVehicles(topVehiclesData);
         setBookingsChartRaw(bookingsData);
+
+        const statusColors: Record<string, string> = {
+          Available: theme.palette.success.main,
+          Booked: theme.palette.primary.main,
+          Unavailable: theme.palette.primary.main,
+          FullyBooked: theme.palette.primary.main,
+          Maintenance: theme.palette.error.main,
+          ComingSoon: theme.palette.info.main,
+          Retired: theme.palette.text.disabled,
+        };
+
+        const chartData = Object.entries(vehicleStatusData).map(([status, count]) => ({
+          name: status,
+          value: count,
+          color: statusColors[status] || theme.palette.grey[500],
+        }));
+
+        setVehicleStatusChartData(chartData);
       } catch (err: unknown) {
         if (cancelled) return;
         logger.error("Failed to load supplier dashboard stats", err);
@@ -230,7 +277,7 @@ export default function SupplierDashboardClient() {
     return () => {
       cancelled = true;
     };
-  }, [session?.accessToken, sessionStatus, t]);
+  }, [session?.accessToken, sessionStatus, t, theme]);
 
   const bookingsChartData = useMemo(() => {
     if (!bookingsChartRaw) return null;
@@ -436,6 +483,164 @@ export default function SupplierDashboardClient() {
         </Grid>
 
         <Grid container spacing={3}>
+          <Grid size={{ xs: 12, lg: 7 }}>
+            <motion.div variants={itemVariants} style={{ height: "100%" }}>
+              <Card
+                elevation={0}
+                sx={theme => ({
+                  borderRadius: 2,
+                  border: "1px solid",
+                  borderColor: theme.palette.border.main,
+                  height: "100%",
+                  boxShadow: theme.palette.shadow.card,
+                })}
+              >
+                <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2.5, gap: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+                      <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                        {t("topVehicles.heading")}
+                      </Typography>
+                    </Box>
+                    <IconButton size="small">
+                      <MoreVertIcon />
+                    </IconButton>
+                  </Box>
+
+                  <Stack divider={<Divider flexItem />} spacing={0}>
+                    {topVehicles?.map(vehicle => (
+                      <Box
+                        key={vehicle.vehicleId}
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 2,
+                          py: 1.5,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: 56,
+                            height: 56,
+                            borderRadius: 2,
+                            overflow: "hidden",
+                            flexShrink: 0,
+                            bgcolor: th => alpha(th.palette.primary.main, 0.08),
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          {vehicle.imageUrl ? (
+                            <Image
+                              src={(toImageUrl(vehicle.imageUrl) as string) || vehicle.imageUrl}
+                              alt={`${vehicle.make} ${vehicle.model}`}
+                              width={120}
+                              height={90}
+                              style={{ objectFit: "cover", width: "100%", height: "100%" }}
+                            />
+                          ) : (
+                            <CarIcon fontSize="small" />
+                          )}
+                        </Box>
+                        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>
+                            {vehicle.make} {vehicle.model}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                            {formatCount(vehicle.completedBookingsCount)} {t("topVehicles.completedBookings")}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    ))}
+                    {topVehicles?.length === 0 && (
+                      <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: "center" }}>
+                        {t("topVehicles.noCompletedBookings")}
+                      </Typography>
+                    )}
+                  </Stack>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </Grid>
+
+          <Grid size={{ xs: 12, lg: 5 }}>
+            <motion.div variants={itemVariants} style={{ height: "100%" }}>
+              <Card
+                elevation={0}
+                sx={theme => ({
+                  borderRadius: 2,
+                  border: "1px solid",
+                  borderColor: theme.palette.border.main,
+                  height: "100%",
+                  boxShadow: theme.palette.shadow.card,
+                })}
+              >
+                <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2.5, gap: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+                      <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                        {t("vehicleStatus.heading")}
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  <Box sx={{ width: "100%", height: 280, minWidth: 0, position: "relative", overflow: "hidden" }}>
+                    {mounted && vehicleStatusChartData && (
+                      <ResponsiveContainer width="100%" height={280} minWidth={0}>
+                        <PieChart>
+                          <Pie
+                            data={vehicleStatusChartData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={70}
+                            outerRadius={100}
+                            paddingAngle={2}
+                            dataKey="value"
+                            stroke="none"
+                          >
+                            {vehicleStatusChartData.map((entry, index) => (
+                              // eslint-disable-next-line @typescript-eslint/no-deprecated, sonarjs/deprecation
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            contentStyle={{
+                              borderRadius: 8,
+                              border: `1px solid ${theme.palette.divider}`,
+                              background: theme.palette.background.paper,
+                              boxShadow: theme.shadows[3],
+                            }}
+                            itemStyle={{
+                              fontWeight: 600,
+                            }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    )}
+                  </Box>
+
+                  {mounted && vehicleStatusChartData && (
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, justifyContent: "center", mt: 1 }}>
+                      {vehicleStatusChartData
+                        .filter(v => v.value > 0)
+                        .map((status, idx) => (
+                          <Box key={idx} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <Box sx={{ width: 12, height: 12, borderRadius: "50%", bgcolor: status.color }} />
+                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                              {status.name} ({status.value})
+                            </Typography>
+                          </Box>
+                        ))}
+                    </Box>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+          </Grid>
+        </Grid>
+
+        <Grid container spacing={3} sx={{ mt: 0 }}>
           <Grid size={{ xs: 12, lg: 7 }}>
             <motion.div variants={itemVariants} style={{ height: "100%" }}>
               <Card

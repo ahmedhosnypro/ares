@@ -52,6 +52,8 @@ interface ApiVehicleDto {
   };
   readonly averageRating?: number;
   readonly reviewCount?: number;
+  readonly categoryId?: string;
+  readonly categoryName?: string;
 }
 
 interface ApiReviewDto {
@@ -121,6 +123,8 @@ function normalizeVehicle(vehicle: ApiVehicleDto): VehicleDetailsViewModel {
     supplierName: asString(vehicle.supplier?.name),
     averageRating: asNumber(vehicle.averageRating),
     reviewCount: asNumber(vehicle.reviewCount),
+    categoryId: vehicle.categoryId ? asString(vehicle.categoryId) : undefined,
+    categoryName: vehicle.categoryName ? asString(vehicle.categoryName) : undefined,
   };
 }
 
@@ -216,5 +220,7 @@ export default async function VehicleDetailsPage({ params }: PageProps) {
   const isOwner = session?.user.id === vehicle.supplierId;
   const canEdit = isAdmin || isOwner;
 
-  return <VehicleDetailsClient vehicle={vehicle} reviews={reviews} locations={locations} canEdit={canEdit} />;
+  return (
+    <VehicleDetailsClient vehicle={vehicle} reviews={reviews} locations={locations} canEdit={canEdit} />
+  );
 }
