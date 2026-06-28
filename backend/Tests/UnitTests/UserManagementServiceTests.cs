@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
+using MockQueryable.Moq;
 using Xunit;
 
 namespace Backend.Tests.UnitTests;
@@ -31,6 +32,9 @@ public class UserManagementServiceTests
         _userManagerMock = CreateMockUserManager();
         _roleManagerMock = CreateMockRoleManager();
         _loggerMock = new Mock<ILogger<UserManagementService>>();
+
+        var emptyUsers = new List<ApplicationUser>().AsQueryable().BuildMock();
+        _userManagerMock.SetupGet(x => x.Users).Returns(emptyUsers);
 
         _userManagementService = new UserManagementService(
             _userRepositoryMock.Object,
@@ -66,6 +70,9 @@ public class UserManagementServiceTests
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(pagedResult);
 
+        var emptyUsers = new List<ApplicationUser>().AsQueryable().BuildMock();
+        _userManagerMock.SetupGet(x => x.Users).Returns(emptyUsers);
+
         // Setup roles for each user
         foreach (var user in users.Take(pageSize))
         {
@@ -73,7 +80,6 @@ public class UserManagementServiceTests
                 .ReturnsAsync(new List<string> { "Customer" });
         }
 
-        // Act
         var result = await _userManagementService.GetUsersAsync(page, pageSize);
         // Assert
         Assert.NotNull(result);
