@@ -16,6 +16,7 @@ export const chapter2: ChapterConfig = {
     "backend/Api/Program.cs",
   ],
   systemPrompt: `You are an expert academic documentation writer for a graduation project at Al-Azhar University, Faculty of Engineering, Systems & Computers Department. You write in formal academic English following the university's rubric guidelines. Output raw Markdown only, never wrap content in codeblock fences. Limit background to what the reader needs to know to understand the solution developed. Include Mermaid diagrams in codeblocks when describing architecture or timelines, referencing Figure X.x.`,
+  includeDiagrams: true,
   userPrompt: `Generate 'CHAPTER 2: BACKGROUND MATERIALS' based on the provided repository context.
 
 This chapter introduces the necessary background material related to the underlying project. Limit yourself to what the reader needs to know to understand the solution that has been developed.

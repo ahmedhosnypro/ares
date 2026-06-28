@@ -1,4 +1,6 @@
 using Backend.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Backend.Application.Interfaces;
 
@@ -29,10 +31,14 @@ public interface IApplicationDbContext
     IQueryable<PrivacySection> PrivacySections { get; }
     IQueryable<Driver> Drivers { get; }
     // Driver Module (Phase 1+) — additive, see DriverProfile entity.
-    IQueryable<DriverProfile> DriverProfiles { get; }
-    IQueryable<DriverWorkArea> DriverWorkAreas { get; }
-    IQueryable<ServiceArea> ServiceAreas { get; }
-    IQueryable<DriverReview> DriverReviews { get; }
+        DbSet<DriverProfile> DriverProfiles { get; }
+        DbSet<DriverWorkArea> DriverWorkAreas { get; }
+        DbSet<ServiceArea> ServiceAreas { get; }
+        DbSet<DriverReview> DriverReviews { get; }
+        DbSet<DriverEarning> DriverEarnings { get; }
+        DbSet<DriverPayout> DriverPayouts { get; }
+        DbSet<DriverPayoutTransaction> DriverPayoutTransactions { get; }
+        DbSet<DriverPaymentInfo> DriverPaymentInfo { get; }
     IQueryable<VehicleInspection> VehicleInspections { get; }
     IQueryable<InspectionImage> InspectionImages { get; }
     IQueryable<Inspector> Inspectors { get; }
@@ -43,6 +49,7 @@ public interface IApplicationDbContext
     void AddVerification(Verification verification);
     void AddDriver(Driver driver);
     void AddDriverProfile(DriverProfile driverProfile);
+    void AddDriverPaymentInfo(DriverPaymentInfo driverPaymentInfo);
     void AddVehicleImage(VehicleImage image);
     void RemoveVehicleImages(IEnumerable<VehicleImage> images);
     void RemoveVehicleFeatures(IEnumerable<VehicleFeature> features);
@@ -56,4 +63,5 @@ public interface IApplicationDbContext
     void AddCategoryOffer(CategoryOffer offer);
     void RemoveCategoryOffer(CategoryOffer offer);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+    Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
 }

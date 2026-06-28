@@ -20,6 +20,9 @@ namespace Backend.Domain.Entities
         [MaxLength(100)]
         public string? Model { get; set; }
 
+        [NotMapped]
+        public string Name => $"{Make} {Model}".Trim();
+
         public int? Year { get; set; }
 
         [MaxLength(50)]

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Chip, useTheme, alpha } from "@mui/material";
 
 interface Props {
@@ -7,29 +8,25 @@ interface Props {
   readonly size?: "small" | "medium";
 }
 
-/**
- * Consistent status badge used throughout the inspection UI:
- *   Pending  → yellow
- *   Approved → green
- *   Rejected → red
- */
 export default function InspectionStatusBadge({ status, size = "small" }: Props) {
   const theme = useTheme();
+  const t = useTranslations("dashboard.inspectorInspections.statusBadge");
+
   const palette: Record<string, { bg: string; color: string; label: string }> = {
     Pending: {
       bg: alpha(theme.palette.warning.main, 0.15),
       color: theme.palette.warning.main,
-      label: "Pending",
+      label: t("pending"),
     },
     Approved: {
       bg: alpha(theme.palette.success.main, 0.15),
       color: theme.palette.success.main,
-      label: "Approved",
+      label: t("approved"),
     },
     Rejected: {
       bg: alpha(theme.palette.error.main, 0.15),
       color: theme.palette.error.main,
-      label: "Rejected",
+      label: t("rejected"),
     },
   };
   const c = palette[status] ?? {

@@ -5,34 +5,24 @@ using System.Linq.Expressions;
 
 namespace Backend.Tests.TestUtilities;
 
-/// <summary>
-/// Extension methods for creating mock DbSet objects for testing
-/// </summary>
 public static class MockDbSetExtensions
 {
-    /// <summary>
-    /// Creates a mock DbSet from an IQueryable for testing purposes with async support
-    /// </summary>
-    /// <typeparam name="T">Entity type</typeparam>
-    /// <param name="data">The data to mock</param>
-    /// <returns>Mock DbSet</returns>
     public static Mock<DbSet<T>> BuildMockDbSet<T>(this IQueryable<T> data) where T : class
     {
         var mockSet = new Mock<DbSet<T>>();
+        var asyncEnumerable = new TestAsyncEnumerable<T>(data);
 
         mockSet.As<IQueryable<T>>().Setup(m => m.Provider).Returns(new TestAsyncQueryProvider<T>(data.Provider));
         mockSet.As<IQueryable<T>>().Setup(m => m.Expression).Returns(data.Expression);
         mockSet.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(data.ElementType);
         mockSet.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(data.GetEnumerator());
+        mockSet.As<IAsyncEnumerable<T>>().Setup(m => m.GetAsyncEnumerator(It.IsAny<CancellationToken>()))
+            .Returns(asyncEnumerable.GetAsyncEnumerator());
 
         return mockSet;
     }
 }
 
-/// <summary>
-/// Test async query provider for mocking Entity Framework async operations
-/// </summary>
-/// <typeparam name="TEntity">Entity type</typeparam>
 internal class TestAsyncQueryProvider<TEntity> : IAsyncQueryProvider
 {
     private readonly IQueryProvider _inner;
@@ -54,16 +44,17 @@ internal class TestAsyncQueryProvider<TEntity> : IAsyncQueryProvider
 
     public object? Execute(Expression expression)
     {
-        return _inner.Execute(expression);
+        return _inner.Execute(RemoveIncludeVisitor.RemoveIncludes(expression));
     }
 
     public TResult Execute<TResult>(Expression expression)
     {
-        return _inner.Execute<TResult>(expression);
+        return _inner.Execute<TResult>(RemoveIncludeVisitor.RemoveIncludes(expression));
     }
 
     public TResult ExecuteAsync<TResult>(Expression expression, CancellationToken cancellationToken = default)
     {
+        var cleanedExpression = RemoveIncludeVisitor.RemoveIncludes(expression);
         var expectedResultType = typeof(TResult).GetGenericArguments()[0];
         var executionResult = typeof(IQueryProvider)
             .GetMethod(
@@ -71,7 +62,7 @@ internal class TestAsyncQueryProvider<TEntity> : IAsyncQueryProvider
                 genericParameterCount: 1,
                 types: new[] { typeof(Expression) })
             ?.MakeGenericMethod(expectedResultType)
-            .Invoke(this, new[] { expression });
+            .Invoke(this, new[] { cleanedExpression });
 
         var taskFromResultMethod = typeof(Task).GetMethod(nameof(Task.FromResult))
             ?.MakeGenericMethod(expectedResultType);
@@ -87,10 +78,31 @@ internal class TestAsyncQueryProvider<TEntity> : IAsyncQueryProvider
     }
 }
 
-/// <summary>
-/// Test async enumerable for mocking Entity Framework async operations
-/// </summary>
-/// <typeparam name="T">Entity type</typeparam>
+internal class RemoveIncludeVisitor : ExpressionVisitor
+{
+    private static readonly HashSet<string> _includeMethodNames =
+    [
+        "Include", "ThenInclude", "AsNoTracking", "AsNoTrackingWithIdentityResolution",
+        "AsTracking", "IgnoreQueryFilters", "IgnoreAutoIncludes"
+    ];
+
+    public static Expression RemoveIncludes(Expression expression)
+    {
+        return new RemoveIncludeVisitor().Visit(expression);
+    }
+
+    protected override Expression VisitMethodCall(MethodCallExpression node)
+    {
+        if (_includeMethodNames.Contains(node.Method.Name) &&
+            node.Method.DeclaringType?.Namespace?.StartsWith("Microsoft.EntityFrameworkCore") == true)
+        {
+            return Visit(node.Arguments[0]);
+        }
+
+        return base.VisitMethodCall(node);
+    }
+}
+
 internal class TestAsyncEnumerable<T> : EnumerableQuery<T>, IAsyncEnumerable<T>, IQueryable<T>
 {
     public TestAsyncEnumerable(IEnumerable<T> enumerable)
@@ -109,10 +121,6 @@ internal class TestAsyncEnumerable<T> : EnumerableQuery<T>, IAsyncEnumerable<T>,
     IQueryProvider IQueryable.Provider => new TestAsyncQueryProvider<T>(this);
 }
 
-/// <summary>
-/// Test async enumerator for mocking Entity Framework async operations
-/// </summary>
-/// <typeparam name="T">Entity type</typeparam>
 internal class TestAsyncEnumerator<T> : IAsyncEnumerator<T>
 {
     private readonly IEnumerator<T> _inner;

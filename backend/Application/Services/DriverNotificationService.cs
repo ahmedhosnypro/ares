@@ -22,6 +22,9 @@ namespace Backend.Application.Services
         public const string NoDriverAvailable = "NoDriverAvailable";
         public const string DriverRequestExpired = "DriverRequestExpired";
         public const string DriverSelected = "DriverSelected";
+        public const string DriverEarningReceived = "DriverEarningReceived";
+        public const string DriverPayoutCompleted = "DriverPayoutCompleted";
+        public const string DriverPayoutRejected = "DriverPayoutRejected";
     }
 
     /// <summary>
@@ -118,5 +121,23 @@ namespace Backend.Application.Services
                 "Driver Available",
                 "A driver has accepted your request! You can now review their profile and select them for your booking.",
                 DriverNotificationTypes.DriverRequestNew, cancellationToken);
+
+        public Task NotifyDriverEarningReceivedAsync(Guid driverUserId, decimal netEarning, string bookingNumber, CancellationToken cancellationToken = default) =>
+            SafeSendAsync(driverUserId,
+                "Earning received",
+                $"You earned ${netEarning:F2} from trip {bookingNumber}.",
+                DriverNotificationTypes.DriverEarningReceived, cancellationToken);
+
+        public Task NotifyDriverPayoutCompletedAsync(Guid driverUserId, decimal amount, CancellationToken cancellationToken = default) =>
+            SafeSendAsync(driverUserId,
+                "Payout completed",
+                $"Your payout of ${amount:F2} has been processed successfully.",
+                DriverNotificationTypes.DriverPayoutCompleted, cancellationToken);
+
+        public Task NotifyDriverPayoutRejectedAsync(Guid driverUserId, decimal amount, string reason, CancellationToken cancellationToken = default) =>
+            SafeSendAsync(driverUserId,
+                "Payout rejected",
+                $"Your payout request of ${amount:F2} was rejected. Reason: {reason}",
+                DriverNotificationTypes.DriverPayoutRejected, cancellationToken);
     }
 }

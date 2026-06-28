@@ -33,6 +33,7 @@ import {
   type NotificationItem,
 } from "@/api-clients/notfications/notfications";
 import { logger } from "@/utils/logger";
+import { getNotificationTypeConfig } from "@/utils/notification-type-config";
 import DeleteNotificationDialog from "@/components/notifications/DeleteNotificationDialog";
 
 const POLL_INTERVAL_MS = 60_000;
@@ -168,6 +169,11 @@ export default function NotificationsPanel({ iconColor = "inherit" }: Notificati
           router.push(`/booking/${entityId}`);
           handleClose();
         }
+      }
+
+      if (["DriverEarningReceived", "DriverPayoutCompleted", "DriverPayoutRejected"].includes(tag)) {
+        router.push("/driver/earnings");
+        handleClose();
       }
     }
   };
@@ -395,14 +401,11 @@ export default function NotificationsPanel({ iconColor = "inherit" }: Notificati
                 >
                   <Avatar
                     sx={{
-                      width: 36,
-                      height: 36,
-                      bgcolor: alpha(theme.palette.primary.main, 0.12),
-                      color: "primary.main",
-                      flexShrink: 0,
+                      ...{ width: 36, height: 36, flexShrink: 0 },
+                      ...(getNotificationTypeConfig(n.type).avatarSx as Record<string, unknown>),
                     }}
                   >
-                    <NotificationsActiveIcon fontSize="small" />
+                    {React.createElement(getNotificationTypeConfig(n.type).icon, { fontSize: "small" })}
                   </Avatar>
                   <Box sx={{ minWidth: 0, flexGrow: 1 }}>
                     <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>

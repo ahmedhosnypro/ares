@@ -24,6 +24,7 @@ export const appendixA: ChapterConfig = {
     "Follow ProjectTemplate.md rubric. Output raw Markdown only.",
     "Include filesystem tree as Mermaid diagram referencing Figure A.x.",
   ].join(" "),
+  includeDiagrams: true,
   userPrompt: [
     "Generate APPENDIX A: APPENDICES",
     "",

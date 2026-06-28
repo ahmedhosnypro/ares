@@ -1,15 +1,5 @@
 "use client";
 
-/**
- * Read-only review details modal used by the "View Details" action
- * on the supplier reviews table.
- *
- * Renders everything the row shows plus the customer comment and any
- * existing supplier reply / report metadata. Suppliers can launch the
- * Reply or Report flows directly from this dialog via the action
- * buttons in the footer.
- */
-
 import {
   Avatar,
   Box,
@@ -31,6 +21,7 @@ import ChatBubbleOutlinedRoundedIcon from "@mui/icons-material/ChatBubbleOutline
 import ReportProblemRoundedIcon from "@mui/icons-material/ReportProblemRounded";
 import DirectionsCarFilledTwoToneIcon from "@mui/icons-material/DirectionsCarFilledTwoTone";
 import PersonOutlinedRoundedIcon from "@mui/icons-material/PersonOutlineRounded";
+import { useTranslations } from "next-intl";
 import RatingStars from "./RatingStars";
 import type { SupplierReviewListItem } from "@/api-clients/supplier-reviews/supplier-reviews";
 
@@ -50,6 +41,7 @@ export interface ReviewDetailsDialogProps {
 
 export default function ReviewDetailsDialog({ open, review, onClose, onReply, onReport }: ReviewDetailsDialogProps) {
   const theme = useTheme();
+  const t = useTranslations("dashboard.supplierReviews");
   if (!review) return null;
 
   return (
@@ -70,14 +62,13 @@ export default function ReviewDetailsDialog({ open, review, onClose, onReply, on
           fontWeight: 700,
         }}
       >
-        <span>Review details</span>
+        <span>{t("detailsDialog.title")}</span>
         <IconButton size="small" onClick={onClose} aria-label="close" sx={{ borderRadius: 2 }}>
           <CloseRoundedIcon fontSize="small" />
         </IconButton>
       </DialogTitle>
 
       <DialogContent sx={{ pt: 2 }}>
-        {/* Customer + rating */}
         <Stack
           direction={{ xs: "column", sm: "row" }}
           sx={{ gap: 1.5, justifyContent: "space-between", alignItems: { xs: "flex-start", sm: "center" }, mb: 2 }}
@@ -88,17 +79,16 @@ export default function ReviewDetailsDialog({ open, review, onClose, onReply, on
             </Avatar>
             <Box>
               <Typography variant="body1" sx={{ fontWeight: 700 }}>
-                {review.customerName || "Customer"}
+                {review.customerName || t("detailsDialog.customerDefault")}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Reviewed on {formatDate(review.createdAt)}
+                {t("detailsDialog.reviewedOn")} {formatDate(review.createdAt)}
               </Typography>
             </Box>
           </Stack>
           <RatingStars rating={review.rating} size="medium" showValue />
         </Stack>
 
-        {/* Vehicle */}
         <Box
           sx={{
             borderRadius: 2,
@@ -128,14 +118,15 @@ export default function ReviewDetailsDialog({ open, review, onClose, onReply, on
               {review.vehicleMake} {review.vehicleModel}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {review.vehicleYear ? `Year ${String(review.vehicleYear)}` : "Year —"}
+              {review.vehicleYear
+                ? `${t("detailsDialog.year")} ${String(review.vehicleYear)}`
+                : `${t("detailsDialog.year")} —`}
             </Typography>
           </Box>
         </Box>
 
-        {/* Comment */}
         <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, textTransform: "uppercase" }}>
-          Customer comment
+          {t("detailsDialog.customerComment")}
         </Typography>
         <Typography
           variant="body2"
@@ -147,20 +138,19 @@ export default function ReviewDetailsDialog({ open, review, onClose, onReply, on
             fontStyle: review.comment ? "normal" : "italic",
           }}
         >
-          {review.comment?.trim() || "Customer didn't leave a comment."}
+          {review.comment?.trim() || t("detailsDialog.noComment")}
         </Typography>
 
         <Divider sx={{ my: 2 }} />
 
-        {/* Existing supplier reply */}
         <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 1 }}>
           <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, textTransform: "uppercase" }}>
-            Your reply
+            {t("detailsDialog.yourReply")}
           </Typography>
           {review.hasReply && (
             <Chip
               size="small"
-              label={`Replied ${formatDate(review.repliedAt)}`}
+              label={`${t("detailsDialog.replied")} ${formatDate(review.repliedAt)}`}
               sx={{
                 fontWeight: 600,
                 bgcolor: alpha(theme.palette.success.main, 0.12),
@@ -177,11 +167,10 @@ export default function ReviewDetailsDialog({ open, review, onClose, onReply, on
           </Typography>
         ) : (
           <Typography variant="body2" color="text.disabled" sx={{ fontStyle: "italic", mb: 2 }}>
-            You haven&apos;t replied to this review yet.
+            {t("detailsDialog.notRepliedYet")}
           </Typography>
         )}
 
-        {/* Report info */}
         {review.isReported && (
           <Box
             sx={{
@@ -195,11 +184,11 @@ export default function ReviewDetailsDialog({ open, review, onClose, onReply, on
             <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 0.5 }}>
               <ReportProblemRoundedIcon fontSize="small" color="error" />
               <Typography variant="body2" sx={{ fontWeight: 700, color: "error.main" }}>
-                You reported this review {formatDate(review.reportedAt)}
+                {t("detailsDialog.reportedLabel")} {formatDate(review.reportedAt)}
               </Typography>
             </Stack>
             <Typography variant="body2" sx={{ whiteSpace: "pre-line" }}>
-              {review.reportReason || "(no reason recorded)"}
+              {review.reportReason || t("detailsDialog.noReasonRecorded")}
             </Typography>
           </Box>
         )}
@@ -215,7 +204,7 @@ export default function ReviewDetailsDialog({ open, review, onClose, onReply, on
           startIcon={<ReportProblemRoundedIcon />}
           sx={{ borderRadius: 2, fontWeight: 600, textTransform: "none", flex: { xs: 1, sm: "none" } }}
         >
-          {review.isReported ? "Update report" : "Report"}
+          {review.isReported ? t("detailsDialog.updateReport") : t("detailsDialog.report")}
         </Button>
         <Button
           onClick={() => {
@@ -225,7 +214,7 @@ export default function ReviewDetailsDialog({ open, review, onClose, onReply, on
           startIcon={<ChatBubbleOutlinedRoundedIcon />}
           sx={{ borderRadius: 2, fontWeight: 700, textTransform: "none", flex: { xs: 1, sm: "none" } }}
         >
-          {review.hasReply ? "Edit reply" : "Reply"}
+          {review.hasReply ? t("detailsDialog.editReply") : t("detailsDialog.reply")}
         </Button>
       </DialogActions>
     </Dialog>
