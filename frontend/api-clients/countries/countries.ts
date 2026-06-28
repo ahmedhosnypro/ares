@@ -127,11 +127,7 @@ export const createCountry = async (
   });
 };
 
-export const validateCountry = async (
-  accessToken: string,
-  language: string,
-  name: string
-): Promise<boolean> => {
+export const validateCountry = async (accessToken: string, language: string, name: string): Promise<boolean> => {
   const res = await fetch(toApiUrl("/api/validate-country"), {
     method: "POST",
     headers: {
@@ -150,4 +146,3 @@ export const validateCountry = async (
   }
   throw new Error("Failed to validate country name");
 };
-

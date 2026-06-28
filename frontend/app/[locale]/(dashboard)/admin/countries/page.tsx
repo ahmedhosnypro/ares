@@ -42,7 +42,6 @@ import { useTranslations } from "next-intl";
 import { useCountries, checkCountry, deleteCountry, type Country } from "@/api-clients/countries/countries";
 import VehicleStats from "@/app/[locale]/(dashboard)/_components/VehicleStats";
 
-
 // ── MAIN PAGE ──
 export default function AdminCountriesPage() {
   const { data: session } = useSession();

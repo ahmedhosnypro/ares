@@ -34,7 +34,6 @@ import PromotionManager from "../_components/PromotionManager";
 import { useTranslations } from "next-intl";
 import { ApiError } from "@/utils/api-client";
 
-
 export default function CategoryDetailsPage({ params }: { readonly params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const router = useRouter();
@@ -178,7 +177,7 @@ export default function CategoryDetailsPage({ params }: { readonly params: Promi
                 {t("stats.totalBookings")}
               </Typography>
               <Typography variant="h5" sx={{ fontWeight: 800 }}>
-                {category.bookingCount as number | null ?? 0}
+                {(category.bookingCount as number | null) ?? 0}
               </Typography>
             </Box>
           </Paper>
@@ -206,7 +205,7 @@ export default function CategoryDetailsPage({ params }: { readonly params: Promi
                 {t("stats.revenue")}
               </Typography>
               <Typography variant="h5" sx={{ fontWeight: 800 }}>
-                ${(category.revenue as number | null ?? 0).toFixed(2)}
+                ${((category.revenue as number | null) ?? 0).toFixed(2)}
               </Typography>
             </Box>
           </Paper>
@@ -232,8 +231,8 @@ export default function CategoryDetailsPage({ params }: { readonly params: Promi
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {(category.vehicles as typeof category.vehicles | null ?? []).length > 0 ? (
-                    (category.vehicles as typeof category.vehicles | null ?? []).map(v => (
+                  {((category.vehicles as typeof category.vehicles | null) ?? []).length > 0 ? (
+                    ((category.vehicles as typeof category.vehicles | null) ?? []).map(v => (
                       <TableRow key={v.id} hover>
                         <TableCell sx={{ fontWeight: 600 }}>
                           {v.make} {v.model}

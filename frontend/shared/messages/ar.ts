@@ -47,7 +47,6 @@ import categoryDetails from "./ar/dashboard/admin/categories/detail";
 import countries from "./ar/dashboard/admin/countries";
 import createCountry from "./ar/dashboard/admin/countries/create";
 
-
 const ar: MessageSchema = {
   common,
   auth,

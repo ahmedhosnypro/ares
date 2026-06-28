@@ -482,7 +482,11 @@ function InspectionCard({
     >
       <Stack spacing={2.5}>
         <InfoGrid columns={2}>
-          <InfoItem label={t("inspection.assignedInspector")} value={inspectorName} icon={<AssignIcon sx={{ fontSize: 16 }} />} />
+          <InfoItem
+            label={t("inspection.assignedInspector")}
+            value={inspectorName}
+            icon={<AssignIcon sx={{ fontSize: 16 }} />}
+          />
           <InfoItem
             label={t("inspection.date")}
             value={inspection ? formatDateTime(inspection.inspectionDate, locale) : "—"}
@@ -490,7 +494,9 @@ function InspectionCard({
           />
           <InfoItem
             label={t("inspection.submittedAt")}
-            value={inspection?.submittedAt ? formatDateTime(inspection.submittedAt, locale) : t("inspection.notSubmitted")}
+            value={
+              inspection?.submittedAt ? formatDateTime(inspection.submittedAt, locale) : t("inspection.notSubmitted")
+            }
             icon={<ScheduleIcon sx={{ fontSize: 16 }} />}
           />
           <InfoItem
@@ -500,7 +506,9 @@ function InspectionCard({
           />
           <InfoItem
             label={t("inspection.mileage")}
-            value={inspection ? `${inspection.odometerReading.toLocaleString(locale === "ar" ? "ar-EG" : "en-US")} km` : "—"}
+            value={
+              inspection ? `${inspection.odometerReading.toLocaleString(locale === "ar" ? "ar-EG" : "en-US")} km` : "—"
+            }
             icon={<SpeedIcon sx={{ fontSize: 16 }} />}
           />
           <InfoItem
@@ -744,7 +752,13 @@ function getLocalizedEventContent(evt: BookingTimelineEvent, bookingNumber: stri
   }
 }
 
-function TimelineList({ events, bookingNumber }: { readonly events: BookingTimelineEvent[]; readonly bookingNumber: string }) {
+function TimelineList({
+  events,
+  bookingNumber,
+}: {
+  readonly events: BookingTimelineEvent[];
+  readonly bookingNumber: string;
+}) {
   const t = useTranslations("dashboardAdmin.bookingDetails");
   const locale = useLocale();
 
@@ -869,7 +883,8 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
         setBooking(data);
       } catch (e) {
         logger.error("Failed to load booking details", e);
-setError(e instanceof Error ? e.message : t("errors.loadFailed"));      } finally {
+        setError(e instanceof Error ? e.message : t("errors.loadFailed"));
+      } finally {
         setLoading(false);
         setRefreshing(false);
       }
@@ -942,11 +957,7 @@ setError(e instanceof Error ? e.message : t("errors.loadFailed"));      } finall
       {/* ── VERTICAL SECTIONS ── */}
       <Stack spacing={3}>
         {/* 1. Booking Information */}
-        <SectionCard
-          icon={<EventIcon />}
-          title={t("bookingInfo.title")}
-          subtitle={t("bookingInfo.subtitle")}
-        >
+        <SectionCard icon={<EventIcon />} title={t("bookingInfo.title")} subtitle={t("bookingInfo.subtitle")}>
           <InfoGrid columns={3}>
             <InfoItem label={t("bookingInfo.number")} value={booking.bookingNumber ?? "—"} />
             <InfoItem
@@ -1025,7 +1036,9 @@ setError(e instanceof Error ? e.message : t("errors.loadFailed"));      } finall
                   {customerVerificationStatus && (
                     <Chip
                       size="small"
-                      label={t("customerInfo.idVerification", { status: t(`badges.${customerVerificationStatus.toLowerCase()}` as any) })}
+                      label={t("customerInfo.idVerification", {
+                        status: t(`badges.${customerVerificationStatus.toLowerCase()}` as any),
+                      })}
                       color={getStatusConfig(customerVerificationStatus)}
                       variant="outlined"
                       sx={{ fontWeight: 600, textTransform: "capitalize" }}
@@ -1109,7 +1122,14 @@ setError(e instanceof Error ? e.message : t("errors.loadFailed"));      } finall
                     label={t("vehicleInfo.dailyRate")}
                     value={formatCurrency(booking.car?.dailyRate ?? booking.dailyRate ?? null, currency, locale)}
                   />
-                  <InfoItem label={t("vehicleInfo.availability")} value={booking.car?.availabilityStatus ? t(`badges.${booking.car.availabilityStatus.toLowerCase()}` as any) : "—"} />
+                  <InfoItem
+                    label={t("vehicleInfo.availability")}
+                    value={
+                      booking.car?.availabilityStatus
+                        ? t(`badges.${booking.car.availabilityStatus.toLowerCase()}` as any)
+                        : "—"
+                    }
+                  />
                 </InfoGrid>
               </Box>
             </Stack>
@@ -1124,9 +1144,19 @@ setError(e instanceof Error ? e.message : t("errors.loadFailed"));      } finall
                 </Typography>
               </Stack>
               <InfoGrid columns={2}>
-                <InfoItem label={t("vehicleInfo.supplierName")} value={carSupplier?.fullName ?? carSupplier?.name ?? "—"} />
-                <InfoItem label={t("vehicleInfo.supplierCompanyName")} value={carSupplier?.companyName ?? supplierDisplayName} />
-                <InfoItem label={t("vehicleInfo.supplierEmail")} value={carSupplier?.email ?? "—"} icon={<EmailIcon sx={{ fontSize: 16 }} />} />
+                <InfoItem
+                  label={t("vehicleInfo.supplierName")}
+                  value={carSupplier?.fullName ?? carSupplier?.name ?? "—"}
+                />
+                <InfoItem
+                  label={t("vehicleInfo.supplierCompanyName")}
+                  value={carSupplier?.companyName ?? supplierDisplayName}
+                />
+                <InfoItem
+                  label={t("vehicleInfo.supplierEmail")}
+                  value={carSupplier?.email ?? "—"}
+                  icon={<EmailIcon sx={{ fontSize: 16 }} />}
+                />
                 <InfoItem
                   label={t("vehicleInfo.supplierPhone")}
                   value={carSupplier?.phone ?? "—"}
@@ -1211,8 +1241,14 @@ setError(e instanceof Error ? e.message : t("errors.loadFailed"));      } finall
                   }
                 />
                 <InfoItem label={t("paymentInfo.authCode")} value={booking.paymentDetails.authorizationCode ?? "—"} />
-                <InfoItem label={t("paymentInfo.paidDate")} value={formatDateTime(booking.paymentDetails.processedAt, locale)} />
-                <InfoItem label={t("paymentInfo.created")} value={formatDateTime(booking.paymentDetails.createdAt, locale)} />
+                <InfoItem
+                  label={t("paymentInfo.paidDate")}
+                  value={formatDateTime(booking.paymentDetails.processedAt, locale)}
+                />
+                <InfoItem
+                  label={t("paymentInfo.created")}
+                  value={formatDateTime(booking.paymentDetails.createdAt, locale)}
+                />
                 {booking.paymentDetails.failureReason && (
                   <InfoItem
                     label={t("paymentInfo.failureReason")}
@@ -1239,7 +1275,11 @@ setError(e instanceof Error ? e.message : t("errors.loadFailed"));      } finall
                         label={t("paymentInfo.refundAmount")}
                         value={
                           booking.paymentDetails.refundAmount != null
-                            ? formatCurrency(booking.paymentDetails.refundAmount, booking.paymentDetails.currency, locale)
+                            ? formatCurrency(
+                                booking.paymentDetails.refundAmount,
+                                booking.paymentDetails.currency,
+                                locale
+                              )
                             : "—"
                         }
                       />
@@ -1259,8 +1299,14 @@ setError(e instanceof Error ? e.message : t("errors.loadFailed"));      } finall
                           )
                         }
                       />
-                      <InfoItem label={t("paymentInfo.refundMethod")} value={booking.paymentDetails.refundMethod ?? "—"} />
-                      <InfoItem label={t("paymentInfo.refundDate")} value={formatDateTime(booking.paymentDetails.refundProcessedAt, locale)} />
+                      <InfoItem
+                        label={t("paymentInfo.refundMethod")}
+                        value={booking.paymentDetails.refundMethod ?? "—"}
+                      />
+                      <InfoItem
+                        label={t("paymentInfo.refundDate")}
+                        value={formatDateTime(booking.paymentDetails.refundProcessedAt, locale)}
+                      />
                     </InfoGrid>
                   </Box>
                 </>

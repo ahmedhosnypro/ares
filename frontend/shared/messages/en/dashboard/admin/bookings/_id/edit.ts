@@ -16,7 +16,8 @@ const edit: EditBookingLabels = {
   },
   notices: {
     terminal: "This booking is {status} and its details can no longer be edited.",
-    priceCalculation: "Total price is recalculated automatically when dates change and confirmed by the server on save.",
+    priceCalculation:
+      "Total price is recalculated automatically when dates change and confirmed by the server on save.",
   },
   bookingSummary: {
     title: "Booking Summary",

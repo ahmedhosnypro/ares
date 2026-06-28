@@ -46,7 +46,6 @@ import type { CategoryDetailsLabels } from "./dashboard/admin/categories/detail"
 import type { CountriesLabels } from "./dashboard/admin/countries";
 import type { CreateCountryLabels } from "./dashboard/admin/countries/create";
 
-
 export type {
   AuthLabels,
   AccountBookingsLabels,

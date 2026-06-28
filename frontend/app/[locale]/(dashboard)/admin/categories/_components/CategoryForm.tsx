@@ -20,7 +20,6 @@ import { createCategory, updateCategory, Category } from "@/api-clients/categori
 import { useTranslations } from "next-intl";
 import { ApiError } from "@/utils/api-client";
 
-
 interface CategoryFormProps {
   readonly open: boolean;
   readonly category: Category | null;

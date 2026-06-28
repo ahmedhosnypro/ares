@@ -47,7 +47,6 @@ import categoryDetails from "./en/dashboard/admin/categories/detail";
 import countries from "./en/dashboard/admin/countries";
 import createCountry from "./en/dashboard/admin/countries/create";
 
-
 const en: MessageSchema = {
   common,
   auth,

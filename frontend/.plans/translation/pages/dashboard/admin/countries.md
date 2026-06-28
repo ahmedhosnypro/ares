@@ -13,7 +13,7 @@
 
 ## Shared Components
 
-- `VehicleStats` (app/[locale]/(dashboard)/_components/VehicleStats.tsx)
+- `VehicleStats` (app/[locale]/(dashboard)/\_components/VehicleStats.tsx)
 
 ## Component Discovery
 

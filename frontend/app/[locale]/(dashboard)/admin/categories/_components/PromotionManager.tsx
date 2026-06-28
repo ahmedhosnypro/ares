@@ -46,7 +46,6 @@ export default function PromotionManager({ categoryId }: { readonly categoryId: 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-
   const [formOpen, setFormOpen] = useState(false);
   const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -220,25 +219,26 @@ export default function PromotionManager({ categoryId }: { readonly categoryId: 
         <Box sx={{ p: 2 }}>
           {error ? (
             <Alert severity="error">{error}</Alert>
-          ) : (promotions as Promotion[] | null ?? []).length > 0 ? (
+          ) : ((promotions as Promotion[] | null) ?? []).length > 0 ? (
             <Stack spacing={2}>
-              {(promotions as Promotion[] | null ?? []).map(promo => (
+              {((promotions as Promotion[] | null) ?? []).map(promo => (
                 <Paper
-                   key={promo.id}
-                   elevation={0}
-                   sx={{
-                     p: 2,
-                     bgcolor: alpha(theme.palette.primary.main, 0.02),
-                     border: "1px solid",
-                     borderColor: alpha(theme.palette.primary.main, 0.1),
-                     borderRadius: 2,
-                   }}
+                  key={promo.id}
+                  elevation={0}
+                  sx={{
+                    p: 2,
+                    bgcolor: alpha(theme.palette.primary.main, 0.02),
+                    border: "1px solid",
+                    borderColor: alpha(theme.palette.primary.main, 0.1),
+                    borderRadius: 2,
+                  }}
                 >
                   <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "flex-start" }}>
                     <Box>
                       <Typography sx={{ fontWeight: 700, color: "primary.main" }}>{promo.name}</Typography>
                       <Typography variant="h6" sx={{ fontWeight: 800, mt: 0.5 }}>
-                        {promo.discountPercentage}{t("promotions.percentOff")}
+                        {promo.discountPercentage}
+                        {t("promotions.percentOff")}
                       </Typography>
                       <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
                         {promo.startDate ? new Date(promo.startDate).toLocaleDateString() : ""} -{" "}
@@ -306,7 +306,9 @@ export default function PromotionManager({ categoryId }: { readonly categoryId: 
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle sx={{ fontWeight: 700 }}>{editingPromotion ? t("promotions.form.editTitle") : t("promotions.form.addTitle")}</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>
+          {editingPromotion ? t("promotions.form.editTitle") : t("promotions.form.addTitle")}
+        </DialogTitle>
         <form
           onSubmit={e => {
             void handleSubmit(e);

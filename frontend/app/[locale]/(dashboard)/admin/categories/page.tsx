@@ -177,7 +177,9 @@ export default function AdminCategoriesPage() {
                     >
                       <TableCell>
                         <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-                          <Avatar sx={{ bgcolor: theme => alpha(theme.palette.primary.main, 0.1), color: "primary.main" }}>
+                          <Avatar
+                            sx={{ bgcolor: theme => alpha(theme.palette.primary.main, 0.1), color: "primary.main" }}
+                          >
                             <CategoryIcon />
                           </Avatar>
                           <Box>
@@ -211,7 +213,8 @@ export default function AdminCategoriesPage() {
                           label={c.isActive ? t("table.statusActive") : t("table.statusInactive")}
                           size="small"
                           sx={{
-                            bgcolor: theme => alpha(c.isActive ? theme.palette.success.main : theme.palette.text.disabled, 0.15),
+                            bgcolor: theme =>
+                              alpha(c.isActive ? theme.palette.success.main : theme.palette.text.disabled, 0.15),
                             color: c.isActive ? "success.main" : "text.secondary",
                             fontWeight: 700,
                           }}
@@ -232,7 +235,9 @@ export default function AdminCategoriesPage() {
                           </Tooltip>
                           <Tooltip
                             title={
-                              c.vehicleCount && c.vehicleCount > 0 ? t("alerts.deleteHasVehiclesError") : t("actions.delete")
+                              c.vehicleCount && c.vehicleCount > 0
+                                ? t("alerts.deleteHasVehiclesError")
+                                : t("actions.delete")
                             }
                           >
                             <span>

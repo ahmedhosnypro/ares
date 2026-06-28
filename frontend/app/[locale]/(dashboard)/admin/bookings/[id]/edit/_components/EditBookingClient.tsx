@@ -396,9 +396,7 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
                 disabled={editableFieldsDisabled}
                 error={!datesValid && form.pickupDate !== "" && form.returnDate !== ""}
                 helperText={
-                  !datesValid && form.pickupDate !== "" && form.returnDate !== ""
-                    ? t("errors.returnDateError")
-                    : ""
+                  !datesValid && form.pickupDate !== "" && form.returnDate !== "" ? t("errors.returnDateError") : ""
                 }
                 fullWidth
               />
