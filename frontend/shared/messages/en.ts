@@ -38,6 +38,8 @@ import bankDetails from "./en/dashboard/admin/bank-details";
 import about from "./en/public/about";
 import privacy from "./en/public/privacy";
 import terms from "./en/public/terms";
+import adminBookings from "./en/dashboard/admin/bookings";
+import createBooking from "./en/dashboard/admin/bookings/create";
 
 const en: MessageSchema = {
   common,
@@ -84,6 +86,8 @@ const en: MessageSchema = {
       vehicles,
     },
     bankDetails,
+    bookings: adminBookings,
+    createBooking,
   },
   deleteNotificationDialog,
   publicPages: {

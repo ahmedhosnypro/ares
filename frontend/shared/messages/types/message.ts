@@ -37,6 +37,8 @@ import type { BankDetailsLabels } from "./dashboard/admin/bank-details";
 import type { AboutLabels } from "./public/about";
 import type { PrivacyLabels } from "./public/privacy";
 import type { TermsLabels } from "./public/terms";
+import type { AdminBookingsLabels } from "./dashboard/admin/bookings";
+import type { CreateBookingLabels } from "./dashboard/admin/bookings/create";
 
 export type {
   AuthLabels,
@@ -78,6 +80,8 @@ export type {
   AboutLabels,
   PrivacyLabels,
   TermsLabels,
+  AdminBookingsLabels,
+  CreateBookingLabels,
 };
 
 export type AuthPagesSchema = {
@@ -125,6 +129,8 @@ export type DashboardAdminAdminSchema = {
 export type DashboardAdminSchema = {
   readonly admin: DashboardAdminAdminSchema;
   readonly bankDetails: BankDetailsLabels;
+  readonly bookings: AdminBookingsLabels;
+  readonly createBooking: CreateBookingLabels;
 };
 
 export type PublicPagesSchema = {

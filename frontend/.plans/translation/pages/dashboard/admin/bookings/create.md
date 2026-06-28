@@ -7,18 +7,20 @@
 
 ## Translation Status
 
-- [ ] Not started
-- [ ] In progress
-- [ ] Completed
+- [x] Completed
 
 ## Shared Components
 
-(To be filled during execution)
+- None
 
 ## Component Discovery
 
-(To be filled during execution)
+- `CreateBookingClient.tsx`: Multistep form to create a booking on behalf of a customer.
 
 ## Translation Tasks
 
-(To be filled during execution)
+- [x] Create `types/dashboard/admin/bookings/create.ts`
+- [x] Create `en/dashboard/admin/bookings/create.ts`
+- [x] Create `ar/dashboard/admin/bookings/create.ts`
+- [x] Register in message schemas & root files
+- [x] Translate `CreateBookingClient.tsx`

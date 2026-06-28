@@ -144,19 +144,26 @@ export const useBookings = (
   searchKeyword: string = "",
   statusFilter: string = "All",
   fromDate: string | null = null,
-  toDate: string | null = null
+  toDate: string | null = null,
+  initialData?: { bookings: Booking[]; totalCount: number; totalPages: number }
 ) => {
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalCount, setTotalCount] = useState(0);
+  const [bookings, setBookings] = useState<Booking[]>(initialData?.bookings || []);
+  const [loading, setLoading] = useState(initialData ? false : true);
+  const [totalPages, setTotalPages] = useState(initialData?.totalPages || 0);
+  const [totalCount, setTotalCount] = useState(initialData?.totalCount || 0);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [isInitialMount, setIsInitialMount] = useState(true);
 
   const refetch = () => {
     setRefreshTrigger(prev => prev + 1);
   };
 
   useEffect(() => {
+    if (initialData && isInitialMount) {
+      setIsInitialMount(false);
+      return;
+    }
+
     const fetchBookings = async () => {
       if (!accessToken || !user) return;
 
@@ -205,7 +212,19 @@ export const useBookings = (
     return () => {
       clearTimeout(delayDebounceFn);
     };
-  }, [accessToken, user, page, size, searchKeyword, statusFilter, fromDate, toDate, refreshTrigger]);
+  }, [
+    accessToken,
+    user,
+    page,
+    size,
+    searchKeyword,
+    statusFilter,
+    fromDate,
+    toDate,
+    refreshTrigger,
+    initialData,
+    isInitialMount,
+  ]);
   return { bookings, loading, totalPages, totalCount, refetch };
 };
 
@@ -438,17 +457,24 @@ export interface AdminBookingAnalytics {
 
 export const useAdminBookingAnalytics = (
   accessToken: string | undefined,
-  user: { id: string; role: string } | undefined
+  user: { id: string; role: string } | undefined,
+  initialData?: AdminBookingAnalytics
 ) => {
-  const [analytics, setAnalytics] = useState<AdminBookingAnalytics | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [analytics, setAnalytics] = useState<AdminBookingAnalytics | null>(initialData || null);
+  const [loading, setLoading] = useState(initialData ? false : true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [isInitialMount, setIsInitialMount] = useState(true);
 
   const refetch = () => {
     setRefreshTrigger(prev => prev + 1);
   };
 
   useEffect(() => {
+    if (initialData && isInitialMount) {
+      setIsInitialMount(false);
+      return;
+    }
+
     const fetchAnalytics = async () => {
       if (!accessToken || !user) return;
 
@@ -467,7 +493,7 @@ export const useAdminBookingAnalytics = (
     };
 
     void fetchAnalytics();
-  }, [accessToken, user, refreshTrigger]);
+  }, [accessToken, user, refreshTrigger, initialData, isInitialMount]);
 
   return { analytics, loading, refetch };
 };
