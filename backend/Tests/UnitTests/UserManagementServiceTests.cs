@@ -70,7 +70,7 @@ public class UserManagementServiceTests
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(pagedResult);
 
-        var emptyUsers = new List<ApplicationUser>().BuildMockDbSet();
+        var emptyUsers = new List<ApplicationUser>().AsQueryable().BuildMockDbSet();
         _userManagerMock.Setup(x => x.Users).Returns(emptyUsers.Object);
 
         // Setup roles for each user
