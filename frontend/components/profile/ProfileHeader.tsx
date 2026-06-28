@@ -14,6 +14,7 @@ import {
   Typography,
 } from "@mui/material";
 import CameraAltRoundedIcon from "@mui/icons-material/CameraAltRounded";
+import { useTranslations } from "next-intl";
 import { toApiUrl } from "@/utils/api-client";
 import { toImageUrl } from "@/utils/image-url";
 import { logger } from "@/utils/logger";
@@ -39,6 +40,7 @@ export default function ProfileHeader({
   completeness,
   isAdmin = false,
 }: ProfileHeaderProps) {
+  const t = useTranslations("customer.accountProfile");
   const [currentPhoto, setCurrentPhoto] = useState(photoUrl);
   const [isUploading, setIsUploading] = useState(false);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "success" | "error" }>({
@@ -83,14 +85,14 @@ export default function ProfileHeader({
       setCurrentPhoto(newPhotoUrl);
       setSnackbar({
         open: true,
-        message: "Profile picture updated successfully!",
+        message: t("profileHeader.photoUpdatedSuccess"),
         severity: "success",
       });
     } catch (error) {
       logger.error("Upload profile photo error", error);
       setSnackbar({
         open: true,
-        message: "Failed to upload profile picture. Please try again.",
+        message: t("profileHeader.photoUpdatedError"),
         severity: "error",
       });
     } finally {
@@ -103,8 +105,8 @@ export default function ProfileHeader({
     setSnackbar(prev => ({ ...prev, open: false }));
   };
 
-  const safeName = firstName || lastName ? `${firstName} ${lastName}`.trim() : "Valued Customer";
-  const safeEmail = email || "No email provided";
+  const safeName = firstName || lastName ? `${firstName} ${lastName}`.trim() : t("profileHeader.valuedCustomer");
+  const safeEmail = email || t("profileHeader.noEmailProvided");
   const progress = completeness;
   const initials = firstName ? firstName.charAt(0).toUpperCase() : "U";
   const resolvedPhoto = currentPhoto ? (toImageUrl(currentPhoto) ?? currentPhoto) : null;
@@ -162,7 +164,7 @@ export default function ProfileHeader({
           <IconButton
             onClick={handleImageClick}
             size="small"
-            aria-label="Change profile photo"
+            aria-label={t("profileHeader.changePhotoAriaLabel")}
             sx={{
               position: "absolute",
               bottom: 0,
@@ -210,7 +212,7 @@ export default function ProfileHeader({
                 lineHeight: 1,
               }}
             >
-              Profile Completion
+              {t("profileHeader.profileCompletion")}
             </Typography>
             <Typography
               variant="caption"

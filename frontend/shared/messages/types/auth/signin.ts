@@ -1,0 +1,20 @@
+export type SignInLabels = {
+  readonly title: string;
+  readonly subtitle: string;
+  readonly emailLabel: string;
+  readonly passwordLabel: string;
+  readonly togglePassword: string;
+  readonly stayConnected: string;
+  readonly forgotPassword: string;
+  readonly signInButton: string;
+  readonly orDivider: string;
+  readonly noAccount: string;
+  readonly createAccount: string;
+  readonly sessionExpired: string;
+  readonly errorTitle: string;
+  readonly unexpectedError: string;
+  readonly demoLogins: string;
+  readonly logoAlt: string;
+  readonly decorativeTitle: string;
+  readonly decorativeSubtitle: string;
+};

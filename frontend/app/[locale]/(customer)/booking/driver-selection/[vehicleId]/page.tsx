@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import {
   Alert,
   Avatar,
@@ -93,6 +94,7 @@ export default function DriverSelectionPage() {
   const params = useParams<{ vehicleId: string }>();
   const router = useRouter();
   const { data: session, status } = useSession();
+  const t = useTranslations("customer.driverSelection");
 
   const [intent, setIntent] = useState<BookingIntent | null>(() => {
     if (typeof window === "undefined") return null;
@@ -150,6 +152,7 @@ export default function DriverSelectionPage() {
     void (async () => {
       try {
         const state = await getActiveCheckout(token);
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (cancelled) return;
         if (state && state.vehicleId === params.vehicleId) {
           const newIntent = intentFromState(state);
@@ -200,6 +203,7 @@ export default function DriverSelectionPage() {
           },
           token
         );
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (cancelled) return;
         setBookingId(state.bookingId);
         sessionStorage.setItem("checkoutBookingId", state.bookingId);
@@ -268,13 +272,13 @@ export default function DriverSelectionPage() {
         setNearbyUnavailableCount(data.nearbyUnavailableCount);
       } catch (e) {
         logger.error("Failed to load available drivers", e);
-        setError("We couldn't load drivers right now. Please try again.");
+        setError(t("error"));
       } finally {
         setLoadingDrivers(false);
       }
     };
     void load();
-  }, [mode, intent, status, session?.accessToken, bookingId]);
+  }, [mode, intent, status, session?.accessToken, bookingId, t]);
 
   const selfDriveDisabled = eligibility?.driverRequired ?? false;
 
@@ -308,7 +312,7 @@ export default function DriverSelectionPage() {
     } catch (e) {
       logger.error("Failed to persist driver selection", e);
       setSelectedDriverId(prevDriverId); // rollback
-      setError("Failed to save your selection. Please try again.");
+      setError(t("errorSaveSelection"));
     }
   };
 
@@ -339,11 +343,11 @@ export default function DriverSelectionPage() {
       logger.error("Failed to change drive mode", e);
       setMode(prevMode);
       setSelectedDriverId(prevDriverId);
-      setError("Failed to change mode. Please try again.");
+      setError(t("errorChangeMode"));
     }
   };
 
-  const handleContinue = async () => {
+  const handleContinue = () => {
     if (!intent || !canContinue || submitting) return;
 
     // The driver choice is already persisted to the server via handleDriverSelect.
@@ -381,11 +385,11 @@ export default function DriverSelectionPage() {
                 router.push(`/vehicles/${params.vehicleId}`);
               }}
             >
-              Go Back
+              {t("intentLost.goBack")}
             </Button>
           }
         >
-          We could not find your booking details. Your session may have expired or the vehicle is no longer available.
+          {t("intentLost.message")}
         </Alert>
       </Box>
     );
@@ -396,10 +400,14 @@ export default function DriverSelectionPage() {
       <Container maxWidth="lg">
         {/* Header */}
         <Typography variant="h4" component="h1" sx={{ fontWeight: 900, mb: 1 }}>
-          Choose your driving mode
+          {t("title")}
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-          {intent.vehicleLabel} · {intent.pickupDate.split("T")[0]} to {intent.returnDate.split("T")[0]}
+          {t("subtitle", {
+            vehicleLabel: intent.vehicleLabel,
+            pickupDate: intent.pickupDate.split("T")[0],
+            returnDate: intent.returnDate.split("T")[0],
+          })}
         </Typography>
 
         {/* Stepper */}
@@ -412,13 +420,12 @@ export default function DriverSelectionPage() {
 
         {selfDriveDisabled && (
           <Alert severity="info" sx={{ mb: 3 }}>
-            You don&apos;t have an approved driving license on file, so a driver is required for this booking. You can
-            add a license from your profile to unlock self-drive.
+            {t("licenseRequired")}
           </Alert>
         )}
         {error && (
           <Alert severity="error" sx={{ mb: 3 }}>
-            {error}
+            {t("error")}
           </Alert>
         )}
 
@@ -443,12 +450,12 @@ export default function DriverSelectionPage() {
                   <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1 }}>
                     <DirectionsCarIcon color={mode === "self" ? "primary" : "action"} />
                     <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                      Self Drive
+                      {t("modes.selfDrive.title")}
                     </Typography>
                     {mode === "self" && <CheckCircleIcon color="primary" sx={{ ml: "auto" }} />}
                   </Stack>
                   <Typography variant="body2" color="text.secondary">
-                    Drive the vehicle yourself. Requires a verified driving license.
+                    {t("modes.selfDrive.description")}
                   </Typography>
                 </CardContent>
               </CardActionArea>
@@ -469,12 +476,12 @@ export default function DriverSelectionPage() {
                   <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1 }}>
                     <PersonSearchIcon color={mode === "driver" ? "primary" : "action"} />
                     <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                      Request a Driver
+                      {t("modes.withDriver.title")}
                     </Typography>
                     {mode === "driver" && <CheckCircleIcon color="primary" sx={{ ml: "auto" }} />}
                   </Stack>
                   <Typography variant="body2" color="text.secondary">
-                    Pick a verified driver to drive for you. A driver fee applies.
+                    {t("modes.withDriver.description")}
                   </Typography>
                 </CardContent>
               </CardActionArea>
@@ -487,11 +494,11 @@ export default function DriverSelectionPage() {
           <Box sx={{ mb: 4 }}>
             <Stack direction="row" sx={{ alignItems: "center", mb: 2, flexWrap: "wrap", gap: 1 }}>
               <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                Available drivers
+                {t("drivers.title")}
               </Typography>
               {nearbyUnavailableCount > 0 && (
                 <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 400 }}>
-                  ({nearbyUnavailableCount} others in this area are currently busy or unavailable)
+                  {t("drivers.unavailable", { count: nearbyUnavailableCount })}
                 </Typography>
               )}
             </Stack>
@@ -501,10 +508,7 @@ export default function DriverSelectionPage() {
                 <CircularProgress />
               </Box>
             ) : drivers.length === 0 ? (
-              <Alert severity="warning">
-                No verified drivers are available for these dates right now. Please try different dates or check back
-                later.
-              </Alert>
+              <Alert severity="warning">{t("drivers.noDriversMessage")}</Alert>
             ) : (
               <Grid container spacing={2}>
                 {drivers.map(driver => {
@@ -549,16 +553,18 @@ export default function DriverSelectionPage() {
 
                             <Stack direction="row" sx={{ justifyContent: "space-between" }}>
                               <Typography variant="body2" color="text.secondary">
-                                Experience
+                                {t("drivers.experience")}
                               </Typography>
                               <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                {driver.experienceYears > 0 ? `${String(driver.experienceYears)} yr` : "New"} ·{" "}
-                                {driver.totalTrips} trips
+                                {driver.experienceYears > 0
+                                  ? `${String(driver.experienceYears)} yr`
+                                  : t("drivers.newDriver")}{" "}
+                                · {driver.totalTrips} {t("drivers.trips")}
                               </Typography>
                             </Stack>
                             <Stack direction="row" sx={{ justifyContent: "space-between", mt: 0.5 }}>
                               <Typography variant="body2" color="text.secondary">
-                                Driver fee
+                                {t("drivers.driverFee")}
                               </Typography>
                               <Typography variant="body2" sx={{ fontWeight: 800 }} color="primary.main">
                                 {formatCurrency(driver.driverFee)}
@@ -571,7 +577,7 @@ export default function DriverSelectionPage() {
                                 color="primary"
                                 sx={{ fontWeight: 800, mt: 1, display: "block", textAlign: "right" }}
                               >
-                                SELECTED (Tap again to unselect)
+                                {t("drivers.selected")} ({t("drivers.unselect")})
                               </Typography>
                             )}
                           </CardContent>
@@ -593,17 +599,17 @@ export default function DriverSelectionPage() {
               router.push(`/vehicles/${intent.vehicleId}`);
             }}
           >
-            Back
+            {t("actions.back")}
           </Button>
           <Button
             variant="contained"
             size="large"
             endIcon={submitting ? <CircularProgress size={18} color="inherit" /> : <ArrowForwardIcon />}
             disabled={!canContinue || submitting}
-            onClick={() => void handleContinue()}
+            onClick={handleContinue}
             sx={{ borderRadius: 999, px: 4, fontWeight: 800, textTransform: "none" }}
           >
-            Continue to payment
+            {t("actions.continuePayment")}
           </Button>
         </Stack>
       </Container>

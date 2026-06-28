@@ -113,6 +113,7 @@ export default function VehicleDetailsClient({
     void (async () => {
       try {
         const data = await getCategories();
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (active) {
           setCategories(data.filter(c => c.isActive));
         }
@@ -156,7 +157,7 @@ export default function VehicleDetailsClient({
   useEffect(() => {
     if (categories.length > 0) {
       const matched = categories.find(
-        c => c.name.toLowerCase() === vehicle.status?.toLowerCase() || c.id === vehicle.status
+        c => c.name.toLowerCase() === vehicle.status.toLowerCase() || c.id === vehicle.status
       );
       if (matched) {
         methods.setValue("categoryId", matched.id);
@@ -178,6 +179,93 @@ export default function VehicleDetailsClient({
     formState: { isDirty },
   } = methods;
 
+  async function handleCreateMode(values: FormValues, accessToken: string): Promise<void> {
+    const payload: CarPayload = {
+      userId: session?.user.id ?? "",
+      make: values.make,
+      model: values.model,
+      year: values.year,
+      color: values.color,
+      licensePlate: values.licensePlate,
+      transmission: values.transmission,
+      fuelType: values.fuelType,
+      seats: values.seats,
+      pricePerDay: values.pricePerDay,
+      locationCity: values.locationCity,
+      description: values.description || "",
+      status: values.status || "Sedan",
+      availabilityStatus: values.availabilityStatus || "Available",
+    };
+
+    const resText = await createCar(accessToken, payload);
+
+    const vehicleIdRegex = /[0-9a-fA-F-]{36}/;
+    const vehicleIdMatch = vehicleIdRegex.exec(resText);
+    const vehicleId = vehicleIdMatch ? vehicleIdMatch[0] : null;
+
+    if (!vehicleId) {
+      throw new Error("Failed to get vehicle ID from response");
+    }
+
+    if (values.images.length > 0) {
+      for (const img of values.images) {
+        if (img.file) {
+          try {
+            await uploadCarImage(accessToken, vehicleId, img.file);
+          } catch (uploadErr) {
+            logger.error("Failed to upload image during creation", uploadErr);
+          }
+        }
+      }
+    }
+
+    setSuccessToastOpen(true);
+    setTimeout(() => {
+      router.push("/admin/vehicles");
+    }, 800);
+  }
+
+  async function handleUpdateMode(values: FormValues, accessToken: string): Promise<void> {
+    const updatedImages = await Promise.all(
+      values.images.map(async img => {
+        if (img.file) {
+          try {
+            const res = await uploadVehicleImage(accessToken, vehicle.vehicleId, img.file, isAdmin);
+            if (img.url.startsWith("blob:")) {
+              URL.revokeObjectURL(img.url);
+            }
+            return { url: res.url, isPrimary: img.isPrimary };
+          } catch (uploadErr) {
+            logger.error("Failed to upload image during update", uploadErr);
+            throw new Error("Failed to upload one or more images. Please try again.", { cause: uploadErr });
+          }
+        }
+        return { url: img.url, isPrimary: img.isPrimary };
+      })
+    );
+
+    const cleanFeatures = values.features.map(f => ({
+      featureName: f.featureName,
+      featureDescription: f.featureDescription,
+      featureCategory: f.featureCategory,
+    }));
+
+    const finalValues: UpdateSupplierVehiclePayload = {
+      ...values,
+      images: updatedImages,
+      features: cleanFeatures,
+    };
+
+    if (isAdmin) {
+      await updateVehicle(accessToken, vehicle.vehicleId, finalValues);
+    } else {
+      await updateSupplierVehicle(accessToken, vehicle.vehicleId, finalValues);
+    }
+
+    methods.reset(finalValues);
+    setSuccessToastOpen(true);
+  }
+
   const onSubmit = async (values: FormValues) => {
     if (!session?.accessToken) return;
     setSubmitting(true);
@@ -187,105 +275,13 @@ export default function VehicleDetailsClient({
       if (onSave) {
         await onSave(values);
         if (!isCreateMode) {
-          // Reset form fields state to clear dirty state
           methods.reset(values);
         }
         setSuccessToastOpen(true);
+      } else if (isCreateMode) {
+        await handleCreateMode(values, session.accessToken);
       } else {
-        if (isCreateMode) {
-          // Create mode: Create the vehicle first
-          const payload: CarPayload = {
-            userId: session.user.id,
-            make: values.make,
-            model: values.model,
-            year: values.year,
-            color: values.color,
-            licensePlate: values.licensePlate,
-            transmission: values.transmission,
-            fuelType: values.fuelType,
-            seats: values.seats,
-            pricePerDay: values.pricePerDay,
-            locationCity: values.locationCity,
-            description: values.description || "",
-            status: values.status || "Sedan",
-            availabilityStatus: values.availabilityStatus || "Available",
-          };
-
-          const resText = await createCar(session.accessToken, payload);
-
-          // Extract vehicle ID from response
-          const vehicleIdRegex = /[0-9a-fA-F-]{36}/;
-          const vehicleIdMatch = vehicleIdRegex.exec(resText);
-          const vehicleId = vehicleIdMatch ? vehicleIdMatch[0] : null;
-
-          if (!vehicleId) {
-            throw new Error("Failed to get vehicle ID from response");
-          }
-
-          // Upload images if any
-          if (values.images.length > 0) {
-            for (const img of values.images) {
-              if (img.file) {
-                try {
-                  await uploadCarImage(session.accessToken, vehicleId, img.file);
-                } catch (uploadErr) {
-                  logger.error("Failed to upload image during creation", uploadErr);
-                }
-              }
-            }
-          }
-
-          setSuccessToastOpen(true);
-          setTimeout(() => {
-            router.push("/admin/vehicles");
-          }, 800);
-        } else {
-          // Update mode: existing logic
-          // 1. Upload new files if any
-          const updatedImages = await Promise.all(
-            values.images.map(async img => {
-              if (img.file) {
-                try {
-                  const res = await uploadVehicleImage(session.accessToken, vehicle.vehicleId, img.file, isAdmin);
-                  // Revoke the temp blob URL
-                  if (img.url.startsWith("blob:")) {
-                    URL.revokeObjectURL(img.url);
-                  }
-                  // Return in camelCase to match standard JSON serialization
-                  return { url: res.url, isPrimary: img.isPrimary };
-                } catch (uploadErr) {
-                  logger.error("Failed to upload image during update", uploadErr);
-                  throw new Error("Failed to upload one or more images. Please try again.", { cause: uploadErr });
-                }
-              }
-              return { url: img.url, isPrimary: img.isPrimary };
-            })
-          );
-
-          // 2. Clean up features (remove internal 'id' from useFieldArray)
-          const cleanFeatures = values.features.map(f => ({
-            featureName: f.featureName,
-            featureDescription: f.featureDescription,
-            featureCategory: f.featureCategory,
-          }));
-
-          const finalValues: UpdateSupplierVehiclePayload = {
-            ...values,
-            images: updatedImages,
-            features: cleanFeatures,
-          };
-
-          if (isAdmin) {
-            await updateVehicle(session.accessToken, vehicle.vehicleId, finalValues);
-          } else {
-            await updateSupplierVehicle(session.accessToken, vehicle.vehicleId, finalValues);
-          }
-
-          // Update the form's initial values to match what was just saved
-          // so that isDirty becomes false and the "Save All Changes" bar disappears
-          methods.reset(finalValues);
-          setSuccessToastOpen(true);
-        }
+        await handleUpdateMode(values, session.accessToken);
       }
     } catch (err: unknown) {
       handleOnSubmitError(err);

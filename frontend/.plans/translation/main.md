@@ -3,14 +3,14 @@
 ## Overall Progress
 
 - Total Pages: 94
-- Completed Pages: 0
-- Progress: 0%
+- Completed Pages: 24
+- Progress: 26%
 
 ## Messages Structure Progress
 
-- **Types**: 3/94 split (common, auth, errors done; 91 page-specific type files to create during execution)
-- **English**: 3/94 split (common, auth, errors done; 91 page-specific en/ files to create during execution)
-- **Arabic**: 3/94 split (common, auth, errors done; 91 page-specific ar/ files to create during execution)
+- **Types**: 24/94 split (common, auth, errors + 7 auth + 7 customer + 6 admin page types done; 70 remaining)
+- **English**: 24/94 split (common, auth, errors + 7 auth + 7 customer + 6 admin page translations done; 70 remaining)
+- **Arabic**: 24/94 split (common, auth, errors + 7 auth + 7 customer + 6 admin page translations done; 70 remaining)
 
 > See `shared/Messages_README.md` for messages directory conventions.
 
@@ -18,40 +18,40 @@
 
 ## Auth Pages (6)
 
-- [ ] [Sign In](pages/auth/sign-in.md) — `/(auth)/sign-in`
-- [ ] [Sign Up](pages/auth/sign-up.md) — `/(auth)/sign-up`
-- [ ] [Forgot Password](pages/auth/forgot-password.md) — `/(auth)/forgot-password`
-- [ ] [Reset Password](pages/auth/reset-password.md) — `/(auth)/reset-password`
-- [ ] [Activate Account](pages/auth/activate/_userId/_token.md) — `/(auth)/activate/[userId]/[token]`
-- [ ] [Verify Email](pages/auth/verify-email.md) — `/(auth)/verify-email`
+- [x] [Sign In](pages/auth/sign-in.md) — `/(auth)/sign-in`
+- [x] [Sign Up](pages/auth/sign-up.md) — `/(auth)/sign-up`
+- [x] [Forgot Password](pages/auth/forgot-password.md) — `/(auth)/forgot-password`
+- [x] [Reset Password](pages/auth/reset-password.md) — `/(auth)/reset-password`
+- [x] [Activate Account](pages/auth/activate/_userId/_token.md) — `/(auth)/activate/[userId]/[token]`
+- [x] [Verify Email](pages/auth/verify-email.md) — `/(auth)/verify-email`
 
 ## Customer Pages (10)
 
-- [ ] [Account Profile](pages/customer/account/profile.md) — `/(customer)/account/profile`
-- [ ] [Account Bookings](pages/customer/account/bookings.md) — `/(customer)/account/bookings`
-- [ ] [Booking Detail](pages/customer/booking/_id.md) — `/(customer)/booking/[id]`
-- [ ] [Driver Selection](pages/customer/booking/driver-selection/_vehicleId.md) — `/(customer)/booking/driver-selection/[vehicleId]`
-- [ ] [Booking Payment](pages/customer/booking/payment/_bookingId.md) — `/(customer)/booking/payment/[bookingId]`
-- [ ] [Customer Bookings](pages/customer/bookings.md) — `/(customer)/bookings`
-- [ ] [Change Password](pages/customer/change-password.md) — `/(customer)/change-password`
-- [ ] [Customer Info](pages/customer/info.md) — `/(customer)/info`
-- [ ] [Customer Notifications](pages/customer/notifications.md) — `/(customer)/notifications`
-- [ ] [Customer Settings](pages/customer/settings.md) — `/(customer)/settings`
+- [x] [Account Profile](pages/customer/account/profile.md) — `/(customer)/account/profile`
+- [x] [Account Bookings](pages/customer/account/bookings.md) — `/(customer)/account/bookings`
+- [x] [Booking Detail](pages/customer/booking/_id.md) — `/(customer)/booking/[id]`
+- [x] [Driver Selection](pages/customer/booking/driver-selection/_vehicleId.md) — `/(customer)/booking/driver-selection/[vehicleId]`
+- [x] [Booking Payment](pages/customer/booking/payment/_bookingId.md) — `/(customer)/booking/payment/[bookingId]`
+- [x] [Customer Bookings](pages/customer/bookings.md) — `/(customer)/bookings`
+- [x] [Change Password](pages/customer/change-password.md) — `/(customer)/change-password`
+- [x] [Customer Info](pages/customer/info.md) — `/(customer)/info`
+- [x] [Customer Notifications](pages/customer/notifications.md) — `/(customer)/notifications`
+- [x] [Customer Settings](pages/customer/settings.md) — `/(customer)/settings`
 
 ## Dashboard - Admin Pages (37)
 
-- [ ] [Admin Compliance](pages/dashboard/admin/admin/compliance.md) — `/(dashboard)/admin/admin/compliance`
-- [ ] [Admin Security](pages/dashboard/admin/admin/security.md) — `/(dashboard)/admin/admin/security`
-- [ ] [Admin Vehicles Mgmt](pages/dashboard/admin/admin/vehicles.md) — `/(dashboard)/admin/admin/vehicles`
-- [ ] [Bank Details](pages/dashboard/admin/bank-details.md) — `/(dashboard)/admin/bank-details`
-- [ ] [Admin Bookings](pages/dashboard/admin/bookings.md) — `/(dashboard)/admin/bookings`
-- [ ] [Create Booking](pages/dashboard/admin/bookings/create.md) — `/(dashboard)/admin/bookings/create`
-- [ ] [Booking Detail](pages/dashboard/admin/bookings/_id.md) — `/(dashboard)/admin/bookings/[id]`
-- [ ] [Edit Booking](pages/dashboard/admin/bookings/_id/edit.md) — `/(dashboard)/admin/bookings/[id]/edit`
-- [ ] [Categories](pages/dashboard/admin/categories.md) — `/(dashboard)/admin/categories`
-- [ ] [Category Detail](pages/dashboard/admin/categories/_id.md) — `/(dashboard)/admin/categories/[id]`
-- [ ] [Countries](pages/dashboard/admin/countries.md) — `/(dashboard)/admin/countries`
-- [ ] [Create Country](pages/dashboard/admin/countries/create.md) — `/(dashboard)/admin/countries/create`
+- [x] [Admin Compliance](pages/dashboard/admin/admin/compliance.md) — `/(dashboard)/admin/admin/compliance`
+- [x] [Admin Security](pages/dashboard/admin/admin/security.md) — `/(dashboard)/admin/admin/security`
+- [x] [Admin Vehicles Mgmt](pages/dashboard/admin/admin/vehicles.md) — `/(dashboard)/admin/admin/vehicles`
+- [x] [Bank Details](pages/dashboard/admin/bank-details.md) — `/(dashboard)/admin/bank-details`
+- [x] [Admin Bookings](pages/dashboard/admin/bookings.md) — `/(dashboard)/admin/bookings`
+- [x] [Create Booking](pages/dashboard/admin/bookings/create.md) — `/(dashboard)/admin/bookings/create`
+- [x] [Booking Detail](pages/dashboard/admin/bookings/_id.md) — `/(dashboard)/admin/bookings/[id]`
+- [x] [Edit Booking](pages/dashboard/admin/bookings/_id/edit.md) — `/(dashboard)/admin/bookings/[id]/edit`
+- [x] [Categories](pages/dashboard/admin/categories.md) — `/(dashboard)/admin/categories`
+- [x] [Category Detail](pages/dashboard/admin/categories/_id.md) — `/(dashboard)/admin/categories/[id]`
+- [x] [Countries](pages/dashboard/admin/countries.md) — `/(dashboard)/admin/countries`
+- [x] [Create Country](pages/dashboard/admin/countries/create.md) — `/(dashboard)/admin/countries/create`
 - [ ] [Country Detail](pages/dashboard/admin/countries/_id.md) — `/(dashboard)/admin/countries/[id]`
 - [ ] [Edit Country](pages/dashboard/admin/countries/_id/edit.md) — `/(dashboard)/admin/countries/[id]/edit`
 - [ ] [Admin Drivers](pages/dashboard/admin/drivers.md) — `/(dashboard)/admin/drivers`
@@ -80,13 +80,13 @@
 
 ## Dashboard - Driver Pages (7)
 
-- [ ] [Complete Profile](pages/dashboard/driver/complete-profile.md) — `/(dashboard)/driver/complete-profile`
-- [ ] [Driver Dashboard](pages/dashboard/driver/dashboard.md) — `/(dashboard)/driver/dashboard`
-- [ ] [Driver Earnings](pages/dashboard/driver/earnings.md) — `/(dashboard)/driver/earnings`
-- [ ] [Driver Notifications](pages/dashboard/driver/notifications.md) — `/(dashboard)/driver/notifications`
-- [ ] [Driver Profile](pages/dashboard/driver/profile.md) — `/(dashboard)/driver/profile`
-- [ ] [Driver Trips](pages/dashboard/driver/trips.md) — `/(dashboard)/driver/trips`
-- [ ] [Verification Status](pages/dashboard/driver/verification-status.md) — `/(dashboard)/driver/verification-status`
+- [x] [Complete Profile](pages/dashboard/driver/complete-profile.md) — `/(dashboard)/driver/complete-profile`
+- [x] [Driver Dashboard](pages/dashboard/driver/dashboard.md) — `/(dashboard)/driver/dashboard`
+- [x] [Driver Earnings](pages/dashboard/driver/earnings.md) — `/(dashboard)/driver/earnings`
+- [x] [Driver Notifications](pages/dashboard/driver/notifications.md) — `/(dashboard)/driver/notifications`
+- [x] [Driver Profile](pages/dashboard/driver/profile.md) — `/(dashboard)/driver/profile`
+- [x] [Driver Trips](pages/dashboard/driver/trips.md) — `/(dashboard)/driver/trips`
+- [x] [Verification Status](pages/dashboard/driver/verification-status.md) — `/(dashboard)/driver/verification-status`
 
 ## Dashboard - Inspector Pages (4)
 

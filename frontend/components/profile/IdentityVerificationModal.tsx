@@ -23,6 +23,7 @@ import {
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import UploadFileRoundedIcon from "@mui/icons-material/UploadFileRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import { useTranslations } from "next-intl";
 
 import {
   submitVerification,
@@ -43,12 +44,12 @@ const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/web
 const ACCEPT_ATTRIBUTE = ACCEPTED_IMAGE_TYPES.join(",");
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 
-function isValidImage(file: File): string | null {
+function isValidImage(file: File): "invalidFileType" | "fileTooLarge" | null {
   if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-    return "Only JPG, PNG, WEBP images or PDF files are allowed.";
+    return "invalidFileType";
   }
   if (file.size > MAX_FILE_SIZE_BYTES) {
-    return "Each file must be smaller than 5 MB.";
+    return "fileTooLarge";
   }
   return null;
 }
@@ -59,6 +60,7 @@ export default function IdentityVerificationModal({
   onClose,
   onSubmitted,
 }: IdentityVerificationModalProps) {
+  const t = useTranslations("customer.accountProfile");
   const [documentType, setDocumentType] = useState<VerificationDocumentType>("NationalID");
   const [frontImage, setFrontImage] = useState<File | null>(null);
   const [backImage, setBackImage] = useState<File | null>(null);
@@ -70,8 +72,9 @@ export default function IdentityVerificationModal({
 
   const backImageRequired = documentType === "NationalID";
   const backImageLabel = useMemo(
-    () => (backImageRequired ? "Back image" : "Back image (optional)"),
-    [backImageRequired]
+    () =>
+      backImageRequired ? t("identityVerificationModal.backImage") : t("identityVerificationModal.backImageOptional"),
+    [backImageRequired, t]
   );
 
   useEffect(() => {
@@ -91,51 +94,57 @@ export default function IdentityVerificationModal({
     setServerError("");
   }, []);
 
-  const handleFrontChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] ?? null;
-    setServerError("");
-    if (!file) {
-      setFrontImage(null);
+  const handleFrontChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0] ?? null;
+      setServerError("");
+      if (!file) {
+        setFrontImage(null);
+        setFrontError("");
+        return;
+      }
+      const err = isValidImage(file);
+      if (err) {
+        setFrontImage(null);
+        setFrontError(t(`identityVerificationModal.${err}`));
+        return;
+      }
+      setFrontImage(file);
       setFrontError("");
-      return;
-    }
-    const err = isValidImage(file);
-    if (err) {
-      setFrontImage(null);
-      setFrontError(err);
-      return;
-    }
-    setFrontImage(file);
-    setFrontError("");
-  }, []);
+    },
+    [t]
+  );
 
-  const handleBackChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] ?? null;
-    setServerError("");
-    if (!file) {
-      setBackImage(null);
+  const handleBackChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0] ?? null;
+      setServerError("");
+      if (!file) {
+        setBackImage(null);
+        setBackError("");
+        return;
+      }
+      const err = isValidImage(file);
+      if (err) {
+        setBackImage(null);
+        setBackError(t(`identityVerificationModal.${err}`));
+        return;
+      }
+      setBackImage(file);
       setBackError("");
-      return;
-    }
-    const err = isValidImage(file);
-    if (err) {
-      setBackImage(null);
-      setBackError(err);
-      return;
-    }
-    setBackImage(file);
-    setBackError("");
-  }, []);
+    },
+    [t]
+  );
 
   const canSubmit = !submitting && !!frontImage && !frontError && !backError && (!backImageRequired || !!backImage);
 
   const handleSubmit = useCallback(async () => {
     if (!frontImage) {
-      setFrontError("Please upload the front of your document.");
+      setFrontError(t("identityVerificationModal.frontImageRequired"));
       return;
     }
     if (backImageRequired && !backImage) {
-      setBackError("Please upload the back of your National ID.");
+      setBackError(t("identityVerificationModal.backImageRequired"));
       return;
     }
 
@@ -153,21 +162,21 @@ export default function IdentityVerificationModal({
       logger.error("Submit verification error", error);
       if (error instanceof ApiError) {
         if (error.status === 409) {
-          setServerError("You already have a pending or approved verification request.");
+          setServerError(t("identityVerificationModal.existingRequest"));
         } else if (error.status === 400) {
-          setServerError("The submitted documents are invalid. Please check the files and try again.");
+          setServerError(t("identityVerificationModal.invalidDocuments"));
         } else if (error.status === 401 || error.status === 403) {
-          setServerError("Your session has expired. Please sign in again.");
+          setServerError(t("identityVerificationModal.sessionExpired"));
         } else {
-          setServerError("Could not submit verification. Please try again in a moment.");
+          setServerError(t("identityVerificationModal.submitFailed"));
         }
       } else {
-        setServerError("Network error. Please check your connection and try again.");
+        setServerError(t("identityVerificationModal.networkError"));
       }
     } finally {
       setSubmitting(false);
     }
-  }, [accessToken, backImage, backImageRequired, documentType, frontImage, onSubmitted]);
+  }, [accessToken, backImage, backImageRequired, documentType, frontImage, onSubmitted, t]);
 
   return (
     <Dialog
@@ -194,10 +203,10 @@ export default function IdentityVerificationModal({
       >
         <Box sx={{ display: "flex", flexDirection: "column" }}>
           <Typography variant="h6" sx={{ fontWeight: 800 }}>
-            Verify your identity
+            {t("identityVerificationModal.title")}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Upload a government-issued document. Our team will review it shortly.
+            {t("identityVerificationModal.subtitle")}
           </Typography>
         </Box>
         <IconButton aria-label="Close" onClick={onClose} disabled={submitting} size="small" sx={{ ml: 1 }}>
@@ -215,27 +224,29 @@ export default function IdentityVerificationModal({
           )}
 
           <FormControl fullWidth>
-            <InputLabel id="verification-document-type-label">Document type</InputLabel>
+            <InputLabel id="verification-document-type-label">{t("identityVerificationModal.documentType")}</InputLabel>
             <Select
               labelId="verification-document-type-label"
               id="verification-document-type"
-              label="Document type"
+              label={t("identityVerificationModal.documentType")}
               value={documentType}
               onChange={handleDocumentTypeChange}
               disabled={submitting}
             >
-              <MenuItem value="NationalID">National ID</MenuItem>
-              <MenuItem value="Passport">Passport</MenuItem>
+              <MenuItem value="NationalID">{t("identityVerification.nationalID")}</MenuItem>
+              <MenuItem value="Passport">{t("identityVerification.passport")}</MenuItem>
             </Select>
           </FormControl>
 
           <FileField
             id="verification-front-image"
-            label="Front image"
+            label={t("identityVerificationModal.frontImage")}
             file={frontImage}
             error={frontError}
             disabled={submitting}
             onChange={handleFrontChange}
+            replaceFileText={t("identityVerificationModal.replaceFile")}
+            chooseFileText={t("identityVerificationModal.chooseFile")}
           />
 
           <FileField
@@ -245,10 +256,12 @@ export default function IdentityVerificationModal({
             error={backError}
             disabled={submitting}
             onChange={handleBackChange}
+            replaceFileText={t("identityVerificationModal.replaceFile")}
+            chooseFileText={t("identityVerificationModal.chooseFile")}
           />
 
           <Typography variant="caption" color="text.secondary">
-            Accepted formats: JPG, PNG, WEBP, PDF. Max 5 MB per file.
+            {t("identityVerificationModal.acceptedFormats")}
           </Typography>
         </Stack>
       </DialogContent>
@@ -256,7 +269,7 @@ export default function IdentityVerificationModal({
       <Divider sx={{ borderColor: "border.light" }} />
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button onClick={onClose} disabled={submitting} color="inherit">
-          Cancel
+          {t("identityVerificationModal.cancel")}
         </Button>
         <Button
           variant="contained"
@@ -268,7 +281,7 @@ export default function IdentityVerificationModal({
           startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <UploadFileRoundedIcon />}
           sx={{ fontWeight: 700 }}
         >
-          {submitting ? "Submitting..." : "Submit for review"}
+          {submitting ? t("identityVerificationModal.submitting") : t("identityVerificationModal.submitForReview")}
         </Button>
       </DialogActions>
     </Dialog>
@@ -282,9 +295,11 @@ interface FileFieldProps {
   readonly error: string;
   readonly disabled: boolean;
   readonly onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  readonly replaceFileText: string;
+  readonly chooseFileText: string;
 }
 
-function FileField({ id, label, file, error, disabled, onChange }: FileFieldProps) {
+function FileField({ id, label, file, error, disabled, onChange, replaceFileText, chooseFileText }: FileFieldProps) {
   return (
     <Box>
       <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600, mb: 0.75 }}>
@@ -306,7 +321,7 @@ function FileField({ id, label, file, error, disabled, onChange }: FileFieldProp
           disabled={disabled}
           sx={{ fontWeight: 700 }}
         >
-          {file ? "Replace file" : "Choose file"}
+          {file ? replaceFileText : chooseFileText}
           <input id={id} type="file" accept={ACCEPT_ATTRIBUTE} hidden onChange={onChange} disabled={disabled} />
         </Button>
         {file && (

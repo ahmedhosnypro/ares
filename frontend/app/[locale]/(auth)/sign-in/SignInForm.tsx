@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRouter, Link } from "@/shared/i18n/routing";
+import { useTranslations } from "next-intl";
 
 import Image from "next/image";
 import { signIn, getSession } from "next-auth/react";
@@ -45,6 +46,7 @@ export default function SignInForm() {
   const errorParam = searchParams.get("error");
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
+  const t = useTranslations("authPages.signin");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -56,7 +58,6 @@ export default function SignInForm() {
   const [touched, setTouched] = useState<Partial<Record<keyof SignInFormData, boolean>>>({});
   const [demoRoles, setDemoRoles] = useState<string[]>([]);
 
-  // Clear error parameter from URL after showing it once
   useEffect(() => {
     if (errorParam === "session_expired") {
       const timer = setTimeout(() => {
@@ -102,7 +103,6 @@ export default function SignInForm() {
     e.preventDefault();
     setServerError("");
 
-    // Full Zod parse on submit
     const result = signInSchema.safeParse({ email, password });
     if (!result.success) {
       const errors: FieldErrors = {};
@@ -128,7 +128,6 @@ export default function SignInForm() {
         setServerError(res.error);
         logger.error("Login error:", res.error);
       } else if (res?.ok) {
-        // Fetch session to determine roles
         const session = await getSession();
         if (callbackUrl) {
           router.push(callbackUrl);
@@ -146,7 +145,7 @@ export default function SignInForm() {
         router.refresh();
       }
     } catch (error) {
-      setServerError("An unexpected error occurred. Please try again.");
+      setServerError(t("unexpectedError"));
       logger.error("Login error:", error);
     } finally {
       setIsLoading(false);
@@ -173,6 +172,8 @@ export default function SignInForm() {
           router.push("/admin");
         } else if (session?.user.roles.includes("Supplier")) {
           router.push("/supplier/dashboard");
+        } else if (session?.user.roles.includes("Driver")) {
+          router.push("/driver/dashboard");
         } else if (session?.user.roles.includes("Inspector")) {
           router.push("/inspector");
         } else {
@@ -181,7 +182,7 @@ export default function SignInForm() {
         router.refresh();
       }
     } catch (error) {
-      setServerError("An unexpected error occurred during demo login. Please try again.");
+      setServerError(t("unexpectedError"));
       logger.error("Demo login error:", error);
     } finally {
       setIsLoading(false);
@@ -193,7 +194,6 @@ export default function SignInForm() {
   return (
     <Box sx={{ minHeight: "100vh", display: "flex", background: theme.palette.overlay.gradient }}>
       <Box sx={{ display: "flex", flex: 1, flexDirection: { xs: "column", lg: "row" } }}>
-        {/* ── Form side ── */}
         <Box
           sx={{
             flex: { xs: "1 1 auto", lg: "0 0 50%" },
@@ -215,13 +215,12 @@ export default function SignInForm() {
               border: `1px solid ${theme.palette.border.main}`,
             }}
           >
-            {/* Logo */}
             <Box sx={{ mb: 6 }}>
               <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", mb: 4 }}>
                 <Box sx={{ position: "relative", width: 200, height: 60, display: "flex", alignItems: "center" }}>
                   <Image
                     src="/img/favicon/logo_transparent.png"
-                    alt="Ares Logo"
+                    alt={t("logoAlt")}
                     fill
                     sizes="200px"
                     style={{ objectFit: "contain" }}
@@ -230,22 +229,22 @@ export default function SignInForm() {
                 </Box>
               </Box>
               <Typography variant="h4" component="h2" sx={{ fontWeight: 700, mb: 1, color: "text.primary" }}>
-                Welcome back
+                {t("title")}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Please enter your details to sign in to your account.
+                {t("subtitle")}
               </Typography>
             </Box>
 
             {errorParam === "session_expired" && (
               <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
-                Your session has expired. Please sign in again.
+                {t("sessionExpired")}
               </Alert>
             )}
 
             {serverError && (
               <Alert severity="error" icon={<ErrorIcon />} sx={{ mb: 3, borderRadius: 2 }}>
-                <AlertTitle sx={{ fontWeight: 600 }}>Error</AlertTitle>
+                <AlertTitle sx={{ fontWeight: 600 }}>{t("errorTitle")}</AlertTitle>
                 {serverError}
               </Alert>
             )}
@@ -261,7 +260,7 @@ export default function SignInForm() {
                 fullWidth
                 id="email"
                 name="email"
-                label="Email Address"
+                label={t("emailLabel")}
                 type="email"
                 autoComplete="email"
                 required
@@ -291,7 +290,7 @@ export default function SignInForm() {
                 fullWidth
                 id="password"
                 name="password"
-                label="Password"
+                label={t("passwordLabel")}
                 type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
                 required
@@ -315,7 +314,7 @@ export default function SignInForm() {
                     endAdornment: (
                       <InputAdornment position="end">
                         <IconButton
-                          aria-label="toggle password visibility"
+                          aria-label={t("togglePassword")}
                           onClick={() => {
                             setShowPassword(!showPassword);
                           }}
@@ -343,7 +342,7 @@ export default function SignInForm() {
                   }
                   label={
                     <Typography variant="body2" color="text.secondary">
-                      Stay connected
+                      {t("stayConnected")}
                     </Typography>
                   }
                 />
@@ -353,7 +352,7 @@ export default function SignInForm() {
                   variant="body2"
                   sx={{ fontWeight: 600, textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
                 >
-                  Forgot password?
+                  {t("forgotPassword")}
                 </MuiLink>
               </Box>
 
@@ -373,11 +372,10 @@ export default function SignInForm() {
                   "&:hover": { boxShadow: theme.palette.shadow.buttonHover },
                 }}
               >
-                {isLoading ? <CircularProgress size={24} color="inherit" /> : "Sign in"}
+                {isLoading ? <CircularProgress size={24} color="inherit" /> : t("signInButton")}
               </Button>
             </Box>
 
-            {/* ── Google sign-in ─────────────────────────────────────── */}
             <Box sx={{ display: "flex", alignItems: "center", gap: 2, my: 3 }}>
               <Box sx={{ flex: 1, height: 1, bgcolor: "divider" }} />
               <Typography
@@ -385,7 +383,7 @@ export default function SignInForm() {
                 color="text.secondary"
                 sx={{ textTransform: "uppercase", letterSpacing: 1 }}
               >
-                or
+                {t("orDivider")}
               </Typography>
               <Box sx={{ flex: 1, height: 1, bgcolor: "divider" }} />
             </Box>
@@ -398,20 +396,20 @@ export default function SignInForm() {
             />
 
             <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 4 }}>
-              Don&apos;t have an account?{" "}
+              {t("noAccount")}{" "}
               <MuiLink
                 component={Link}
                 href="/sign-up"
                 sx={{ fontWeight: 700, textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
               >
-                Create a free account
+                {t("createAccount")}
               </MuiLink>
             </Typography>
 
             {demoRoles.length > 0 && (
               <Box sx={{ mt: 4, pt: 4, borderTop: `1px solid ${theme.palette.divider}` }}>
                 <Typography variant="subtitle2" align="center" color="text.secondary" sx={{ mb: 2 }}>
-                  DEV ONLY: Demo Logins
+                  {t("demoLogins")}
                 </Typography>
                 <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", justifyContent: "center" }}>
                   {demoRoles.map(role => (
@@ -435,7 +433,6 @@ export default function SignInForm() {
           </Box>
         </Box>
 
-        {/* ── Decorative side ── */}
         {!isMobile && (
           <Box sx={{ flex: { lg: "0 0 50%" }, position: "relative", display: { xs: "none", lg: "block" } }}>
             <Paper
@@ -445,7 +442,7 @@ export default function SignInForm() {
               <Box sx={{ position: "absolute", inset: 0, "& img": { objectFit: "cover", opacity: 0.6 } }}>
                 <Image
                   src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80"
-                  alt="Luxury Car"
+                  alt={t("logoAlt")}
                   fill
                   sizes="50vw"
                   priority
@@ -454,14 +451,13 @@ export default function SignInForm() {
               <Box sx={{ position: "absolute", inset: 0, background: theme.palette.overlay.tealGradient }} />
               <Box sx={{ position: "absolute", bottom: 0, left: 0, right: 0, p: 6, color: "common.white" }}>
                 <Typography variant="h3" component="h3" sx={{ fontWeight: 900, mb: 2, letterSpacing: "-0.02em" }}>
-                  Drive Your Ambition
+                  {t("decorativeTitle")}
                 </Typography>
                 <Typography
                   variant="h6"
                   sx={{ maxWidth: 500, color: "text.secondary", fontWeight: 400, lineHeight: 1.6 }}
                 >
-                  Experience the ultimate driving journey with our collection of top-tier vehicles, tailored just for
-                  you.
+                  {t("decorativeSubtitle")}
                 </Typography>
               </Box>
             </Paper>

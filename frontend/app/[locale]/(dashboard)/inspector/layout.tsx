@@ -1,23 +1,25 @@
 "use client";
 
 import React from "react";
+import { useTranslations } from "next-intl";
 import { Dashboard as DashboardIcon, History as HistoryIcon, Person as PersonIcon } from "@mui/icons-material";
 import DashboardShell, { type DashboardMenuItem } from "../_components/DashboardShell";
 
-const menuItems: DashboardMenuItem[] = [
-  { text: "Dashboard", icon: <DashboardIcon />, path: "/inspector" },
-  { text: "Inspection History", icon: <HistoryIcon />, path: "/inspector/history" },
-  { text: "Profile", icon: <PersonIcon />, path: "/inspector/profile" },
-];
-
 export default function InspectorLayout({ children }: { readonly children: React.ReactNode }) {
+  const t = useTranslations("dashboard.inspectorSidebar");
+  const menuItems: DashboardMenuItem[] = [
+    { text: t("dashboard"), icon: <DashboardIcon />, path: "/inspector" },
+    { text: t("inspectionHistory"), icon: <HistoryIcon />, path: "/inspector/history" },
+    { text: t("profile"), icon: <PersonIcon />, path: "/inspector/profile" },
+  ];
+
   return (
     <DashboardShell
       menuItems={menuItems}
-      sidebarLabel="Inspector"
-      userFallbackName="Inspector"
-      userFallbackInitial="I"
-      userRoleFallback="Inspector"
+      sidebarLabel={t("sidebarLabel")}
+      userFallbackName={t("userFallbackName")}
+      userFallbackInitial={t("userFallbackInitial")}
+      userRoleFallback={t("userRoleFallback")}
       notificationsHref="/inspector"
     >
       {children}

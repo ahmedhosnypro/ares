@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { Link } from "@/shared/i18n/routing";
 import Image from "next/image";
 import { Box, Button, Chip, Divider, Typography } from "@mui/material";
@@ -36,8 +39,8 @@ function getStatusColor(status?: string): "success" | "warning" | "error" | "def
   }
 }
 
-function formatDate(dateStr?: string): string {
-  if (!dateStr) return "N/A";
+function formatDate(dateStr?: string, fallback: string = "N/A"): string {
+  if (!dateStr) return fallback;
   return new Date(dateStr).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -46,8 +49,9 @@ function formatDate(dateStr?: string): string {
 }
 
 export default function BookingCard({ booking }: Readonly<{ booking: BookingItem }>) {
-  const fromDate = formatDate(booking.from);
-  const toDate = formatDate(booking.to);
+  const t = useTranslations("customer.bookings");
+  const fromDate = formatDate(booking.from, t("card.notAvailable"));
+  const toDate = formatDate(booking.to, t("card.notAvailable"));
   const imageUrl = toImageUrl(booking.car?.image) ?? "/placeholder-car.jpg";
 
   return (
@@ -76,18 +80,18 @@ export default function BookingCard({ booking }: Readonly<{ booking: BookingItem
               color="text.primary"
               sx={{ fontSize: { xs: "1rem", sm: "1.125rem" }, fontWeight: 800 }}
             >
-              {booking.car?.name ?? "Unknown Car"}
+              {booking.car?.name ?? t("card.unknownCar")}
             </Typography>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
               <BusinessIcon sx={{ fontSize: 14, color: "text.secondary" }} />
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" } }}>
-                {booking.supplier?.fullName ?? "Unknown Supplier"}
+                {booking.supplier?.fullName ?? t("card.unknownSupplier")}
               </Typography>
             </Box>
           </Box>
           <Box sx={{ textAlign: "right", ml: 2 }}>
             <Chip
-              label={booking.status ?? "Unknown"}
+              label={booking.status ?? t("card.notAvailable")}
               color={getStatusColor(booking.status)}
               size="small"
               sx={{
@@ -114,7 +118,7 @@ export default function BookingCard({ booking }: Readonly<{ booking: BookingItem
                 fontWeight: 700,
               }}
             >
-              Total
+              {t("card.totalLabel")}
             </Typography>
           </Box>
         </Box>
@@ -133,7 +137,7 @@ export default function BookingCard({ booking }: Readonly<{ booking: BookingItem
         >
           <Image
             src={imageUrl}
-            alt={booking.car?.name ?? "Car image"}
+            alt={booking.car?.name ?? t("card.carImageAlt")}
             fill
             sizes="100vw"
             style={{ objectFit: "cover" }}
@@ -161,10 +165,10 @@ export default function BookingCard({ booking }: Readonly<{ booking: BookingItem
                 color="text.primary"
                 sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" }, fontWeight: 700 }}
               >
-                Pick-up
+                {t("card.pickup")}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" } }}>
-                {booking.pickupLocation?.name ?? "N/A"}
+                {booking.pickupLocation?.name ?? t("card.notAvailable")}
               </Typography>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
                 <CalendarIcon sx={{ fontSize: 12, color: "text.disabled" }} />
@@ -194,10 +198,10 @@ export default function BookingCard({ booking }: Readonly<{ booking: BookingItem
                 color="text.primary"
                 sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" }, fontWeight: 700 }}
               >
-                Drop-off
+                {t("card.dropoff")}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" } }}>
-                {booking.dropOffLocation?.name ?? "N/A"}
+                {booking.dropOffLocation?.name ?? t("card.notAvailable")}
               </Typography>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
                 <CalendarIcon sx={{ fontSize: 12, color: "text.disabled" }} />
@@ -221,7 +225,7 @@ export default function BookingCard({ booking }: Readonly<{ booking: BookingItem
             fontSize: { xs: "0.875rem", sm: "1rem" },
           }}
         >
-          View Details
+          {t("card.viewDetails")}
         </Button>
       </Box>
 
@@ -247,14 +251,14 @@ export default function BookingCard({ booking }: Readonly<{ booking: BookingItem
         >
           <Image
             src={imageUrl}
-            alt={booking.car?.name ?? "Car image"}
+            alt={booking.car?.name ?? t("card.carImageAlt")}
             fill
             sizes="220px"
             style={{ objectFit: "cover" }}
           />
           <Box sx={{ position: "absolute", top: 10, left: 10 }}>
             <Chip
-              label={booking.status ?? "Unknown"}
+              label={booking.status ?? t("card.notAvailable")}
               color={getStatusColor(booking.status)}
               size="small"
               sx={{ fontWeight: 700, fontSize: "0.65rem", textTransform: "uppercase" }}
@@ -275,12 +279,12 @@ export default function BookingCard({ booking }: Readonly<{ booking: BookingItem
           >
             <Box>
               <Typography variant="h6" color="text.primary" sx={{ fontWeight: 800 }}>
-                {booking.car?.name ?? "Unknown Car"}
+                {booking.car?.name ?? t("card.unknownCar")}
               </Typography>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
                 <BusinessIcon sx={{ fontSize: 14, color: "text.secondary" }} />
                 <Typography variant="body2" color="text.secondary">
-                  {booking.supplier?.fullName ?? "Unknown Supplier"}
+                  {booking.supplier?.fullName ?? t("card.unknownSupplier")}
                 </Typography>
               </Box>
             </Box>
@@ -294,7 +298,7 @@ export default function BookingCard({ booking }: Readonly<{ booking: BookingItem
                 color="text.secondary"
                 sx={{ textTransform: "uppercase", letterSpacing: 1, fontWeight: 700 }}
               >
-                Total Price
+                {t("card.totalLabel")}
               </Typography>
             </Box>
           </Box>
@@ -318,10 +322,10 @@ export default function BookingCard({ booking }: Readonly<{ booking: BookingItem
               </Box>
               <Box>
                 <Typography variant="body2" color="text.primary" sx={{ fontWeight: 700 }}>
-                  Pick-up
+                  {t("card.pickup")}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" noWrap>
-                  {booking.pickupLocation?.name ?? "N/A"}
+                  {booking.pickupLocation?.name ?? t("card.notAvailable")}
                 </Typography>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
                   <CalendarIcon sx={{ fontSize: 12, color: "text.disabled" }} />
@@ -347,10 +351,10 @@ export default function BookingCard({ booking }: Readonly<{ booking: BookingItem
               </Box>
               <Box>
                 <Typography variant="body2" color="text.primary" sx={{ fontWeight: 700 }}>
-                  Drop-off
+                  {t("card.dropoff")}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" noWrap>
-                  {booking.dropOffLocation?.name ?? "N/A"}
+                  {booking.dropOffLocation?.name ?? t("card.notAvailable")}
                 </Typography>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
                   <CalendarIcon sx={{ fontSize: 12, color: "text.disabled" }} />
@@ -372,7 +376,7 @@ export default function BookingCard({ booking }: Readonly<{ booking: BookingItem
             endIcon={<ArrowForwardIcon />}
             sx={{ whiteSpace: "nowrap" }}
           >
-            Details
+            {t("card.details")}
           </Button>
         </Box>
       </Box>

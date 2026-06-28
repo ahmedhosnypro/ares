@@ -1,0 +1,38 @@
+import type { ResetPasswordLabels } from "../../types/auth/reset-password";
+
+const resetPassword: ResetPasswordLabels = {
+  title: "تعيين كلمة مرور جديدة",
+  subtitle: "يرجى إدخال كلمة المرور الجديدة أدناه.",
+  newPasswordLabel: "كلمة المرور الجديدة",
+  confirmPasswordLabel: "تأكيد كلمة المرور الجديدة",
+  resetButton: "إعادة تعيين كلمة المرور",
+  togglePassword: "تبديل ظهور كلمة المرور",
+  toggleConfirmPassword: "تبديل ظهور تأكيد كلمة المرور",
+  successTitle: "تم إعادة تعيين كلمة المرور بنجاح!",
+  successMessage: "تم تحديث كلمة المرور الخاصة بك بنجاح. يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.",
+  goToSignIn: "الذهاب لتسجيل الدخول",
+  invalidLinkTitle: "رابط غير صالح",
+  invalidLinkMessage: "رابط إعادة تعيين كلمة المرور هذا غير صالح أو يفتقد معلومات مطلوبة. يرجى طلب رابط جديد.",
+  requestNewLink: "طلب رابط جديد",
+  invalidResetLink: "رابط إعادة التعيين غير صالح. البريد الإلكتروني أو الرمز مفقود.",
+  resetFailed: "فشل إعادة تعيين كلمة المرور. قد يكون الرابط منتهي الصلاحية أو غير صالح.",
+  unexpectedError: "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى لاحقًا.",
+  errorTitle: "خطأ",
+  logoAlt: "شعار أريس",
+  carImageAlt: "الجانب الجانبي لسيارة فاخرة",
+  decorativeTitle: "بداية جديدة",
+  decorativeSubtitle: "أمّن حسابك واستعد لرحلتك الاستثنائية القادمة مع أريس.",
+  passwordWeak: "ضعيفة",
+  passwordFair: "مقبولة",
+  passwordGood: "جيدة",
+  passwordStrong: "قوية",
+  passwordTooShort: "قصيرة جدًا",
+  validationMinLength: "يجب أن تكون كلمة المرور 8 أحرف على الأقل",
+  validationUppercase: "يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل",
+  validationLowercase: "يجب أن تحتوي كلمة المرور على حرف صغير واحد على الأقل",
+  validationNumber: "يجب أن تحتوي كلمة المرور على رقم واحد على الأقل",
+  validationSpecialChar: "يجب أن تحتوي كلمة المرور على حرف خاص واحد على الأقل",
+  validationPasswordsMatch: "كلمات المرور غير متطابقة",
+};
+
+export default resetPassword;

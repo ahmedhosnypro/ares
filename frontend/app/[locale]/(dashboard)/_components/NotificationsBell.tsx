@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Box,
   IconButton,
@@ -37,20 +38,19 @@ const POLL_INTERVAL_MS = 60_000;
 const PREVIEW_LIMIT = 6;
 
 const DEFAULT_NOTIFICATIONS_HREF = "/admin/notifications";
-const DEFAULT_NOTIFICATIONS_LABEL = "View all notifications";
 
-function timeAgo(input: string): string {
+function timeAgo(input: string, t: ReturnType<typeof useTranslations>): string {
   const date = new Date(input);
   if (Number.isNaN(date.getTime())) return "";
   const diffMs = Date.now() - date.getTime();
   const seconds = Math.floor(diffMs / 1000);
-  if (seconds < 30) return "just now";
+  if (seconds < 30) return t("justNow");
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes.toString()}m ago`;
+  if (minutes < 60) return `${minutes.toString()}${t("minutesAgo")}`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours.toString()}h ago`;
+  if (hours < 24) return `${hours.toString()}${t("hoursAgo")}`;
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days.toString()}d ago`;
+  if (days < 7) return `${days.toString()}${t("daysAgo")}`;
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
@@ -61,11 +61,13 @@ type NotificationsBellProps = {
 
 export default function NotificationsBell({
   allNotificationsHref = DEFAULT_NOTIFICATIONS_HREF,
-  allNotificationsLabel = DEFAULT_NOTIFICATIONS_LABEL,
+  allNotificationsLabel: allNotificationsLabelProp,
 }: NotificationsBellProps) {
   const theme = useTheme();
   const { data: session } = useSession();
   const token = session?.accessToken;
+  const t = useTranslations("common");
+  const allNotificationsLabelDefault = allNotificationsLabelProp ?? t("viewAllNotifications");
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [items, setItems] = useState<NotificationItem[]>([]);
@@ -181,7 +183,7 @@ export default function NotificationsBell({
       setItems(prev => prev.filter(n => n.id !== deletingNotification.id));
       setToast({
         open: true,
-        message: "Notification deleted successfully.",
+        message: t("notificationDeletedSuccessfully"),
         severity: "success",
       });
       window.dispatchEvent(new CustomEvent("notifications-updated"));
@@ -193,7 +195,7 @@ export default function NotificationsBell({
         setItems(prev => prev.filter(n => n.id !== deletingNotification.id));
         setToast({
           open: true,
-          message: "Notification deleted successfully.",
+          message: t("notificationDeletedSuccessfully"),
           severity: "success",
         });
         window.dispatchEvent(new CustomEvent("notifications-updated"));
@@ -201,7 +203,7 @@ export default function NotificationsBell({
       } else {
         setToast({
           open: true,
-          message: "Failed to delete notification. Please try again.",
+          message: t("failedToDeleteNotification"),
           severity: "error",
         });
       }
@@ -212,9 +214,9 @@ export default function NotificationsBell({
 
   return (
     <>
-      <Tooltip title="Notifications">
+      <Tooltip title={t("notifications")}>
         <IconButton
-          aria-label="notifications"
+          aria-label={t("notifications")}
           onClick={handleOpen}
           sx={{
             color: "text.secondary",
@@ -302,13 +304,13 @@ export default function NotificationsBell({
         >
           <Box>
             <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-              Notifications
+              {t("notifications")}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {unreadCount > 0 ? `${unreadCount.toString()} unread messages` : "You're all caught up"}
+              {unreadCount > 0 ? `${unreadCount.toString()} ${t("unreadMessages")}` : t("allCaughtUp")}
             </Typography>
           </Box>
-          <Tooltip title="Mark all as read">
+          <Tooltip title={t("markAllAsRead")}>
             <span>
               <IconButton
                 size="small"
@@ -333,10 +335,10 @@ export default function NotificationsBell({
           {!loading && error && (
             <Box sx={{ p: 4, textAlign: "center" }}>
               <Typography variant="body2" color="error">
-                Failed to load notifications.
+                {t("failedToLoadNotifications")}
               </Typography>
               <Button size="small" onClick={() => void fetchData()} sx={{ mt: 1 }}>
-                Try again
+                {t("tryAgain")}
               </Button>
             </Box>
           )}
@@ -345,7 +347,7 @@ export default function NotificationsBell({
             <Box sx={{ p: 5, textAlign: "center" }}>
               <NotificationsIcon sx={{ fontSize: 36, color: "text.disabled", mb: 1 }} />
               <Typography variant="body2" color="text.secondary">
-                No notifications yet.
+                {t("noNotificationsYet")}
               </Typography>
             </Box>
           )}
@@ -395,7 +397,7 @@ export default function NotificationsBell({
                           flexGrow: 1,
                         }}
                       >
-                        {n.title || "Notification"}
+                        {n.title || t("notifications")}
                       </Typography>
                       <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", flexShrink: 0 }}>
                         {!n.isRead && (
@@ -444,7 +446,7 @@ export default function NotificationsBell({
                       variant="caption"
                       sx={{ display: "block", mt: 0.5, color: "text.disabled", fontSize: "0.7rem" }}
                     >
-                      {timeAgo(n.createdAt)}
+                      {timeAgo(n.createdAt, t)}
                     </Typography>
                   </Box>
                 </Box>
@@ -470,7 +472,7 @@ export default function NotificationsBell({
             endIcon={<OpenInNewIcon fontSize="small" />}
             sx={{ fontWeight: 600, textTransform: "none" }}
           >
-            {allNotificationsLabel}
+            {allNotificationsLabelDefault}
           </Button>
         </Box>
       </Popover>

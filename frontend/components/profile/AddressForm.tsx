@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Alert, Box, Button, CircularProgress, Divider, Grid, TextField, Typography } from "@mui/material";
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 import CountrySelect from "@/components/input/CountrySelect";
+import { useTranslations } from "next-intl";
 import { addressSchema, type AddressFormData } from "@/lib/validation/schemas";
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
@@ -57,6 +58,7 @@ export default function AddressForm({
   languagePreference,
   currencyPreference,
 }: AddressFormProps) {
+  const t = useTranslations("customer.accountProfile");
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [serverError, setServerError] = useState("");
@@ -172,20 +174,20 @@ export default function AddressForm({
           const firstError = body.validationErrors[0];
           let msg = firstError.message;
           if (firstError.field?.toLowerCase() === "phone") {
-            msg = `Main Profile Error: ${msg}. Please update your main phone in the Personal Info section first.`;
+            msg = t("address.mainProfilePhoneError", { message: msg });
           }
           setServerError(msg);
           return;
         }
 
-        const msg = body?.message ?? "Failed to update address.";
+        const msg = body?.message ?? t("address.updateFailed");
         setServerError(msg);
         return;
       }
-      setSuccessMsg("Address saved successfully.");
+      setSuccessMsg(t("address.saveSuccess"));
     } catch (error) {
       logger.error("Address update error", error);
-      setServerError(error instanceof Error ? error.message : "Failed to save address.");
+      setServerError(error instanceof Error ? error.message : t("address.saveFailed"));
     } finally {
       setLoading(false);
     }
@@ -194,7 +196,7 @@ export default function AddressForm({
   return (
     <Box>
       <Typography variant="h6" color="text.primary" gutterBottom sx={{ fontWeight: 700 }}>
-        Address & Emergency Contact
+        {t("address.title")}
       </Typography>
       <Divider sx={{ mb: 3, borderColor: "border.light" }} />
 
@@ -209,7 +211,7 @@ export default function AddressForm({
           <Grid size={{ xs: 12 }}>
             <TextField
               id="street"
-              label="Street Address"
+              label={t("address.streetAddress")}
               value={street}
               onChange={e => {
                 setStreet(e.target.value);
@@ -227,7 +229,7 @@ export default function AddressForm({
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               id="city"
-              label="City"
+              label={t("address.city")}
               value={city}
               onChange={e => {
                 setCity(e.target.value);
@@ -245,7 +247,7 @@ export default function AddressForm({
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               id="state"
-              label="State / Governorate"
+              label={t("address.stateGovernorate")}
               value={state}
               onChange={e => {
                 setState(e.target.value);
@@ -263,7 +265,7 @@ export default function AddressForm({
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               id="postalCode"
-              label="Postal Code"
+              label={t("address.postalCode")}
               value={postalCode}
               onChange={e => {
                 setPostalCode(e.target.value);
@@ -289,7 +291,7 @@ export default function AddressForm({
               onBlur={() => {
                 handleBlur("country", country);
               }}
-              label="Country"
+              label={t("address.country")}
               error={touched.country && !!fieldErrors.country}
               helperText={touched.country ? fieldErrors.country : undefined}
             />
@@ -299,7 +301,7 @@ export default function AddressForm({
         {/* Emergency contact */}
         <Box sx={{ mt: 4 }}>
           <Typography variant="subtitle2" color="text.primary" gutterBottom sx={{ fontWeight: 700 }}>
-            Emergency Contact
+            {t("address.emergencyContact")}
           </Typography>
           <Divider sx={{ mb: 2.5, borderColor: "border.light" }} />
 
@@ -307,7 +309,7 @@ export default function AddressForm({
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 id="emergencyName"
-                label="Contact Name"
+                label={t("address.contactName")}
                 value={emergencyName}
                 onChange={e => {
                   setEmergencyName(e.target.value);
@@ -326,7 +328,7 @@ export default function AddressForm({
               <TextField
                 id="emergencyPhone"
                 name="emergencyPhone"
-                label="Phone Number"
+                label={t("personalInfo.phoneNumber")}
                 type="tel"
                 value={emergencyPhone}
                 onChange={handleEmergencyPhoneChange}
@@ -336,7 +338,9 @@ export default function AddressForm({
                 fullWidth
                 variant="outlined"
                 error={touched.emergencyPhone && !!fieldErrors.emergencyPhone}
-                helperText={(touched.emergencyPhone && fieldErrors.emergencyPhone) || "Include country code"}
+                helperText={
+                  (touched.emergencyPhone && fieldErrors.emergencyPhone) || t("address.emergencyPhoneHelperText")
+                }
                 autoComplete="tel"
               />
             </Grid>
@@ -344,7 +348,7 @@ export default function AddressForm({
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 id="emergencyRelationship"
-                label="Relationship"
+                label={t("address.relationship")}
                 value={emergencyRelationship}
                 onChange={e => {
                   setEmergencyRelationship(e.target.value);
@@ -355,7 +359,7 @@ export default function AddressForm({
                 }}
                 error={touched.emergencyRelationship && !!fieldErrors.emergencyRelationship}
                 helperText={touched.emergencyRelationship ? fieldErrors.emergencyRelationship : undefined}
-                placeholder="e.g. Spouse, Parent, Sibling"
+                placeholder={t("address.relationshipPlaceholder")}
               />
             </Grid>
           </Grid>
@@ -368,7 +372,7 @@ export default function AddressForm({
             justifyContent: "space-between",
             mt: 3,
             pt: 2,
-            borderTop: t => `1px solid ${t.palette.border.light}`,
+            borderTop: theme => `1px solid ${theme.palette.border.light}`,
             flexWrap: "wrap",
             gap: 2,
           }}
@@ -399,7 +403,7 @@ export default function AddressForm({
               "&:hover": { boxShadow: t => t.palette.shadow.buttonHover },
             }}
           >
-            {loading ? "Saving..." : "Save Address"}
+            {loading ? t("address.saving") : t("address.saveAddress")}
           </Button>
         </Box>
       </Box>

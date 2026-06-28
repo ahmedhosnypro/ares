@@ -4,6 +4,7 @@ import { useServerInsertedHTML } from "next/navigation";
 import { useLocale } from "next-intl";
 import type { ReactNode } from "react";
 import rtlPlugin from "stylis-plugin-rtl";
+// cspell:ignore stylis
 
 const cacheLtr = createCache({
   key: "ltr",

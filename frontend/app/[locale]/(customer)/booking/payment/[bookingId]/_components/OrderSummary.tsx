@@ -6,6 +6,7 @@ import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
 import StarIcon from "@mui/icons-material/Star";
 import { formatCurrency } from "@/utils/currency-helpers";
 import { toImageUrl } from "@/utils/image-url";
+import { useTranslations } from "next-intl";
 
 interface OrderSummaryProps {
   readonly booking: {
@@ -28,6 +29,7 @@ interface OrderSummaryProps {
 }
 
 export default function OrderSummary({ booking }: OrderSummaryProps) {
+  const t = useTranslations("customer.bookingPayment.orderSummary");
   const pickupDate = new Date(booking.from);
   const returnDate = new Date(booking.to);
   const days = Math.max(1, Math.ceil((returnDate.getTime() - pickupDate.getTime()) / (1000 * 60 * 60 * 24)));
@@ -70,7 +72,7 @@ export default function OrderSummary({ booking }: OrderSummaryProps) {
         >
           <StarIcon sx={{ fontSize: 16, color: "primary.main", mr: 0.5 }} />
           <Typography variant="caption" sx={{ fontWeight: 700, color: "primary.main" }}>
-            Premium Class
+            {t("premiumClass")}
           </Typography>
         </Box>
       </Box>
@@ -80,7 +82,7 @@ export default function OrderSummary({ booking }: OrderSummaryProps) {
           {booking.car.make} {booking.car.model}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Supplied by {booking.car.supplier.name}
+          {t("suppliedBy", { supplier: booking.car.supplier.name })}
         </Typography>
 
         <Divider sx={{ mb: 3 }} />
@@ -95,7 +97,7 @@ export default function OrderSummary({ booking }: OrderSummaryProps) {
                 color="text.secondary"
                 sx={{ textTransform: "uppercase", letterSpacing: 1, fontWeight: 700 }}
               >
-                Pickup
+                {t("pickup")}
               </Typography>
               <Typography variant="body1" sx={{ fontWeight: 700, color: "text.primary" }}>
                 {booking.pickupLocation.name}
@@ -119,7 +121,7 @@ export default function OrderSummary({ booking }: OrderSummaryProps) {
                 color="text.secondary"
                 sx={{ textTransform: "uppercase", letterSpacing: 1, fontWeight: 700 }}
               >
-                Return
+                {t("return")}
               </Typography>
               <Typography variant="body1" sx={{ fontWeight: 700, color: "text.primary" }}>
                 {booking.dropOffLocation.name}
@@ -142,7 +144,7 @@ export default function OrderSummary({ booking }: OrderSummaryProps) {
         <Stack spacing={1.5}>
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography variant="body2" color="text.secondary">
-              Rental ({days} {days === 1 ? "Day" : "Days"})
+              {t("price.rental", { count: days, unit: days === 1 ? t("price.day") : t("price.days") })}
             </Typography>
             <Typography variant="body2" sx={{ fontFamily: "monospace", fontWeight: 500 }}>
               {booking.originalPrice ? formatCurrency(booking.originalPrice) : formatCurrency(booking.price)}
@@ -151,7 +153,7 @@ export default function OrderSummary({ booking }: OrderSummaryProps) {
           {booking.discountAmount ? (
             <Box sx={{ display: "flex", justifyContent: "space-between" }}>
               <Typography variant="body2" color="error.main">
-                Discount
+                {t("price.discount")}
               </Typography>
               <Typography variant="body2" color="error.main" sx={{ fontFamily: "monospace", fontWeight: 500 }}>
                 -{formatCurrency(booking.discountAmount)}
@@ -170,7 +172,7 @@ export default function OrderSummary({ booking }: OrderSummaryProps) {
             }}
           >
             <Typography variant="h6" sx={{ fontWeight: 700, color: "primary.main" }}>
-              Total Amount
+              {t("price.totalAmount")}
             </Typography>
             <Typography variant="h5" sx={{ fontWeight: 800, color: "primary.main", fontFamily: "monospace" }}>
               {formatCurrency(booking.price)}

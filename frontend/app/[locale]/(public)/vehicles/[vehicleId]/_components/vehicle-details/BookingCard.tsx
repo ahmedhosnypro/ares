@@ -173,7 +173,7 @@ export default function BookingCard({ vehicle, locationOptions, vehicleId, baseP
     };
   }, [pickupDate, returnDate, resolvedVehicle.pricePerDay, resolvedVehicle.vehicleId, validate]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     const validationErrors = validate();
     setErrors(validationErrors);
     if (Object.keys(validationErrors).length > 0) return;
@@ -345,7 +345,7 @@ export default function BookingCard({ vehicle, locationOptions, vehicleId, baseP
           variant="contained"
           size="large"
           onClick={() => {
-            void handleSubmit();
+            handleSubmit();
           }}
           disabled={isBookingDisabled || resolvedLocations.length === 0 || resolvedVehicle.vehicleId === ""}
         >

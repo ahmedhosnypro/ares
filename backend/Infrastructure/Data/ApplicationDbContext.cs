@@ -48,6 +48,7 @@ namespace Backend.Infrastructure.Data
         public DbSet<SystemSetting> SystemSettings { get; set; }
         public DbSet<TermsSection> TermsSections { get; set; }
         public DbSet<AboutSection> AboutSections { get; set; }
+        public DbSet<PrivacySection> PrivacySections { get; set; }
 
         // Crucial Graduation Project Extras
         public DbSet<VehicleFeature> VehicleFeatures { get; set; }
@@ -75,6 +76,7 @@ namespace Backend.Infrastructure.Data
         IQueryable<SystemSetting> IApplicationDbContext.SystemSettings => SystemSettings;
         IQueryable<TermsSection> IApplicationDbContext.TermsSections => TermsSections;
         IQueryable<AboutSection> IApplicationDbContext.AboutSections => AboutSections;
+        IQueryable<PrivacySection> IApplicationDbContext.PrivacySections => PrivacySections;
         IQueryable<Driver> IApplicationDbContext.Drivers => Drivers;
         IQueryable<DriverProfile> IApplicationDbContext.DriverProfiles => DriverProfiles;
         IQueryable<DriverWorkArea> IApplicationDbContext.DriverWorkAreas => DriverWorkAreas;

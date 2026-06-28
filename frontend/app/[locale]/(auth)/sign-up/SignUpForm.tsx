@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Link } from "@/shared/i18n/routing";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
@@ -46,24 +47,23 @@ import RoleSelector from "./RoleSelector";
 
 interface PasswordStrength {
   score: number;
-  label: string;
   color: "error" | "warning" | "info" | "success";
 }
 
 function getPasswordStrength(password: string): PasswordStrength {
-  if (!password) return { score: 0, label: "", color: "error" };
+  if (!password) return { score: 0, color: "error" };
   let score = 0;
   if (password.length >= 8) score++;
   if (/[A-Z]/.test(password)) score++;
   if (/\d/.test(password)) score++;
   if (/[\W_]/.test(password)) score++;
   const levels: PasswordStrength[] = [
-    { score: 1, label: "Weak", color: "error" },
-    { score: 2, label: "Fair", color: "warning" },
-    { score: 3, label: "Good", color: "info" },
-    { score: 4, label: "Strong", color: "success" },
+    { score: 1, color: "error" },
+    { score: 2, color: "warning" },
+    { score: 3, color: "info" },
+    { score: 4, color: "success" },
   ];
-  return levels[score - 1] ?? { score: 0, label: "Too short", color: "error" };
+  return levels[score - 1] ?? { score: 0, color: "error" };
 }
 
 interface RegistrationFormProps {
@@ -96,7 +96,9 @@ interface RegistrationFormProps {
   readonly handleBlur: (field: keyof SignUpFormData) => void;
   readonly validateField: <K extends keyof SignUpFormData>(field: K, value: SignUpFormData[K]) => void;
   readonly passwordStrength: PasswordStrength;
+  readonly passwordStrengthLabel: string;
   readonly canSubmit: boolean;
+  readonly t: (key: string, values?: Record<string, string | number>) => string;
 }
 
 function RegistrationForm({
@@ -129,7 +131,9 @@ function RegistrationForm({
   handleBlur,
   validateField,
   passwordStrength,
+  passwordStrengthLabel,
   canSubmit,
+  t,
 }: RegistrationFormProps) {
   const theme = useTheme();
   return (
@@ -150,7 +154,7 @@ function RegistrationForm({
             fullWidth
             id="firstName"
             name="firstName"
-            label="First Name"
+            label={t("firstNameLabel")}
             required
             value={firstName}
             onChange={e => {
@@ -179,7 +183,7 @@ function RegistrationForm({
             fullWidth
             id="lastName"
             name="lastName"
-            label="Last Name"
+            label={t("lastNameLabel")}
             required
             value={lastName}
             onChange={e => {
@@ -210,7 +214,7 @@ function RegistrationForm({
         fullWidth
         id="email"
         name="email"
-        label="Email Address"
+        label={t("emailLabel")}
         type="email"
         autoComplete="email"
         required
@@ -241,7 +245,7 @@ function RegistrationForm({
         fullWidth
         id="phone"
         name="phone"
-        label="Phone Number"
+        label={t("phoneLabel")}
         type="tel"
         autoComplete="tel"
         required
@@ -272,7 +276,7 @@ function RegistrationForm({
         fullWidth
         id="password"
         name="password"
-        label="Password"
+        label={t("passwordLabel")}
         type={showPassword ? "text" : "password"}
         autoComplete="new-password"
         required
@@ -296,7 +300,7 @@ function RegistrationForm({
             endAdornment: (
               <InputAdornment position="end">
                 <IconButton
-                  aria-label="toggle password visibility"
+                  aria-label={t("togglePassword")}
                   onClick={() => {
                     setShowPassword(!showPassword);
                   }}
@@ -321,7 +325,7 @@ function RegistrationForm({
             sx={{ height: 4, borderRadius: 999, mb: 0.5 }}
           />
           <Typography variant="caption" color={`${passwordStrength.color}.main`} sx={{ fontWeight: 600 }}>
-            {passwordStrength.label}
+            {passwordStrengthLabel}
           </Typography>
         </Box>
       )}
@@ -331,7 +335,7 @@ function RegistrationForm({
         fullWidth
         id="confirmPassword"
         name="confirmPassword"
-        label="Confirm Password"
+        label={t("confirmPasswordLabel")}
         type={showConfirmPassword ? "text" : "password"}
         autoComplete="new-password"
         required
@@ -358,7 +362,7 @@ function RegistrationForm({
             endAdornment: (
               <InputAdornment position="end">
                 <IconButton
-                  aria-label="toggle confirm password visibility"
+                  aria-label={t("toggleConfirmPassword")}
                   onClick={() => {
                     setShowConfirmPassword(!showConfirmPassword);
                   }}
@@ -388,13 +392,13 @@ function RegistrationForm({
           }
           label={
             <Typography variant="body2" color="text.secondary">
-              I accept the{" "}
+              {t("iAcceptThe")}{" "}
               <MuiLink
                 component={Link}
                 href="/terms"
                 sx={{ fontWeight: 700, textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
               >
-                Terms of Service
+                {t("termsOfService")}
               </MuiLink>
             </Typography>
           }
@@ -417,13 +421,13 @@ function RegistrationForm({
           }
           label={
             <Typography variant="body2" color="text.secondary">
-              I accept the{" "}
+              {t("iAcceptThe")}{" "}
               <MuiLink
                 component={Link}
                 href="/privacy"
                 sx={{ fontWeight: 700, textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
               >
-                Privacy Policy
+                {t("privacyPolicy")}
               </MuiLink>
             </Typography>
           }
@@ -451,7 +455,7 @@ function RegistrationForm({
           "&:hover": { boxShadow: theme.palette.shadow.buttonHover },
         }}
       >
-        {isLoading ? <CircularProgress size={24} color="inherit" /> : "Create Account"}
+        {isLoading ? <CircularProgress size={24} color="inherit" /> : t("createAccountButton")}
       </Button>
     </Box>
   );
@@ -461,9 +465,10 @@ function RegistrationForm({
 
 interface SignUpHeaderProps {
   readonly isSuccess: boolean;
+  readonly t: (key: string, values?: Record<string, string | number>) => string;
 }
 
-function SignUpHeader({ isSuccess }: SignUpHeaderProps) {
+function SignUpHeader({ isSuccess, t }: SignUpHeaderProps) {
   const theme = useTheme();
   return (
     <Box sx={{ mb: 4 }}>
@@ -476,16 +481,16 @@ function SignUpHeader({ isSuccess }: SignUpHeaderProps) {
           component="h1"
           sx={{ fontWeight: 900, letterSpacing: "-0.02em", color: "text.primary" }}
         >
-          ARES
+          {t("brandName")}
         </Typography>
       </Box>
       {!isSuccess && (
         <>
           <Typography variant="h5" component="h2" sx={{ fontWeight: 700, mb: 1, color: "text.primary" }}>
-            Create an account
+            {t("title")}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Join us and start your premium rental experience today.
+            {t("subtitle")}
           </Typography>
         </>
       )}
@@ -497,9 +502,10 @@ interface SuccessViewProps {
   readonly firstName: string;
   readonly email: string;
   readonly callbackUrl?: string | null;
+  readonly t: (key: string, values?: Record<string, string | number>) => string;
 }
 
-function SuccessView({ firstName, email: _email, callbackUrl }: SuccessViewProps) {
+function SuccessView({ firstName, email: _email, callbackUrl, t }: SuccessViewProps) {
   const signInHref = callbackUrl ? `/sign-in?callbackUrl=${encodeURIComponent(callbackUrl)}` : "/sign-in";
 
   return (
@@ -517,11 +523,10 @@ function SuccessView({ firstName, email: _email, callbackUrl }: SuccessViewProps
         <CheckCircleIcon sx={{ fontSize: 40 }} />
       </Avatar>
       <Typography variant="h6" sx={{ fontWeight: "bold" }} gutterBottom>
-        Check your email!
+        {t("successTitle")}
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Welcome to ARES, {firstName}. We&apos;ve sent a verification link to your email. Please click the link to verify
-        your account before logging in.
+        {t("successMessage", { firstName })}
       </Typography>
       <Button
         component={Link}
@@ -531,7 +536,7 @@ function SuccessView({ firstName, email: _email, callbackUrl }: SuccessViewProps
         size="large"
         sx={{ borderRadius: "999px", py: 1.75, fontWeight: 700, textTransform: "none" }}
       >
-        Go to Sign In
+        {t("goToSignIn")}
       </Button>
     </Box>
   );
@@ -578,14 +583,21 @@ function processSignUpResult(
   return { success: false, errors };
 }
 
-async function handleRegisterResponse(response: Response): Promise<void> {
+interface ErrorMessages {
+  readonly emailAlreadyRegistered: string;
+  readonly tooManyAttempts: string;
+  readonly invalidDetails: string;
+  readonly unexpectedError: string;
+}
+
+async function handleRegisterResponse(response: Response, errors: ErrorMessages): Promise<void> {
   if (response.ok) return;
 
   if (response.status === 409) {
-    throw new Error("This email is already registered. Try signing in instead.");
+    throw new Error(errors.emailAlreadyRegistered);
   }
   if (response.status === 429) {
-    throw new Error("Too many registration attempts. Please try again later.");
+    throw new Error(errors.tooManyAttempts);
   }
   if (response.status === 400) {
     const body = (await response.json().catch(() => null)) as {
@@ -593,15 +605,12 @@ async function handleRegisterResponse(response: Response): Promise<void> {
       message?: string;
     } | null;
     const first = body?.validationErrors?.[0]?.message ?? body?.message;
-    throw new Error(first ?? "Invalid details. Please check your inputs.");
+    throw new Error(first ?? errors.invalidDetails);
   }
-  throw new Error("An unexpected error occurred. Please try again.");
+  throw new Error(errors.unexpectedError);
 }
 
-async function performRegistration(payload: SignUpFormData): Promise<void> {
-  // The backend `RegisterRequest` has both the legacy fields and the new
-  // optional Phone / ConfirmPassword / Role. We forward all of them; the
-  // backend validator handles the cross-field rules.
+async function performRegistration(payload: SignUpFormData, errors: ErrorMessages): Promise<void> {
   const response = await fetch(toApiUrl("/api/auth/register"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -618,7 +627,7 @@ async function performRegistration(payload: SignUpFormData): Promise<void> {
     }),
   });
 
-  await handleRegisterResponse(response);
+  await handleRegisterResponse(response, errors);
 }
 
 // ── component ──────────────────────────────────────────────────────────────────
@@ -631,6 +640,7 @@ export default function SignUpForm() {
   const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl");
+  const t = useTranslations("authPages.signup");
 
   const [role, setRole] = useState<SignUpRole>("customer");
   const [firstName, setFirstName] = useState("");
@@ -651,6 +661,23 @@ export default function SignUpForm() {
 
   const passwordStrength = getPasswordStrength(password);
 
+  const passwordStrengthLabel = (() => {
+    switch (passwordStrength.score) {
+      case 0:
+        return password ? t("passwordTooShort") : "";
+      case 1:
+        return t("passwordWeak");
+      case 2:
+        return t("passwordFair");
+      case 3:
+        return t("passwordGood");
+      case 4:
+        return t("passwordStrong");
+      default:
+        return "";
+    }
+  })();
+
   const validateField = <K extends keyof SignUpFormData>(field: K, value: SignUpFormData[K]) => {
     // Special-case the confirmPassword field — the underlying schema
     // only checks "is a non-empty string", so we layer the cross-field
@@ -659,11 +686,11 @@ export default function SignUpForm() {
     if (field === "confirmPassword") {
       const stringValue = typeof value === "string" ? value : "";
       if (stringValue.length === 0) {
-        setFieldErrors(prev => ({ ...prev, confirmPassword: "Please confirm your password" }));
+        setFieldErrors(prev => ({ ...prev, confirmPassword: t("confirmPasswordRequired") }));
         return;
       }
       if (stringValue !== password) {
-        setFieldErrors(prev => ({ ...prev, confirmPassword: "Passwords do not match" }));
+        setFieldErrors(prev => ({ ...prev, confirmPassword: t("passwordsDoNotMatch") }));
         return;
       }
       setFieldErrors(prev => ({ ...prev, confirmPassword: undefined }));
@@ -719,8 +746,14 @@ export default function SignUpForm() {
   const executeRegistration = async (payload: SignUpFormData) => {
     setIsLoading(true);
     setServerError("");
+    const errorMessages: ErrorMessages = {
+      emailAlreadyRegistered: t("emailAlreadyRegistered"),
+      tooManyAttempts: t("tooManyAttempts"),
+      invalidDetails: t("invalidDetails"),
+      unexpectedError: t("unexpectedError"),
+    };
     try {
-      await performRegistration(payload);
+      await performRegistration(payload, errorMessages);
       setIsSuccess(true);
     } catch (error: unknown) {
       setServerError(error instanceof Error ? error.message : String(error));
@@ -768,6 +801,12 @@ export default function SignUpForm() {
 
   const canSubmit = !isLoading && isFormValid;
 
+  const googleRole: "Customer" | "Supplier" | "Driver" = (() => {
+    if (role === "driver") return "Driver";
+    if (role === "supplier") return "Supplier";
+    return "Customer";
+  })();
+
   return (
     <Box sx={{ minHeight: "100vh", display: "flex", background: theme.palette.overlay.gradient }}>
       <Box sx={{ display: "flex", flex: 1, flexDirection: { xs: "column", lg: "row" } }}>
@@ -794,16 +833,16 @@ export default function SignUpForm() {
             }}
           >
             {/* Logo */}
-            <SignUpHeader isSuccess={isSuccess} />
+            <SignUpHeader isSuccess={isSuccess} t={t} />
 
             {/* ── Success ── */}
             {isSuccess ? (
-              <SuccessView firstName={firstName} email={email} callbackUrl={callbackUrl} />
+              <SuccessView firstName={firstName} email={email} callbackUrl={callbackUrl} t={t} />
             ) : (
               <>
                 {serverError && (
                   <Alert severity="error" icon={<ErrorIcon />} sx={{ mb: 3, borderRadius: 2 }}>
-                    <AlertTitle sx={{ fontWeight: 600 }}>Error</AlertTitle>
+                    <AlertTitle sx={{ fontWeight: 600 }}>{t("errorTitle")}</AlertTitle>
                     {serverError}
                   </Alert>
                 )}
@@ -838,7 +877,9 @@ export default function SignUpForm() {
                   handleBlur={handleBlur}
                   validateField={validateField}
                   passwordStrength={passwordStrength}
+                  passwordStrengthLabel={passwordStrengthLabel}
                   canSubmit={canSubmit}
+                  t={t}
                 />
 
                 {/* ── Google sign-up ─────────────────────────────────── */}
@@ -849,26 +890,26 @@ export default function SignUpForm() {
                     color="text.secondary"
                     sx={{ textTransform: "uppercase", letterSpacing: 1 }}
                   >
-                    or
+                    {t("orDivider")}
                   </Typography>
                   <Box sx={{ flex: 1, height: 1, bgcolor: "divider" }} />
                 </Box>
                 <GoogleSignInButton
                   disabled={isLoading}
-                  initialRole={role === "driver" ? "Driver" : role === "supplier" ? "Supplier" : "Customer"}
+                  initialRole={googleRole}
                   onError={message => {
                     setServerError(message);
                   }}
                 />
 
                 <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 4 }}>
-                  Already have an account?{" "}
+                  {t("hasAccount")}{" "}
                   <MuiLink
                     component={Link}
                     href="/sign-in"
                     sx={{ fontWeight: 700, textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
                   >
-                    Sign in
+                    {t("signInLink")}
                   </MuiLink>
                 </Typography>
               </>
@@ -886,7 +927,7 @@ export default function SignUpForm() {
               <Box sx={{ position: "absolute", inset: 0, "& img": { objectFit: "cover", opacity: 0.6 } }}>
                 <Image
                   src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80"
-                  alt="Luxury Car Fleet"
+                  alt={t("carImageAlt")}
                   fill
                   sizes="50vw"
                   priority
@@ -895,14 +936,13 @@ export default function SignUpForm() {
               <Box sx={{ position: "absolute", inset: 0, background: theme.palette.overlay.tealGradient }} />
               <Box sx={{ position: "absolute", bottom: 0, left: 0, right: 0, p: 6, color: "common.white" }}>
                 <Typography variant="h3" component="h3" sx={{ fontWeight: 900, mb: 2, letterSpacing: "-0.02em" }}>
-                  Your Journey Begins Here
+                  {t("decorativeTitle")}
                 </Typography>
                 <Typography
                   variant="h6"
                   sx={{ maxWidth: 500, color: "text.secondary", fontWeight: 400, lineHeight: 1.6 }}
                 >
-                  Join thousands of satisfied customers and gain access to the most exclusive vehicle fleet in the
-                  region.
+                  {t("decorativeSubtitle")}
                 </Typography>
               </Box>
             </Paper>

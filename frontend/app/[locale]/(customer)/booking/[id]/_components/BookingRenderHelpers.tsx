@@ -1,7 +1,9 @@
 import { Link } from "@/shared/i18n/routing";
 import { Box, Button, CardContent, Container, Paper, Typography } from "@mui/material";
+import { getTranslations } from "next-intl/server";
 
-export function renderSignInRequired() {
+export async function renderSignInRequired() {
+  const t = await getTranslations("customer.bookingDetail");
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default", py: { xs: 6, md: 10 } }}>
       <Container maxWidth="sm">
@@ -15,14 +17,14 @@ export function renderSignInRequired() {
         >
           <CardContent sx={{ p: { xs: 4, sm: 6 }, textAlign: "center" }}>
             <Typography variant="h5" color="text.primary" gutterBottom sx={{ fontWeight: 700 }}>
-              Sign in required
+              {t("signInRequired.title")}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
-              Please sign in to view booking details.
+              {t("signInRequired.message")}
             </Typography>
             <Link href="/sign-in" style={{ textDecoration: "none" }}>
               <Button variant="contained" size="large" sx={{ px: 4 }}>
-                Sign In
+                {t("signInRequired.signInButton")}
               </Button>
             </Link>
           </CardContent>
@@ -32,7 +34,8 @@ export function renderSignInRequired() {
   );
 }
 
-export function renderErrorState(title: string, message: string) {
+export async function renderErrorState(title: string, message: string) {
+  const t = await getTranslations("customer.bookingDetail");
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default", py: { xs: 6, md: 10 } }}>
       <Container maxWidth="sm">
@@ -53,7 +56,7 @@ export function renderErrorState(title: string, message: string) {
             </Typography>
             <Link href="/bookings" style={{ textDecoration: "none" }}>
               <Button variant="outlined" size="large" sx={{ px: 4 }}>
-                Back to Bookings
+                {t("overview.backToBookings")}
               </Button>
             </Link>
           </CardContent>

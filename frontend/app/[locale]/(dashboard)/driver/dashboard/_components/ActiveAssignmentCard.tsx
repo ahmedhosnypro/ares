@@ -13,6 +13,7 @@ import {
   IconButton,
   Tooltip,
 } from "@mui/material";
+import { useTranslations } from "next-intl";
 import {
   Phone as PhoneIcon,
   WhatsApp as WhatsAppIcon,
@@ -43,6 +44,18 @@ interface ActiveAssignmentCardProps {
 }
 
 export default function ActiveAssignmentCard({ assignment }: ActiveAssignmentCardProps) {
+
+  const t = useTranslations("dashboard.driverDashboard.activeAssignment");
+
+// Empty state - no active assignment
+if (!assignment) {
+    return (
+        <Card ...>
+            ... وكل كود الكارد بتاعك لغاية القوس الـ قفل }
+        </Card>
+    );
+}
+  
   // Empty state — no active assignment
   if (!assignment) {
     return (
@@ -104,6 +117,9 @@ export default function ActiveAssignmentCard({ assignment }: ActiveAssignmentCar
     );
   }
 
+  const t = useTranslations("dashboard.driverDashboard.activeAssignment");
+
+
   return (
     <Card
       sx={{
@@ -137,10 +153,10 @@ export default function ActiveAssignmentCard({ assignment }: ActiveAssignmentCar
             <CarIcon fontSize="small" />
           </Avatar>
           <Typography variant="h6" sx={{ fontWeight: 700, color: "text.primary" }}>
-            Active Rental Assignment
+            {t("activeRentalAssignment")}
           </Typography>
         </Stack>
-        <Chip label="In Progress" color="primary" size="small" sx={{ fontWeight: 700, borderRadius: 2 }} />
+        <Chip label={t("inProgress")} color="primary" size="small" sx={{ fontWeight: 700, borderRadius: 2 }} />
       </Box>
 
       <CardContent sx={{ p: { xs: 3, md: 4 }, flexGrow: 1, display: "flex", flexDirection: "column", gap: 3.5 }}>
@@ -151,7 +167,7 @@ export default function ActiveAssignmentCard({ assignment }: ActiveAssignmentCar
             color="text.secondary"
             sx={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: "1.5px", display: "block", mb: 1.5 }}
           >
-            Assigned Client
+            {t("assignedClient")}
           </Typography>
           <Card
             elevation={0}
@@ -190,7 +206,7 @@ export default function ActiveAssignmentCard({ assignment }: ActiveAssignmentCar
                     {assignment.clientEmail} • {assignment.clientPhone}
                   </Typography>
                   <Chip
-                    label="Premium Customer"
+                    label={t("premiumCustomer")}
                     size="small"
                     color="secondary"
                     variant="outlined"
@@ -209,7 +225,7 @@ export default function ActiveAssignmentCard({ assignment }: ActiveAssignmentCar
                 spacing={1.5}
                 sx={{ mt: { xs: 2, sm: 0 }, alignSelf: { xs: "stretch", sm: "auto" }, justifyContent: "center" }}
               >
-                <Tooltip title="Call Client">
+                <Tooltip title={t("callClient")}>
                   <IconButton
                     href={`tel:${assignment.clientPhone}`}
                     sx={{
@@ -225,7 +241,7 @@ export default function ActiveAssignmentCard({ assignment }: ActiveAssignmentCar
                     <PhoneIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
-                <Tooltip title="WhatsApp Client">
+                <Tooltip title={t("whatsappClient")}>
                   <IconButton
                     href={`https://wa.me/${assignment.clientPhone.replace("+", "")}`}
                     target="_blank"
@@ -256,7 +272,7 @@ export default function ActiveAssignmentCard({ assignment }: ActiveAssignmentCar
             color="text.secondary"
             sx={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: "1.5px", display: "block", mb: 2 }}
           >
-            Journey Path
+            {t("journeyPath")}
           </Typography>
           <Grid container spacing={3}>
             {/* Pickup Address Item */}
@@ -284,7 +300,7 @@ export default function ActiveAssignmentCard({ assignment }: ActiveAssignmentCar
                     color="text.secondary"
                     sx={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px" }}
                   >
-                    Pickup address
+                    {t("pickupAddress")}
                   </Typography>
                   <Typography variant="body2" sx={{ fontWeight: 500, color: "text.primary", mt: 0.5 }}>
                     {assignment.pickupLocation}
@@ -294,7 +310,7 @@ export default function ActiveAssignmentCard({ assignment }: ActiveAssignmentCar
                     color="text.secondary"
                     sx={{ display: "block", mt: 0.5, fontWeight: 500 }}
                   >
-                    Scheduled: {assignment.pickupDate}
+                    {t("scheduled")}: {assignment.pickupDate}
                   </Typography>
                 </Box>
               </Card>
@@ -325,7 +341,7 @@ export default function ActiveAssignmentCard({ assignment }: ActiveAssignmentCar
                     color="text.secondary"
                     sx={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px" }}
                   >
-                    Drop-off destination
+                    {t("dropoffDestination")}
                   </Typography>
                   <Typography variant="body2" sx={{ fontWeight: 500, color: "text.primary", mt: 0.5 }}>
                     {assignment.dropoffLocation}
@@ -335,7 +351,7 @@ export default function ActiveAssignmentCard({ assignment }: ActiveAssignmentCar
                     color="text.secondary"
                     sx={{ display: "block", mt: 0.5, fontWeight: 500 }}
                   >
-                    Scheduled: {assignment.dropoffDate}
+                    {t("scheduled")}: {assignment.dropoffDate}
                   </Typography>
                 </Box>
               </Card>
@@ -354,7 +370,7 @@ export default function ActiveAssignmentCard({ assignment }: ActiveAssignmentCar
               color="text.secondary"
               sx={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: "1.5px", display: "block", mb: 1.5 }}
             >
-              Assigned Fleet Vehicle
+              {t("assignedFleetVehicle")}
             </Typography>
             <Card
               elevation={0}
@@ -393,7 +409,7 @@ export default function ActiveAssignmentCard({ assignment }: ActiveAssignmentCar
                       {assignment.vehicleModel}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ display: "block", fontWeight: 500 }}>
-                      Luxury Sedan Class
+                      {t("luxurySedanClass")}
                     </Typography>
                   </Box>
                 </Stack>
@@ -446,7 +462,7 @@ export default function ActiveAssignmentCard({ assignment }: ActiveAssignmentCar
               color="text.secondary"
               sx={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: "1.5px", display: "block", mb: 1.5 }}
             >
-              Rental Schedule & Guidelines
+              {t("rentalScheduleAndGuidelines")}
             </Typography>
             <Card
               elevation={0}
@@ -462,11 +478,21 @@ export default function ActiveAssignmentCard({ assignment }: ActiveAssignmentCar
               <Stack spacing={2}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>
-                    Active Duration
+                    {t("activeDuration")}
                   </Typography>
                   <Chip
                     icon={<DurationIcon />}
-                    label={assignment.rentalDuration}
+                    label={(() => {
+                      const d = assignment.rentalDuration;
+                      const drm = d.match(/^(\d+)\s+Days?\s+Remaining$/i);
+                      if (drm) return t("daysRemaining", { count: Number(drm[1]) });
+                      const dm = d.match(/^(\d+)\s+Days?$/i);
+                      if (dm) {
+                        const c = Number(dm[1]);
+                        return c === 1 ? t("day") : t("days", { count: c });
+                      }
+                      return d;
+                    })()}
                     size="small"
                     color="primary"
                     sx={{ fontWeight: 700, borderRadius: 2 }}
@@ -476,24 +502,14 @@ export default function ActiveAssignmentCard({ assignment }: ActiveAssignmentCar
                 <Divider />
 
                 <Stack spacing={1.5}>
-                  <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-                    <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "primary.main", flexShrink: 0 }} />
-                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-                      Ensure vehicle cabin remains clean and client amenities are stocked.
-                    </Typography>
-                  </Stack>
-                  <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-                    <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "primary.main", flexShrink: 0 }} />
-                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-                      Verify route schedule and adjust for traffic before picking up client.
-                    </Typography>
-                  </Stack>
-                  <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-                    <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "primary.main", flexShrink: 0 }} />
-                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-                      Report any delays or telemetry issues immediately via dispatch.
-                    </Typography>
-                  </Stack>
+                  {(t.raw("guidelines") as readonly string[]).map((guideline, index) => (
+                    <Stack key={index} direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+                      <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "primary.main", flexShrink: 0 }} />
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                        {guideline}
+                      </Typography>
+                    </Stack>
+                  ))}
                 </Stack>
               </Stack>
             </Card>

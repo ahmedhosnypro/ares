@@ -19,6 +19,7 @@ import {
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import UploadFileRoundedIcon from "@mui/icons-material/UploadFileRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import { useTranslations } from "next-intl";
 
 import { submitDriverLicense, type DriverLicenseDto } from "@/api-clients/driver-license/driver-license";
 import { ApiError } from "@/utils/api-client";
@@ -36,12 +37,12 @@ const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "applicati
 const ACCEPT_ATTRIBUTE = ACCEPTED_IMAGE_TYPES.join(",");
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB to match backend
 
-function isValidImage(file: File): string | null {
+function isValidImage(file: File): "invalidFileType" | "fileTooLarge" | null {
   if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-    return "Only JPG, PNG or PDF files are allowed.";
+    return "invalidFileType";
   }
   if (file.size > MAX_FILE_SIZE_BYTES) {
-    return "The license file must be smaller than 10 MB.";
+    return "fileTooLarge";
   }
   return null;
 }
@@ -73,6 +74,7 @@ export default function DriverLicenseModal({
   onClose,
   onSubmitted,
 }: DriverLicenseModalProps) {
+  const t = useTranslations("customer.accountProfile");
   const [licenseNumber, setLicenseNumber] = useState<string>("");
   const [expiryDate, setExpiryDate] = useState<string>("");
   const [licenseImage, setLicenseImage] = useState<File | null>(null);
@@ -109,51 +111,54 @@ export default function DriverLicenseModal({
     setServerError("");
   }, []);
 
-  const handleImageChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] ?? null;
-    setServerError("");
-    if (!file) {
-      setLicenseImage(null);
+  const handleImageChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0] ?? null;
+      setServerError("");
+      if (!file) {
+        setLicenseImage(null);
+        setImageError("");
+        return;
+      }
+      const err = isValidImage(file);
+      if (err) {
+        setLicenseImage(null);
+        setImageError(t(`driverLicenseModal.${err}`));
+        return;
+      }
+      setLicenseImage(file);
       setImageError("");
-      return;
-    }
-    const err = isValidImage(file);
-    if (err) {
-      setLicenseImage(null);
-      setImageError(err);
-      return;
-    }
-    setLicenseImage(file);
-    setImageError("");
-  }, []);
+    },
+    [t]
+  );
 
   const validateAll = useCallback((): boolean => {
     let valid = true;
 
     const trimmed = licenseNumber.trim();
     if (!trimmed) {
-      setLicenseNumberError("License number is required.");
+      setLicenseNumberError(t("driverLicenseModal.licenseNumberRequired"));
       valid = false;
     } else if (trimmed.length < 3 || trimmed.length > 50) {
-      setLicenseNumberError("License number must be between 3 and 50 characters.");
+      setLicenseNumberError(t("driverLicenseModal.licenseNumberLength"));
       valid = false;
     }
 
     if (!expiryDate) {
-      setExpiryDateError("Expiry date is required.");
+      setExpiryDateError(t("driverLicenseModal.expiryDateRequired"));
       valid = false;
     } else if (!isFutureDate(expiryDate)) {
-      setExpiryDateError("Expiry date must be in the future.");
+      setExpiryDateError(t("driverLicenseModal.expiryDateFuture"));
       valid = false;
     }
 
     if (!licenseImage) {
-      setImageError("License image is required.");
+      setImageError(t("driverLicenseModal.licenseImageRequired"));
       valid = false;
     }
 
     return valid;
-  }, [licenseNumber, expiryDate, licenseImage]);
+  }, [licenseNumber, expiryDate, licenseImage, t]);
 
   const canSubmit =
     !submitting &&
@@ -182,30 +187,30 @@ export default function DriverLicenseModal({
       logger.error("Submit driver license error", error);
       if (error instanceof ApiError) {
         if (error.status === 400) {
-          setServerError("The submitted information is invalid. Please review the fields and try again.");
+          setServerError(t("driverLicenseModal.invalidInfo"));
         } else if (error.status === 401 || error.status === 403) {
-          setServerError("Your session has expired. Please sign in again.");
+          setServerError(t("driverLicenseModal.sessionExpired"));
         } else if (error.status === 409) {
-          setServerError("There is already a pending request for this license.");
+          setServerError(t("driverLicenseModal.pendingRequest"));
         } else {
-          setServerError("Could not submit driver license. Please try again in a moment.");
+          setServerError(t("driverLicenseModal.submitFailed"));
         }
       } else {
-        setServerError("Network error. Please check your connection and try again.");
+        setServerError(t("driverLicenseModal.networkError"));
       }
     } finally {
       setSubmitting(false);
     }
-  }, [accessToken, expiryDate, licenseImage, licenseNumber, onSubmitted, validateAll]);
+  }, [accessToken, expiryDate, licenseImage, licenseNumber, onSubmitted, t, validateAll]);
 
   // Today (UTC) as yyyy-MM-dd, used to enforce `min` on the date input.
   const todayMin = toDateInputValue(new Date().toISOString());
 
-  let submitButtonText = "Submit for review";
+  let submitButtonText = t("driverLicenseModal.submitForReview");
   if (submitting) {
-    submitButtonText = "Submitting...";
+    submitButtonText = t("driverLicenseModal.submitting");
   } else if (currentLicense) {
-    submitButtonText = "Update license";
+    submitButtonText = t("driverLicenseModal.updateLicense");
   }
 
   return (
@@ -233,10 +238,10 @@ export default function DriverLicenseModal({
       >
         <Box sx={{ display: "flex", flexDirection: "column" }}>
           <Typography variant="h6" sx={{ fontWeight: 800 }}>
-            {currentLicense ? "Update driver license" : "Submit driver license"}
+            {currentLicense ? t("driverLicenseModal.updateDriverLicense") : t("driverLicenseModal.submitDriverLicense")}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Upload a clear photo of your valid driver license. Our team will review it shortly.
+            {t("driverLicenseModal.subtitle")}
           </Typography>
         </Box>
         <IconButton aria-label="Close" onClick={onClose} disabled={submitting} size="small" sx={{ ml: 1 }}>
@@ -255,7 +260,7 @@ export default function DriverLicenseModal({
 
           <TextField
             id="driver-license-number"
-            label="License number"
+            label={t("driverLicenseModal.licenseNumber")}
             value={licenseNumber}
             onChange={handleLicenseNumberChange}
             error={!!licenseNumberError}
@@ -267,7 +272,7 @@ export default function DriverLicenseModal({
 
           <TextField
             id="driver-license-expiry"
-            label="Expiry date"
+            label={t("driverLicenseModal.expiryDate")}
             type="date"
             value={expiryDate}
             onChange={handleExpiryDateChange}
@@ -283,15 +288,18 @@ export default function DriverLicenseModal({
 
           <ImageFileField
             id="driver-license-image"
-            label="License image"
+            label={t("driverLicenseModal.licenseImage")}
             file={licenseImage}
             error={imageError}
             disabled={submitting}
             onChange={handleImageChange}
+            replaceFileText={t("driverLicenseModal.replaceFile")}
+            chooseFileText={t("driverLicenseModal.chooseFile")}
+            previewAltText={t("driverLicenseModal.licensePreview")}
           />
 
           <Typography variant="caption" color="text.secondary">
-            Accepted formats: JPG, PNG, PDF. Max 10 MB.
+            {t("driverLicenseModal.acceptedFormats")}
           </Typography>
         </Stack>
       </DialogContent>
@@ -299,7 +307,7 @@ export default function DriverLicenseModal({
       <Divider sx={{ borderColor: "border.light" }} />
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button onClick={onClose} disabled={submitting} color="inherit">
-          Cancel
+          {t("driverLicenseModal.cancel")}
         </Button>
         <Button
           variant="contained"
@@ -325,9 +333,22 @@ interface ImageFileFieldProps {
   readonly error: string;
   readonly disabled: boolean;
   readonly onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  readonly replaceFileText: string;
+  readonly chooseFileText: string;
+  readonly previewAltText: string;
 }
 
-function ImageFileField({ id, label, file, error, disabled, onChange }: ImageFileFieldProps) {
+function ImageFileField({
+  id,
+  label,
+  file,
+  error,
+  disabled,
+  onChange,
+  replaceFileText,
+  chooseFileText,
+  previewAltText,
+}: ImageFileFieldProps) {
   // Generate a transient object URL purely for preview while the modal is open.
   // Stored in state and managed via effect so we don't recreate it every render.
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -364,7 +385,7 @@ function ImageFileField({ id, label, file, error, disabled, onChange }: ImageFil
           disabled={disabled}
           sx={{ fontWeight: 700 }}
         >
-          {file ? "Replace file" : "Choose file"}
+          {file ? replaceFileText : chooseFileText}
           <input id={id} type="file" accept={ACCEPT_ATTRIBUTE} hidden onChange={onChange} disabled={disabled} />
         </Button>
         {file && (
@@ -401,7 +422,7 @@ function ImageFileField({ id, label, file, error, disabled, onChange }: ImageFil
           <Box
             component="img"
             src={previewUrl}
-            alt="License preview"
+            alt={previewAltText}
             sx={{ display: "block", width: "100%", height: "auto", objectFit: "contain" }}
           />
         </Box>

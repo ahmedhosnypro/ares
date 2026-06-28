@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { Alert, Box, Button, CircularProgress, Pagination, Typography } from "@mui/material";
 import { DirectionsCar as CarIcon, CalendarMonth as CalendarIcon } from "@mui/icons-material";
 import { Link } from "@/shared/i18n/routing";
@@ -65,6 +66,7 @@ function normalizeBooking(raw: RawBooking): BookingItem {
 const PAGE_SIZE = 6;
 
 export default function BookingsList({ userId, accessToken }: Readonly<{ userId: string; accessToken: string }>) {
+  const t = useTranslations("customer.bookings");
   const [bookings, setBookings] = useState<readonly BookingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -131,11 +133,11 @@ export default function BookingsList({ userId, accessToken }: Readonly<{ userId:
       setTotalRecords(data.totalCount ?? 0);
     } catch (err) {
       logger.error("Fetch bookings error", err);
-      setError("Unable to load bookings. Please try again.");
+      setError(t("list.error"));
     } finally {
       setLoading(false);
     }
-  }, [page, userId, accessToken, activeStatuses, searchKeyword, sortBy, sortOrder, hasEverBooked]);
+  }, [page, userId, accessToken, activeStatuses, searchKeyword, sortBy, sortOrder, hasEverBooked, t]);
 
   useEffect(() => {
     void fetchBookings();
@@ -181,7 +183,7 @@ export default function BookingsList({ userId, accessToken }: Readonly<{ userId:
                 void fetchBookings();
               }}
             >
-              Retry
+              {t("list.retry")}
             </Button>
           }
         >
@@ -231,7 +233,7 @@ export default function BookingsList({ userId, accessToken }: Readonly<{ userId:
             fontWeight: 800,
           }}
         >
-          Ready for your first trip?
+          {t("list.firstTripTitle")}
         </Typography>
         <Typography
           variant="body1"
@@ -243,11 +245,10 @@ export default function BookingsList({ userId, accessToken }: Readonly<{ userId:
             fontSize: { xs: "0.875rem", sm: "1rem" },
           }}
         >
-          You haven&apos;t made any reservations yet. Browse our premium collection of vehicles and start your journey
-          today.
+          {t("list.firstTripMessage")}
         </Typography>
         <Button component={Link} href="/vehicles" variant="contained" size="large">
-          Browse Vehicles
+          {t("list.empty.browse")}
         </Button>
       </Box>
     );
@@ -279,7 +280,7 @@ export default function BookingsList({ userId, accessToken }: Readonly<{ userId:
               fontWeight: 700,
             }}
           >
-            No matches found
+            {t("list.noMatches")}
           </Typography>
           <Typography
             variant="body2"
@@ -288,7 +289,7 @@ export default function BookingsList({ userId, accessToken }: Readonly<{ userId:
               fontSize: { xs: "0.75rem", sm: "0.875rem" },
             }}
           >
-            Try adjusting your filters or searching for something else.
+            {t("list.noMatchesHint")}
           </Typography>
         </Box>
       ) : (
@@ -321,7 +322,7 @@ export default function BookingsList({ userId, accessToken }: Readonly<{ userId:
                   fontSize: { xs: "0.75rem", md: "0.875rem" },
                 }}
               >
-                Showing{" "}
+                {t("list.pagination.showing")}{" "}
                 <Typography component="span" sx={{ fontWeight: 700, color: "primary.main" }}>
                   {(page - 1) * PAGE_SIZE + 1}
                 </Typography>
@@ -329,11 +330,11 @@ export default function BookingsList({ userId, accessToken }: Readonly<{ userId:
                 <Typography component="span" sx={{ fontWeight: 700, color: "primary.main" }}>
                   {Math.min(page * PAGE_SIZE, totalRecords)}
                 </Typography>
-                {" of "}
+                {` ${t("list.pagination.of")} `}
                 <Typography component="span" sx={{ fontWeight: 700, color: "primary.main" }}>
                   {totalRecords}
                 </Typography>
-                {" bookings"}
+                {` ${t("list.pagination.bookings")}`}
               </Typography>
               <Pagination
                 count={totalPages}

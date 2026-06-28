@@ -28,6 +28,8 @@ import {
 } from "@mui/icons-material";
 import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { ApiError } from "@/utils/api-client";
 import { getCategories, deleteCategory, Category } from "@/api-clients/categories/categories";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
@@ -36,6 +38,8 @@ import CategoryForm from "./_components/CategoryForm";
 export default function AdminCategoriesPage() {
   const router = useRouter();
   const { data: session } = useSession();
+  const t = useTranslations("dashboardAdmin.categories");
+  const tc = useTranslations("common");
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,11 +61,11 @@ export default function AdminCategoriesPage() {
       const data = await getCategories();
       setCategories(data);
     } catch {
-      setError("Failed to load categories. Please try again later.");
+      setError(t("alerts.loadError"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (session?.accessToken) {
@@ -71,21 +75,20 @@ export default function AdminCategoriesPage() {
 
   const handleDelete = async (id: string, vehicleCount: number) => {
     if (vehicleCount > 0) {
-      setSnackbar({ open: true, message: "Cannot delete a category that contains vehicles.", severity: "error" });
+      setSnackbar({ open: true, message: t("alerts.deleteHasVehiclesError"), severity: "error" });
       return;
     }
 
-    if (!window.confirm("Are you sure you want to delete this category?")) return;
+    if (!window.confirm(t("actions.deleteConfirm"))) return;
 
     try {
       await deleteCategory(id);
       setCategories(prev => prev.filter(c => c.id !== id));
-      setSnackbar({ open: true, message: "Category deleted successfully.", severity: "success" });
+      setSnackbar({ open: true, message: t("alerts.deleteSuccess"), severity: "success" });
     } catch (err: unknown) {
-      const errorResponse = err as { response?: { data?: { message?: string } } };
       setSnackbar({
         open: true,
-        message: errorResponse.response?.data?.message || "Failed to delete category.",
+        message: err instanceof ApiError ? err.message : t("alerts.deleteError"),
         severity: "error",
       });
     }
@@ -104,14 +107,14 @@ export default function AdminCategoriesPage() {
   const handleFormSuccess = () => {
     setFormOpen(false);
     void fetchCategories();
-    setSnackbar({ open: true, message: "Category saved successfully.", severity: "success" });
+    setSnackbar({ open: true, message: t("alerts.saveSuccess"), severity: "success" });
   };
 
   return (
     <Box sx={{ width: "100%", maxWidth: 1200, mx: "auto", p: { xs: 2, sm: 3 } }}>
       <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 3 }}>
         <Typography variant="h4" sx={{ fontWeight: 800 }}>
-          Categories
+          {t("title")}
         </Typography>
         <Button
           variant="contained"
@@ -119,7 +122,7 @@ export default function AdminCategoriesPage() {
           onClick={handleCreate}
           sx={{ borderRadius: 2, textTransform: "none", fontWeight: 700 }}
         >
-          Add Category
+          {t("addCategory")}
         </Button>
       </Stack>
 
@@ -145,20 +148,20 @@ export default function AdminCategoriesPage() {
               }}
               sx={{ mt: 2 }}
             >
-              Retry
+              {tc("retry")}
             </Button>
           </Box>
         ) : (
           <TableContainer>
             <Table>
               <TableHead>
-                <TableRow sx={{ bgcolor: t => alpha(t.palette.primary.main, 0.04) }}>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Commission</TableCell>
-                  <TableCell>Vehicles</TableCell>
-                  <TableCell>Offer</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="right">Actions</TableCell>
+                <TableRow sx={{ bgcolor: theme => alpha(theme.palette.primary.main, 0.04) }}>
+                  <TableCell>{t("table.headers.name")}</TableCell>
+                  <TableCell>{t("table.headers.commission")}</TableCell>
+                  <TableCell>{t("table.headers.vehicles")}</TableCell>
+                  <TableCell>{t("table.headers.offer")}</TableCell>
+                  <TableCell>{t("table.headers.status")}</TableCell>
+                  <TableCell align="right">{t("table.headers.actions")}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -174,7 +177,9 @@ export default function AdminCategoriesPage() {
                     >
                       <TableCell>
                         <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-                          <Avatar sx={{ bgcolor: t => alpha(t.palette.primary.main, 0.1), color: "primary.main" }}>
+                          <Avatar
+                            sx={{ bgcolor: theme => alpha(theme.palette.primary.main, 0.1), color: "primary.main" }}
+                          >
                             <CategoryIcon />
                           </Avatar>
                           <Box>
@@ -192,23 +197,24 @@ export default function AdminCategoriesPage() {
                       <TableCell>
                         {c.activeOffer ? (
                           <Chip
-                            label={`${c.activeOffer.discountPercentage}% off`}
+                            label={t("table.offerValue", { discount: c.activeOffer.discountPercentage })}
                             size="small"
                             color="primary"
                             variant="outlined"
                           />
                         ) : (
                           <Typography variant="caption" color="text.secondary">
-                            None
+                            {t("table.offerNone")}
                           </Typography>
                         )}
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={c.isActive ? "Active" : "Inactive"}
+                          label={c.isActive ? t("table.statusActive") : t("table.statusInactive")}
                           size="small"
                           sx={{
-                            bgcolor: t => alpha(c.isActive ? t.palette.success.main : t.palette.text.disabled, 0.15),
+                            bgcolor: theme =>
+                              alpha(c.isActive ? theme.palette.success.main : theme.palette.text.disabled, 0.15),
                             color: c.isActive ? "success.main" : "text.secondary",
                             fontWeight: 700,
                           }}
@@ -216,7 +222,7 @@ export default function AdminCategoriesPage() {
                       </TableCell>
                       <TableCell align="right">
                         <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end" }}>
-                          <Tooltip title="Edit">
+                          <Tooltip title={t("actions.edit")}>
                             <IconButton
                               size="small"
                               onClick={e => {
@@ -229,7 +235,9 @@ export default function AdminCategoriesPage() {
                           </Tooltip>
                           <Tooltip
                             title={
-                              c.vehicleCount && c.vehicleCount > 0 ? "Cannot delete category with vehicles" : "Delete"
+                              c.vehicleCount && c.vehicleCount > 0
+                                ? t("alerts.deleteHasVehiclesError")
+                                : t("actions.delete")
                             }
                           >
                             <span>
@@ -252,8 +260,8 @@ export default function AdminCategoriesPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
-                      <Typography color="text.secondary">No categories found.</Typography>
+                    <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                      <Typography color="text.secondary">{t("table.empty")}</Typography>
                     </TableCell>
                   </TableRow>
                 )}

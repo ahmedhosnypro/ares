@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
 import {
   Alert,
   Box,
@@ -22,7 +24,7 @@ import { useTheme } from "@mui/material/styles";
 import { LocationOn as LocationIcon, Event as EventIcon, Person as PersonIcon } from "@mui/icons-material";
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
-import { format } from "date-fns";
+import { useDateFnsLocale } from "@/hooks/useDateFnsLocale";
 
 interface DriverAssignment {
   bookingId: string;
@@ -41,6 +43,29 @@ interface DriverAssignment {
 export default function DriverTripsClient() {
   const { data: session } = useSession();
   const theme = useTheme();
+  const t = useTranslations("dashboard.driverTrips");
+  const tc = useTranslations("common");
+  const { formatLocalized } = useDateFnsLocale();
+  const locale = useLocale();
+
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+
+  const statusMap: Record<string, string> = {
+    Confirmed: t("statusConfirmed"),
+    Approved: t("statusApproved"),
+    ReadyForDelivery: t("statusReadyForDelivery"),
+    Active: t("statusActive"),
+    Completed: t("statusCompleted"),
+    Cancelled: t("statusCancelled"),
+  };
+
+  const translateStatus = (status: string) => statusMap[status] ?? status;
 
   const [isLoading, setIsLoading] = useState(true);
   const [assignments, setAssignments] = useState<DriverAssignment[]>([]);
@@ -56,20 +81,40 @@ export default function DriverTripsClient() {
         },
       });
 
-      if (!res.ok) throw new Error("Failed to load assignments");
+      if (!res.ok) throw new Error(t("failedToLoadAssignments"));
 
-      const data = await res.json();
+      const data = (await res.json()) as DriverAssignment[];
       setAssignments(data);
     } catch (err) {
       logger.error("Error fetching driver assignments", err);
-      setError("Could not load your trips.");
+      setError(t("couldNotLoadTrips"));
     } finally {
       setIsLoading(false);
     }
   }, [session?.accessToken]);
 
+  const handleCancelTrip = useCallback(
+    async (bookingId: string) => {
+      if (!confirm(t("cancelTripConfirm"))) return;
+      try {
+        const res = await fetch(toApiUrl(`/api/driver/assignments/${bookingId}/cancel`), {
+          method: "POST",
+          headers: { Authorization: `Bearer ${session?.accessToken}` },
+        });
+        if (!res.ok) {
+          const err = (await res.json().catch(() => ({}))) as { message?: string };
+          throw new Error(err.message ?? t("failedToCancel"));
+        }
+        void fetchAssignments();
+      } catch (e: unknown) {
+        alert(e instanceof Error ? e.message : t("failedToCancelTrip"));
+      }
+    },
+    [session?.accessToken, fetchAssignments]
+  );
+
   useEffect(() => {
-    fetchAssignments().catch(logger.error);
+    void fetchAssignments();
   }, [fetchAssignments]);
 
   const assignedTrips = useMemo(
@@ -95,10 +140,10 @@ export default function DriverTripsClient() {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Typography variant="h4" component="h1" sx={{ fontWeight: 800, mb: 1 }}>
-        My Trips
+        {t("title")}
       </Typography>
       <Typography color="text.secondary" sx={{ mb: 4 }}>
-        Manage your assigned, active, and completed ride requests.
+        {t("description")}
       </Typography>
 
       {error && (
@@ -110,21 +155,21 @@ export default function DriverTripsClient() {
       <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 4 }}>
         <Tabs
           value={tabIndex}
-          onChange={(_, nv) => {
+          onChange={(_, nv: number) => {
             setTabIndex(nv);
           }}
-          aria-label="driver trips tabs"
+          aria-label={t("ariaLabel")}
         >
-          <Tab label={`Upcoming (${assignedTrips.length})`} />
-          <Tab label={`Active (${activeTrips.length})`} />
-          <Tab label={`Completed (${completedTrips.length})`} />
+          <Tab label={`${t("upcoming")} (${assignedTrips.length})`} />
+          <Tab label={`${t("active")} (${activeTrips.length})`} />
+          <Tab label={`${t("completed")} (${completedTrips.length})`} />
         </Tabs>
       </Box>
 
       {currentTrips.length === 0 ? (
         <Box sx={{ py: 8, textAlign: "center", bgcolor: "background.paper", borderRadius: 2 }}>
           <Typography variant="h6" color="text.secondary">
-            No trips found in this category.
+            {t("noTripsFound")}
           </Typography>
         </Box>
       ) : (
@@ -151,7 +196,7 @@ export default function DriverTripsClient() {
                         {trip.bookingNumber}
                       </Typography>
                       <Chip
-                        label={trip.status}
+                        label={translateStatus(trip.status)}
                         size="small"
                         color={
                           trip.status === "Active" ? "primary" : trip.status === "Completed" ? "success" : "default"
@@ -180,16 +225,16 @@ export default function DriverTripsClient() {
                       <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
                         <EventIcon color="action" fontSize="small" />
                         <Typography variant="body2" color="text.secondary">
-                          {format(pDate, "MMM d, h:mm a")} — {format(rDate, "MMM d, h:mm a")}
+                          {formatLocalized(pDate, "MMM d, h:mm a")} — {formatLocalized(rDate, "MMM d, h:mm a")}
                         </Typography>
                       </Box>
 
                       <Box sx={{ display: "flex", gap: 1.5, alignItems: "flex-start" }}>
                         <LocationIcon color="action" fontSize="small" sx={{ mt: 0.25 }} />
                         <Typography variant="body2" color="text.secondary">
-                          Pickup: {trip.pickupLocation || "N/A"}
+                          {t("pickup")}: {trip.pickupLocation || tc("na")}
                           <br />
-                          Dropoff: {trip.dropoffLocation || "N/A"}
+                          {t("dropoff")}: {trip.dropoffLocation || tc("na")}
                         </Typography>
                       </Box>
                     </Stack>
@@ -198,10 +243,10 @@ export default function DriverTripsClient() {
 
                     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
-                        Driver Fee
+                        {t("driverFee")}
                       </Typography>
                       <Typography variant="h6" color="success.main" sx={{ fontWeight: 800 }}>
-                        ${trip.earnings.toFixed(2)}
+                        {formatCurrency(trip.earnings)}
                       </Typography>
                     </Box>
                   </CardContent>
@@ -212,29 +257,11 @@ export default function DriverTripsClient() {
                         fullWidth
                         variant="outlined"
                         color="error"
-                        onClick={async () => {
-                          if (
-                            !confirm(
-                              "Are you sure you want to cancel this trip? This action cannot be undone and is only allowed at least 24h before pickup."
-                            )
-                          )
-                            return;
-                          try {
-                            const res = await fetch(toApiUrl(`/api/driver/assignments/${trip.bookingId}/cancel`), {
-                              method: "POST",
-                              headers: { Authorization: `Bearer ${session?.accessToken}` },
-                            });
-                            if (!res.ok) {
-                              const err = await res.json().catch(() => ({}));
-                              throw new Error(err.message || "Failed to cancel");
-                            }
-                            fetchAssignments();
-                          } catch (e: any) {
-                            alert(e.message);
-                          }
+                        onClick={() => {
+                          void handleCancelTrip(trip.bookingId);
                         }}
                       >
-                        Cancel Trip
+                        {t("cancelTrip")}
                       </Button>
                     </Box>
                   )}

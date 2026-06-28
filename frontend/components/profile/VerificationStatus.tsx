@@ -1,9 +1,12 @@
+"use client";
+
 import { Box, Chip, Divider, List, ListItem, Typography } from "@mui/material";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 import EmailRoundedIcon from "@mui/icons-material/EmailRounded";
 import PhoneRoundedIcon from "@mui/icons-material/PhoneRounded";
 import BadgeRoundedIcon from "@mui/icons-material/BadgeRounded";
+import { useTranslations } from "next-intl";
 
 interface VerificationStatusProps {
   readonly emailVerified: boolean;
@@ -24,9 +27,21 @@ interface VerificationItemProps {
   readonly icon: React.ReactNode;
   readonly isLast: boolean;
   readonly onClick?: () => void;
+  readonly pendingLabel: string;
+  readonly verifiedLabel: string;
 }
 
-function VerificationItem({ label, isVerified, isPending, actionText, icon, isLast, onClick }: VerificationItemProps) {
+function VerificationItem({
+  label,
+  isVerified,
+  isPending,
+  actionText,
+  icon,
+  isLast,
+  onClick,
+  pendingLabel,
+  verifiedLabel,
+}: VerificationItemProps) {
   return (
     <>
       <ListItem sx={{ px: 0, py: 1.5 }}>
@@ -72,7 +87,7 @@ function VerificationItem({ label, isVerified, isPending, actionText, icon, isLa
           <Box sx={{ flexShrink: 0 }}>
             {isPending ? (
               <Chip
-                label="Pending"
+                label={pendingLabel}
                 size="small"
                 color="warning"
                 variant="outlined"
@@ -90,7 +105,7 @@ function VerificationItem({ label, isVerified, isPending, actionText, icon, isLa
               />
             ) : (
               <Chip
-                label="Verified"
+                label={verifiedLabel}
                 size="small"
                 color="success"
                 variant="outlined"
@@ -115,6 +130,7 @@ export default function VerificationStatus({
   onUploadLicense,
   isInspector = false,
 }: VerificationStatusProps) {
+  const t = useTranslations("customer.accountProfile");
   const isKycVerified =
     kycStatus?.toLowerCase() === "approved" ||
     kycStatus?.toLowerCase() === "basic" ||
@@ -125,34 +141,34 @@ export default function VerificationStatus({
 
   const items = [
     {
-      label: "Email Address",
+      label: t("verificationStatus.emailAddress"),
       isVerified: emailVerified,
       isPending: false,
-      actionText: "Verify",
+      actionText: t("verificationStatus.verify"),
       icon: <EmailRoundedIcon sx={{ fontSize: 15 }} />,
     },
     {
-      label: "Phone Number",
+      label: t("verificationStatus.phoneNumber"),
       isVerified: phoneVerified,
       isPending: false,
-      actionText: "Verify",
+      actionText: t("verificationStatus.verify"),
       icon: <PhoneRoundedIcon sx={{ fontSize: 15 }} />,
     },
     {
-      label: "Identity Verification",
+      label: t("verificationStatus.identityVerification"),
       isVerified: isKycVerified,
       isPending: isKycPending,
-      actionText: "Verify",
+      actionText: t("verificationStatus.verify"),
       icon: <BadgeRoundedIcon sx={{ fontSize: 15 }} />,
       onClick: onVerifyIdentity,
     },
     ...(!isInspector
       ? [
           {
-            label: "Driver's License",
+            label: t("verificationStatus.driversLicense"),
             isVerified: licenseVerified,
             isPending: licensePending,
-            actionText: "Upload",
+            actionText: t("verificationStatus.upload"),
             icon: <BadgeRoundedIcon sx={{ fontSize: 15 }} />,
             onClick: onUploadLicense,
           },
@@ -163,7 +179,7 @@ export default function VerificationStatus({
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="subtitle1" color="text.primary" gutterBottom sx={{ fontWeight: 700 }}>
-        Verification Status
+        {t("verificationStatus.title")}
       </Typography>
       <Divider sx={{ mb: 1, borderColor: "border.light" }} />
       <List disablePadding>
@@ -177,6 +193,8 @@ export default function VerificationStatus({
             icon={item.icon}
             isLast={index === items.length - 1}
             onClick={item.onClick}
+            pendingLabel={t("verificationStatus.pending")}
+            verifiedLabel={t("verificationStatus.verified")}
           />
         ))}
       </List>

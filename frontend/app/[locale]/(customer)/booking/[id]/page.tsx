@@ -6,6 +6,7 @@ import BookingDetailsView from "./_components/BookingDetailsView";
 import { cancelBookingAction } from "./_actions/cancel-booking";
 import { canCancelBooking, getFeedback, type SearchParamValue } from "./_components/booking-utils";
 import { renderErrorState, renderSignInRequired } from "./_components/BookingRenderHelpers";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
@@ -17,27 +18,28 @@ interface PageProps {
 export const generateMetadata = async ({ params }: Readonly<Pick<PageProps, "params">>): Promise<Metadata> => {
   const { id } = await params;
   const session = await getServerSession(authOptions);
+  const t = await getTranslations("customer.bookingDetail");
 
   if (!session?.accessToken) {
     return {
-      title: "Booking Details | Rent Your Dream Car",
-      description: "View your booking details and reservation summary.",
+      title: t("metaTitle"),
+      description: t("metaDescription"),
     };
   }
 
   try {
     const result = await fetchBookingDetails(id, session.accessToken);
     const carName = result.booking?.car?.name;
-    const title = carName ? `Booking ${carName} | Rent Your Dream Car` : "Booking Details | Rent Your Dream Car";
+    const title = carName ? t("metaTitleWithCar", { carName }) : t("metaTitle");
 
     return {
       title,
-      description: "View your booking details and reservation summary.",
+      description: t("metaDescription"),
     };
   } catch {
     return {
-      title: "Booking Details | Rent Your Dream Car",
-      description: "View your booking details and reservation summary.",
+      title: t("metaTitle"),
+      description: t("metaDescription"),
     };
   }
 };
@@ -50,6 +52,8 @@ export default async function BookingDetailsPage({ params, searchParams }: Reado
     return renderSignInRequired();
   }
 
+  const t = await getTranslations("customer.bookingDetail");
+
   const bookingResult = await fetchBookingDetails(id, session.accessToken).catch(() => ({
     booking: null,
     status: 500,
@@ -57,18 +61,18 @@ export default async function BookingDetailsPage({ params, searchParams }: Reado
 
   if (!bookingResult.booking) {
     if (bookingResult.status === 404) {
-      return renderErrorState("Booking not found", "The booking you are looking for does not exist.");
+      return await renderErrorState(t("error.notFound.title"), t("error.notFound.message"));
     }
 
     if (bookingResult.status === 403) {
-      return renderErrorState("Access denied", "You are not allowed to view this booking.");
+      return await renderErrorState(t("error.accessDenied.title"), t("error.accessDenied.message"));
     }
 
     if (bookingResult.status === 401) {
-      return renderErrorState("Session expired", "Please sign in again to continue.");
+      return await renderErrorState(t("error.sessionExpired.title"), t("error.sessionExpired.message"));
     }
 
-    return renderErrorState("Unable to load booking", "Please try again in a moment.");
+    return await renderErrorState(t("error.generic.title"), t("error.generic.message"));
   }
 
   return (
@@ -78,7 +82,7 @@ export default async function BookingDetailsPage({ params, searchParams }: Reado
       canCancel={canCancelBooking(bookingResult.booking.status)}
       onCancel={cancelBookingAction.bind(null, id)}
       accessToken={session.accessToken}
-      feedback={getFeedback(resolvedSearchParams)}
+      feedback={getFeedback(resolvedSearchParams, t)}
     />
   );
 }

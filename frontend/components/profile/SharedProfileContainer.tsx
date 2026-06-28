@@ -1,5 +1,6 @@
 "use client";
 import { useState, useCallback, useEffect, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import ProfileHeader from "./ProfileHeader";
 import PersonalInfoForm from "./PersonalInfoForm";
 import AddressForm from "./AddressForm";
@@ -107,6 +108,7 @@ export default function SharedProfileContainer({
   children,
 }: SharedProfileContainerProps) {
   const theme = useTheme();
+  const t = useTranslations("customer.accountProfile");
   const [activeTab, setActiveTab] = useState<TabType>("general");
 
   const {
@@ -219,11 +221,11 @@ export default function SharedProfileContainer({
   ]);
 
   const pills: { id: TabType; label: string }[] = [
-    { id: "general", label: "General Information" },
-    { id: "address", label: "Address & Contact" },
-    { id: "security", label: "Security" },
-    ...(showPreferences ? [{ id: "preferences" as TabType, label: "Preferences" }] : []),
-    ...(children ? [{ id: "docs" as TabType, label: "Professional Docs" }] : []),
+    { id: "general", label: t("tabs.generalInformation") },
+    { id: "address", label: t("tabs.addressAndContact") },
+    { id: "security", label: t("tabs.security") },
+    ...(showPreferences ? [{ id: "preferences" as TabType, label: t("tabs.preferences") }] : []),
+    ...(children ? [{ id: "docs" as TabType, label: t("tabs.professionalDocs") }] : []),
   ];
 
   return (

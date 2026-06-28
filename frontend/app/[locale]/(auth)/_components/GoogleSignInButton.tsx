@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Script from "next/script";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "@/shared/i18n/routing";
+import { useTranslations } from "next-intl";
 import { signIn, getSession } from "next-auth/react";
 import {
   Box,
@@ -22,30 +23,14 @@ import {
 import { useTheme } from "@mui/material/styles";
 import { logger } from "@/utils/logger";
 
-/**
- * Roles a self-service user may pick before doing Google sign-in.
- *
- * Admin / Inspector are intentionally excluded — the backend re-validates
- * this list, so even a tampered client can't escalate.
- */
 type GoogleRole = "Customer" | "Supplier" | "Driver";
-
-const GOOGLE_ROLES: { value: GoogleRole; label: string; description: string }[] = [
-  { value: "Customer", label: "Customer", description: "Rent vehicles for personal or business trips." },
-  { value: "Supplier", label: "Supplier", description: "List and manage your fleet of rental vehicles." },
-  { value: "Driver", label: "Driver", description: "Drive bookings on behalf of customers." },
-];
 
 const GOOGLE_GSI_SCRIPT_SRC = "https://accounts.google.com/gsi/client";
 
-// The shape of the Google Identity Services credential response we care about.
 interface GoogleCredentialResponse {
   credential?: string;
 }
 
-// Minimal typing for the bits of `window.google.accounts.id` we actually use.
-// We deliberately avoid importing the official `@types/google.accounts`
-// package to keep the dependency footprint small.
 interface GoogleAccountsId {
   initialize: (options: {
     client_id: string;
@@ -79,51 +64,16 @@ declare global {
 }
 
 interface GoogleSignInButtonProps {
-  /**
-   * Optional label override. Defaults make sense for both the sign-in
-   * page ("Continue with Google") and the sign-up page (same copy).
-   */
   readonly label?: string;
-  /**
-   * Called when the user dismisses the role-picker dialog or Google
-   * cancels the prompt. Used to clear loading state in the parent.
-   */
   readonly onCancel?: () => void;
-  /**
-   * Called when an error occurs. The parent renders this in its existing
-   * Alert component so we don't add a second error UI.
-   */
   readonly onError?: (message: string) => void;
-  /**
-   * Disable the button (e.g. while another form is submitting).
-   */
   readonly disabled?: boolean;
-  /**
-   * When false, skips the role-picker dialog and goes straight to the Google
-   * prompt. Use on the sign-in page where the account must already exist.
-   */
   readonly requireRole?: boolean;
-  /**
-   * Pre-selected role for the picker dialog. The sign-up page already has a
-   * role selector, so it passes the chosen role here to keep the two in sync
-   * (otherwise the dialog would default to "Customer" and silently override a
-   * Driver/Supplier choice — the cause of "Google sign-up always lands as
-   * Customer").
-   */
   readonly initialRole?: GoogleRole;
 }
 
-/**
- * "Continue with Google" button.
- *
- * Click → show role-picker dialog → trigger Google Identity Services
- * `prompt()` → receive ID token → forward to NextAuth's existing
- * CredentialsProvider with `googleIdToken` + `googleRole`. The provider
- * calls the backend's `/api/auth/google` endpoint and we end up with the
- * same session shape as the email/password flow.
- */
 export default function GoogleSignInButton({
-  label = "Continue with Google",
+  label,
   onCancel,
   onError,
   disabled = false,
@@ -134,23 +84,26 @@ export default function GoogleSignInButton({
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl");
+  const t = useTranslations("authPages.googleSignIn");
+
+  const displayLabel = label ?? t("defaultLabel");
+
+  const googleRoles = [
+    { value: "Customer" as GoogleRole, label: t("roleCustomerLabel"), description: t("roleCustomerDesc") },
+    { value: "Supplier" as GoogleRole, label: t("roleSupplierLabel"), description: t("roleSupplierDesc") },
+    { value: "Driver" as GoogleRole, label: t("roleDriverLabel"), description: t("roleDriverDesc") },
+  ];
 
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<GoogleRole>(initialRole);
-  // Two separate loading states: `isPrompting` covers the Google popup,
-  // `isExchanging` covers the round-trip to our backend through NextAuth.
   const [isPrompting, setIsPrompting] = useState(false);
   const [isExchanging, setIsExchanging] = useState(false);
 
-  // Keep the picker in sync when the parent's role selector changes so the
-  // role the user picked on the page is the one Google sign-up uses.
   useEffect(() => {
     setSelectedRole(initialRole);
   }, [initialRole]);
 
-  // Capture the role chosen in the dialog so the GIS callback (which
-  // doesn't take user-defined args) can see it without a stale closure.
   const selectedRoleRef = useRef<GoogleRole>(selectedRole);
   useEffect(() => {
     selectedRoleRef.current = selectedRole;
@@ -164,7 +117,7 @@ export default function GoogleSignInButton({
       const idToken = response.credential;
       if (!idToken) {
         setIsPrompting(false);
-        onError?.("Google did not return a credential. Please try again.");
+        onError?.(t("noCredential"));
         return;
       }
 
@@ -188,35 +141,35 @@ export default function GoogleSignInButton({
           const session = await getSession();
           if (callbackUrl) {
             router.push(callbackUrl);
+          } else if (session?.user.roles.includes("Admin")) {
+            router.push("/admin");
           } else if (session?.user.roles.includes("Supplier")) {
             router.push("/supplier/dashboard");
+          } else if (session?.user.roles.includes("Driver")) {
+            router.push("/driver/dashboard");
+          } else if (session?.user.roles.includes("Inspector")) {
+            router.push("/inspector");
           } else {
             router.push("/");
           }
           router.refresh();
         }
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Unexpected error during Google sign-in";
+        const message = error instanceof Error ? error.message : t("unexpectedError");
         onError?.(message);
         logger.error("Google sign-in exception:", error);
       } finally {
         setIsExchanging(false);
       }
     },
-    [callbackUrl, onError, router]
+    [callbackUrl, onError, router, t]
   );
 
-  // Keep a stable ref to handleSuccess so the GIS initialize effect doesn't
-  // re-run every time handleSuccess's identity changes.
   const handleSuccessRef = useRef(handleSuccess);
   useEffect(() => {
     handleSuccessRef.current = handleSuccess;
   }, [handleSuccess]);
 
-  // Initialise GIS once the script has loaded and we have a client ID.
-  // handleSuccessRef is used so this effect only runs once per script load,
-  // not every time handleSuccess's identity changes (which caused the
-  // "initialize() called multiple times" warning).
   useEffect(() => {
     if (!scriptLoaded || !isConfigured || !window.google?.accounts.id) return;
     window.google.accounts.id.initialize({
@@ -232,12 +185,11 @@ export default function GoogleSignInButton({
 
   const triggerGooglePrompt = useCallback(() => {
     if (!window.google?.accounts.id) {
-      onError?.("Google sign-in is still loading. Please try again in a moment.");
+      onError?.(t("stillLoading"));
       return;
     }
     setIsPrompting(true);
     window.google.accounts.id.prompt(notification => {
-      // FedCM doesn't expose these helpers on every notification; guard each call.
       const notDisplayed = notification.isNotDisplayed?.() === true;
       const skipped = notification.isSkippedMoment?.() === true;
       const dismissed = notification.isDismissedMoment?.() === true;
@@ -246,14 +198,10 @@ export default function GoogleSignInButton({
         setIsPrompting(false);
         const reason = notification.getNotDisplayedReason?.() ?? notification.getSkippedReason?.() ?? "unknown_reason";
         logger.warn("Google prompt was not displayed:", reason);
-        onError?.("Google sign-in was cancelled or blocked by the browser. Please try again.");
+        onError?.(t("cancelled"));
         return;
       }
 
-      // The user closed the popup. If they actually picked an account the
-      // credential callback would fire first (and would have set
-      // isExchanging=true), so reaching this branch with no credential
-      // means they cancelled. Release the loading state silently.
       if (dismissed) {
         const reason = notification.getDismissedReason?.() ?? "";
         if (reason !== "credential_returned") {
@@ -261,7 +209,7 @@ export default function GoogleSignInButton({
         }
       }
     });
-  }, [onError]);
+  }, [onError, t]);
 
   const showRoleDialog = () => {
     setDialogOpen(true);
@@ -295,7 +243,7 @@ export default function GoogleSignInButton({
           setScriptLoaded(true);
         }}
         onError={() => {
-          onError?.("Failed to load Google sign-in. Please check your connection.");
+          onError?.(t("loadFailed"));
         }}
       />
 
@@ -322,7 +270,7 @@ export default function GoogleSignInButton({
           },
         }}
       >
-        {isWorking ? <CircularProgress size={22} color="inherit" /> : label}
+        {isWorking ? <CircularProgress size={22} color="inherit" /> : displayLabel}
       </Button>
 
       <Dialog
@@ -334,11 +282,10 @@ export default function GoogleSignInButton({
           paper: { sx: { borderRadius: 2, p: 1 } },
         }}
       >
-        <DialogTitle sx={{ fontWeight: 700 }}>Choose your role</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>{t("chooseRole")}</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Pick the role you want before continuing with Google. We&apos;ll use it only if this is your first time
-            signing in.
+            {t("roleDialogDescription")}
           </Typography>
           <FormControl component="fieldset" fullWidth>
             <RadioGroup
@@ -348,7 +295,7 @@ export default function GoogleSignInButton({
                 setSelectedRole(e.target.value as GoogleRole);
               }}
             >
-              {GOOGLE_ROLES.map(role => (
+              {googleRoles.map(role => (
                 <FormControlLabel
                   key={role.value}
                   value={role.value}
@@ -375,14 +322,14 @@ export default function GoogleSignInButton({
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={handleDialogCancel} sx={{ textTransform: "none", fontWeight: 600 }}>
-            Cancel
+            {t("cancel")}
           </Button>
           <Button
             onClick={handleDialogConfirm}
             variant="contained"
             sx={{ textTransform: "none", fontWeight: 700, borderRadius: "999px", px: 3 }}
           >
-            Continue with Google
+            {t("confirmGoogle")}
           </Button>
         </DialogActions>
       </Dialog>
@@ -390,15 +337,6 @@ export default function GoogleSignInButton({
   );
 }
 
-/**
- * Inline SVG of the official Google "G" mark. Inline so we don't need to
- * pull in an icon package or add a new asset.
- *
- * NOTE: The four fill colors below are part of Google's brand mark and
- * MUST NOT be moved into the theme palette — they are protected brand
- * identifiers required by Google's brand guidelines, not theme tokens.
- * They are the only hardcoded colors in this file.
- */
 const GOOGLE_BRAND_YELLOW = "#FFC107";
 const GOOGLE_BRAND_RED = "#FF3D00";
 const GOOGLE_BRAND_GREEN = "#4CAF50";

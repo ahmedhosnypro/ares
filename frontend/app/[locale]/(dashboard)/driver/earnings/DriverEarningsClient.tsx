@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
 import {
   Alert,
   Box,
@@ -25,7 +27,8 @@ import {
 } from "@mui/icons-material";
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
-import { format, isSameMonth } from "date-fns";
+import { isSameMonth } from "date-fns";
+import { useDateFnsLocale } from "@/hooks/useDateFnsLocale";
 import StatCard from "../../_components/StatCard";
 
 interface DriverAssignment {
@@ -41,6 +44,26 @@ interface DriverAssignment {
 export default function DriverEarningsClient() {
   const { data: session } = useSession();
   const theme = useTheme();
+  const t = useTranslations("dashboard.driverEarnings");
+  const { formatLocalized } = useDateFnsLocale();
+  const locale = useLocale();
+
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+
+  const formatCurrencyWithSign = (amount: number) =>
+    new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: "USD",
+      signDisplay: "always",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
 
   const [isLoading, setIsLoading] = useState(true);
   const [assignments, setAssignments] = useState<DriverAssignment[]>([]);
@@ -56,19 +79,19 @@ export default function DriverEarningsClient() {
           },
         });
 
-        if (!res.ok) throw new Error("Failed to load earnings data");
+        if (!res.ok) throw new Error(t("errors.failedToLoadEarningsData"));
 
-        const data = await res.json();
+        const data = (await res.json()) as DriverAssignment[];
         setAssignments(data);
       } catch (err) {
         logger.error("Error fetching driver assignments for earnings", err);
-        setError("Could not load your earnings data.");
+        setError(t("couldNotLoadEarningsData"));
       } finally {
         setIsLoading(false);
       }
     };
     void fetchAssignments();
-  }, [session]);
+  }, [session, t]);
 
   const { totalEarnings, monthlyEarnings, completedTripEarnings, recentEarnings } = useMemo(() => {
     let total = 0;
@@ -113,10 +136,10 @@ export default function DriverEarningsClient() {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Typography variant="h4" component="h1" sx={{ fontWeight: 800, mb: 1 }}>
-        Earnings Overview
+        {t("earningsOverview")}
       </Typography>
       <Typography color="text.secondary" sx={{ mb: 4 }}>
-        Track your income and review your completed trip earnings.
+        {t("trackYourIncome")}
       </Typography>
 
       {error && (
@@ -128,32 +151,32 @@ export default function DriverEarningsClient() {
       <Grid container spacing={3} sx={{ mb: 6 }}>
         <Grid size={{ xs: 12, sm: 4 }}>
           <StatCard
-            title="Total Earnings"
-            value={`$${totalEarnings.toFixed(2)}`}
+            title={t("totalEarnings")}
+            value={formatCurrency(totalEarnings)}
             icon={<WalletIcon sx={{ color: "primary.main" }} />}
-            trend={{ value: 0, label: "Lifetime earnings" }}
+            trend={{ value: 0, label: t("lifetimeEarnings") }}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>
           <StatCard
-            title="This Month"
-            value={`$${monthlyEarnings.toFixed(2)}`}
+            title={t("thisMonth")}
+            value={formatCurrency(monthlyEarnings)}
             icon={<TrendingUpIcon sx={{ color: "success.main" }} />}
-            trend={{ value: 0, label: format(new Date(), "MMMM yyyy") }}
+            trend={{ value: 0, label: formatLocalized(new Date(), "MMMM yyyy") }}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>
           <StatCard
-            title="Completed Trips"
-            value={`$${completedTripEarnings.toFixed(2)}`}
+            title={t("completedTrips")}
+            value={formatCurrency(completedTripEarnings)}
             icon={<EventAvailableIcon sx={{ color: "info.main" }} />}
-            trend={{ value: 0, label: "Earnings from finished trips" }}
+            trend={{ value: 0, label: t("earningsFromFinishedTrips") }}
           />
         </Grid>
       </Grid>
 
       <Typography variant="h5" sx={{ fontWeight: 800, mb: 3 }}>
-        Recent Earnings History
+        {t("recentEarningsHistory")}
       </Typography>
 
       {recentEarnings.length === 0 ? (
@@ -161,7 +184,7 @@ export default function DriverEarningsClient() {
           elevation={0}
           sx={{ p: 4, textAlign: "center", border: `1px dashed ${theme.palette.divider}`, borderRadius: 2 }}
         >
-          <Typography color="text.secondary">You haven't completed any trips yet.</Typography>
+          <Typography color="text.secondary">{t("noCompletedTrips")}</Typography>
         </Paper>
       ) : (
         <TableContainer
@@ -169,14 +192,14 @@ export default function DriverEarningsClient() {
           elevation={0}
           sx={{ borderRadius: 2, border: `1px solid ${theme.palette.divider}` }}
         >
-          <Table sx={{ minWidth: 650 }} aria-label="earnings history table">
+          <Table sx={{ minWidth: 650 }} aria-label={t("earningsAriaLabel")}>
             <TableHead sx={{ bgcolor: "background.default" }}>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Booking ID</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Vehicle</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{t("date")}</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{t("bookingId")}</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{t("vehicle")}</TableCell>
                 <TableCell align="right" sx={{ fontWeight: 700 }}>
-                  Earnings
+                  {t("earnings")}
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -184,12 +207,12 @@ export default function DriverEarningsClient() {
               {recentEarnings.map(row => (
                 <TableRow key={row.bookingId} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                   <TableCell component="th" scope="row">
-                    {format(new Date(row.returnDate), "MMM dd, yyyy")}
+                    {formatLocalized(new Date(row.returnDate), "MMM dd, yyyy")}
                   </TableCell>
                   <TableCell>{row.bookingNumber}</TableCell>
                   <TableCell>{row.vehicleName}</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 800, color: "success.main" }}>
-                    +${row.earnings.toFixed(2)}
+                    {formatCurrencyWithSign(row.earnings)}
                   </TableCell>
                 </TableRow>
               ))}

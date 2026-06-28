@@ -2,6 +2,7 @@
 
 import { Box, Stack, Typography, alpha } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import { useTranslations } from "next-intl";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import StorefrontRoundedIcon from "@mui/icons-material/StorefrontRounded";
@@ -16,52 +17,35 @@ interface RoleSelectorProps {
 
 interface RoleOption {
   readonly value: SignUpRole;
-  readonly title: string;
-  readonly description: string;
+  readonly titleKey: string;
+  readonly descKey: string;
   readonly icon: typeof PersonRoundedIcon;
 }
 
 const OPTIONS: readonly RoleOption[] = [
   {
     value: "customer",
-    title: "Customer",
-    description: "Rent vehicles for personal or business trips.",
+    titleKey: "roleCustomerTitle",
+    descKey: "roleCustomerDesc",
     icon: PersonRoundedIcon,
   },
   {
     value: "supplier",
-    title: "Supplier",
-    description: "List and manage your fleet of rental vehicles.",
+    titleKey: "roleSupplierTitle",
+    descKey: "roleSupplierDesc",
     icon: StorefrontRoundedIcon,
   },
   {
     value: "driver",
-    title: "Driver",
-    description: "Offer your driving services to customers.",
+    titleKey: "roleDriverTitle",
+    descKey: "roleDriverDesc",
     icon: DirectionsCarRoundedIcon,
   },
 ];
 
-/**
- * Role selector rendered at the top of the registration form.
- *
- * Visual contract (per spec):
- *   - selectable cards (not a dropdown)
- *   - Customer pre-selected by default
- *   - the selected card has a highlighted border, background tint,
- *     subtle glow/shadow, and a check icon in the top-right corner
- *
- * Implementation notes:
- *   - colours come from MUI's primary palette via `alpha(...)` so the
- *     control stays in sync with the existing form theme and obeys the
- *     no-hard-coded-colour rule in AGENTS.md;
- *   - the two cards live in a responsive 2-column grid (1 column on
- *     very narrow viewports) so the control stays comfortable on mobile;
- *   - keyboard support is implicit because each card is a real
- *     `<button>` — focus ring + Space/Enter handling come for free.
- */
 export default function RoleSelector({ value, onChange, disabled = false }: RoleSelectorProps) {
   const theme = useTheme();
+  const t = useTranslations("authPages.signup");
 
   return (
     <Box sx={{ mb: 3 }}>
@@ -77,11 +61,11 @@ export default function RoleSelector({ value, onChange, disabled = false }: Role
           color: "text.secondary",
         }}
       >
-        I want to register as
+        {t("registerAs")}
       </Typography>
       <Box
         role="radiogroup"
-        aria-label="Account type"
+        aria-label={t("accountTypeAria")}
         sx={{
           display: "grid",
           gridTemplateColumns: { xs: "1fr", sm: "repeat(auto-fit, minmax(240px, 1fr))" },
@@ -154,10 +138,10 @@ export default function RoleSelector({ value, onChange, disabled = false }: Role
                 </Box>
                 <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
-                    {option.title}
+                    {t(option.titleKey)}
                   </Typography>
                   <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.25 }}>
-                    {option.description}
+                    {t(option.descKey)}
                   </Typography>
                 </Box>
               </Stack>

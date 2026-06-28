@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Alert,
   Box,
@@ -32,6 +33,7 @@ interface Props {
 }
 
 export default function CancelBookingButton({ bookingId, canCancel, accessToken, onCancel }: Props) {
+  const t = useTranslations("customer.bookingDetail");
   const [open, setOpen] = useState(false);
   const [preview, setPreview] = useState<RefundPreview | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
@@ -51,7 +53,7 @@ export default function CancelBookingButton({ bookingId, canCancel, accessToken,
       setPreview(data);
     } catch (err) {
       logger.error("Refund preview error", err);
-      setPreviewError("Could not calculate refund. You can still cancel.");
+      setPreviewError(t("cancelBooking.refundPreviewError"));
     } finally {
       setLoadingPreview(false);
     }
@@ -69,7 +71,7 @@ export default function CancelBookingButton({ bookingId, canCancel, accessToken,
   if (!canCancel) {
     return (
       <Button variant="contained" color="secondary" fullWidth disabled>
-        Cancellation Unavailable
+        {t("cancelBooking.cancellationUnavailable")}
       </Button>
     );
   }
@@ -77,7 +79,7 @@ export default function CancelBookingButton({ bookingId, canCancel, accessToken,
   return (
     <>
       <Button variant="contained" color="secondary" fullWidth onClick={() => void handleOpen()}>
-        Cancel Booking
+        {t("cancelBooking.cancelBooking")}
       </Button>
 
       <Dialog
@@ -88,13 +90,13 @@ export default function CancelBookingButton({ bookingId, canCancel, accessToken,
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle sx={{ fontWeight: 800 }}>Cancel Booking</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 800 }}>{t("cancelBooking.cancelButtonTitle")}</DialogTitle>
         <DialogContent>
           {loadingPreview && (
             <Stack sx={{ alignItems: "center", py: 3 }} spacing={1}>
               <CircularProgress size={28} />
               <Typography variant="body2" color="text.secondary">
-                Calculating refund…
+                {t("cancelBooking.calculatingRefund")}
               </Typography>
             </Stack>
           )}
@@ -107,7 +109,7 @@ export default function CancelBookingButton({ bookingId, canCancel, accessToken,
             <Stack spacing={1.5}>
               <Stack direction="row" sx={{ justifyContent: "space-between" }}>
                 <Typography variant="body2" color="text.secondary">
-                  Refund policy
+                  {t("cancelBooking.refundPolicy")}
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 700, textTransform: "capitalize" }}>
                   {preview.policyType}
@@ -115,7 +117,7 @@ export default function CancelBookingButton({ bookingId, canCancel, accessToken,
               </Stack>
               <Stack direction="row" sx={{ justifyContent: "space-between" }}>
                 <Typography variant="body2" color="text.secondary">
-                  Refund percentage
+                  {t("cancelBooking.refundPercentage")}
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 700 }}>
                   {preview.refundPercentage}%
@@ -123,7 +125,7 @@ export default function CancelBookingButton({ bookingId, canCancel, accessToken,
               </Stack>
               <Stack direction="row" sx={{ justifyContent: "space-between" }}>
                 <Typography variant="body2" color="text.secondary">
-                  Cancellation fee
+                  {t("cancelBooking.cancellationFee")}
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 700, color: "error.main" }}>
                   ${preview.cancellationFee.toFixed(2)}
@@ -132,7 +134,7 @@ export default function CancelBookingButton({ bookingId, canCancel, accessToken,
               <Divider />
               <Stack direction="row" sx={{ justifyContent: "space-between" }}>
                 <Typography variant="body1" sx={{ fontWeight: 800 }}>
-                  You will receive
+                  {t("cancelBooking.youWillReceive")}
                 </Typography>
                 <Typography variant="body1" sx={{ fontWeight: 900, color: "success.main" }}>
                   ${preview.refundAmount.toFixed(2)}
@@ -142,12 +144,12 @@ export default function CancelBookingButton({ bookingId, canCancel, accessToken,
           )}
           {!loadingPreview && !preview && !previewError && (
             <Typography variant="body2" color="text.secondary">
-              Are you sure you want to cancel this booking?
+              {t("cancelBooking.confirmQuestion")}
             </Typography>
           )}
           <Box sx={{ mt: 2 }}>
             <Typography variant="caption" color="text.secondary">
-              This action cannot be undone.
+              {t("cancelBooking.cannotBeUndone")}
             </Typography>
           </Box>
         </DialogContent>
@@ -158,7 +160,7 @@ export default function CancelBookingButton({ bookingId, canCancel, accessToken,
             }}
             disabled={cancelling}
           >
-            Keep Booking
+            {t("cancelBooking.keepBooking")}
           </Button>
           <Button
             variant="contained"
@@ -167,7 +169,7 @@ export default function CancelBookingButton({ bookingId, canCancel, accessToken,
             disabled={cancelling || loadingPreview}
             startIcon={cancelling ? <CircularProgress size={14} color="inherit" /> : null}
           >
-            {cancelling ? "Cancelling…" : "Confirm Cancel"}
+            {cancelling ? t("cancelBooking.cancelling") : t("cancelBooking.confirmCancel")}
           </Button>
         </DialogActions>
       </Dialog>

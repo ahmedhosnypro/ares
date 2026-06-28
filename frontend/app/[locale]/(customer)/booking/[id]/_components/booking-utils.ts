@@ -16,13 +16,14 @@ export function canCancelBooking(status?: string): boolean {
 }
 
 export function getFeedback(
-  searchParams: Record<string, SearchParamValue>
+  searchParams: Record<string, SearchParamValue>,
+  t: (key: string) => string
 ): { severity: AlertColor; message: string } | undefined {
   const notice = firstValue(searchParams.notice);
   if (notice === "cancelled") {
     return {
       severity: "success",
-      message: "Booking cancelled successfully.",
+      message: t("feedback.cancelled"),
     };
   }
 
@@ -31,27 +32,27 @@ export function getFeedback(
     case "not-eligible":
       return {
         severity: "error",
-        message: "This booking cannot be cancelled in its current status.",
+        message: t("feedback.notEligible"),
       };
     case "forbidden":
       return {
         severity: "error",
-        message: "You are not allowed to cancel this booking.",
+        message: t("feedback.forbidden"),
       };
     case "not-found":
       return {
         severity: "error",
-        message: "Booking not found.",
+        message: t("feedback.notFound"),
       };
     case "invalid-booking":
       return {
         severity: "error",
-        message: "Invalid booking reference.",
+        message: t("feedback.invalidBooking"),
       };
     case "cancel-failed":
       return {
         severity: "error",
-        message: "Unable to cancel booking right now. Please try again.",
+        message: t("feedback.cancelFailed"),
       };
     default:
       return undefined;

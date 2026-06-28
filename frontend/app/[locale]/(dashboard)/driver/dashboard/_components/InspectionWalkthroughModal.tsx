@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogTitle,
@@ -36,11 +37,12 @@ export default function InspectionWalkthroughModal({
   onSubmit,
   isSubmitting,
 }: InspectionWalkthroughModalProps) {
+  const t = useTranslations("dashboard.driverDashboard.inspectionWalkthrough");
+  const tc = useTranslations("common");
   const [odometer, setOdometer] = useState("");
   const [fuel, setFuel] = useState<number>(100);
   const [notes, setNotes] = useState("");
 
-  // Reset fields when opening
   useEffect(() => {
     if (open) {
       setOdometer("");
@@ -52,6 +54,8 @@ export default function InspectionWalkthroughModal({
   const handleFormSubmit = () => {
     onSubmit(odometer, fuel, notes);
   };
+
+  const rentalTypeLabel = type === "pre" ? t("preRental") : t("postRental");
 
   return (
     <Dialog
@@ -71,24 +75,24 @@ export default function InspectionWalkthroughModal({
       }}
     >
       <DialogTitle sx={{ fontWeight: 800, display: "flex", alignItems: "center", gap: 1 }}>
-        <InspectionIcon color="primary" /> {type === "pre" ? "Pre-Rental" : "Post-Rental"} Walkthrough Inspection
+        <InspectionIcon color="primary" /> {rentalTypeLabel} {t("walkthroughInspection")}
       </DialogTitle>
       <DialogContent dividers>
         <Stack spacing={3} sx={{ py: 1 }}>
           <Box>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-              Please review and log the current condition check of <strong>{vehicleModel}</strong>.
+              {t("reviewConditionCheck")} <strong>{vehicleModel}</strong>.
             </Typography>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
-                  label="Current Odometer (km)"
+                  label={t("currentOdometer")}
                   fullWidth
                   value={odometer}
                   onChange={e => {
                     setOdometer(e.target.value);
                   }}
-                  placeholder="e.g., 42,500"
+                  placeholder={t("odometerPlaceholder")}
                   variant="outlined"
                   slotProps={{ inputLabel: { shrink: true } }}
                 />
@@ -98,12 +102,12 @@ export default function InspectionWalkthroughModal({
                 sx={{ display: "flex", flexDirection: "column", justifyContent: "center" }}
               >
                 <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
-                  Fuel Level ({fuel}%)
+                  {t("fuelLevel", { fuel })}
                 </Typography>
                 <Slider
                   value={fuel}
                   onChange={(_, val) => {
-                    setFuel(val as number);
+                    setFuel(val);
                   }}
                   step={25}
                   marks
@@ -123,21 +127,12 @@ export default function InspectionWalkthroughModal({
               color="text.secondary"
               sx={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", display: "block", mb: 1.5 }}
             >
-              Exterior Verification
+              {t("exteriorVerification")}
             </Typography>
             <Stack>
-              <FormControlLabel
-                control={<Checkbox defaultChecked />}
-                label="No new scratches, dents, or bumper cracks"
-              />
-              <FormControlLabel
-                control={<Checkbox defaultChecked />}
-                label="All tires (including spare) have correct pressure and tread depth"
-              />
-              <FormControlLabel
-                control={<Checkbox defaultChecked />}
-                label="Windshield, mirrors, and window glass are completely clean"
-              />
+              <FormControlLabel control={<Checkbox defaultChecked />} label={t("noNewScratches")} />
+              <FormControlLabel control={<Checkbox defaultChecked />} label={t("correctTirePressure")} />
+              <FormControlLabel control={<Checkbox defaultChecked />} label={t("cleanWindshield")} />
             </Stack>
           </Box>
 
@@ -147,21 +142,12 @@ export default function InspectionWalkthroughModal({
               color="text.secondary"
               sx={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", display: "block", mb: 1.5 }}
             >
-              Interior Verification
+              {t("interiorVerification")}
             </Typography>
             <Stack>
-              <FormControlLabel
-                control={<Checkbox defaultChecked />}
-                label="Clean cabin, seats vacuumed, and floor mats in place"
-              />
-              <FormControlLabel
-                control={<Checkbox defaultChecked />}
-                label="Dashboard is free of warnings and fault lights"
-              />
-              <FormControlLabel
-                control={<Checkbox defaultChecked />}
-                label="Vehicle documentation (registration & insurance) in glove box"
-              />
+              <FormControlLabel control={<Checkbox defaultChecked />} label={t("cleanCabin")} />
+              <FormControlLabel control={<Checkbox defaultChecked />} label={t("dashboardFreeOfWarnings")} />
+              <FormControlLabel control={<Checkbox defaultChecked />} label={t("documentationInGloveBox")} />
             </Stack>
           </Box>
 
@@ -173,7 +159,7 @@ export default function InspectionWalkthroughModal({
               color="text.secondary"
               sx={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", display: "block", mb: 1.5 }}
             >
-              Walkthrough Evidence (Photos)
+              {t("walkthroughEvidence")}
             </Typography>
             <Box
               sx={{
@@ -192,16 +178,16 @@ export default function InspectionWalkthroughModal({
             >
               <UploadIcon color="primary" sx={{ fontSize: 32, mb: 1 }} />
               <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary" }}>
-                Upload Verification Photos
+                {t("uploadVerificationPhotos")}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Drag and drop exterior photos from different angles (PNG or JPG)
+                {t("dragAndDropPhotos")}
               </Typography>
             </Box>
           </Box>
 
           <TextField
-            label="Walkthrough & Log Notes"
+            label={t("walkthroughLogNotes")}
             fullWidth
             multiline
             rows={3}
@@ -209,13 +195,13 @@ export default function InspectionWalkthroughModal({
             onChange={e => {
               setNotes(e.target.value);
             }}
-            placeholder="e.g., Vehicle runs clean, minor pre-existing scratch on rear passenger door rim logged."
+            placeholder={t("logNotesPlaceholder")}
           />
         </Stack>
       </DialogContent>
       <DialogActions sx={{ p: 2.5 }}>
         <Button onClick={onClose} color="inherit" disabled={isSubmitting} sx={{ textTransform: "none" }}>
-          Cancel
+          {tc("cancel")}
         </Button>
         <Button
           onClick={handleFormSubmit}
@@ -224,7 +210,7 @@ export default function InspectionWalkthroughModal({
           disabled={isSubmitting || !odometer}
           sx={{ textTransform: "none", minWidth: 150 }}
         >
-          {isSubmitting ? "Submitting Walkthrough..." : "Submit Log"}
+          {isSubmitting ? t("submittingWalkthrough") : t("submitLog")}
         </Button>
       </DialogActions>
     </Dialog>

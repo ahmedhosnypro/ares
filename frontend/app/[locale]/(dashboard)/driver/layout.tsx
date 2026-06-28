@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useSession } from "next-auth/react";
 import { useRouter, usePathname } from "@/shared/i18n/routing";
 import {
@@ -14,18 +15,18 @@ import { CircularProgress, Box } from "@mui/material";
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
 
-const menuItems: DashboardMenuItem[] = [
-  { text: "Dashboard", icon: <DashboardIcon />, path: "/driver/dashboard" },
-  { text: "My Trips", icon: <TripsIcon />, path: "/driver/trips" },
-  { text: "Earnings", icon: <EarningsIcon />, path: "/driver/earnings" },
-  { text: "Profile", icon: <ProfileIcon />, path: "/driver/profile" },
-];
-
 export default function DriverLayout({ children }: { readonly children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
   const [isChecking, setIsChecking] = useState(true);
+  const t = useTranslations("dashboard.driverSidebar");
+  const menuItems: DashboardMenuItem[] = [
+    { text: t("dashboard"), icon: <DashboardIcon />, path: "/driver/dashboard" },
+    { text: t("myTrips"), icon: <TripsIcon />, path: "/driver/trips" },
+    { text: t("earnings"), icon: <EarningsIcon />, path: "/driver/earnings" },
+    { text: t("profile"), icon: <ProfileIcon />, path: "/driver/profile" },
+  ];
 
   useEffect(() => {
     if (status === "loading") return;
@@ -35,7 +36,7 @@ export default function DriverLayout({ children }: { readonly children: React.Re
       return;
     }
 
-    if (!session?.user?.roles?.includes("Driver")) {
+    if (!session?.user.roles.includes("Driver")) {
       router.push("/");
       return;
     }
@@ -58,7 +59,7 @@ export default function DriverLayout({ children }: { readonly children: React.Re
           return;
         }
 
-        const data = await response.json();
+        const data = (await response.json()) as { status: string };
         const profileStatus = data.status;
 
         if (profileStatus === "Incomplete" && pathname !== "/driver/complete-profile") {
@@ -93,10 +94,10 @@ export default function DriverLayout({ children }: { readonly children: React.Re
   return (
     <DashboardShell
       menuItems={isRestricted ? [] : menuItems}
-      sidebarLabel="Driver"
-      userFallbackName={session?.user?.firstName ?? "Driver"}
-      userFallbackInitial={session?.user?.firstName?.[0] ?? "D"}
-      userRoleFallback="Driver"
+      sidebarLabel={t("sidebarLabel")}
+      userFallbackName={session?.user?.firstName ?? t("userFallbackName")}
+      userFallbackInitial={session?.user?.firstName?.[0] ?? t("userFallbackInitial")}
+      userRoleFallback={t("userRoleFallback")}
       notificationsHref="/driver/notifications"
     >
       {children}

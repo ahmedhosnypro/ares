@@ -42,7 +42,7 @@ export default function VerificationStatusClient() {
           throw new Error("Failed to fetch profile status");
         }
 
-        const data = await res.json();
+        const data = (await res.json()) as ProfileStatus;
         setProfileStatus(data);
 
         if (data.status === "Verified") {
@@ -114,7 +114,7 @@ export default function VerificationStatusClient() {
             {profileStatus?.status === "Verified" && "Your profile is approved. Redirecting to your dashboard..."}
           </Typography>
 
-          {isRejected && profileStatus?.rejectionReason && (
+          {isRejected && profileStatus.rejectionReason && (
             <Alert severity="error" variant="outlined" sx={{ textAlign: "left", mb: 4 }}>
               <AlertTitle sx={{ fontWeight: 700 }}>Reason for Rejection</AlertTitle>
               {profileStatus.rejectionReason}

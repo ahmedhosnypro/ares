@@ -7,6 +7,7 @@ import HourglassTopRoundedIcon from "@mui/icons-material/HourglassTopRounded";
 import ErrorOutlinedRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 import BadgeRoundedIcon from "@mui/icons-material/BadgeRounded";
 import UploadFileRoundedIcon from "@mui/icons-material/UploadFileRounded";
+import { useTranslations } from "next-intl";
 
 import { getMyVerification, type UserVerificationDto } from "@/api-clients/verifications/verifications";
 import { logger } from "@/utils/logger";
@@ -25,15 +26,6 @@ interface IdentityVerificationCardProps {
 
 type LoadState = "loading" | "ready" | "error";
 
-const DOCUMENT_TYPE_LABELS: Record<string, string> = {
-  NationalID: "National ID",
-  Passport: "Passport",
-};
-
-function formatDocumentType(value: string): string {
-  return DOCUMENT_TYPE_LABELS[value] ?? value;
-}
-
 function formatSubmittedAt(value: string): string {
   const date = new Date(value);
   if (isNaN(date.getTime())) return "";
@@ -50,10 +42,20 @@ export default function IdentityVerificationCard({
   onCloseModal,
   onSubmitted,
 }: IdentityVerificationCardProps) {
+  const t = useTranslations("customer.accountProfile");
   const [internalState, setInternalState] = useState<LoadState>("loading");
   const [internalVerification, setInternalVerification] = useState<UserVerificationDto | null>(null);
   const [internalLoadError, setInternalLoadError] = useState<string>("");
   const [internalModalOpen, setInternalModalOpen] = useState(false);
+
+  const formatDocumentType = useCallback(
+    (value: string): string => {
+      if (value === "NationalID") return t("identityVerification.nationalID");
+      if (value === "Passport") return t("identityVerification.passport");
+      return value;
+    },
+    [t]
+  );
 
   const isControlled = externalState !== undefined;
 
@@ -72,10 +74,10 @@ export default function IdentityVerificationCard({
       setInternalState("ready");
     } catch (error) {
       logger.error("Failed to load verification status", error);
-      setInternalLoadError("Unable to load verification status.");
+      setInternalLoadError(t("identityVerification.loadError"));
       setInternalState("error");
     }
-  }, [accessToken, isControlled]);
+  }, [accessToken, isControlled, t]);
 
   useEffect(() => {
     if (!isControlled) {
@@ -118,7 +120,7 @@ export default function IdentityVerificationCard({
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
         <Typography variant="subtitle1" color="text.primary" sx={{ fontWeight: 700 }}>
-          Identity Verification
+          {t("identityVerification.title")}
         </Typography>
         <BadgeRoundedIcon sx={{ color: "text.secondary", fontSize: 20 }} />
       </Box>
@@ -146,7 +148,7 @@ export default function IdentityVerificationCard({
             }}
             sx={{ fontWeight: 700 }}
           >
-            Try Again
+            {t("identityVerification.tryAgain")}
           </Button>
         </Stack>
       )}
@@ -158,7 +160,7 @@ export default function IdentityVerificationCard({
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Chip
                   icon={<VerifiedRoundedIcon sx={{ fontSize: 16 }} />}
-                  label="Verified"
+                  label={t("identityVerification.verified")}
                   size="small"
                   color="success"
                   variant="outlined"
@@ -166,12 +168,12 @@ export default function IdentityVerificationCard({
                 />
                 {verification?.documentType && (
                   <Typography variant="caption" color="text.secondary">
-                    via {formatDocumentType(verification.documentType)}
+                    {t("identityVerification.via")} {formatDocumentType(verification.documentType)}
                   </Typography>
                 )}
               </Box>
               <Typography variant="body2" color="text.secondary">
-                Your identity has been verified. This badge increases trust with hosts and guests.
+                {t("identityVerification.verifiedDescription")}
               </Typography>
             </>
           )}
@@ -181,7 +183,7 @@ export default function IdentityVerificationCard({
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Chip
                   icon={<HourglassTopRoundedIcon sx={{ fontSize: 16 }} />}
-                  label="Pending Approval"
+                  label={t("identityVerification.pendingApproval")}
                   size="small"
                   color="warning"
                   variant="outlined"
@@ -194,12 +196,11 @@ export default function IdentityVerificationCard({
                 )}
               </Box>
               <Typography variant="body2" color="text.secondary">
-                Your verification is under review. We&apos;ll update your status once our team has finished reviewing
-                your documents.
+                {t("identityVerification.pendingDescription")}
               </Typography>
               {verification?.submittedAt && (
                 <Typography variant="caption" color="text.secondary">
-                  Submitted {formatSubmittedAt(verification.submittedAt)}
+                  {t("identityVerification.submitted")} {formatSubmittedAt(verification.submittedAt)}
                 </Typography>
               )}
             </>
@@ -210,7 +211,7 @@ export default function IdentityVerificationCard({
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Chip
                   icon={<ErrorOutlinedRoundedIcon sx={{ fontSize: 16 }} />}
-                  label="Rejected"
+                  label={t("identityVerification.rejected")}
                   size="small"
                   color="error"
                   variant="outlined"
@@ -225,13 +226,13 @@ export default function IdentityVerificationCard({
               {verification?.rejectionReason ? (
                 <Alert severity="error" variant="outlined" sx={{ py: 0.5 }}>
                   <Typography variant="caption" sx={{ fontWeight: 700, display: "block" }}>
-                    Reason
+                    {t("identityVerification.reason")}
                   </Typography>
                   <Typography variant="body2">{verification.rejectionReason}</Typography>
                 </Alert>
               ) : (
                 <Typography variant="body2" color="text.secondary">
-                  Your previous verification was rejected. Please resubmit with clearer documents.
+                  {t("identityVerification.rejectedNoReasonDescription")}
                 </Typography>
               )}
             </>
@@ -242,7 +243,7 @@ export default function IdentityVerificationCard({
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Chip
                   icon={<ErrorOutlinedRoundedIcon sx={{ fontSize: 16 }} />}
-                  label="Not verified"
+                  label={t("identityVerification.notVerified")}
                   size="small"
                   color="warning"
                   variant="outlined"
@@ -250,7 +251,7 @@ export default function IdentityVerificationCard({
                 />
               </Box>
               <Typography variant="body2" color="text.secondary">
-                Verify your identity to boost trust and unlock more features on ARES.
+                {t("identityVerification.notVerifiedDescription")}
               </Typography>
             </>
           )}
@@ -264,7 +265,9 @@ export default function IdentityVerificationCard({
               onClick={handleOpenModal}
               sx={{ fontWeight: 700, alignSelf: "flex-start" }}
             >
-              {status === "rejected" ? "Resubmit Documents" : "Verify Identity"}
+              {status === "rejected"
+                ? t("identityVerification.resubmitDocuments")
+                : t("identityVerification.verifyIdentity")}
             </Button>
           )}
         </Stack>

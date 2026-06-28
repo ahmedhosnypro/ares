@@ -13,30 +13,47 @@ import {
   FormControl,
 } from "@mui/material";
 import { Search as SearchIcon } from "@mui/icons-material";
+import { useTranslations } from "next-intl";
 
 interface BookingFiltersProps {
   readonly onFilterChange: (statuses: readonly string[], keyword: string, sortBy: string, sortOrder: string) => void;
 }
 
-const ALL_STATUSES = ["Draft", "PaymentPending", "Confirmed", "Active", "Completed", "Cancelled"] as const;
+type StatusFilterKey = "draft" | "pending" | "confirmed" | "active" | "completed" | "cancelled";
+
+const STATUS_FILTERS: readonly { readonly key: StatusFilterKey; readonly apiValue: string }[] = [
+  { key: "draft", apiValue: "Draft" },
+  { key: "pending", apiValue: "PaymentPending" },
+  { key: "confirmed", apiValue: "Confirmed" },
+  { key: "active", apiValue: "Active" },
+  { key: "completed", apiValue: "Completed" },
+  { key: "cancelled", apiValue: "Cancelled" },
+] as const;
 
 const SORT_OPTIONS = [
-  { value: "date_desc", label: "Date: Newest First", sortBy: "date", sortOrder: "desc" },
-  { value: "date_asc", label: "Date: Oldest First", sortBy: "date", sortOrder: "asc" },
-  { value: "price_asc", label: "Price: Low to High", sortBy: "price", sortOrder: "asc" },
-  { value: "price_desc", label: "Price: High to Low", sortBy: "price", sortOrder: "desc" },
-  { value: "status_asc", label: "Status: A to Z", sortBy: "status", sortOrder: "asc" },
-  { value: "status_desc", label: "Status: Z to A", sortBy: "status", sortOrder: "desc" },
+  { value: "date_desc", labelKey: "filters.sortOptions.dateDesc" as const, sortBy: "date", sortOrder: "desc" },
+  { value: "date_asc", labelKey: "filters.sortOptions.dateAsc" as const, sortBy: "date", sortOrder: "asc" },
+  { value: "price_asc", labelKey: "filters.sortOptions.priceAsc" as const, sortBy: "price", sortOrder: "asc" },
+  { value: "price_desc", labelKey: "filters.sortOptions.priceDesc" as const, sortBy: "price", sortOrder: "desc" },
+  { value: "status_asc", labelKey: "filters.sortOptions.statusAsc" as const, sortBy: "status", sortOrder: "asc" },
+  { value: "status_desc", labelKey: "filters.sortOptions.statusDesc" as const, sortBy: "status", sortOrder: "desc" },
 ] as const;
 
 export default function BookingFilters({ onFilterChange }: Readonly<BookingFiltersProps>) {
+  const t = useTranslations("customer.bookings");
   const [keyword, setKeyword] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("All");
+  const [selectedStatus, setSelectedStatus] = useState<StatusFilterKey | "all">("all");
   const [sortValue, setSortValue] = useState("date_desc");
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      const statusesToFetch = selectedStatus === "All" ? [...ALL_STATUSES] : [selectedStatus];
+      const filter = STATUS_FILTERS.find(f => f.key === selectedStatus);
+      const statusesToFetch =
+        selectedStatus === "all"
+          ? STATUS_FILTERS.map(f => f.apiValue)
+          : filter
+            ? [filter.apiValue]
+            : STATUS_FILTERS.map(f => f.apiValue);
       const selectedSort = SORT_OPTIONS.find(opt => opt.value === sortValue) ?? SORT_OPTIONS[0];
       onFilterChange(statusesToFetch, keyword, selectedSort.sortBy, selectedSort.sortOrder);
     }, 500);
@@ -59,10 +76,9 @@ export default function BookingFilters({ onFilterChange }: Readonly<BookingFilte
         boxShadow: "shadow.card",
       }}
     >
-      {/* Search */}
       <TextField
         size="small"
-        placeholder="Search cars or locations..."
+        placeholder={t("filters.searchPlaceholder")}
         value={keyword}
         onChange={e => {
           setKeyword(e.target.value);
@@ -94,7 +110,6 @@ export default function BookingFilters({ onFilterChange }: Readonly<BookingFilte
           alignItems: { md: "flex-end" },
         }}
       >
-        {/* Status filters */}
         <Box sx={{ flexGrow: 1 }}>
           <Typography
             variant="body2"
@@ -105,10 +120,9 @@ export default function BookingFilters({ onFilterChange }: Readonly<BookingFilte
               fontWeight: 700,
             }}
           >
-            Filter by Status:
+            {t("filters.filterByStatus")}
           </Typography>
 
-          {/* Mobile: Scrollable chips, Desktop: Button group */}
           <Box
             sx={{
               display: { xs: "flex", md: "none" },
@@ -121,9 +135,9 @@ export default function BookingFilters({ onFilterChange }: Readonly<BookingFilte
           >
             <Button
               size="small"
-              variant={selectedStatus === "All" ? "contained" : "outlined"}
+              variant={selectedStatus === "all" ? "contained" : "outlined"}
               onClick={() => {
-                setSelectedStatus("All");
+                setSelectedStatus("all");
               }}
               sx={{
                 minWidth: "auto",
@@ -132,15 +146,15 @@ export default function BookingFilters({ onFilterChange }: Readonly<BookingFilte
                 fontSize: "0.75rem",
               }}
             >
-              All
+              {t("filters.all")}
             </Button>
-            {ALL_STATUSES.map(status => (
+            {STATUS_FILTERS.map(({ key }) => (
               <Button
-                key={status}
+                key={key}
                 size="small"
-                variant={selectedStatus === status ? "contained" : "outlined"}
+                variant={selectedStatus === key ? "contained" : "outlined"}
                 onClick={() => {
-                  setSelectedStatus(status);
+                  setSelectedStatus(key);
                 }}
                 sx={{
                   minWidth: "auto",
@@ -149,38 +163,36 @@ export default function BookingFilters({ onFilterChange }: Readonly<BookingFilte
                   fontSize: "0.75rem",
                 }}
               >
-                {status}
+                {t(`list.status.${key}`)}
               </Button>
             ))}
           </Box>
 
-          {/* Desktop: Button group */}
           <Box sx={{ display: { xs: "none", md: "block" } }}>
             <ButtonGroup size="small" variant="outlined">
               <Button
-                variant={selectedStatus === "All" ? "contained" : "outlined"}
+                variant={selectedStatus === "all" ? "contained" : "outlined"}
                 onClick={() => {
-                  setSelectedStatus("All");
+                  setSelectedStatus("all");
                 }}
               >
-                All
+                {t("filters.all")}
               </Button>
-              {ALL_STATUSES.map(status => (
+              {STATUS_FILTERS.map(({ key }) => (
                 <Button
-                  key={status}
-                  variant={selectedStatus === status ? "contained" : "outlined"}
+                  key={key}
+                  variant={selectedStatus === key ? "contained" : "outlined"}
                   onClick={() => {
-                    setSelectedStatus(status);
+                    setSelectedStatus(key);
                   }}
                 >
-                  {status}
+                  {t(`list.status.${key}`)}
                 </Button>
               ))}
             </ButtonGroup>
           </Box>
         </Box>
 
-        {/* Sorting Dropdown */}
         <Box sx={{ minWidth: { xs: "100%", md: 240 } }}>
           <Typography
             variant="body2"
@@ -191,7 +203,7 @@ export default function BookingFilters({ onFilterChange }: Readonly<BookingFilte
               fontWeight: 700,
             }}
           >
-            Sort by:
+            {t("filters.sortBy")}
           </Typography>
           <FormControl size="small" fullWidth>
             <Select
@@ -206,7 +218,7 @@ export default function BookingFilters({ onFilterChange }: Readonly<BookingFilte
             >
               {SORT_OPTIONS.map(opt => (
                 <MenuItem key={opt.value} value={opt.value} sx={{ fontSize: { xs: "1rem", md: "0.875rem" } }}>
-                  {opt.label}
+                  {t(opt.labelKey)}
                 </MenuItem>
               ))}
             </Select>

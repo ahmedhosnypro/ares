@@ -3,22 +3,26 @@
 ## Page Overview
 
 - Route: `/(auth)/activate/[userId]/[token]`
-- Source: app/[locale]/(auth)/activate/[userId]/[token]/
+- Source: app/[locale]/(auth)/activate/[userId]/[token]/page.tsx
+- Server component using `getTranslations`
 
 ## Translation Status
 
-- [ ] Not started
-- [ ] In progress
-- [ ] Completed
+- [x] Not started
+- [x] In progress
+- [x] Completed
 
-## Shared Components
+## Message Keys
 
-(To be filled during execution)
-
-## Component Discovery
-
-(To be filled during execution)
+| Key     | English          | Arabic       |
+| ------- | ---------------- | ------------ |
+| `title` | Activate Account | تفعيل الحساب |
 
 ## Translation Tasks
 
-(To be filled during execution)
+- [x] Update `types/auth/activate.ts` with `ActivateLabels` type
+- [x] Update `en/auth/activate.ts` with English translations
+- [x] Update `ar/auth/activate.ts` with Arabic translations
+- [x] Update page component to use `getTranslations("authPages.activate")`
+- [x] Fix `types/message.ts` duplicate `MessageSchema` and missing imports
+- [x] Verify with `tsgo` and `lint`

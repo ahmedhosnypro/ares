@@ -13,7 +13,7 @@ export interface AboutSection {
   sectionType: string;
 }
 
-function HeroSection({ section }: Readonly<{ section: AboutSection }>) {
+function HeroSection({ section, chipLabel }: Readonly<{ section: AboutSection; chipLabel: string }>) {
   const [headline, ...rest] = section.content.split("\n\n");
   return (
     <Box
@@ -39,7 +39,7 @@ function HeroSection({ section }: Readonly<{ section: AboutSection }>) {
       <Stack sx={{ alignItems: "flex-start", gap: 3, position: "relative" }}>
         <Chip
           icon={<DirectionsCarRoundedIcon />}
-          label="About ARES"
+          label={chipLabel}
           sx={{ bgcolor: "primary.contrastText", color: "primary.main", fontWeight: 700 }}
         />
         <Typography variant="h2" sx={{ fontWeight: 800, lineHeight: 1.1 }}>
@@ -220,7 +220,10 @@ function ValuesSection({ section }: Readonly<{ section: AboutSection }>) {
   );
 }
 
-function CtaSection({ section }: Readonly<{ section: AboutSection }>) {
+function CtaSection({
+  section,
+  browseVehiclesLabel,
+}: Readonly<{ section: AboutSection; browseVehiclesLabel: string }>) {
   const [headline, ...rest] = section.content.split("\n\n");
   return (
     <Box
@@ -256,16 +259,20 @@ function CtaSection({ section }: Readonly<{ section: AboutSection }>) {
           "&:hover": { bgcolor: "primary.contrastText", opacity: 0.9 },
         }}
       >
-        Browse Vehicles
+        {browseVehiclesLabel}
       </Button>
     </Box>
   );
 }
 
-function RenderSection({ section }: Readonly<{ section: AboutSection }>) {
+function RenderSection({
+  section,
+  chipLabel,
+  browseVehiclesLabel,
+}: Readonly<{ section: AboutSection; chipLabel: string; browseVehiclesLabel: string }>) {
   switch (section.sectionType) {
     case "hero":
-      return <HeroSection section={section} />;
+      return <HeroSection section={section} chipLabel={chipLabel} />;
     case "story":
       return <StorySection section={section} />;
     case "offer":
@@ -275,17 +282,26 @@ function RenderSection({ section }: Readonly<{ section: AboutSection }>) {
     case "values":
       return <ValuesSection section={section} />;
     case "cta":
-      return <CtaSection section={section} />;
+      return <CtaSection section={section} browseVehiclesLabel={browseVehiclesLabel} />;
     default:
       return <StorySection section={section} />;
   }
 }
 
-export function AboutSections({ sections }: Readonly<{ sections: AboutSection[] }>) {
+export function AboutSections({
+  sections,
+  chipLabel,
+  browseVehiclesLabel,
+}: Readonly<{ sections: AboutSection[]; chipLabel: string; browseVehiclesLabel: string }>) {
   return (
     <>
       {sections.map(section => (
-        <RenderSection key={section.id} section={section} />
+        <RenderSection
+          key={section.id}
+          section={section}
+          chipLabel={chipLabel}
+          browseVehiclesLabel={browseVehiclesLabel}
+        />
       ))}
     </>
   );

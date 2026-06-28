@@ -6,6 +6,7 @@ import { Link } from "@/shared/i18n/routing";
 import { CheckCircle as CheckCircleIcon, ErrorOutlined as ErrorIcon } from "@mui/icons-material";
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
+import { useTranslations } from "next-intl";
 
 interface VerifyEmailClientProps {
   userId?: string;
@@ -13,15 +14,19 @@ interface VerifyEmailClientProps {
 }
 
 export default function VerifyEmailClient({ userId, token }: Readonly<VerifyEmailClientProps>) {
+  const t = useTranslations("authPages.verifyEmail");
   const [status, setStatus] = useState<"loading" | "success" | "error">(() => {
     if (!userId || !token) return "error";
     return "loading";
   });
-  const [errorMessage, setErrorMessage] = useState(() => {
-    if (!userId || !token) return "Invalid verification link. Missing user ID or token.";
+  const [errorKey] = useState<string>(() => {
+    if (!userId || !token) return "invalidLink";
     return "";
   });
+  const [apiErrorMessage, setApiErrorMessage] = useState("");
   const effectRan = useRef(false);
+
+  const errorDisplay = apiErrorMessage || (errorKey ? t(errorKey as keyof typeof t) : "");
 
   useEffect(() => {
     if (!userId || !token) {
@@ -45,17 +50,17 @@ export default function VerifyEmailClient({ userId, token }: Readonly<VerifyEmai
         } else {
           const data = (await response.json().catch(() => null)) as { message?: string } | null;
           setStatus("error");
-          setErrorMessage(data?.message || "Failed to verify email. The link may be expired or invalid.");
+          setApiErrorMessage(data?.message || t("verificationFailed"));
         }
       } catch (_err) {
         logger.error("Email verification error:", _err);
         setStatus("error");
-        setErrorMessage("An unexpected error occurred while communicating with the server.");
+        setApiErrorMessage(t("unexpectedError"));
       }
     };
 
     void verify();
-  }, [userId, token]);
+  }, [userId, token, t]);
 
   return (
     <Box
@@ -83,10 +88,10 @@ export default function VerifyEmailClient({ userId, token }: Readonly<VerifyEmai
           <>
             <CircularProgress size={48} sx={{ mb: 3 }} />
             <Typography variant="h5" gutterBottom sx={{ fontWeight: "bold" }}>
-              Verifying your email...
+              {t("loadingTitle")}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Please wait a moment while we verify your account.
+              {t("loadingMessage")}
             </Typography>
           </>
         )}
@@ -95,10 +100,10 @@ export default function VerifyEmailClient({ userId, token }: Readonly<VerifyEmai
           <>
             <CheckCircleIcon color="success" sx={{ fontSize: 64, mb: 2 }} />
             <Typography variant="h5" gutterBottom sx={{ fontWeight: "bold" }}>
-              Email Verified!
+              {t("successTitle")}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
-              Your email address has been successfully verified. You can now log in to your account.
+              {t("successMessage")}
             </Typography>
             <Button
               component={Link}
@@ -108,7 +113,7 @@ export default function VerifyEmailClient({ userId, token }: Readonly<VerifyEmai
               size="large"
               sx={{ borderRadius: 999, py: 1.5, fontWeight: "bold" }}
             >
-              Continue to Login
+              {t("continueToLogin")}
             </Button>
           </>
         )}
@@ -117,10 +122,10 @@ export default function VerifyEmailClient({ userId, token }: Readonly<VerifyEmai
           <>
             <ErrorIcon color="error" sx={{ fontSize: 64, mb: 2 }} />
             <Typography variant="h5" gutterBottom sx={{ fontWeight: "bold" }}>
-              Verification Failed
+              {t("errorTitle")}
             </Typography>
             <Alert severity="error" sx={{ mb: 4, textAlign: "left", borderRadius: 2 }}>
-              {errorMessage}
+              {errorDisplay}
             </Alert>
             <Button
               component={Link}
@@ -130,10 +135,10 @@ export default function VerifyEmailClient({ userId, token }: Readonly<VerifyEmai
               size="large"
               sx={{ mb: 2, borderRadius: 999, py: 1.5, fontWeight: "bold" }}
             >
-              Back to Login
+              {t("backToLogin")}
             </Button>
             <Button component={Link} href="/sign-up" variant="text" fullWidth sx={{ fontWeight: "bold" }}>
-              Register a new account
+              {t("registerNewAccount")}
             </Button>
           </>
         )}

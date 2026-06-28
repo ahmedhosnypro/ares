@@ -4,8 +4,10 @@ import { Box, Button, CardContent, Container, Typography } from "@mui/material";
 import { Link } from "@/shared/i18n/routing";
 import BookingsList from "./_componets/BookingsList";
 import { ResumeBookingBanner } from "@/app/[locale]/(customer)/booking/_components/ResumeBookingBanner";
+import { getTranslations } from "next-intl/server";
 
 export default async function MyBookingsPage() {
+  const t = await getTranslations("customer.bookings");
   const session = await getServerSession(authOptions);
 
   if (!session || !session.user.id || !session.accessToken) {
@@ -23,14 +25,14 @@ export default async function MyBookingsPage() {
           >
             <CardContent sx={{ p: { xs: 4, sm: 6 }, textAlign: "center" }}>
               <Typography variant="h5" color="text.primary" gutterBottom sx={{ fontWeight: 700 }}>
-                Sign in required
+                {t("signInRequired.title")}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
-                Please sign in to view your bookings.
+                {t("signInRequired.message")}
               </Typography>
               <Link href="/sign-in" style={{ textDecoration: "none" }}>
                 <Button variant="contained" size="large" sx={{ px: 4 }}>
-                  Sign In
+                  {t("signInRequired.signInButton")}
                 </Button>
               </Link>
             </CardContent>
@@ -54,7 +56,7 @@ export default async function MyBookingsPage() {
               fontWeight: 800,
             }}
           >
-            My Bookings
+            {t("title")}
           </Typography>
           <Typography
             variant="body2"
@@ -63,7 +65,7 @@ export default async function MyBookingsPage() {
               fontSize: { xs: "0.875rem", md: "1rem" },
             }}
           >
-            Track, manage, and review all your car rental reservations in one place.
+            {t("description")}
           </Typography>
         </Box>
 

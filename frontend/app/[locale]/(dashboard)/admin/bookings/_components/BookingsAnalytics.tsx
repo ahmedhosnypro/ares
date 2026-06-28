@@ -9,6 +9,7 @@ import {
   AssignmentReturnTwoTone as ReturnIcon,
   ScheduleTwoTone as UpcomingIcon,
 } from "@mui/icons-material";
+import { useTranslations } from "next-intl";
 import type { AdminBookingAnalytics } from "@/api-clients/bookings/bookings";
 import { StatCard } from "@/app/[locale]/(dashboard)/_components/VehicleStats";
 
@@ -19,6 +20,7 @@ interface BookingsAnalyticsProps {
 
 export default function BookingsAnalytics({ analytics, loading }: BookingsAnalyticsProps) {
   const theme = useTheme();
+  const t = useTranslations("dashboardAdmin.bookings");
 
   // Ensure strict ordering and map colors for the Donut Chart
   const statusOrder = [
@@ -52,10 +54,31 @@ export default function BookingsAnalytics({ analytics, loading }: BookingsAnalyt
     }
   };
 
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "Draft":
+        return t("analytics.statuses.draft");
+      case "Payment Pending":
+        return t("analytics.statuses.paymentPending");
+      case "Confirmed":
+        return t("analytics.statuses.confirmed");
+      case "Active":
+        return t("analytics.statuses.active");
+      case "Completed":
+        return t("analytics.statuses.completed");
+      case "Cancelled":
+        return t("analytics.statuses.cancelled");
+      case "Cancelled By Admin":
+        return t("analytics.statuses.cancelledByAdmin");
+      default:
+        return status;
+    }
+  };
+
   const chartData = statusOrder.map(status => {
     const found = analytics?.statusDistribution.find(s => s.status === status);
     return {
-      name: status,
+      name: getStatusLabel(status),
       value: found ? found.count : 0,
       color: getColorForStatus(status),
     };
@@ -65,25 +88,25 @@ export default function BookingsAnalytics({ analytics, loading }: BookingsAnalyt
 
   const kpis = [
     {
-      label: "Active Bookings",
+      label: t("analytics.kpis.activeBookings"),
       value: analytics?.activeBookings ?? 0,
       color: "success",
       icon: <ActiveIcon />,
     },
     {
-      label: "Pickup Queue",
+      label: t("analytics.kpis.pickupQueue"),
       value: analytics?.pickupQueue ?? 0,
       color: "warning",
       icon: <PickupIcon />,
     },
     {
-      label: "Return Queue",
+      label: t("analytics.kpis.returnQueue"),
       value: analytics?.returnQueue ?? 0,
       color: "info",
       icon: <ReturnIcon />,
     },
     {
-      label: "Upcoming Pickups",
+      label: t("analytics.kpis.upcomingPickups"),
       value: analytics?.upcomingPickups ?? 0,
       color: "primary",
       icon: <UpcomingIcon />,
@@ -102,7 +125,7 @@ export default function BookingsAnalytics({ analytics, loading }: BookingsAnalyt
     <Box sx={{ mb: 3 }}>
       <Grid container spacing={2}>
         {/* Donut Chart Card */}
-        <Grid size={{ xs: 12, md: 5, lg: 4 }}>
+        <Grid size={{ xs: 12, lg: 5, xl: 4 }}>
           <Paper
             elevation={0}
             sx={{
@@ -110,15 +133,19 @@ export default function BookingsAnalytics({ analytics, loading }: BookingsAnalyt
               borderRadius: 3,
               border: "1px solid",
               borderColor: "divider",
-              height: "100%",
+              height: { xs: "auto", lg: "100%" },
               display: "flex",
               flexDirection: "column",
             }}
           >
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-              Booking Status Distribution
+              {t("analytics.title")}
             </Typography>
-            <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", flexGrow: 1 }}>
+            <Stack
+              direction={{ xs: "column", lg: "row" }}
+              spacing={3}
+              sx={{ alignItems: "center", justifyContent: "center", flexGrow: 1 }}
+            >
               {/* Donut Chart Wrapper */}
               <Box sx={{ position: "relative", width: 140, height: 140, flexShrink: 0 }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -139,7 +166,7 @@ export default function BookingsAnalytics({ analytics, loading }: BookingsAnalyt
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(value: unknown) => [String(value), "Bookings"]}
+                      formatter={(value: unknown) => [String(value), t("analytics.chartTooltip")]}
                       contentStyle={{ borderRadius: 8, border: "none", boxShadow: theme.shadows[3] }}
                     />
                   </PieChart>
@@ -160,7 +187,7 @@ export default function BookingsAnalytics({ analytics, loading }: BookingsAnalyt
                   }}
                 >
                   <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, fontSize: "0.7rem" }}>
-                    Total
+                    {t("analytics.total")}
                   </Typography>
                   <Typography variant="h5" sx={{ fontWeight: 800, color: "text.primary", lineHeight: 1 }}>
                     {totalBookings}
@@ -169,9 +196,27 @@ export default function BookingsAnalytics({ analytics, loading }: BookingsAnalyt
               </Box>
 
               {/* Legend alongside the chart */}
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.8, ml: 2, flexGrow: 1 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: { xs: "row", lg: "column" },
+                  flexWrap: "wrap",
+                  gap: 1.5,
+                  ml: { xs: 0, lg: 2 },
+                  mt: { xs: 1, lg: 0 },
+                  flexGrow: 1,
+                  justifyContent: "center",
+                }}
+              >
                 {chartData.map((entry, index) => (
-                  <Stack key={index} direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                  <Stack
+                    key={index}
+                    direction="row"
+                    spacing={1}
+                    sx={{
+                      alignItems: "center",
+                    }}
+                  >
                     <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: entry.color, flexShrink: 0 }} />
                     <Typography variant="caption" sx={{ fontWeight: 600, lineHeight: 1 }}>
                       {entry.name}: {entry.value}
@@ -179,13 +224,13 @@ export default function BookingsAnalytics({ analytics, loading }: BookingsAnalyt
                   </Stack>
                 ))}
               </Box>
-            </Box>
+            </Stack>
           </Paper>
         </Grid>
 
         {/* KPI Cards */}
-        <Grid size={{ xs: 12, md: 7, lg: 8 }}>
-          <Grid container spacing={1.5} sx={{ height: "100%", alignContent: "flex-start" }}>
+        <Grid size={{ xs: 12, lg: 7, xl: 8 }}>
+          <Grid container spacing={1.5} sx={{ height: { xs: "auto", lg: "100%" }, alignContent: "flex-start" }}>
             {kpis.map((kpi, index) => (
               <Grid size={{ xs: 12, sm: 6 }} key={index}>
                 <StatCard label={kpi.label} value={kpi.value} color={kpi.color} icon={kpi.icon} loading={loading} />

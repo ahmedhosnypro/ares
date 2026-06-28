@@ -89,7 +89,7 @@ export default function AdminDriversClient() {
             : "/api/admin/drivers";
       const res = await fetch(toApiUrl(url), { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) throw new Error("Failed to load drivers");
-      setDrivers(await res.json());
+      setDrivers((await res.json()) as DriverListItem[]);
     } catch (err) {
       logger.error("Error loading admin drivers", err);
       setError("Could not load drivers.");
@@ -125,7 +125,7 @@ export default function AdminDriversClient() {
       <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
         <Tabs
           value={tab}
-          onChange={(_, v) => {
+          onChange={(_, v: number) => {
             setTab(v);
           }}
           aria-label="driver tabs"
@@ -232,7 +232,9 @@ export default function AdminDriversClient() {
                     <Button
                       size="small"
                       variant="outlined"
-                      onClick={() => router.push(`/admin/drivers/${d.driverProfileId}`)}
+                      onClick={() => {
+                        router.push(`/admin/drivers/${d.driverProfileId}`);
+                      }}
                     >
                       View
                     </Button>

@@ -2,6 +2,7 @@
 
 import { Box, Button, Typography, Stack, Divider } from "@mui/material";
 import CreditCardIcon from "@mui/icons-material/CreditCard";
+import { useTranslations } from "next-intl";
 
 interface ExpressCheckoutProps {
   readonly enableApplePay: boolean;
@@ -9,6 +10,8 @@ interface ExpressCheckoutProps {
 }
 
 export default function ExpressCheckout({ enableApplePay, enableGooglePay }: ExpressCheckoutProps) {
+  const t = useTranslations("customer.bookingPayment");
+
   if (!enableApplePay && !enableGooglePay) {
     return null;
   }
@@ -19,7 +22,7 @@ export default function ExpressCheckout({ enableApplePay, enableGooglePay }: Exp
         variant="overline"
         sx={{ fontWeight: 800, color: "primary.main", letterSpacing: 1.5, display: "block", mb: 2 }}
       >
-        Express Checkout
+        {t("express.title")}
       </Typography>
 
       <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
@@ -39,7 +42,7 @@ export default function ExpressCheckout({ enableApplePay, enableGooglePay }: Exp
             }}
           >
             <Typography variant="button" sx={{ fontWeight: 700 }}>
-              Apple Pay
+              {t("express.applePay")}
             </Typography>
           </Button>
         )}
@@ -67,7 +70,7 @@ export default function ExpressCheckout({ enableApplePay, enableGooglePay }: Exp
               sx={{ height: 24, mr: 1 }}
             />
             <Typography variant="button" sx={{ fontWeight: 700 }}>
-              Pay
+              {t("express.pay")}
             </Typography>
           </Button>
         )}
@@ -76,7 +79,7 @@ export default function ExpressCheckout({ enableApplePay, enableGooglePay }: Exp
       <Box sx={{ display: "flex", alignItems: "center", py: 2 }}>
         <Divider sx={{ flexGrow: 1 }} />
         <Typography variant="caption" sx={{ fontWeight: 800, color: "text.secondary", px: 2, letterSpacing: 1 }}>
-          OR
+          {t("express.or")}
         </Typography>
         <CreditCardIcon sx={{ color: "text.secondary", fontSize: 20, mr: 2 }} />
         <Divider sx={{ flexGrow: 1 }} />

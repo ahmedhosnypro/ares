@@ -34,14 +34,18 @@ import {
   SearchRounded as SearchIcon,
   PublicTwoTone as CountryIcon,
   MapTwoTone as MapIcon,
+  Add as AddIcon,
 } from "@mui/icons-material";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useCountries, checkCountry, deleteCountry, type Country } from "@/api-clients/countries/countries";
 import VehicleStats from "@/app/[locale]/(dashboard)/_components/VehicleStats";
 
 // ── MAIN PAGE ──
 export default function AdminCountriesPage() {
   const { data: session } = useSession();
+  const t = useTranslations("dashboardAdmin.countries");
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [openDelete, setOpenDelete] = useState(false);
@@ -79,19 +83,20 @@ export default function AdminCountriesPage() {
   const countryStatsItems = useMemo(
     () => [
       {
-        label: "Total Countries",
+        label: t("stats.totalCountries"),
         value: totalRecords,
         color: "primary",
         icon: <CountryIcon fontSize="small" />,
       },
       {
-        label: "Active Regions",
-        value: totalRecords, // Approximation since countries are derived from active locations
+        label: t("stats.activeRegions"),
+        value: totalRecords,
+        subtitle: t("stats.activeRegionsDesc"),
         color: "success",
         icon: <MapIcon fontSize="small" />,
       },
     ],
-    [totalRecords]
+    [totalRecords, t]
   );
 
   // ── HANDLERS ──
@@ -102,33 +107,33 @@ export default function AdminCountriesPage() {
       try {
         const { canDelete, message } = await checkCountry(session.accessToken, id);
         if (!canDelete) {
-          setErrorMsg(message || "This country cannot be deleted because it has locations.");
+          setErrorMsg(message || t("alerts.cannotDelete"));
           return;
         }
 
         setDeleteId(id);
         setOpenDelete(true);
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Failed to check country status.";
+        const message = err instanceof Error ? err.message : t("alerts.checkError");
         setErrorMsg(message);
       }
     },
-    [session]
+    [session, t]
   );
 
   const confirmDelete = useCallback(async () => {
     if (!deleteId || !session?.accessToken) return;
     try {
       await deleteCountry(session.accessToken, deleteId);
-      setSuccessMsg("Country deleted successfully.");
+      setSuccessMsg(t("alerts.deleteSuccess"));
       setOpenDelete(false);
       setDeleteId(null);
       refresh();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to delete country.";
+      const message = err instanceof Error ? err.message : t("alerts.deleteError");
       setErrorMsg(message);
     }
-  }, [deleteId, session, refresh]);
+  }, [deleteId, session, refresh, t]);
 
   const handleCloseDelete = useCallback(() => {
     setOpenDelete(false);
@@ -154,10 +159,27 @@ export default function AdminCountriesPage() {
       >
         <Box>
           <Typography variant="h4" sx={{ fontWeight: 800, fontSize: { xs: "1.6rem", sm: "2rem" } }}>
-            Countries
+            {t("title")}
           </Typography>
-          <Typography color="text.secondary">Manage available countries for locations</Typography>
+          <Typography color="text.secondary">{t("subtitle")}</Typography>
         </Box>
+        <Link href="/admin/countries/create" passHref style={{ textDecoration: "none" }}>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            sx={{
+              borderRadius: 2,
+              fontWeight: 700,
+              boxShadow: theme => theme.palette.shadow.button,
+              "&:hover": {
+                boxShadow: theme => theme.palette.shadow.buttonHover,
+              },
+            }}
+          >
+            {t("addCountry")}
+          </Button>
+        </Link>
       </Stack>
 
       {/* STATS */}
@@ -167,7 +189,7 @@ export default function AdminCountriesPage() {
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>
         <TextField
           fullWidth
-          placeholder="Search country by name..."
+          placeholder={t("searchPlaceholder")}
           value={search}
           onChange={e => {
             setSearch(e.target.value);
@@ -212,9 +234,9 @@ export default function AdminCountriesPage() {
                     },
                   }}
                 >
-                  <TableCell sx={{ pl: 6 }}>Country Name</TableCell>
+                  <TableCell sx={{ pl: 6 }}>{t("table.headers.countryName")}</TableCell>
                   <TableCell align="right" sx={{ pr: 4 }}>
-                    Actions
+                    {t("table.headers.actions")}
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -269,7 +291,7 @@ export default function AdminCountriesPage() {
                       </TableCell>
 
                       <TableCell align="right">
-                        <Tooltip title="Delete Country">
+                        <Tooltip title={t("actions.delete")}>
                           <IconButton
                             onClick={() => {
                               void handleDeleteClick(c._id);
@@ -305,7 +327,7 @@ export default function AdminCountriesPage() {
                           <SearchIcon sx={{ fontSize: 32, color: "text.disabled" }} />
                         </Avatar>
                         <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 700 }}>
-                          No countries found
+                          {t("table.empty")}
                         </Typography>
                       </Box>
                     </TableCell>
@@ -316,7 +338,11 @@ export default function AdminCountriesPage() {
                 <TableRow>
                   <TableCell>
                     <Typography variant="caption" color="text.secondary">
-                      Showing <strong>{countries.length}</strong> of {totalRecords} countries
+                      {t.rich("table.showing", {
+                        count: countries.length,
+                        total: totalRecords,
+                        strong: chunks => <strong>{chunks}</strong>,
+                      })}
                     </Typography>
                   </TableCell>
                   <TableCell align="right">
@@ -345,15 +371,15 @@ export default function AdminCountriesPage() {
         onClose={handleCloseDelete}
         slotProps={{ paper: { sx: { borderRadius: 2, p: 1, minWidth: 350 } } }}
       >
-        <DialogTitle sx={{ fontWeight: 700 }}>Delete Country</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>{t("deleteDialog.title")}</DialogTitle>
         <DialogContent>
-          Are you sure you want to delete this country?
+          {t("deleteDialog.description")}
           <br />
-          <strong>This action cannot be undone.</strong>
+          <strong>{t("deleteDialog.notice")}</strong>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDelete} variant="outlined" sx={{ borderRadius: 2 }}>
-            Cancel
+            {t("deleteDialog.cancel")}
           </Button>
           <Button
             onClick={() => {
@@ -363,7 +389,7 @@ export default function AdminCountriesPage() {
             variant="contained"
             sx={{ borderRadius: 2, fontWeight: 700 }}
           >
-            Delete
+            {t("deleteDialog.confirm")}
           </Button>
         </DialogActions>
       </Dialog>

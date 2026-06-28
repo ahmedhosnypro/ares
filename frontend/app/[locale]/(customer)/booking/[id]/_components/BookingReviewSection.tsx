@@ -14,6 +14,7 @@ import {
   Typography,
 } from "@mui/material";
 import { RateReview as RateReviewIcon } from "@mui/icons-material";
+import { useTranslations } from "next-intl";
 import { ApiError, toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
 
@@ -91,18 +92,20 @@ function ReviewForm({
   submitting,
   isUpdate,
 }: ReviewFormProps) {
+  const t = useTranslations("customer.bookingDetail");
+
   let buttonLabel: string;
   if (submitting) {
-    buttonLabel = isUpdate ? "Saving…" : "Submitting…";
+    buttonLabel = isUpdate ? t("review.saving") : t("review.submitting");
   } else {
-    buttonLabel = isUpdate ? "Save Changes" : "Submit Review";
+    buttonLabel = isUpdate ? t("review.saveChanges") : t("review.submitReview");
   }
 
   return (
     <Stack spacing={2}>
       <Box>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          Rating
+          {t("review.rating")}
         </Typography>
         <Rating
           value={draftRating}
@@ -113,7 +116,7 @@ function ReviewForm({
         />
       </Box>
       <TextField
-        label="Comment (optional)"
+        label={t("review.commentOptional")}
         multiline
         minRows={3}
         fullWidth
@@ -135,7 +138,7 @@ function ReviewForm({
           {buttonLabel}
         </Button>
         <Button variant="outlined" onClick={onCancel} disabled={submitting}>
-          Cancel
+          {t("review.cancel")}
         </Button>
       </Stack>
     </Stack>
@@ -148,6 +151,8 @@ interface ReviewViewStateProps {
 }
 
 function ReviewViewState({ review, onEdit }: ReviewViewStateProps) {
+  const t = useTranslations("customer.bookingDetail");
+
   return (
     <Stack spacing={1.5}>
       <Stack
@@ -158,17 +163,17 @@ function ReviewViewState({ review, onEdit }: ReviewViewStateProps) {
         <Rating value={review.rating} readOnly />
         <Typography variant="caption" color="text.secondary">
           {review.canEdit
-            ? `Editable until ${formatDeadline(review.editDeadline)}`
-            : "This review can no longer be edited (24h window passed)."}
+            ? `${t("review.editableUntil")} ${formatDeadline(review.editDeadline)}`
+            : t("review.editWindowPassed")}
         </Typography>
       </Stack>
       <Typography variant="body2" color="text.primary">
-        {review.comment && review.comment.trim() !== "" ? review.comment : "No written feedback provided."}
+        {review.comment && review.comment.trim() !== "" ? review.comment : t("review.noFeedback")}
       </Typography>
       {review.canEdit ? (
         <Box>
           <Button variant="outlined" onClick={onEdit}>
-            Edit Review
+            {t("review.editReview")}
           </Button>
         </Box>
       ) : null}
@@ -182,30 +187,35 @@ interface EmptyReviewStateProps {
 }
 
 function EmptyReviewState({ onStartCreate, vehicleId }: EmptyReviewStateProps) {
+  const t = useTranslations("customer.bookingDetail");
+
   return (
     <Stack spacing={2}>
       <Typography variant="body2" color="text.secondary">
-        How was your experience? Leave a quick rating and an optional comment.
+        {t("review.emptyPrompt")}
       </Typography>
       <Box>
         <Button variant="contained" onClick={onStartCreate} disabled={!vehicleId}>
-          Write a Review
+          {t("review.writeReview")}
         </Button>
       </Box>
     </Stack>
   );
 }
 
-function getSubmissionErrorMessage(err: unknown): string {
+function getSubmissionErrorMessage(
+  err: unknown,
+  t: ReturnType<typeof useTranslations<"customer.bookingDetail">>
+): string {
   if (err instanceof ApiError) {
     if (err.status === 400) {
-      return "Please double-check your review and try again.";
+      return t("review.errorBadRequest");
     }
     if (err.status === 409) {
-      return "A review for this booking already exists.";
+      return t("review.errorConflict");
     }
   }
-  return "Unable to save your review. Please try again.";
+  return t("review.errorGeneric");
 }
 
 export default function BookingReviewSection({
@@ -214,6 +224,7 @@ export default function BookingReviewSection({
   status,
   accessToken,
 }: Readonly<BookingReviewSectionProps>) {
+  const t = useTranslations("customer.bookingDetail");
   const [review, setReview] = useState<BookingReviewDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -253,11 +264,11 @@ export default function BookingReviewSection({
       setDraftComment(data.comment ?? "");
     } catch (err) {
       logger.error("Load booking review failed", err);
-      setError("Unable to load your review right now. Please try again in a moment.");
+      setError(t("review.errorLoadReview"));
     } finally {
       setLoading(false);
     }
-  }, [bookingId, accessToken]);
+  }, [bookingId, accessToken, t]);
 
   useEffect(() => {
     if (!completed) {
@@ -298,7 +309,7 @@ export default function BookingReviewSection({
 
   const handleSubmit = useCallback(async () => {
     if (draftRating == null || draftRating < 1 || draftRating > 5) {
-      setError("Please pick a rating between 1 and 5 stars.");
+      setError(t("review.validationPickRating"));
       return;
     }
 
@@ -339,19 +350,19 @@ export default function BookingReviewSection({
         if (isReviewPayload(data)) {
           setReview(data);
         }
-        setFeedback("Your review has been updated.");
+        setFeedback(t("review.successUpdated"));
       } else {
         await loadReview();
-        setFeedback("Thanks! Your review has been submitted.");
+        setFeedback(t("review.successSubmitted"));
       }
       setEditing(false);
     } catch (err) {
       logger.error("Submit booking review failed", err);
-      setError(getSubmissionErrorMessage(err));
+      setError(getSubmissionErrorMessage(err, t));
     } finally {
       setSubmitting(false);
     }
-  }, [draftRating, draftComment, review, vehicleId, bookingId, accessToken, loadReview]);
+  }, [draftRating, draftComment, review, vehicleId, bookingId, accessToken, loadReview, t]);
 
   if (!completed) {
     return null;
@@ -373,7 +384,7 @@ export default function BookingReviewSection({
             <RateReviewIcon />
           </Box>
           <Typography variant="h6" color="text.primary" sx={{ fontWeight: 800 }}>
-            Your Review
+            {t("review.title")}
           </Typography>
         </Stack>
 

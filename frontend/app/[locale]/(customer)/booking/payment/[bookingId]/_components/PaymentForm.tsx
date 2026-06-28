@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Alert, Box, CircularProgress, Paper, Stack, Typography } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
+import { useTranslations } from "next-intl";
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
 
@@ -18,6 +19,7 @@ interface InitiateResponse {
 }
 
 export default function PaymentForm({ bookingId, accessToken }: PaymentFormProps) {
+  const t = useTranslations("customer.bookingPayment");
   const [iframeUrl, setIframeUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,7 +35,7 @@ export default function PaymentForm({ bookingId, accessToken }: PaymentFormProps
         });
         if (!res.ok) {
           const payload = (await res.json().catch(() => ({}))) as { message?: string };
-          throw new Error(payload.message ?? "Failed to initiate payment");
+          throw new Error(payload.message ?? t("form.initiationFailed"));
         }
         const data = (await res.json()) as InitiateResponse;
         setIframeUrl(data.iframeUrl);
@@ -42,14 +44,14 @@ export default function PaymentForm({ bookingId, accessToken }: PaymentFormProps
           return;
         }
         logger.error("Payment initiation failed", err);
-        setError(err instanceof Error ? err.message : "Failed to load payment form");
+        setError(err instanceof Error ? err.message : t("form.loadFailed"));
       }
     };
     void initiate();
     return () => {
       controller.abort();
     };
-  }, [bookingId, accessToken]);
+  }, [bookingId, accessToken, t]);
 
   return (
     <Paper
@@ -66,7 +68,7 @@ export default function PaymentForm({ bookingId, accessToken }: PaymentFormProps
         <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
           <LockIcon sx={{ color: "success.main", fontSize: 20 }} />
           <Typography variant="h5" sx={{ fontWeight: 800, color: "primary.main" }}>
-            Secure Payment
+            {t("form.securePayment")}
           </Typography>
         </Stack>
 
@@ -76,7 +78,7 @@ export default function PaymentForm({ bookingId, accessToken }: PaymentFormProps
           <Stack sx={{ alignItems: "center", py: 6 }} spacing={2}>
             <CircularProgress />
             <Typography variant="body2" color="text.secondary">
-              Loading secure payment form…
+              {t("form.loading")}
             </Typography>
           </Stack>
         )}
@@ -87,7 +89,7 @@ export default function PaymentForm({ bookingId, accessToken }: PaymentFormProps
               src={iframeUrl}
               width="100%"
               height="600"
-              title="Secure Payment"
+              title={t("form.iframeTitle")}
               style={{ display: "block", border: 0 }}
             />
           </Box>

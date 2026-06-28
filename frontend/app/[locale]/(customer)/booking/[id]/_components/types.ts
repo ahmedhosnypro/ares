@@ -25,6 +25,15 @@ export interface BookingInspectionOverview {
   readonly postInspectionDate?: string;
 }
 
+export interface AssignedDriverProfile {
+  readonly driverProfileId: string;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly profilePictureUrl?: string;
+  readonly averageRating: number;
+  readonly totalTrips: number;
+}
+
 export interface BookingDetails {
   readonly id?: string;
   readonly car?: BookingCar;
@@ -42,5 +51,5 @@ export interface BookingDetails {
   readonly grandTotal?: number;
   readonly withDriver?: boolean;
   readonly requiresDriver?: boolean;
-  readonly assignedDriverProfile?: any;
+  readonly assignedDriverProfile?: AssignedDriverProfile;
 }

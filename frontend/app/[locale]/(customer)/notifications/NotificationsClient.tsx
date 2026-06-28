@@ -29,8 +29,10 @@ import {
 } from "@/api-clients/notfications/notfications";
 import { logger } from "@/utils/logger";
 import DeleteNotificationDialog from "@/components/notifications/DeleteNotificationDialog";
+import { useTranslations } from "next-intl";
 
 export default function NotificationsClient() {
+  const t = useTranslations("customer.notifications");
   const { data: session, status } = useSession();
   const token = session?.accessToken;
   const router = useRouter();
@@ -63,12 +65,12 @@ export default function NotificationsClient() {
         setError(null);
       } catch (err) {
         logger.error("Notifications fetch error", err);
-        if (!background) setError("Failed to load notifications. Please try again later.");
+        if (!background) setError(t("fetchError"));
       } finally {
         if (!background) setLoading(false);
       }
     },
-    [token]
+    [t, token]
   );
 
   useEffect(() => {
@@ -158,7 +160,7 @@ export default function NotificationsClient() {
       window.dispatchEvent(new CustomEvent("notifications-updated"));
     } catch (err) {
       logger.error("Mark all as read failed", err);
-      setError("Failed to mark all as read.");
+      setError(t("markAllError"));
     } finally {
       setMarkingAll(false);
     }
@@ -180,7 +182,7 @@ export default function NotificationsClient() {
       setNotifications(prev => prev.filter(n => n.id !== deletingNotification.id));
       setToast({
         open: true,
-        message: "Notification deleted successfully.",
+        message: t("deleteSuccess"),
         severity: "success",
       });
       window.dispatchEvent(new CustomEvent("notifications-updated"));
@@ -192,7 +194,7 @@ export default function NotificationsClient() {
         setNotifications(prev => prev.filter(n => n.id !== deletingNotification.id));
         setToast({
           open: true,
-          message: "Notification deleted successfully.",
+          message: t("deleteSuccess"),
           severity: "success",
         });
         window.dispatchEvent(new CustomEvent("notifications-updated"));
@@ -200,7 +202,7 @@ export default function NotificationsClient() {
       } else {
         setToast({
           open: true,
-          message: "Failed to delete notification. Please try again.",
+          message: t("deleteError"),
           severity: "error",
         });
       }
@@ -227,7 +229,7 @@ export default function NotificationsClient() {
   if (status === "unauthenticated") {
     return (
       <Container maxWidth="md" sx={{ py: 4 }}>
-        <Alert severity="info">Please sign in to view your notifications.</Alert>
+        <Alert severity="info">{t("signInRequired")}</Alert>
       </Container>
     );
   }
@@ -240,7 +242,7 @@ export default function NotificationsClient() {
         <Box sx={{ p: 10, textAlign: "center" }}>
           <CircularProgress size={30} />
           <Typography variant="body2" sx={{ mt: 2, color: "text.secondary" }}>
-            Loading your notifications...
+            {t("loading")}
           </Typography>
         </Box>
       );
@@ -250,7 +252,7 @@ export default function NotificationsClient() {
       return (
         <Box sx={{ p: 10, textAlign: "center" }}>
           <NotificationsActiveIcon sx={{ fontSize: 40, color: "text.disabled", mb: 1 }} />
-          <Typography color="text.secondary">You&apos;re all caught up. No notifications yet.</Typography>
+          <Typography color="text.secondary">{t("empty")}</Typography>
         </Box>
       );
     }
@@ -297,7 +299,7 @@ export default function NotificationsClient() {
 
               <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 {!n.isRead ? (
-                  <Tooltip title="Mark as read">
+                  <Tooltip title={t("markAsReadTooltip")}>
                     <span>
                       <IconButton
                         size="small"
@@ -314,10 +316,10 @@ export default function NotificationsClient() {
                   </Tooltip>
                 ) : (
                   <Typography variant="caption" color="text.disabled" sx={{ fontStyle: "italic" }}>
-                    Read
+                    {t("read")}
                   </Typography>
                 )}
-                <Tooltip title="Delete">
+                <Tooltip title={t("deleteTooltip")}>
                   <IconButton
                     size="small"
                     color="error"
@@ -342,15 +344,15 @@ export default function NotificationsClient() {
       <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 4 }}>
         <Typography variant="h4" sx={{ fontWeight: 800, display: "flex", alignItems: "center", gap: 2 }}>
           <NotificationsActiveIcon color="primary" fontSize="large" />
-          Notifications
+          {t("title")}
         </Typography>
         <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
           <Chip
-            label={`${unreadCount.toString()} Unread`}
+            label={t("unreadCount", { count: unreadCount.toString() })}
             color={unreadCount > 0 ? "primary" : "default"}
             sx={{ fontWeight: 700 }}
           />
-          <Tooltip title="Mark all as read">
+          <Tooltip title={t("markAllAsReadTooltip")}>
             <span>
               <IconButton
                 onClick={() => {

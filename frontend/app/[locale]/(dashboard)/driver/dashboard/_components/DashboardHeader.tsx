@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, Grid, Stack, Avatar, Box, Typography, useTheme } from "@mui/material";
+import { useTranslations } from "next-intl";
 import DriverAvailabilityToggle from "../../_components/DriverAvailabilityToggle";
 
 interface DashboardHeaderProps {
@@ -11,6 +12,7 @@ interface DashboardHeaderProps {
 
 export default function DashboardHeader({ userName, initialAvailability, onAvailabilityChange }: DashboardHeaderProps) {
   const theme = useTheme();
+  const t = useTranslations("dashboard.driverDashboard.dashboardHeader");
 
   return (
     <Card
@@ -38,14 +40,14 @@ export default function DashboardHeader({ userName, initialAvailability, onAvail
                   fontSize: "1.5rem",
                 }}
               >
-                {userName?.[0] || "C"}
+                {userName?.[0] || t("defaultInitial")}
               </Avatar>
               <Box>
                 <Typography variant="h5" sx={{ fontWeight: 700, color: "text.primary", mb: 0.5 }}>
-                  Welcome back, {userName || "Chauffeur"}!
+                  {t("welcomeBack", { userName: userName || t("defaultUserName") })}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  ARES Premium Chauffeur Portal • Shift Active and monitored.
+                  {t("portalDescription")}
                 </Typography>
               </Box>
             </Stack>

@@ -2,6 +2,9 @@
 
 import { useSession } from "next-auth/react";
 import { Box, Container, Grid, Typography, CircularProgress } from "@mui/material";
+import { Box, Container, Grid, Typography } from "@mui/material";
+import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
 import { useEffect, useState } from "react";
 
 // Nested components
@@ -33,6 +36,16 @@ const DEFAULT_KPI: DriverKpiMetrics = {
 
 export default function DriverDashboardClient() {
   const { data: session } = useSession();
+  const t = useTranslations("dashboard.driverDashboard");
+  const locale = useLocale();
+
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
 
   const [isLoading, setIsLoading] = useState(true);
   const [assignment, setAssignment] = useState<TripAssignment | null>(null);
@@ -41,6 +54,19 @@ export default function DriverDashboardClient() {
   const [kpiMetrics, setKpiMetrics] = useState<DriverKpiMetrics>(DEFAULT_KPI);
   const [availability, setAvailability] = useState<DriverAvailabilityStatus>("Unavailable");
 
+  // State hooks initialized with the Mock fallback data for immediate seamless rendering
+  const [assignment, setAssignment] = useState<TripAssignment>(mockAssignment);
+  const [upcomingTrips, setUpcomingTrips] = useState<readonly UpcomingTrip[]>(mockUpcomingTrips);
+  const [payoutHistory, setPayoutHistory] = useState<readonly HistoricalPayout[]>(mockPayoutHistory);
+  const [kpiMetrics, setKpiMetrics] = useState<DriverKpiMetrics>({
+    earnings: formatCurrency(mockDashboardSummary.totalEarnings),
+    tripsCompleted: mockDashboardSummary.totalTripsCompleted,
+    activeUpcomingCount: mockDashboardSummary.upcomingAssignmentsCount,
+    rating: t("kpiMetrics.ratingFormat", { value: mockDashboardSummary.averageRating.toFixed(1) }),
+  });
+  const [availability, setAvailability] = useState<DriverAvailabilityStatus>(mockDashboardSummary.availability);
+
+  // Fetch real API data when token is ready, with automatic error fallback
   useEffect(() => {
     const token = session?.accessToken;
     if (!token) return;
@@ -72,6 +98,28 @@ export default function DriverDashboardClient() {
       } finally {
         setIsLoading(false);
       }
+    async function loadDashboardData(accessToken: string) {
+      const activeTask = getDriverActiveAssignment(accessToken).then(data => {
+        setAssignment(data);
+      });
+      const upcomingTask = getDriverUpcomingSchedule(accessToken).then(data => {
+        setUpcomingTrips(data);
+      });
+      const payoutsTask = getDriverPayoutLogs(accessToken).then(data => {
+        setPayoutHistory(data);
+      });
+
+      const summaryTask = getDriverDashboardSummary(accessToken).then(summary => {
+        setAvailability(summary.availability);
+        setKpiMetrics({
+          earnings: formatCurrency(summary.totalEarnings),
+          tripsCompleted: summary.totalTripsCompleted,
+          activeUpcomingCount: summary.upcomingAssignmentsCount,
+          rating: t("kpiMetrics.ratingFormat", { value: summary.averageRating.toFixed(1) }),
+        });
+      });
+
+      await Promise.allSettled([activeTask, upcomingTask, payoutsTask, summaryTask]);
     }
 
     void loadDashboardData(token);
@@ -95,6 +143,7 @@ export default function DriverDashboardClient() {
         {/* Header Panel */}
         <DashboardHeader
           userName={session?.user?.firstName ?? "Chauffeur"}
+          userName={session?.user.firstName || t("chauffeur")}
           initialAvailability={availability}
           onAvailabilityChange={handleAvailabilityChange}
         />
@@ -126,7 +175,7 @@ export default function DriverDashboardClient() {
         <Box sx={{ mt: 4, mb: 2, borderBottom: "1px solid", borderColor: "border.light" }}>
           <Box sx={{ pb: 1.5, display: "inline-block", borderBottom: "2px solid", borderColor: "primary.main" }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "primary.main" }}>
-              Historical Payout Logs
+              {t("historicalPayoutLogs")}
             </Typography>
           </Box>
         </Box>

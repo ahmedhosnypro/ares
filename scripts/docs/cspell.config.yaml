@@ -1,0 +1,42 @@
+version: "0.2"
+language: en
+import:
+  - "@cspell/dict-ar/cspell-ext.json"
+words:
+  - tsgo
+  - tsconfig
+  - repomix
+  - openai
+  - Ares
+  - devcontainer
+  - shinawy
+  - ora
+  - zod
+  - pandoc
+  - quarto
+  - cliOptions
+  - packResult
+  - totalTokens
+  - totalCharacters
+  - fileCharCounts
+  - fileTokenCounts
+  - TokenCounter
+  - runCli
+  - searchFiles
+  - collectFiles
+  - processFiles
+  - o200k
+  - cl100k
+  - dirpath
+  - repomixignore
+  - Secretlint
+  - Tree-sitter
+  - Al-Azhar
+  - Paymob
+  - paymob
+  - nextauth
+  - ASPNETCORE
+  - dotnet
+  - mssql
+  - ngrok
+  - substep

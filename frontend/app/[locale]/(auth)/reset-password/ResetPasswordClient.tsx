@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { Link } from "@/shared/i18n/routing";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import {
   Alert,
@@ -34,8 +35,25 @@ interface ResetPasswordClientProps {
   readonly token?: string;
 }
 
-// Reusing password strength logic
-function getPasswordStrength(password: string) {
+function createResetPasswordSchema(t: (key: string) => string) {
+  return z
+    .object({
+      newPassword: z
+        .string()
+        .min(8, t("validationMinLength"))
+        .regex(/[A-Z]/, t("validationUppercase"))
+        .regex(/[a-z]/, t("validationLowercase"))
+        .regex(/\d/, t("validationNumber"))
+        .regex(/[^A-Za-z0-9]/, t("validationSpecialChar")),
+      confirmPassword: z.string(),
+    })
+    .refine(data => data.newPassword === data.confirmPassword, {
+      message: t("validationPasswordsMatch"),
+      path: ["confirmPassword"],
+    });
+}
+
+function getPasswordStrength(password: string, t: (key: string) => string) {
   if (!password) return { score: 0, label: "", color: "error" as const };
   let score = 0;
   if (password.length >= 8) score++;
@@ -43,35 +61,20 @@ function getPasswordStrength(password: string) {
   if (/\d/.test(password)) score++;
   if (/[\W_]/.test(password)) score++;
   const levels = [
-    { score: 1, label: "Weak", color: "error" as const },
-    { score: 2, label: "Fair", color: "warning" as const },
-    { score: 3, label: "Good", color: "info" as const },
-    { score: 4, label: "Strong", color: "success" as const },
+    { score: 1, label: t("passwordWeak"), color: "error" as const },
+    { score: 2, label: t("passwordFair"), color: "warning" as const },
+    { score: 3, label: t("passwordGood"), color: "info" as const },
+    { score: 4, label: t("passwordStrong"), color: "success" as const },
   ];
-  return levels[score - 1] ?? { score: 0, label: "Too short", color: "error" as const };
+  return levels[score - 1] ?? { score: 0, label: t("passwordTooShort"), color: "error" as const };
 }
-
-const resetPasswordSchema = z
-  .object({
-    newPassword: z
-      .string()
-      .min(8, "Password must be at least 8 characters")
-      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-      .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-      .regex(/\d/, "Password must contain at least one number")
-      .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character"),
-    confirmPassword: z.string(),
-  })
-  .refine(data => data.newPassword === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
-
-type FieldErrors = Partial<Record<keyof z.infer<typeof resetPasswordSchema>, string>>;
 
 export default function ResetPasswordClient({ email, token }: ResetPasswordClientProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
+  const t = useTranslations("authPages.resetPassword");
+
+  const resetPasswordSchema = useMemo(() => createResetPasswordSchema(t), [t]);
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -82,10 +85,12 @@ export default function ResetPasswordClient({ email, token }: ResetPasswordClien
   const [serverError, setServerError] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof z.infer<typeof resetPasswordSchema>, string>>>(
+    {}
+  );
   const [touched, setTouched] = useState<Partial<Record<keyof z.infer<typeof resetPasswordSchema>, boolean>>>({});
 
-  const passwordStrength = getPasswordStrength(newPassword);
+  const passwordStrength = getPasswordStrength(newPassword, t);
 
   const isLinkInvalid = !email || !token;
 
@@ -103,7 +108,7 @@ export default function ResetPasswordClient({ email, token }: ResetPasswordClien
         [field]: result.success ? undefined : result.error.issues[0]?.message,
       }));
     },
-    [newPassword]
+    [newPassword, resetPasswordSchema]
   );
 
   const handleBlur = (field: keyof z.infer<typeof resetPasswordSchema>, value: string) => {
@@ -117,7 +122,7 @@ export default function ResetPasswordClient({ email, token }: ResetPasswordClien
 
     const result = resetPasswordSchema.safeParse({ newPassword, confirmPassword });
     if (!result.success) {
-      const errors: FieldErrors = {};
+      const errors: Partial<Record<keyof z.infer<typeof resetPasswordSchema>, string>> = {};
       for (const issue of result.error.issues) {
         const key = issue.path[0] as keyof z.infer<typeof resetPasswordSchema>;
         if (!errors[key]) errors[key] = issue.message;
@@ -128,7 +133,7 @@ export default function ResetPasswordClient({ email, token }: ResetPasswordClien
     }
 
     if (isLinkInvalid) {
-      setServerError("Invalid reset link. Missing email or token.");
+      setServerError(t("invalidResetLink"));
       return;
     }
 
@@ -148,11 +153,11 @@ export default function ResetPasswordClient({ email, token }: ResetPasswordClien
         setIsSuccess(true);
       } else {
         const data = (await res.json().catch(() => null)) as { message?: string } | null;
-        setServerError(data?.message || "Failed to reset password. The link may be expired or invalid.");
+        setServerError(data?.message || t("resetFailed"));
       }
     } catch (_error) {
       logger.error("Reset password failed", _error);
-      setServerError("An unexpected error occurred. Please try again later.");
+      setServerError(t("unexpectedError"));
     } finally {
       setIsLoading(false);
     }
@@ -175,10 +180,10 @@ export default function ResetPasswordClient({ email, token }: ResetPasswordClien
         >
           <SuccessIcon color="success" sx={{ fontSize: 64, mb: 2 }} />
           <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
-            Password Reset Successfully!
+            {t("successTitle")}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Your password has been successfully updated. You can now sign in with your new password.
+            {t("successMessage")}
           </Typography>
           <Button
             component={Link}
@@ -188,7 +193,7 @@ export default function ResetPasswordClient({ email, token }: ResetPasswordClien
             size="large"
             sx={{ borderRadius: "999px", py: 1.5, fontWeight: 700, textTransform: "none" }}
           >
-            Go to Sign In
+            {t("goToSignIn")}
           </Button>
         </Box>
       );
@@ -208,10 +213,10 @@ export default function ResetPasswordClient({ email, token }: ResetPasswordClien
         >
           <ErrorIcon color="error" sx={{ fontSize: 64, mb: 2 }} />
           <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
-            Invalid Link
+            {t("invalidLinkTitle")}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            This password reset link is invalid or missing required information. Please request a new link.
+            {t("invalidLinkMessage")}
           </Typography>
           <Button
             component={Link}
@@ -221,7 +226,7 @@ export default function ResetPasswordClient({ email, token }: ResetPasswordClien
             size="large"
             sx={{ borderRadius: "999px", py: 1.5, fontWeight: 700, textTransform: "none" }}
           >
-            Request New Link
+            {t("requestNewLink")}
           </Button>
         </Box>
       );
@@ -233,7 +238,6 @@ export default function ResetPasswordClient({ email, token }: ResetPasswordClien
   return (
     <Box sx={{ minHeight: "100vh", display: "flex", background: theme.palette.overlay.gradient }}>
       <Box sx={{ display: "flex", flex: 1, flexDirection: { xs: "column", lg: "row" } }}>
-        {/* ── Form side ── */}
         <Box
           sx={{
             flex: { xs: "1 1 auto", lg: "0 0 50%" },
@@ -255,13 +259,12 @@ export default function ResetPasswordClient({ email, token }: ResetPasswordClien
               border: `1px solid ${theme.palette.border.main}`,
             }}
           >
-            {/* Logo */}
             <Box sx={{ mb: 6 }}>
               <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", mb: 4 }}>
                 <Box sx={{ position: "relative", width: 200, height: 60, display: "flex", alignItems: "center" }}>
                   <Image
                     src="/img/favicon/logo_transparent.png"
-                    alt="Ares Logo"
+                    alt={t("logoAlt")}
                     fill
                     sizes="200px"
                     style={{ objectFit: "contain" }}
@@ -270,11 +273,11 @@ export default function ResetPasswordClient({ email, token }: ResetPasswordClien
                 </Box>
               </Box>
               <Typography variant="h4" component="h1" sx={{ fontWeight: 700, mb: 1, color: "text.primary" }}>
-                Set New Password
+                {t("title")}
               </Typography>
               {!isSuccess && (
                 <Typography variant="body2" color="text.secondary">
-                  Please enter your new password below.
+                  {t("subtitle")}
                 </Typography>
               )}
             </Box>
@@ -283,7 +286,7 @@ export default function ResetPasswordClient({ email, token }: ResetPasswordClien
               <>
                 {serverError && (
                   <Alert severity="error" icon={<ErrorIcon />} sx={{ mb: 3, borderRadius: 2 }}>
-                    <AlertTitle sx={{ fontWeight: 600 }}>Error</AlertTitle>
+                    <AlertTitle sx={{ fontWeight: 600 }}>{t("errorTitle")}</AlertTitle>
                     {serverError}
                   </Alert>
                 )}
@@ -300,7 +303,7 @@ export default function ResetPasswordClient({ email, token }: ResetPasswordClien
                       fullWidth
                       id="newPassword"
                       name="newPassword"
-                      label="New Password"
+                      label={t("newPasswordLabel")}
                       type={showPassword ? "text" : "password"}
                       autoComplete="new-password"
                       required
@@ -324,7 +327,7 @@ export default function ResetPasswordClient({ email, token }: ResetPasswordClien
                           endAdornment: (
                             <InputAdornment position="end">
                               <IconButton
-                                aria-label="toggle password visibility"
+                                aria-label={t("togglePassword")}
                                 onClick={() => {
                                   setShowPassword(!showPassword);
                                 }}
@@ -356,7 +359,7 @@ export default function ResetPasswordClient({ email, token }: ResetPasswordClien
                     fullWidth
                     id="confirmPassword"
                     name="confirmPassword"
-                    label="Confirm New Password"
+                    label={t("confirmPasswordLabel")}
                     type={showConfirm ? "text" : "password"}
                     autoComplete="new-password"
                     required
@@ -380,7 +383,7 @@ export default function ResetPasswordClient({ email, token }: ResetPasswordClien
                         endAdornment: (
                           <InputAdornment position="end">
                             <IconButton
-                              aria-label="toggle confirm password visibility"
+                              aria-label={t("toggleConfirmPassword")}
                               onClick={() => {
                                 setShowConfirm(!showConfirm);
                               }}
@@ -411,7 +414,7 @@ export default function ResetPasswordClient({ email, token }: ResetPasswordClien
                       "&:hover": { boxShadow: theme.palette.shadow.buttonHover },
                     }}
                   >
-                    {isLoading ? <CircularProgress size={24} color="inherit" /> : "Reset Password"}
+                    {isLoading ? <CircularProgress size={24} color="inherit" /> : t("resetButton")}
                   </Button>
                 </Box>
               </>
@@ -419,7 +422,6 @@ export default function ResetPasswordClient({ email, token }: ResetPasswordClien
           </Box>
         </Box>
 
-        {/* ── Decorative side ── */}
         {!isMobile && (
           <Box sx={{ flex: { lg: "0 0 50%" }, position: "relative", display: { xs: "none", lg: "block" } }}>
             <Paper
@@ -429,7 +431,7 @@ export default function ResetPasswordClient({ email, token }: ResetPasswordClien
               <Box sx={{ position: "absolute", inset: 0, "& img": { objectFit: "cover", opacity: 0.6 } }}>
                 <Image
                   src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80"
-                  alt="Luxury Car Side Profile"
+                  alt={t("carImageAlt")}
                   fill
                   sizes="50vw"
                   priority
@@ -438,13 +440,13 @@ export default function ResetPasswordClient({ email, token }: ResetPasswordClien
               <Box sx={{ position: "absolute", inset: 0, background: theme.palette.overlay.tealGradient }} />
               <Box sx={{ position: "absolute", bottom: 0, left: 0, right: 0, p: 6, color: "common.white" }}>
                 <Typography variant="h3" component="h3" sx={{ fontWeight: 900, mb: 2, letterSpacing: "-0.02em" }}>
-                  A Fresh Start
+                  {t("decorativeTitle")}
                 </Typography>
                 <Typography
                   variant="h6"
                   sx={{ maxWidth: 500, color: "text.secondary", fontWeight: 400, lineHeight: 1.6 }}
                 >
-                  Secure your account and prepare for your next extraordinary journey with Ares.
+                  {t("decorativeSubtitle")}
                 </Typography>
               </Box>
             </Paper>

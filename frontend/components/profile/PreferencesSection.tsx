@@ -11,6 +11,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
 
@@ -52,6 +53,7 @@ export default function PreferencesSection({
   emergencyPhone,
   emergencyRelationship,
 }: PreferencesSectionProps) {
+  const t = useTranslations("customer.accountProfile");
   const [language, setLanguage] = useState(languagePreference);
   const [currency, setCurrency] = useState(currencyPreference);
 
@@ -104,37 +106,37 @@ export default function PreferencesSection({
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="subtitle1" color="text.primary" gutterBottom sx={{ fontWeight: 700 }}>
-        Preferences
+        {t("preferences.title")}
       </Typography>
       <Divider sx={{ mb: 2.5, borderColor: "border.light" }} />
 
       <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
         <FormControl fullWidth size="small">
-          <InputLabel id="language-label">Language</InputLabel>
+          <InputLabel id="language-label">{t("preferences.language")}</InputLabel>
           <Select
             labelId="language-label"
             id="language-select"
             value={language}
-            label="Language"
+            label={t("preferences.language")}
             onChange={handleLanguageChange}
           >
-            <MenuItem value="en">English (US)</MenuItem>
-            <MenuItem value="ar">Arabic (EG)</MenuItem>
+            <MenuItem value="en">{t("preferences.englishUS")}</MenuItem>
+            <MenuItem value="ar">{t("preferences.arabicEG")}</MenuItem>
           </Select>
         </FormControl>
 
         <FormControl fullWidth size="small">
-          <InputLabel id="currency-label">Currency</InputLabel>
+          <InputLabel id="currency-label">{t("preferences.currency")}</InputLabel>
           <Select
             labelId="currency-label"
             id="currency-select"
             value={currency}
-            label="Currency"
+            label={t("preferences.currency")}
             onChange={handleCurrencyChange}
           >
-            <MenuItem value="USD">USD ($)</MenuItem>
-            <MenuItem value="EGP">EGP (E£)</MenuItem>
-            <MenuItem value="EUR">EUR (€)</MenuItem>
+            <MenuItem value="USD">{t("preferences.usd")}</MenuItem>
+            <MenuItem value="EGP">{t("preferences.egp")}</MenuItem>
+            <MenuItem value="EUR">{t("preferences.eur")}</MenuItem>
           </Select>
         </FormControl>
       </Box>

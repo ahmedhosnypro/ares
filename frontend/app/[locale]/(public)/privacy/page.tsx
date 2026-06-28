@@ -1,7 +1,70 @@
-export default function PrivacyPage() {
+import { Box, Container, Divider, Typography } from "@mui/material";
+import { apiFetchJson } from "@/utils/api-client";
+import { getTranslations } from "next-intl/server";
+
+interface PrivacySection {
+  id: string;
+  title: string;
+  content: string;
+  order: number;
+  updatedAt: string;
+}
+
+async function getPrivacySections(locale: string): Promise<PrivacySection[]> {
+  try {
+    return await apiFetchJson<PrivacySection[]>(`/api/privacy?locale=${locale}`);
+  } catch {
+    return [];
+  }
+}
+
+export default async function PrivacyPage({ params }: Readonly<{ params: Promise<{ locale: string }> }>) {
+  const { locale } = await params;
+  const sections = await getPrivacySections(locale);
+  const lastUpdated = sections[0]?.updatedAt
+    ? new Intl.DateTimeFormat(locale, { year: "numeric", month: "long", day: "numeric" }).format(
+        new Date(sections[0].updatedAt)
+      )
+    : null;
+  const t = await getTranslations("publicPages.privacy");
+
   return (
-    <main>
-      <h1>Privacy Policy</h1>
-    </main>
+    <Container maxWidth="md" sx={{ py: { xs: 6, md: 10 } }}>
+      <Box sx={{ mb: 6 }}>
+        <Typography variant="h3" sx={{ fontWeight: 800, mb: 1 }}>
+          {t("title")}
+        </Typography>
+        {lastUpdated && (
+          <Typography variant="body2" color="text.secondary">
+            {t("lastUpdated")} {lastUpdated}
+          </Typography>
+        )}
+      </Box>
+
+      {sections.length === 0 ? (
+        <Typography color="text.secondary">{t("emptyState")}</Typography>
+      ) : (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 5 }}>
+          {sections.map((section, index) => (
+            <Box key={section.id}>
+              <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
+                {index + 1}. {section.title}
+              </Typography>
+              {section.content.split("\n\n").map((paragraph, i) => (
+                <Typography
+                  key={i}
+                  variant="body1"
+                  color="text.secondary"
+                  sx={{ mb: 1.5, whiteSpace: "pre-line", lineHeight: 1.8 }}
+                >
+                  {paragraph}
+                </Typography>
+              ))}
+              {index < sections.length - 1 && <Divider sx={{ mt: 4 }} />}
+            </Box>
+          ))}
+        </Box>
+      )}
+    </Container>
   );
 }

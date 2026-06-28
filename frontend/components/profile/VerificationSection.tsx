@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import ProfileCard from "./ProfileCard";
 import VerificationStatus from "./VerificationStatus";
 import IdentityVerificationCard from "./IdentityVerificationCard";
@@ -39,6 +40,7 @@ export default function VerificationSection({
   initialLicenseVerified,
   initialKycStatus,
 }: VerificationSectionProps) {
+  const t = useTranslations("customer.accountProfile");
   // Identity state
   const [verificationState, setVerificationState] = useState<LoadState>("loading");
   const [verification, setVerification] = useState<UserVerificationDto | null>(null);
@@ -61,10 +63,10 @@ export default function VerificationSection({
       setVerificationState("ready");
     } catch (error) {
       logger.error("Failed to load verification status client-side", error);
-      setVerificationError("Unable to load verification status.");
+      setVerificationError(t("identityVerification.loadError"));
       setVerificationState("error");
     }
-  }, [accessToken]);
+  }, [accessToken, t]);
 
   // Load driver license
   const loadLicense = useCallback(async () => {
@@ -76,10 +78,10 @@ export default function VerificationSection({
       setLicenseState("ready");
     } catch (error) {
       logger.error("Failed to load driver license status client-side", error);
-      setLicenseError("Unable to load driver license status.");
+      setLicenseError(t("driverLicense.loadError"));
       setLicenseState("error");
     }
-  }, [accessToken]);
+  }, [accessToken, t]);
 
   useEffect(() => {
     void loadVerification();

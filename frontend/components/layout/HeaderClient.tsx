@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 import Image from "next/image";
 import { usePathname, Link } from "@/shared/i18n/routing";
@@ -49,6 +50,8 @@ interface HeaderClientProps {
 export default function HeaderClient({ session: initialSession }: HeaderClientProps) {
   const { data: clientSession, status } = useSession();
   const session = status === "loading" ? initialSession : clientSession;
+  const t = useTranslations("header");
+  const tc = useTranslations("common");
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currencyAnchor, setCurrencyAnchor] = useState<null | HTMLElement>(null);
@@ -56,18 +59,18 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
   const [selectedCurrency, setSelectedCurrency] = useState("USD");
 
   const navigationLinks = [
-    { label: "Search", href: "/search" },
-    { label: "Locations", href: "/locations" },
-    { label: "Categories", href: "/categories" },
-    { label: "Offers & Deals", href: "/offers" },
-    { label: "About Us", href: "/about" },
+    { label: t("search"), href: "/search" },
+    { label: t("locations"), href: "/locations" },
+    { label: t("categories"), href: "/categories" },
+    { label: t("offersAndDeals"), href: "/offers" },
+    { label: t("aboutUs"), href: "/about" },
   ];
 
   const currencies = [
-    { code: "USD", label: "USD - US Dollar", symbol: "$" },
-    { code: "EGP", label: "EGP - Egyptian Pound", symbol: "E£" },
-    { code: "EUR", label: "EUR - Euro", symbol: "€" },
-    { code: "GBP", label: "GBP - British Pound", symbol: "£" },
+    { code: "USD", label: t("usDollar"), symbol: "$" },
+    { code: "EGP", label: t("egpPound"), symbol: "E£" },
+    { code: "EUR", label: t("euro"), symbol: "€" },
+    { code: "GBP", label: t("britishPound"), symbol: "£" },
   ];
 
   const handleCurrencyClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -89,20 +92,18 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
     await signOut({ callbackUrl: "/" });
   };
 
-  // Get user initials for avatar
   const getUserInitials = () => {
-    if (!session?.user) return "U";
+    if (!session?.user) return t("fallbackUserInitial");
     const firstName = session.user.firstName || "";
     const lastName = session.user.lastName || "";
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || "U";
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || t("fallbackUserInitial");
   };
 
-  // Get user display name
   const getUserDisplayName = () => {
-    if (!session?.user) return "User";
+    if (!session?.user) return t("fallbackUserName");
     const firstName = session.user.firstName || "";
     const lastName = session.user.lastName || "";
-    return `${firstName} ${lastName}`.trim() || session.user.email || "User";
+    return `${firstName} ${lastName}`.trim() || session.user.email || t("fallbackUserName");
   };
 
   // Check if user has admin/supplier/driver/inspector roles
@@ -184,7 +185,7 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
               >
                 <Image
                   src="/img/favicon/logo_transparent.png"
-                  alt="Ares Logo"
+                  alt={t("logoAlt")}
                   fill
                   sizes="(max-width: 600px) 100px, 120px"
                   style={{
@@ -219,6 +220,7 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
                     borderRadius: 1.5,
                     textTransform: "none",
                     fontSize: "1rem",
+                    whiteSpace: "nowrap",
                     transition: "all 0.2s ease",
                     "&:hover": {
                       bgcolor: "header.buttonHover",
@@ -359,7 +361,7 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
                       <ListItemIcon>
                         <PersonIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText>My Profile</ListItemText>
+                      <ListItemText>{t("myProfile")}</ListItemText>
                     </MenuItem>
 
                     {!isAdmin && (
@@ -373,7 +375,7 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
                         <ListItemIcon>
                           <BookmarksIcon fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>My Bookings</ListItemText>
+                        <ListItemText>{t("myBookings")}</ListItemText>
                       </MenuItem>
                     )}
 
@@ -388,7 +390,7 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
                         <ListItemIcon>
                           <DashboardIcon fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>Dashboard</ListItemText>
+                        <ListItemText>{tc("dashboard")}</ListItemText>
                       </MenuItem>
                     )}
 
@@ -403,7 +405,7 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
                       <ListItemIcon>
                         <LogoutIcon fontSize="small" color="error" />
                       </ListItemIcon>
-                      <ListItemText>Sign Out</ListItemText>
+                      <ListItemText>{tc("signOut")}</ListItemText>
                     </MenuItem>
                   </Menu>
                 </>
@@ -421,12 +423,13 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
                       display: { xs: "none", md: "inline-flex" },
                       borderRadius: 1.5,
                       px: 2,
+                      whiteSpace: "nowrap",
                       "&:hover": {
                         bgcolor: "header.buttonHover",
                       },
                     }}
                   >
-                    Sign In
+                    {tc("signIn")}
                   </Button>
                   <Button
                     component={Link}
@@ -449,7 +452,7 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
                       transition: "all 0.2s ease",
                     }}
                   >
-                    Register
+                    {tc("register")}
                   </Button>
                 </>
               )}
@@ -495,7 +498,7 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
             >
               <Image
                 src="/img/favicon/logo_transparent.png"
-                alt="Ares Logo"
+                alt={t("logoAlt")}
                 fill
                 sizes="100px"
                 style={{ objectFit: "contain", mixBlendMode: "multiply" }}
@@ -556,7 +559,7 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
                     <ListItemIcon>
                       <PersonIcon />
                     </ListItemIcon>
-                    <ListItemText primary="My Profile" />
+                    <ListItemText primary={t("myProfile")} />
                   </ListItemButton>
                 </ListItem>
                 {!isAdmin && (
@@ -572,7 +575,7 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
                       <ListItemIcon>
                         <BookmarksIcon />
                       </ListItemIcon>
-                      <ListItemText primary="My Bookings" />
+                      <ListItemText primary={t("myBookings")} />
                     </ListItemButton>
                   </ListItem>
                 )}
@@ -589,7 +592,7 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
                       <ListItemIcon>
                         <DashboardIcon />
                       </ListItemIcon>
-                      <ListItemText primary="Dashboard" />
+                      <ListItemText primary={tc("dashboard")} />
                     </ListItemButton>
                   </ListItem>
                 )}
@@ -623,31 +626,31 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
           <Stack spacing={2} sx={{ px: 2 }}>
             <Box>
               <Typography variant="caption" color="text.secondary" gutterBottom>
-                Theme
+                {tc("theme")}
               </Typography>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <ThemeSwitcher size="small" />
                 <Typography variant="body2" color="text.secondary">
-                  Toggle theme
+                  {t("toggleTheme")}
                 </Typography>
               </Box>
             </Box>
 
             <Box>
               <Typography variant="caption" color="text.secondary" gutterBottom>
-                Language
+                {tc("language")}
               </Typography>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <LanguageSwitcher color="inherit" size="small" />
                 <Typography variant="body2" color="text.secondary">
-                  Switch language
+                  {t("switchLanguage")}
                 </Typography>
               </Box>
             </Box>
 
             <Box>
               <Typography variant="caption" color="text.secondary" gutterBottom>
-                Currency
+                {tc("currency")}
               </Typography>
               <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
                 {currencies.map(curr => (
@@ -683,7 +686,7 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
                 startIcon={<LogoutIcon />}
                 sx={{ borderRadius: 1.5, py: 1.5 }}
               >
-                Sign Out
+                {tc("signOut")}
               </Button>
             ) : (
               <>
@@ -697,7 +700,7 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
                   }}
                   sx={{ borderRadius: 1.5, py: 1.5 }}
                 >
-                  Sign In
+                  {tc("signIn")}
                 </Button>
                 <Button
                   component={Link}
@@ -709,7 +712,7 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
                   }}
                   sx={{ borderRadius: 1.5, py: 1.5, fontWeight: "bold" }}
                 >
-                  Register
+                  {tc("register")}
                 </Button>
               </>
             )}

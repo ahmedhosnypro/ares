@@ -1,10 +1,14 @@
-import { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import DriverDashboardClient from "./DriverDashboardClient";
 
-export const metadata: Metadata = {
-  title: "Driver Dashboard | ARES",
-  description: "Manage your driving requests, trips, and earnings.",
-};
+export async function generateMetadata({ params: { locale } }: { params: { locale: string } }) {
+  const t = await getTranslations({ locale, namespace: "dashboard.driverDashboard" });
+
+  return {
+    title: t("title"),
+    description: t("description"),
+  };
+}
 
 export default function DriverDashboardPage() {
   return <DriverDashboardClient />;

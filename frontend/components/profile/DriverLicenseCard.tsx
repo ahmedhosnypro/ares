@@ -7,6 +7,7 @@ import HourglassTopRoundedIcon from "@mui/icons-material/HourglassTopRounded";
 import ErrorOutlinedRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 import DriveEtaRoundedIcon from "@mui/icons-material/DriveEtaRounded";
 import UploadFileRoundedIcon from "@mui/icons-material/UploadFileRounded";
+import { useTranslations } from "next-intl";
 
 import {
   getMyDriverLicense,
@@ -52,6 +53,7 @@ export default function DriverLicenseCard({
   onCloseModal,
   onSubmitted,
 }: DriverLicenseCardProps) {
+  const t = useTranslations("customer.accountProfile");
   const [internalState, setInternalState] = useState<LoadState>("loading");
   const [internalLicense, setInternalLicense] = useState<DriverLicenseDto | null>(null);
   const [internalLoadError, setInternalLoadError] = useState<string>("");
@@ -74,10 +76,10 @@ export default function DriverLicenseCard({
       setInternalState("ready");
     } catch (error) {
       logger.error("Failed to load driver license status", error);
-      setInternalLoadError("Unable to load driver license status.");
+      setInternalLoadError(t("driverLicense.loadError"));
       setInternalState("error");
     }
-  }, [accessToken, isControlled]);
+  }, [accessToken, isControlled, t]);
 
   useEffect(() => {
     if (!isControlled) {
@@ -115,18 +117,18 @@ export default function DriverLicenseCard({
 
   const verificationState = useMemo(() => deriveState(license), [license]);
 
-  let buttonLabel = "Update License";
+  let buttonLabel = t("driverLicense.updateLicense");
   if (verificationState === "NotSubmitted") {
-    buttonLabel = "Upload License";
+    buttonLabel = t("driverLicense.uploadLicense");
   } else if (verificationState === "Rejected") {
-    buttonLabel = "Resubmit License";
+    buttonLabel = t("driverLicense.resubmitLicense");
   }
 
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
         <Typography variant="subtitle1" color="text.primary" sx={{ fontWeight: 700 }}>
-          Driver License
+          {t("driverLicense.title")}
         </Typography>
         <DriveEtaRoundedIcon sx={{ color: "text.secondary", fontSize: 20 }} />
       </Box>
@@ -154,7 +156,7 @@ export default function DriverLicenseCard({
             }}
             sx={{ fontWeight: 700 }}
           >
-            Try Again
+            {t("driverLicense.tryAgain")}
           </Button>
         </Stack>
       )}
@@ -166,7 +168,7 @@ export default function DriverLicenseCard({
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
                 <Chip
                   icon={<VerifiedRoundedIcon sx={{ fontSize: 16 }} />}
-                  label="Verified"
+                  label={t("driverLicense.verified")}
                   size="small"
                   color="success"
                   variant="outlined"
@@ -174,12 +176,12 @@ export default function DriverLicenseCard({
                 />
                 {license?.licenseExpiryDate && (
                   <Typography variant="caption" color="text.secondary">
-                    Expires {formatDate(license.licenseExpiryDate)}
+                    {t("driverLicense.expires")} {formatDate(license.licenseExpiryDate)}
                   </Typography>
                 )}
               </Box>
               <Typography variant="body2" color="text.secondary">
-                Your driver license has been verified. Keep it up to date to remain eligible for bookings.
+                {t("driverLicense.verifiedDescription")}
               </Typography>
             </>
           )}
@@ -189,7 +191,7 @@ export default function DriverLicenseCard({
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
                 <Chip
                   icon={<HourglassTopRoundedIcon sx={{ fontSize: 16 }} />}
-                  label="Pending review"
+                  label={t("driverLicense.pendingReview")}
                   size="small"
                   color="warning"
                   variant="outlined"
@@ -197,17 +199,16 @@ export default function DriverLicenseCard({
                 />
                 {license?.licenseExpiryDate && (
                   <Typography variant="caption" color="text.secondary">
-                    Expires {formatDate(license.licenseExpiryDate)}
+                    {t("driverLicense.expires")} {formatDate(license.licenseExpiryDate)}
                   </Typography>
                 )}
               </Box>
               <Typography variant="body2" color="text.secondary">
-                Your driver license is under review. We&apos;ll update your status once our team has finished reviewing
-                your documents.
+                {t("driverLicense.pendingDescription")}
               </Typography>
               {license?.submittedAt && (
                 <Typography variant="caption" color="text.secondary">
-                  Submitted {formatDate(license.submittedAt)}
+                  {t("driverLicense.submitted")} {formatDate(license.submittedAt)}
                 </Typography>
               )}
             </>
@@ -218,7 +219,7 @@ export default function DriverLicenseCard({
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
                 <Chip
                   icon={<ErrorOutlinedRoundedIcon sx={{ fontSize: 16 }} />}
-                  label="Rejected"
+                  label={t("driverLicense.rejected")}
                   size="small"
                   color="error"
                   variant="outlined"
@@ -228,13 +229,13 @@ export default function DriverLicenseCard({
               {license?.rejectionReason ? (
                 <Alert severity="error" variant="outlined" sx={{ py: 0.5 }}>
                   <Typography variant="caption" sx={{ fontWeight: 700, display: "block" }}>
-                    Reason
+                    {t("driverLicense.reason")}
                   </Typography>
                   <Typography variant="body2">{license.rejectionReason}</Typography>
                 </Alert>
               ) : (
                 <Typography variant="body2" color="text.secondary">
-                  Your previous driver license submission was rejected. Please re-upload a clearer copy.
+                  {t("driverLicense.rejectedNoReasonDescription")}
                 </Typography>
               )}
             </>
@@ -245,7 +246,7 @@ export default function DriverLicenseCard({
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Chip
                   icon={<ErrorOutlinedRoundedIcon sx={{ fontSize: 16 }} />}
-                  label="Not submitted"
+                  label={t("driverLicense.notSubmitted")}
                   size="small"
                   color="warning"
                   variant="outlined"
@@ -253,7 +254,7 @@ export default function DriverLicenseCard({
                 />
               </Box>
               <Typography variant="body2" color="text.secondary">
-                Upload your driver license to become eligible for bookings on ARES.
+                {t("driverLicense.notSubmittedDescription")}
               </Typography>
             </>
           )}

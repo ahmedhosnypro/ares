@@ -6,6 +6,7 @@ import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { useTranslations } from "next-intl";
 import { personalInfoSchema, type PersonalInfoFormData } from "@/lib/validation/schemas";
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
@@ -51,6 +52,7 @@ export default function PersonalInfoForm({
   languagePreference,
   currencyPreference,
 }: PersonalInfoFormProps) {
+  const t = useTranslations("customer.accountProfile");
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [serverError, setServerError] = useState("");
@@ -138,14 +140,14 @@ export default function PersonalInfoForm({
           return;
         }
 
-        const msg = body?.message ?? "Failed to update.";
+        const msg = body?.message ?? t("personalInfo.updateFailed");
         setServerError(msg);
         return;
       }
-      setSuccessMsg("Personal information updated successfully.");
+      setSuccessMsg(t("personalInfo.updateSuccess"));
     } catch (error) {
       logger.error("Update profile error", error);
-      setServerError(error instanceof Error ? error.message : "Failed to save changes.");
+      setServerError(error instanceof Error ? error.message : t("personalInfo.saveChangesFailed"));
     } finally {
       setLoading(false);
     }
@@ -154,7 +156,7 @@ export default function PersonalInfoForm({
   return (
     <Box>
       <Typography variant="h6" color="text.primary" gutterBottom sx={{ fontWeight: 700 }}>
-        Personal Information
+        {t("personalInfo.title")}
       </Typography>
       <Divider sx={{ mb: 3, borderColor: "border.light" }} />
 
@@ -170,7 +172,7 @@ export default function PersonalInfoForm({
             <TextField
               id="firstName"
               name="firstName"
-              label="First Name"
+              label={t("personalInfo.firstName")}
               value={firstName}
               onChange={e => {
                 setFirstName(e.target.value);
@@ -189,7 +191,7 @@ export default function PersonalInfoForm({
             <TextField
               id="lastName"
               name="lastName"
-              label="Last Name"
+              label={t("personalInfo.lastName")}
               value={lastName}
               onChange={e => {
                 setLastName(e.target.value);
@@ -207,12 +209,12 @@ export default function PersonalInfoForm({
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               id="email"
-              label="Email Address"
+              label={t("personalInfo.emailAddress")}
               type="email"
               value={email}
               disabled
               autoComplete="email"
-              helperText="Email cannot be changed"
+              helperText={t("personalInfo.emailCannotBeChanged")}
             />
           </Grid>
 
@@ -220,7 +222,7 @@ export default function PersonalInfoForm({
             <TextField
               id="phone"
               name="phone"
-              label="Phone Number"
+              label={t("personalInfo.phoneNumber")}
               type="tel"
               value={phone}
               onChange={handlePhoneChange}
@@ -230,7 +232,7 @@ export default function PersonalInfoForm({
               fullWidth
               variant="outlined"
               error={touched.phone && !!fieldErrors.phone}
-              helperText={(touched.phone && fieldErrors.phone) || "Include country code (e.g. +20 100 000 0000)"}
+              helperText={(touched.phone && fieldErrors.phone) || t("personalInfo.phoneHelperText")}
               autoComplete="tel"
             />
           </Grid>
@@ -238,7 +240,7 @@ export default function PersonalInfoForm({
           <Grid size={{ xs: 12, sm: 6 }}>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <DatePicker
-                label="Date of Birth"
+                label={t("personalInfo.dateOfBirth")}
                 value={dob}
                 onChange={newValue => {
                   setDob(newValue);
@@ -277,7 +279,7 @@ export default function PersonalInfoForm({
             justifyContent: "space-between",
             mt: 3,
             pt: 2,
-            borderTop: t => `1px solid ${t.palette.border.light}`,
+            borderTop: theme => `1px solid ${theme.palette.border.light}`,
             flexWrap: "wrap",
             gap: 2,
           }}
@@ -304,11 +306,11 @@ export default function PersonalInfoForm({
               px: 3,
               py: 1.25,
               fontWeight: 700,
-              boxShadow: t => t.palette.shadow.button,
-              "&:hover": { boxShadow: t => t.palette.shadow.buttonHover },
+              boxShadow: theme => theme.palette.shadow.button,
+              "&:hover": { boxShadow: theme => theme.palette.shadow.buttonHover },
             }}
           >
-            {loading ? "Saving..." : "Save Changes"}
+            {loading ? t("personalInfo.saving") : t("personalInfo.saveChanges")}
           </Button>
         </Box>
       </Box>

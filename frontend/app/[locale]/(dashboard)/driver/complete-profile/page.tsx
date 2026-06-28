@@ -1,10 +1,14 @@
-import { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import CompleteProfileClient from "./CompleteProfileClient";
 
-export const metadata: Metadata = {
-  title: "Complete Driver Profile | ARES",
-  description: "Provide your license, ID, and work area details to start driving with ARES.",
-};
+export async function generateMetadata({ params: { locale } }: { params: { locale: string } }) {
+  const t = await getTranslations({ locale, namespace: "dashboard.driverCompleteProfile" });
+
+  return {
+    title: t("title"),
+    description: t("pageDescription"),
+  };
+}
 
 export default function CompleteProfilePage() {
   return <CompleteProfileClient />;

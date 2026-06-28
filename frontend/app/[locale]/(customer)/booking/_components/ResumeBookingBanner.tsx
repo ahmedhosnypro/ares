@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { Alert, AlertTitle, Box, Button, Stack } from "@mui/material";
 import RestoreIcon from "@mui/icons-material/Restore";
 import {
@@ -22,19 +23,21 @@ import { logger } from "@/utils/logger";
  * `excludeBookingId` lets a page that is already showing a given booking avoid
  * advertising a banner for that same booking.
  */
-export function ResumeBookingBanner({ excludeBookingId }: { excludeBookingId?: string }) {
+export function ResumeBookingBanner({ excludeBookingId }: { readonly excludeBookingId?: string }) {
   const router = useRouter();
+  const t = useTranslations("customer.bookings.resumeBooking");
   const { data: session, status } = useSession();
   const [active, setActive] = useState<CheckoutState | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (status !== "authenticated" || !session?.accessToken) return;
+    if (status !== "authenticated" || !session.accessToken) return;
     let cancelled = false;
     void (async () => {
       try {
         const state = await getActiveCheckout(session.accessToken);
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (!cancelled) setActive(state);
       } catch (e) {
         logger.error("Failed to check for a resumable booking", e);
@@ -71,7 +74,7 @@ export function ResumeBookingBanner({ excludeBookingId }: { excludeBookingId?: s
         action={
           <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
             <Button color="inherit" size="small" disabled={busy} onClick={() => void handleDiscard()}>
-              Discard
+              {t("cancel")}
             </Button>
             <Button
               variant="contained"
@@ -81,14 +84,14 @@ export function ResumeBookingBanner({ excludeBookingId }: { excludeBookingId?: s
                 router.push(checkoutStepHref(active));
               }}
             >
-              Continue
+              {t("resume")}
             </Button>
           </Stack>
         }
       >
-        <AlertTitle>You have an unfinished booking</AlertTitle>
-        Continue where you left off with {active.vehicleLabel}
-        {active.status === "PaymentPending" ? " — your vehicle is being held." : "."}
+        <AlertTitle>{t("title")}</AlertTitle>
+        {t("message", { vehicle: active.vehicleLabel })}
+        {active.status === "PaymentPending" ? ` — ${t("vehicleHeld")}` : "."}
       </Alert>
     </Box>
   );

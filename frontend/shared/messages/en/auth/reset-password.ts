@@ -1,0 +1,38 @@
+import type { ResetPasswordLabels } from "../../types/auth/reset-password";
+
+const resetPassword: ResetPasswordLabels = {
+  title: "Set New Password",
+  subtitle: "Please enter your new password below.",
+  newPasswordLabel: "New Password",
+  confirmPasswordLabel: "Confirm New Password",
+  resetButton: "Reset Password",
+  togglePassword: "toggle password visibility",
+  toggleConfirmPassword: "toggle confirm password visibility",
+  successTitle: "Password Reset Successfully!",
+  successMessage: "Your password has been successfully updated. You can now sign in with your new password.",
+  goToSignIn: "Go to Sign In",
+  invalidLinkTitle: "Invalid Link",
+  invalidLinkMessage: "This password reset link is invalid or missing required information. Please request a new link.",
+  requestNewLink: "Request New Link",
+  invalidResetLink: "Invalid reset link. Missing email or token.",
+  resetFailed: "Failed to reset password. The link may be expired or invalid.",
+  unexpectedError: "An unexpected error occurred. Please try again later.",
+  errorTitle: "Error",
+  logoAlt: "Ares Logo",
+  carImageAlt: "Luxury Car Side Profile",
+  decorativeTitle: "A Fresh Start",
+  decorativeSubtitle: "Secure your account and prepare for your next extraordinary journey with Ares.",
+  passwordWeak: "Weak",
+  passwordFair: "Fair",
+  passwordGood: "Good",
+  passwordStrong: "Strong",
+  passwordTooShort: "Too short",
+  validationMinLength: "Password must be at least 8 characters",
+  validationUppercase: "Password must contain at least one uppercase letter",
+  validationLowercase: "Password must contain at least one lowercase letter",
+  validationNumber: "Password must contain at least one number",
+  validationSpecialChar: "Password must contain at least one special character",
+  validationPasswordsMatch: "Passwords do not match",
+};
+
+export default resetPassword;

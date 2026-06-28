@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button, Box } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { Logout as LogoutIcon } from "@mui/icons-material";
@@ -14,6 +15,8 @@ interface LogoutConfirmDialogProps {
 export default function LogoutConfirmDialog({ open, onOpenChange, onConfirm }: LogoutConfirmDialogProps) {
   const cancelRef = useRef<HTMLButtonElement>(null);
   const logoutRef = useRef<HTMLButtonElement>(null);
+  const t = useTranslations("dashboard.logoutDialog");
+  const tc = useTranslations("common");
 
   const handleClose = () => {
     onOpenChange(false);
@@ -75,13 +78,11 @@ export default function LogoutConfirmDialog({ open, onOpenChange, onConfirm }: L
           <LogoutIcon />
         </Box>
         <DialogTitle id="logout-dialog-title" sx={{ p: 0, fontWeight: 700 }}>
-          Confirm Logout
+          {t("title")}
         </DialogTitle>
       </Box>
       <DialogContent sx={{ mt: 2 }}>
-        <DialogContentText id="logout-dialog-description">
-          Are you sure you want to log out of your account? You will need to sign in again to access your dashboard.
-        </DialogContentText>
+        <DialogContentText id="logout-dialog-description">{t("message")}</DialogContentText>
       </DialogContent>
       <DialogActions sx={{ p: 3, gap: 1 }}>
         <Button
@@ -93,7 +94,7 @@ export default function LogoutConfirmDialog({ open, onOpenChange, onConfirm }: L
           sx={{ fontWeight: 600 }}
           autoFocus
         >
-          Cancel
+          {tc("cancel")}
         </Button>
         <Button
           ref={logoutRef}
@@ -107,7 +108,7 @@ export default function LogoutConfirmDialog({ open, onOpenChange, onConfirm }: L
             "&:hover": { bgcolor: "error.dark" },
           }}
         >
-          Logout
+          {t("logout")}
         </Button>
       </DialogActions>
     </Dialog>

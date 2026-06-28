@@ -14,14 +14,17 @@ public class TermsController : ControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(List<TermsSectionDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll(CancellationToken ct) =>
-        Ok(await _terms.GetAllAsync(ct));
+    public async Task<IActionResult> GetAll([FromQuery] string? locale, [FromQuery] bool includeLocalizations = false, CancellationToken ct = default)
+    {
+        var effectiveLocale = includeLocalizations ? null : locale;
+        return Ok(await _terms.GetAllAsync(effectiveLocale, ct));
+    }
 
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(TermsSectionDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetById(Guid id, CancellationToken ct) =>
-        Ok(await _terms.GetByIdAsync(id, ct));
+    public async Task<IActionResult> GetById(Guid id, [FromQuery] string? locale, CancellationToken ct = default) =>
+        Ok(await _terms.GetByIdAsync(id, locale, ct));
 
     [HttpPost]
     [Authorize(Roles = "Admin")]
@@ -36,7 +39,7 @@ public class TermsController : ControllerBase
     [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(TermsSectionDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTermsSectionRequest request, CancellationToken ct) =>
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTermsSectionRequest request, CancellationToken ct = default) =>
         Ok(await _terms.UpdateAsync(id, request, ct));
 
     [HttpDelete("{id:guid}")]

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "@/shared/i18n/routing";
+import { useTranslations } from "next-intl";
 import {
   Box,
   Container,
@@ -23,6 +24,88 @@ import { logger } from "@/utils/logger";
 import PaymentForm from "./PaymentForm";
 import ExpressCheckout from "./ExpressCheckout";
 import OrderSummary from "./OrderSummary";
+
+function renderPaymentErrorState(
+  errorStatus: number,
+  errorMessage: string | null,
+  t: ReturnType<typeof useTranslations>,
+  router: ReturnType<typeof useRouter>,
+  booking: BookingDetailsDto
+) {
+  const isVerificationRequired = errorStatus === 403;
+  const isConflict = errorStatus === 409;
+
+  return (
+    <Box sx={{ minHeight: "80vh", display: "grid", placeItems: "center", px: 2 }}>
+      <Card
+        variant="outlined"
+        sx={{
+          maxWidth: 500,
+          width: "100%",
+          p: 2,
+          borderColor: isVerificationRequired ? "warning.main" : "error.main",
+          borderWidth: 1.5,
+          boxShadow: t => t.palette.shadow.card,
+        }}
+      >
+        <CardContent>
+          <Stack spacing={3} sx={{ alignItems: "center", textAlign: "center" }}>
+            <WarningIcon color={isVerificationRequired ? "warning" : "error"} sx={{ fontSize: 48 }} />
+            <Box>
+              <Typography
+                variant="h5"
+                sx={{
+                  fontWeight: 800,
+                  mb: 1,
+                  color: isVerificationRequired ? "warning.main" : "error.main",
+                }}
+              >
+                {isVerificationRequired
+                  ? t("error.verificationRequired.title")
+                  : isConflict && errorMessage?.includes("no longer in progress")
+                    ? t("error.bookingStatusChanged.title")
+                    : t("error.vehicleUnavailable.title")}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {errorMessage || (isConflict ? t("error.bookingStatusChanged.message") : t("error.generic.message"))}
+              </Typography>
+            </Box>
+            <Stack direction="row" spacing={2}>
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  router.push(`/booking/${booking.id}`);
+                }}
+                sx={{ fontWeight: 700, borderRadius: 999, px: 3, textTransform: "none" }}
+              >
+                {t("actions.viewBooking")}
+              </Button>
+              <Button
+                variant="contained"
+                onClick={() => {
+                  router.push(isVerificationRequired ? "/account/profile" : "/");
+                }}
+                sx={{
+                  fontWeight: 800,
+                  borderRadius: 999,
+                  px: 4,
+                  height: 48,
+                  textTransform: "none",
+                  bgcolor: isVerificationRequired ? "warning.main" : "primary.main",
+                  "&:hover": {
+                    bgcolor: isVerificationRequired ? "warning.dark" : "primary.dark",
+                  },
+                }}
+              >
+                {isVerificationRequired ? t("actions.completeVerification") : t("actions.returnHome")}
+              </Button>
+            </Stack>
+          </Stack>
+        </CardContent>
+      </Card>
+    </Box>
+  );
+}
 
 export interface BookingDetailsDto {
   readonly id: string;
@@ -55,6 +138,7 @@ interface PaymentClientProps {
 export default function PaymentClient({ booking, accessToken }: PaymentClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const t = useTranslations("customer.bookingPayment");
   const [holdSecondsLeft, setHoldSecondsLeft] = useState<number | null>(null);
   const [holdExpired, setHoldExpired] = useState(false);
   const [errorStatus, setErrorStatus] = useState<number | null>(null);
@@ -86,7 +170,7 @@ export default function PaymentClient({ booking, accessToken }: PaymentClientPro
           setErrorMessage(err.message);
         } else {
           setErrorStatus(500);
-          setErrorMessage("An unexpected error occurred while placing the reservation hold.");
+          setErrorMessage(t("error.generic.message"));
         }
       } finally {
         if (active) setLoading(false);
@@ -97,7 +181,7 @@ export default function PaymentClient({ booking, accessToken }: PaymentClientPro
     return () => {
       active = false;
     };
-  }, [booking.id, accessToken]);
+  }, [booking.id, accessToken, t]);
 
   // Handle countdown timer ticking
   useEffect(() => {
@@ -115,7 +199,9 @@ export default function PaymentClient({ booking, accessToken }: PaymentClientPro
       });
     }, 1000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+    };
   }, [holdSecondsLeft, holdExpired, errorStatus]);
 
   const formatTime = (seconds: number | null) => {
@@ -133,82 +219,8 @@ export default function PaymentClient({ booking, accessToken }: PaymentClientPro
     );
   }
 
-  // Handle specialized errors (Verification Required, Vehicle Unavailable, etc.)
   if (errorStatus) {
-    const isVerificationRequired = errorStatus === 403;
-    const isConflict = errorStatus === 409;
-
-    return (
-      <Box sx={{ minHeight: "80vh", display: "grid", placeItems: "center", px: 2 }}>
-        <Card
-          variant="outlined"
-          sx={{
-            maxWidth: 500,
-            width: "100%",
-            p: 2,
-            borderColor: isVerificationRequired ? "warning.main" : "error.main",
-            borderWidth: 1.5,
-            boxShadow: t => t.palette.shadow.card,
-          }}
-        >
-          <CardContent>
-            <Stack spacing={3} sx={{ alignItems: "center", textAlign: "center" }}>
-              <WarningIcon color={isVerificationRequired ? "warning" : "error"} sx={{ fontSize: 48 }} />
-              <Box>
-                <Typography
-                  variant="h5"
-                  sx={{
-                    fontWeight: 800,
-                    mb: 1,
-                    color: isVerificationRequired ? "warning.main" : "error.main",
-                  }}
-                >
-                  {isVerificationRequired
-                    ? "Verification Required"
-                    : isConflict && errorMessage?.includes("no longer in progress")
-                      ? "Booking Status Changed"
-                      : "Vehicle Unavailable"}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {errorMessage ||
-                    (isConflict
-                      ? "This vehicle is no longer available or the booking cannot be modified."
-                      : "An unexpected error occurred.")}
-                </Typography>
-              </Box>
-              <Stack direction="row" spacing={2}>
-                <Button
-                  variant="outlined"
-                  onClick={() => router.push(`/booking/${booking.id}`)}
-                  sx={{ fontWeight: 700, borderRadius: 999, px: 3, textTransform: "none" }}
-                >
-                  View Booking
-                </Button>
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                    router.push(isVerificationRequired ? "/account/profile" : "/");
-                  }}
-                  sx={{
-                    fontWeight: 800,
-                    borderRadius: 999,
-                    px: 4,
-                    height: 48,
-                    textTransform: "none",
-                    bgcolor: isVerificationRequired ? "warning.main" : "primary.main",
-                    "&:hover": {
-                      bgcolor: isVerificationRequired ? "warning.dark" : "primary.dark",
-                    },
-                  }}
-                >
-                  {isVerificationRequired ? "Complete Verification" : "Return Home"}
-                </Button>
-              </Stack>
-            </Stack>
-          </CardContent>
-        </Card>
-      </Box>
-    );
+    return renderPaymentErrorState(errorStatus, errorMessage, t, router, booking);
   }
 
   const enableApplePay = process.env.ENABLE_APPLE_PAY === "true";
@@ -221,10 +233,10 @@ export default function PaymentClient({ booking, accessToken }: PaymentClientPro
         <Grid container spacing={3} sx={{ mb: 6 }}>
           <Grid size={{ xs: 12, md: 8 }}>
             <Typography variant="h3" sx={{ fontWeight: 800, mb: 1, letterSpacing: "-0.04em", color: "primary.main" }}>
-              Complete Booking
+              {t("title")}
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 4, fontSize: "1.125rem" }}>
-              Review your details and complete secure payment.
+              {t("subtitle")}
             </Typography>
 
             <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 2 }}>
@@ -241,7 +253,7 @@ export default function PaymentClient({ booking, accessToken }: PaymentClientPro
                     color: "secondary.main",
                   }}
                 >
-                  Payment
+                  {t("stepper.payment")}
                 </Typography>
               </Box>
             </Stack>
@@ -257,11 +269,10 @@ export default function PaymentClient({ booking, accessToken }: PaymentClientPro
                 <Alert severity="error" icon={<WarningIcon />} sx={{ mb: 1 }}>
                   <Box>
                     <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 0.5 }}>
-                      Your reservation hold has expired
+                      {t("hold.expired.title")}
                     </Typography>
                     <Typography variant="body2" sx={{ mb: 2 }}>
-                      The hold on this vehicle has lapsed. To guarantee your booking, please restart the checkout
-                      process.
+                      {t("hold.expired.message")}
                     </Typography>
                     <Button
                       variant="contained"
@@ -275,7 +286,7 @@ export default function PaymentClient({ booking, accessToken }: PaymentClientPro
                         textTransform: "none",
                       }}
                     >
-                      Restart Booking
+                      {t("actions.restartBooking")}
                     </Button>
                   </Box>
                 </Alert>
@@ -299,10 +310,10 @@ export default function PaymentClient({ booking, accessToken }: PaymentClientPro
                   >
                     <Box>
                       <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
-                        We are holding this vehicle for you
+                        {t("hold.active.title")}
                       </Typography>
                       <Typography variant="body2" sx={{ opacity: 0.85 }}>
-                        Please complete your payment within the next few minutes to secure your booking.
+                        {t("hold.active.message")}
                       </Typography>
                     </Box>
                     <Box
@@ -339,7 +350,7 @@ export default function PaymentClient({ booking, accessToken }: PaymentClientPro
                           color: "text.secondary",
                         }}
                       >
-                        Remaining
+                        {t("hold.active.remaining")}
                       </Typography>
                     </Box>
                   </Alert>
@@ -349,12 +360,9 @@ export default function PaymentClient({ booking, accessToken }: PaymentClientPro
               {paymentFailed && (
                 <Alert severity="error" icon={<ErrorOutlinedIcon />} sx={{ mb: 1 }}>
                   <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 0.5 }}>
-                    Payment Failed
+                    {t("payment.failed.title")}
                   </Typography>
-                  <Typography variant="body2">
-                    Your previous payment attempt was unsuccessful. Please check your card details and try again, or use
-                    a different payment method.
-                  </Typography>
+                  <Typography variant="body2">{t("payment.failed.message")}</Typography>
                 </Alert>
               )}
 

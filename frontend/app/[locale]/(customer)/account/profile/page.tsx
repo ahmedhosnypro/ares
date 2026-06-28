@@ -7,7 +7,10 @@ import SharedProfileContainer from "@/components/profile/SharedProfileContainer"
 import ProfileCard from "@/components/profile/ProfileCard";
 import { Alert, Box, Button, CardContent, Container, Typography } from "@mui/material";
 import { Link } from "@/shared/i18n/routing";
+import { getTranslations } from "next-intl/server";
+
 export default async function ProfilePage() {
+  const t = await getTranslations("customer.accountProfile");
   const session = await getServerSession(authOptions);
 
   if (!session || !session.user.id || !session.accessToken) {
@@ -17,14 +20,14 @@ export default async function ProfilePage() {
           <ProfileCard>
             <CardContent sx={{ p: { xs: 4, sm: 6 }, textAlign: "center" }}>
               <Typography variant="h5" color="text.primary" gutterBottom sx={{ fontWeight: 700 }}>
-                Sign in required
+                {t("signInRequired.title")}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
-                Please sign in to access your account settings.
+                {t("signInRequired.message")}
               </Typography>
               <Link href="/sign-in" style={{ textDecoration: "none" }}>
                 <Button variant="contained" color="primary" size="large" sx={{ px: 4, fontWeight: 700 }}>
-                  Sign In
+                  {t("signInRequired.signInButton")}
                 </Button>
               </Link>
             </CardContent>
@@ -59,22 +62,22 @@ export default async function ProfilePage() {
 
       if (response.status === 401 || response.status === 403) {
         errorType = "auth";
-        errorMessage = "Your session has expired. Please sign in again.";
+        errorMessage = t("profile.error.signInAgain");
       } else if (response.status === 404) {
         errorType = "notfound";
-        errorMessage = "Profile not found. Please contact support.";
+        errorMessage = t("profile.error.message");
       } else if (response.status >= 500) {
         errorType = "server";
-        errorMessage = "Server error. Please try again in a moment.";
+        errorMessage = t("profile.error.message");
       } else {
         errorType = "unknown";
-        errorMessage = `Unable to load profile (Error ${String(response.status)}).`;
+        errorMessage = t("profile.error.message");
       }
     }
   } catch (error) {
     logger.error("Profile fetch error", { error });
     errorType = "network";
-    errorMessage = "Network error. Please check your connection and try again.";
+    errorMessage = t("profile.error.message");
   }
 
   if (!profileData) {
@@ -84,18 +87,18 @@ export default async function ProfilePage() {
           <ProfileCard>
             <CardContent sx={{ p: { xs: 4, sm: 6 }, textAlign: "center" }}>
               <Alert severity="error" sx={{ mb: 3, textAlign: "left" }}>
-                {errorMessage ?? "Please try again in a moment."}
+                {errorMessage ?? t("profile.error.message")}
               </Alert>
               {errorType === "auth" ? (
                 <Link href="/sign-in" style={{ textDecoration: "none" }}>
                   <Button variant="contained" color="primary" size="large" sx={{ px: 4, fontWeight: 700 }}>
-                    Sign In Again
+                    {t("profile.error.signInAgain")}
                   </Button>
                 </Link>
               ) : (
                 <Link href="/account/profile" style={{ textDecoration: "none" }}>
                   <Button variant="contained" color="primary" size="large" sx={{ px: 4, fontWeight: 700 }}>
-                    Try Again
+                    {t("profile.error.tryAgain")}
                   </Button>
                 </Link>
               )}

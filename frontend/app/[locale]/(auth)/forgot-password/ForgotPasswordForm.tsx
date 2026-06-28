@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Link } from "@/shared/i18n/routing";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import {
   Alert,
@@ -34,6 +35,7 @@ const forgotPasswordSchema = z.object({
 export default function ForgotPasswordForm() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
+  const t = useTranslations("authPages.forgotPassword");
 
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -43,7 +45,7 @@ export default function ForgotPasswordForm() {
 
   const handleBlur = () => {
     const result = forgotPasswordSchema.safeParse({ email });
-    setEmailError(result.success ? "" : result.error.issues[0]?.message || "Invalid email");
+    setEmailError(result.success ? "" : result.error.issues[0]?.message || t("invalidEmail"));
   };
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
@@ -52,7 +54,7 @@ export default function ForgotPasswordForm() {
 
     const result = forgotPasswordSchema.safeParse({ email });
     if (!result.success) {
-      setEmailError(result.error.issues[0]?.message || "Invalid email");
+      setEmailError(result.error.issues[0]?.message || t("invalidEmail"));
       return;
     }
 
@@ -71,11 +73,11 @@ export default function ForgotPasswordForm() {
           logger.error("Failed to parse forgot password error response", err);
           return null;
         })) as { message?: string } | null;
-        setServerError(data?.message || "Failed to request password reset. Please try again.");
+        setServerError(data?.message || t("resetFailed"));
       }
     } catch (error) {
       logger.error("Forgot password request failed", error);
-      setServerError("An unexpected error occurred. Please try again later.");
+      setServerError(t("unexpectedError"));
     } finally {
       setIsLoading(false);
     }
@@ -84,7 +86,6 @@ export default function ForgotPasswordForm() {
   return (
     <Box sx={{ minHeight: "100vh", display: "flex", background: theme.palette.overlay.gradient }}>
       <Box sx={{ display: "flex", flex: 1, flexDirection: { xs: "column", lg: "row" } }}>
-        {/* ── Form side ── */}
         <Box
           sx={{
             flex: { xs: "1 1 auto", lg: "0 0 50%" },
@@ -106,13 +107,12 @@ export default function ForgotPasswordForm() {
               border: `1px solid ${theme.palette.border.main}`,
             }}
           >
-            {/* Logo */}
             <Box sx={{ mb: 6 }}>
               <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", mb: 4 }}>
                 <Box sx={{ position: "relative", width: 200, height: 60, display: "flex", alignItems: "center" }}>
                   <Image
                     src="/img/favicon/logo_transparent.png"
-                    alt="Ares Logo"
+                    alt={t("logoAlt")}
                     fill
                     sizes="200px"
                     style={{ objectFit: "contain" }}
@@ -121,10 +121,10 @@ export default function ForgotPasswordForm() {
                 </Box>
               </Box>
               <Typography variant="h4" component="h1" sx={{ fontWeight: 700, mb: 1, color: "text.primary" }}>
-                Reset Password
+                {t("title")}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Enter your email address and we&apos;ll send you a link to reset your password.
+                {t("subtitle")}
               </Typography>
             </Box>
 
@@ -141,10 +141,10 @@ export default function ForgotPasswordForm() {
               >
                 <SuccessIcon color="success" sx={{ fontSize: 64, mb: 2 }} />
                 <Typography variant="h6" sx={{ fontWeight: "bold" }} gutterBottom>
-                  Check Your Email
+                  {t("successTitle")}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  If an account exists for <b>{email}</b>, we have sent a password reset link. Please check your inbox.
+                  {t("successMessage", { email })}
                 </Typography>
                 <Button
                   component={Link}
@@ -154,14 +154,14 @@ export default function ForgotPasswordForm() {
                   size="large"
                   sx={{ borderRadius: "999px", py: 1.5, fontWeight: 700, textTransform: "none" }}
                 >
-                  Return to Sign In
+                  {t("returnToSignIn")}
                 </Button>
               </Box>
             ) : (
               <>
                 {serverError && (
                   <Alert severity="error" icon={<ErrorIcon />} sx={{ mb: 3, borderRadius: 2 }}>
-                    <AlertTitle sx={{ fontWeight: 600 }}>Error</AlertTitle>
+                    <AlertTitle sx={{ fontWeight: 600 }}>{t("errorTitle")}</AlertTitle>
                     {serverError}
                   </Alert>
                 )}
@@ -178,7 +178,7 @@ export default function ForgotPasswordForm() {
                     fullWidth
                     id="email"
                     name="email"
-                    label="Email Address"
+                    label={t("emailLabel")}
                     type="email"
                     autoComplete="email"
                     required
@@ -217,26 +217,25 @@ export default function ForgotPasswordForm() {
                       "&:hover": { boxShadow: theme.palette.shadow.buttonHover },
                     }}
                   >
-                    {isLoading ? <CircularProgress size={24} color="inherit" /> : "Send Reset Link"}
+                    {isLoading ? <CircularProgress size={24} color="inherit" /> : t("sendResetLink")}
                   </Button>
                 </Box>
               </>
             )}
 
             <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 4 }}>
-              Remember your password?{" "}
+              {t("rememberPassword")}{" "}
               <MuiLink
                 component={Link}
                 href="/sign-in"
                 sx={{ fontWeight: 700, textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
               >
-                Sign in
+                {t("signInLink")}
               </MuiLink>
             </Typography>
           </Box>
         </Box>
 
-        {/* ── Decorative side ── */}
         {!isMobile && (
           <Box sx={{ flex: { lg: "0 0 50%" }, position: "relative", display: { xs: "none", lg: "block" } }}>
             <Paper
@@ -246,7 +245,7 @@ export default function ForgotPasswordForm() {
               <Box sx={{ position: "absolute", inset: 0, "& img": { objectFit: "cover", opacity: 0.6 } }}>
                 <Image
                   src="https://images.unsplash.com/photo-1503376712351-1f2e82502c89?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80"
-                  alt="Luxury Car Interior"
+                  alt={t("carImageAlt")}
                   fill
                   sizes="50vw"
                   priority
@@ -255,14 +254,13 @@ export default function ForgotPasswordForm() {
               <Box sx={{ position: "absolute", inset: 0, background: theme.palette.overlay.tealGradient }} />
               <Box sx={{ position: "absolute", bottom: 0, left: 0, right: 0, p: 6, color: "common.white" }}>
                 <Typography variant="h3" component="h3" sx={{ fontWeight: 900, mb: 2, letterSpacing: "-0.02em" }}>
-                  Seamless Recovery
+                  {t("decorativeTitle")}
                 </Typography>
                 <Typography
                   variant="h6"
                   sx={{ maxWidth: 500, color: "text.secondary", fontWeight: 400, lineHeight: 1.6 }}
                 >
-                  Don&apos;t worry, getting back on the road is just a click away. Let&apos;s get you signed back in
-                  securely.
+                  {t("decorativeSubtitle")}
                 </Typography>
               </Box>
             </Paper>

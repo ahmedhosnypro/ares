@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import { Link } from "@/shared/i18n/routing";
+import { useTranslations } from "next-intl";
 import {
   Box,
   Button,
@@ -39,9 +42,9 @@ interface BookingDetailsViewProps {
   };
 }
 
-function formatDate(input?: string): string {
+function formatDate(input?: string, naText = "N/A"): string {
   if (!input) {
-    return "N/A";
+    return naText;
   }
 
   return new Date(input).toLocaleString("en-US", {
@@ -53,9 +56,9 @@ function formatDate(input?: string): string {
   });
 }
 
-function formatCurrency(amount?: number): string {
+function formatCurrency(amount?: number, naText = "N/A"): string {
   if (typeof amount !== "number") {
-    return "N/A";
+    return naText;
   }
 
   return new Intl.NumberFormat("en-US", {
@@ -94,36 +97,6 @@ function getStatusColor(status?: string): "success" | "warning" | "error" | "def
   }
 }
 
-function getInspectionStatusStyles(status?: string) {
-  const normalized = status?.toLowerCase();
-  switch (normalized) {
-    case "approved":
-      return {
-        bg: "status.completed.light",
-        color: "status.completed.main",
-        label: "Approved",
-      };
-    case "pending":
-      return {
-        bg: "status.pending.light",
-        color: "status.pending.main",
-        label: "Pending",
-      };
-    case "rejected":
-      return {
-        bg: "status.cancelled.light",
-        color: "status.cancelled.main",
-        label: "Rejected",
-      };
-    default:
-      return {
-        bg: "action.hover",
-        color: "text.secondary",
-        label: status ?? "Not Required",
-      };
-  }
-}
-
 export default function BookingDetailsView({
   booking,
   routeBookingId,
@@ -132,9 +105,41 @@ export default function BookingDetailsView({
   accessToken,
   feedback,
 }: Readonly<BookingDetailsViewProps>) {
+  const t = useTranslations("customer.bookingDetail");
+  const na = t("notAvailable");
   const bookingRef = booking.id ?? routeBookingId;
   const imageUrl = toImageUrl(booking.car?.image) ?? "/placeholder-car.jpg";
   const durationDays = getDurationDays(booking.from, booking.to);
+
+  function getInspectionStatusStyles(status?: string) {
+    const normalized = status?.toLowerCase();
+    switch (normalized) {
+      case "approved":
+        return {
+          bg: "status.completed.light",
+          color: "status.completed.main",
+          label: t("inspection.approved"),
+        };
+      case "pending":
+        return {
+          bg: "status.pending.light",
+          color: "status.pending.main",
+          label: t("inspection.pending"),
+        };
+      case "rejected":
+        return {
+          bg: "status.cancelled.light",
+          color: "status.cancelled.main",
+          label: t("inspection.rejected"),
+        };
+      default:
+        return {
+          bg: "action.hover",
+          color: "text.secondary",
+          label: status ?? t("inspection.notRequired"),
+        };
+    }
+  }
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default", py: { xs: 4, md: 6 } }}>
@@ -146,10 +151,10 @@ export default function BookingDetailsView({
         >
           <Box>
             <Typography variant="h4" color="text.primary" sx={{ fontWeight: 800 }}>
-              Booking Overview
+              {t("overview.title")}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              Ref ID: {bookingRef}
+              {t("overview.refId", { ref: bookingRef })}
             </Typography>
           </Box>
 
@@ -159,7 +164,7 @@ export default function BookingDetailsView({
               startIcon={<ArrowBackIcon />}
               sx={{ alignSelf: { xs: "flex-start", sm: "auto" } }}
             >
-              Back to Bookings
+              {t("overview.backToBookings")}
             </Button>
           </Link>
         </Stack>
@@ -206,7 +211,7 @@ export default function BookingDetailsView({
               >
                 <Image
                   src={imageUrl}
-                  alt={booking.car?.name ?? "Booked car"}
+                  alt={booking.car?.name ?? t("car.bookedCarAlt")}
                   fill
                   sizes="(max-width: 900px) 100vw, 66vw"
                   style={{ objectFit: "cover" }}
@@ -221,16 +226,20 @@ export default function BookingDetailsView({
                 >
                   <Box>
                     <Typography variant="h5" color="text.primary" sx={{ fontWeight: 800 }}>
-                      {booking.car?.name ?? "Unknown car"}
+                      {booking.car?.name ?? t("car.unknownCar")}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                      Supplier: {booking.car?.supplier?.fullName ?? "N/A"}
+                      {t("car.supplier", { name: booking.car?.supplier?.fullName ?? na })}
                     </Typography>
                   </Box>
 
                   <Stack direction="row" spacing={1} sx={{ alignSelf: { xs: "flex-start", sm: "center" } }}>
                     <Chip label={booking.status ?? "Unknown"} color={getStatusColor(booking.status)} size="small" />
-                    <Chip label={booking.payLater ? "Pay later" : "Prepaid"} variant="outlined" size="small" />
+                    <Chip
+                      label={booking.payLater ? t("car.payLater") : t("car.prepaid")}
+                      variant="outlined"
+                      size="small"
+                    />
                   </Stack>
                 </Stack>
 
@@ -244,13 +253,13 @@ export default function BookingDetailsView({
                       </Box>
                       <Box>
                         <Typography variant="body2" color="text.primary" sx={{ fontWeight: 700 }}>
-                          Pick-up
+                          {t("location.pickup")}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          {booking.pickupLocation?.name ?? "N/A"}
+                          {booking.pickupLocation?.name ?? na}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {formatDate(booking.from)}
+                          {formatDate(booking.from, na)}
                         </Typography>
                       </Box>
                     </Stack>
@@ -263,13 +272,13 @@ export default function BookingDetailsView({
                       </Box>
                       <Box>
                         <Typography variant="body2" color="text.primary" sx={{ fontWeight: 700 }}>
-                          Drop-off
+                          {t("location.dropoff")}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          {booking.dropOffLocation?.name ?? "N/A"}
+                          {booking.dropOffLocation?.name ?? na}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {formatDate(booking.to)}
+                          {formatDate(booking.to, na)}
                         </Typography>
                       </Box>
                     </Stack>
@@ -284,13 +293,13 @@ export default function BookingDetailsView({
                   </Box>
                   <Box>
                     <Typography variant="body2" color="text.primary" sx={{ fontWeight: 700 }}>
-                      Driver
+                      {t("driverInfo.title")}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {booking.driver?.fullName ?? "N/A"}
+                      {booking.driver?.fullName ?? na}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {booking.driver?.email ?? "No email available"}
+                      {booking.driver?.email ?? t("driverInfo.noEmailAvailable")}
                     </Typography>
                   </Box>
                 </Stack>
@@ -314,7 +323,7 @@ export default function BookingDetailsView({
                       <VerifiedIcon fontSize="medium" />
                     </Box>
                     <Typography variant="h6" color="text.primary" sx={{ fontWeight: 800 }}>
-                      Vehicle Inspection Details
+                      {t("inspection.title")}
                     </Typography>
                   </Stack>
 
@@ -326,10 +335,10 @@ export default function BookingDetailsView({
                         </Box>
                         <Box>
                           <Typography variant="body2" color="text.primary" sx={{ fontWeight: 700 }}>
-                            Assigned Inspector
+                            {t("inspection.assignedInspector")}
                           </Typography>
                           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                            {booking.inspection.assignedInspectorName ?? "No Inspector Assigned"}
+                            {booking.inspection.assignedInspectorName ?? t("inspection.noInspectorAssigned")}
                           </Typography>
                         </Box>
                       </Stack>
@@ -338,7 +347,7 @@ export default function BookingDetailsView({
                     <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       <Stack spacing={1}>
                         <Typography variant="body2" color="text.primary" sx={{ fontWeight: 700 }}>
-                          Pre-Delivery Inspection
+                          {t("inspection.preDelivery")}
                         </Typography>
                         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                           {(() => {
@@ -359,7 +368,7 @@ export default function BookingDetailsView({
                         </Box>
                         {booking.inspection.preInspectionDate ? (
                           <Typography variant="caption" color="text.secondary">
-                            Date: {formatDate(booking.inspection.preInspectionDate)}
+                            {t("inspection.dateLabel")}: {formatDate(booking.inspection.preInspectionDate, na)}
                           </Typography>
                         ) : null}
                       </Stack>
@@ -368,7 +377,7 @@ export default function BookingDetailsView({
                     <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       <Stack spacing={1}>
                         <Typography variant="body2" color="text.primary" sx={{ fontWeight: 700 }}>
-                          Post-Return Inspection
+                          {t("inspection.postReturn")}
                         </Typography>
                         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                           {(() => {
@@ -389,7 +398,7 @@ export default function BookingDetailsView({
                         </Box>
                         {booking.inspection.postInspectionDate ? (
                           <Typography variant="caption" color="text.secondary">
-                            Date: {formatDate(booking.inspection.postInspectionDate)}
+                            {t("inspection.dateLabel")}: {formatDate(booking.inspection.postInspectionDate, na)}
                           </Typography>
                         ) : null}
                       </Stack>
@@ -422,7 +431,7 @@ export default function BookingDetailsView({
             >
               <CardContent sx={{ p: { xs: 3, md: 4 } }}>
                 <Typography variant="h6" color="text.primary" sx={{ mb: 2, fontWeight: 800 }}>
-                  Reservation Summary
+                  {t("summary.title")}
                 </Typography>
 
                 <Stack spacing={1.5}>
@@ -430,11 +439,11 @@ export default function BookingDetailsView({
                     <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                       <CarIcon sx={{ color: "text.secondary", fontSize: 18 }} />
                       <Typography variant="body2" color="text.secondary">
-                        Vehicle
+                        {t("summary.vehicle")}
                       </Typography>
                     </Stack>
                     <Typography variant="body2" color="text.primary" sx={{ fontWeight: 700 }}>
-                      {booking.car?.name ?? "N/A"}
+                      {booking.car?.name ?? na}
                     </Typography>
                   </Stack>
 
@@ -442,11 +451,11 @@ export default function BookingDetailsView({
                     <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                       <CalendarIcon sx={{ color: "text.secondary", fontSize: 18 }} />
                       <Typography variant="body2" color="text.secondary">
-                        Duration
+                        {t("summary.duration")}
                       </Typography>
                     </Stack>
                     <Typography variant="body2" color="text.primary" sx={{ fontWeight: 700 }}>
-                      {durationDays ? `${String(durationDays)} days` : "N/A"}
+                      {durationDays ? `${String(durationDays)} ${t("summary.days")}` : na}
                     </Typography>
                   </Stack>
                 </Stack>
@@ -455,17 +464,17 @@ export default function BookingDetailsView({
 
                 <Stack direction="row" sx={{ mb: 3, justifyContent: "space-between", alignItems: "center" }}>
                   <Typography variant="body1" color="text.primary" sx={{ fontWeight: 700 }}>
-                    Total Price
+                    {t("summary.totalPrice")}
                   </Typography>
                   <Typography variant="h5" color="primary.main" sx={{ fontWeight: 900 }}>
-                    {formatCurrency(booking.price)}
+                    {formatCurrency(booking.price, na)}
                   </Typography>
                 </Stack>
 
                 <Stack spacing={1.5}>
                   <Link href="/bookings" style={{ textDecoration: "none" }}>
                     <Button variant="outlined" fullWidth>
-                      View All Bookings
+                      {t("summary.viewAllBookings")}
                     </Button>
                   </Link>
                   {accessToken ? (
@@ -477,7 +486,7 @@ export default function BookingDetailsView({
                     />
                   ) : (
                     <Button variant="contained" color="secondary" fullWidth disabled>
-                      {canCancel ? "Cancel Booking" : "Cancellation Unavailable"}
+                      {canCancel ? t("cancelBooking.cancelBooking") : t("cancelBooking.cancellationUnavailable")}
                     </Button>
                   )}
                 </Stack>
