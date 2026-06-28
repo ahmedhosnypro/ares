@@ -22,6 +22,7 @@ type AuthResponse = {
      *  freshly-registered "Pending" user to /complete-profile. */
     status?: string | null;
     phone?: string | null;
+    profileImage?: string | null;
   };
   token?: string;
   refreshToken?: string;
@@ -151,6 +152,7 @@ export const authOptions: NextAuthOptions = {
               expiresAt: data.expiresAt || "",
               status: data.user.status ?? null,
               phone: data.user.phone ?? null,
+              image: data.user.profileImage ?? null,
             };
           }
 
@@ -179,6 +181,7 @@ export const authOptions: NextAuthOptions = {
         token.accessTokenExpires = new Date(user.expiresAt).getTime();
         token.status = user.status ?? null;
         token.phone = user.phone ?? null;
+        token.picture = user.image ?? null;
         return token;
       }
 
@@ -210,6 +213,7 @@ export const authOptions: NextAuthOptions = {
       session.user.roles = token.roles;
       session.user.status = token.status ?? null;
       session.user.phone = token.phone ?? null;
+      session.user.image = token.picture ?? null;
       session.accessToken = token.accessToken;
       session.refreshToken = token.refreshToken;
       session.accessTokenExpires = token.accessTokenExpires;

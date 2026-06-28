@@ -30,6 +30,8 @@ const accountProfile: AccountProfileLabels = {
     valuedCustomer: "عميل كريم",
     noEmailProvided: "لم يتم تقديم بريد إلكتروني",
     changePhotoAriaLabel: "تغيير الصورة الشخصية",
+    invalidFileType: "نوع ملف غير صالح. يسمح فقط بصور JPEG و PNG.",
+    fileTooLarge: "حجم الملف يتجاوز الحد الأقصى المسموح به وهو 5 ميجابايت.",
   },
   personalInfo: {
     title: "المعلومات الشخصية",

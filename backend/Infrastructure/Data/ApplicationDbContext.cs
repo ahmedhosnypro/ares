@@ -74,6 +74,7 @@ namespace Backend.Infrastructure.Data
         IQueryable<Favorite> IApplicationDbContext.Favorites => Favorites;
         IQueryable<VehicleFeature> IApplicationDbContext.VehicleFeatures => VehicleFeatures;
         IQueryable<ApplicationUser> IApplicationDbContext.Users => Users;
+        IQueryable<Microsoft.AspNetCore.Identity.IdentityUserRole<Guid>> IApplicationDbContext.UserRoles => UserRoles;
         IQueryable<BookingCancellation> IApplicationDbContext.BookingCancellations => BookingCancellations;
         IQueryable<UserAddress> IApplicationDbContext.UserAddresses => UserAddresses;
         IQueryable<Verification> IApplicationDbContext.Verifications => Verifications;

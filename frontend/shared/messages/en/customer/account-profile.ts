@@ -30,6 +30,8 @@ const accountProfile: AccountProfileLabels = {
     valuedCustomer: "Valued Customer",
     noEmailProvided: "No email provided",
     changePhotoAriaLabel: "Change profile photo",
+    invalidFileType: "Invalid file type. Only JPEG and PNG images are allowed.",
+    fileTooLarge: "File size exceeds the maximum limit of 5MB.",
   },
   personalInfo: {
     title: "Personal Information",

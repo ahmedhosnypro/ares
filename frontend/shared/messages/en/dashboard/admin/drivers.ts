@@ -11,6 +11,9 @@ const drivers: AdminDriversLabels = {
   status: "Status",
   errorLoad: "Could not load drivers.",
   noDrivers: "No drivers found",
+  filters: {
+    reset: "Reset",
+  },
   table: {
     driver: "Driver",
     email: "Email",
@@ -20,6 +23,9 @@ const drivers: AdminDriversLabels = {
     active: "Active",
     actions: "Actions",
     view: "View",
+    viewLicense: "View License",
+    verifyStatus: "Verify Status",
+    toggleStatus: "Toggle Status",
     activeStatus: "Active",
     disabledStatus: "Disabled",
   },

@@ -13,27 +13,45 @@ export interface User {
   [key: string]: unknown;
 }
 
-interface UserResponse {
-  data?: User[];
-  message?: string;
-  [key: string]: unknown;
+export interface UserResponse {
+  items: User[];
+  currentPage: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+  stats: UserStats;
+}
+
+export interface UserStats {
+  totalUsers: number;
+  customers: number;
+  suppliers: number;
+  drivers: number;
+  inspectors: number;
+  blockedUsers: number;
 }
 
 /**
  * GET paginated users
  */
-export async function getUsers(page = 1, size = 10): Promise<UserResponse> {
+export async function getUsers(
+  page = 1,
+  size = 10,
+  filter?: { searchTerm?: string; role?: string; status?: string }
+): Promise<UserResponse> {
   const session = await getSession();
 
   return apiFetchJson<UserResponse>(`/api/admin/users/${String(page)}/${String(size)}`, {
     method: "POST",
     accessToken: session?.accessToken ?? undefined,
     body: JSON.stringify({
-      keyword: null,
-      types: ["user"],
+      searchTerm: filter?.searchTerm || null,
+      role: filter?.role && filter.role !== "all" ? filter.role : null,
+      status: filter?.status && filter.status !== "all" ? filter.status : null,
     }),
   });
 }
+
 
 // create new user
 export const createUser = async (payload: {
@@ -106,20 +124,11 @@ export async function uploadUserPhoto(userId: string, photo: File): Promise<{ su
   const formData = new FormData();
   formData.append("photo", photo);
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/admin/users/${userId}/photo`, {
+  return apiFetchJson<{ success: boolean; avatarUrl: string }>(`/api/admin/users/${userId}/photo`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${session?.accessToken ?? ""}`,
-    },
+    accessToken: session?.accessToken ?? undefined,
     body: formData,
   });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Photo upload failed: ${text}`);
-  }
-
-  return res.json() as Promise<{ success: boolean; avatarUrl: string }>;
 }
 
 // toggle status

@@ -10,6 +10,9 @@ const inspectors: AdminInspectorsLabels = {
   statusAll: "All Status",
   statusActive: "Active",
   statusDisabled: "Disabled",
+  filters: {
+    reset: "Reset",
+  },
   stats: {
     totalInspectors: "Total Inspectors",
     active: "Active",

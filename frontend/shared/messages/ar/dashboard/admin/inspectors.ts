@@ -10,6 +10,9 @@ const inspectors: AdminInspectorsLabels = {
   statusAll: "جميع الحالات",
   statusActive: "نشط",
   statusDisabled: "معطل",
+  filters: {
+    reset: "إعادة ضبط",
+  },
   stats: {
     totalInspectors: "إجمالي المفتشين",
     active: "نشط",

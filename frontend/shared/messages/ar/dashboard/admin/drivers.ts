@@ -11,6 +11,9 @@ const drivers: AdminDriversLabels = {
   status: "الحالة",
   errorLoad: "تعذر تحميل بيانات السائقين.",
   noDrivers: "لم يتم العثور على سائقين",
+  filters: {
+    reset: "إعادة تعيين",
+  },
   table: {
     driver: "السائق",
     email: "البريد الإلكتروني",
@@ -20,6 +23,9 @@ const drivers: AdminDriversLabels = {
     active: "نشط",
     actions: "الإجراءات",
     view: "عرض",
+    viewLicense: "عرض الرخصة",
+    verifyStatus: "التحقق من الحالة",
+    toggleStatus: "تبديل الحالة",
     activeStatus: "نشط",
     disabledStatus: "معطل",
   },

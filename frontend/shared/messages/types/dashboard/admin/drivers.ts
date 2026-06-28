@@ -9,6 +9,9 @@ export type AdminDriversLabels = {
   readonly status: string;
   readonly errorLoad: string;
   readonly noDrivers: string;
+  readonly filters: {
+    readonly reset: string;
+  };
   readonly table: {
     readonly driver: string;
     readonly email: string;
@@ -18,6 +21,9 @@ export type AdminDriversLabels = {
     readonly active: string;
     readonly actions: string;
     readonly view: string;
+    readonly viewLicense: string;
+    readonly verifyStatus: string;
+    readonly toggleStatus: string;
     readonly activeStatus: string;
     readonly disabledStatus: string;
   };

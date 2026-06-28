@@ -8,6 +8,9 @@ export type AdminInspectorsLabels = {
   readonly statusAll: string;
   readonly statusActive: string;
   readonly statusDisabled: string;
+  readonly filters: {
+    readonly reset: string;
+  };
   readonly stats: {
     readonly totalInspectors: string;
     readonly active: string;

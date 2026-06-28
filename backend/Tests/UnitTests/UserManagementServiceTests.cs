@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
+using MockQueryable.Moq;
 using Xunit;
 
 namespace Backend.Tests.UnitTests;
@@ -32,13 +33,16 @@ public class UserManagementServiceTests
         _roleManagerMock = CreateMockRoleManager();
         _loggerMock = new Mock<ILogger<UserManagementService>>();
 
+        var emptyUsers = new List<ApplicationUser>().AsQueryable().BuildMock();
+        _userManagerMock.SetupGet(x => x.Users).Returns(emptyUsers);
+
         _userManagementService = new UserManagementService(
             _userRepositoryMock.Object,
             _userManagerMock.Object,
             _roleManagerMock.Object,
             _loggerMock.Object,
             new Mock<ISupplierRestrictionService>().Object,
-            new Mock<Microsoft.AspNetCore.Http.IHttpContextAccessor>().Object);
+            new Mock<Microsoft.AspNetCore.Http.IHttpContextAccessor>().Object, new Mock<IApplicationDbContext>().Object);
     }
 
     #region GetUsersAsync Tests
@@ -66,6 +70,9 @@ public class UserManagementServiceTests
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(pagedResult);
 
+        var emptyUsers = new List<ApplicationUser>().AsQueryable().BuildMock();
+        _userManagerMock.SetupGet(x => x.Users).Returns(emptyUsers);
+
         // Setup roles for each user
         foreach (var user in users.Take(pageSize))
         {
@@ -73,17 +80,16 @@ public class UserManagementServiceTests
                 .ReturnsAsync(new List<string> { "Customer" });
         }
 
-        // Act
         var result = await _userManagementService.GetUsersAsync(page, pageSize);
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(page, result.Page);
+        Assert.Equal(page, result.CurrentPage);
         Assert.Equal(pageSize, result.PageSize);
         Assert.Equal(15, result.TotalCount);
         Assert.Equal(2, result.TotalPages);
-        Assert.Equal(10, result.Data.Count);
+        Assert.Equal(10, result.Items.Count);
 
-        var firstUser = result.Data.First();
+        var firstUser = result.Items.First();
         Assert.NotEqual(Guid.Empty, firstUser.Id);
         Assert.NotEmpty(firstUser.Email);
         Assert.NotEmpty(firstUser.FirstName);
@@ -135,7 +141,7 @@ public class UserManagementServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(expectedPage, result.Page);
+        Assert.Equal(expectedPage, result.CurrentPage);
         Assert.Equal(expectedPageSize, result.PageSize);
 
         _userRepositoryMock.Verify(x => x.GetPagedAsync(
@@ -172,7 +178,7 @@ public class UserManagementServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Empty(result.Data);
+        Assert.Empty(result.Items);
         Assert.Equal(0, result.TotalCount);
         Assert.Equal(0, result.TotalPages);
     }
@@ -207,12 +213,12 @@ public class UserManagementServiceTests
         var result = await _userManagementService.GetUsersAsync();
 
         // Assert
-        Assert.Equal(2, result.Data.Count);
-        Assert.Equal(2, result.Data[0].Roles.Count);
-        Assert.Contains("Admin", result.Data[0].Roles);
-        Assert.Contains("Customer", result.Data[0].Roles);
-        Assert.Single(result.Data[1].Roles);
-        Assert.Contains("Supplier", result.Data[1].Roles);
+        Assert.Equal(2, result.Items.Count);
+        Assert.Equal(2, result.Items[0].Roles.Count);
+        Assert.Contains("Admin", result.Items[0].Roles);
+        Assert.Contains("Customer", result.Items[0].Roles);
+        Assert.Single(result.Items[1].Roles);
+        Assert.Contains("Supplier", result.Items[1].Roles);
     }
 
     #endregion

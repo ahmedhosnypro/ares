@@ -21,6 +21,7 @@ public class UserManagementService : IUserManagementService
     private readonly ILogger<UserManagementService> _logger;
     private readonly ISupplierRestrictionService _supplierRestrictionService;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IApplicationDbContext _context;
 
     private string? FormatDateOfBirth(DateTime? date) =>
         date.HasValue ? date.Value.ToString("yyyy-MM-dd") : null;
@@ -50,7 +51,8 @@ public class UserManagementService : IUserManagementService
         RoleManager<IdentityRole<Guid>> roleManager,
         ILogger<UserManagementService> logger,
         ISupplierRestrictionService supplierRestrictionService,
-        IHttpContextAccessor httpContextAccessor)
+        IHttpContextAccessor httpContextAccessor,
+        IApplicationDbContext context)
     {
         _userRepository = userRepository;
         _userManager = userManager;
@@ -58,13 +60,41 @@ public class UserManagementService : IUserManagementService
         _logger = logger;
         _supplierRestrictionService = supplierRestrictionService;
         _httpContextAccessor = httpContextAccessor;
+        _context = context;
+    }
+
+    public async Task<UserStatsDto> GetUserStatsAsync(CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Getting user statistics");
+
+        var totalUsers = await _userManager.Users.CountAsync(cancellationToken);
+        var blockedUsers = await _userManager.Users.CountAsync(u => u.Status == "Blocked" || u.Status == "Restricted", cancellationToken);
+
+        var customerRole = await _roleManager.FindByNameAsync("Customer");
+        var supplierRole = await _roleManager.FindByNameAsync("Supplier");
+        var driverRole = await _roleManager.FindByNameAsync("Driver");
+        var inspectorRole = await _roleManager.FindByNameAsync("Inspector");
+
+        var customers = customerRole != null ? await _context.UserRoles.CountAsync(ur => ur.RoleId == customerRole.Id, cancellationToken) : 0;
+        var suppliers = supplierRole != null ? await _context.UserRoles.CountAsync(ur => ur.RoleId == supplierRole.Id, cancellationToken) : 0;
+        var drivers = driverRole != null ? await _context.UserRoles.CountAsync(ur => ur.RoleId == driverRole.Id, cancellationToken) : 0;
+        var inspectors = inspectorRole != null ? await _context.UserRoles.CountAsync(ur => ur.RoleId == inspectorRole.Id, cancellationToken) : 0;
+
+        return new UserStatsDto(
+            TotalUsers: totalUsers,
+            Customers: customers,
+            Suppliers: suppliers,
+            Drivers: drivers,
+            Inspectors: inspectors,
+            BlockedUsers: blockedUsers
+        );
     }
 
     /// <summary>
     /// Gets paginated list of users
     /// Validates: Requirements 12.1
     /// </summary>
-    public async Task<PagedResult<UserManagementDto>> GetUsersAsync(
+    public async Task<UserManagementListResponse> GetUsersAsync(
         int page = 1,
         int pageSize = 20,
         UserFilterRequest? filter = null,
@@ -77,15 +107,51 @@ public class UserManagementService : IUserManagementService
         if (pageSize < 1) pageSize = 20;
         if (pageSize > 100) pageSize = 100; // Limit max page size
 
+        // Efficient stats query
+        var totalUsers = await _userManager.Users.CountAsync(cancellationToken);
+        var blockedUsers = await _userManager.Users.CountAsync(u => u.Status == "Blocked" || u.Status == "Restricted", cancellationToken);
+
+        // For roles, we query AspNetUserRoles through the DbContext
+        var customerRole = await _roleManager.FindByNameAsync("Customer");
+        var supplierRole = await _roleManager.FindByNameAsync("Supplier");
+        var driverRole = await _roleManager.FindByNameAsync("Driver");
+        var inspectorRole = await _roleManager.FindByNameAsync("Inspector");
+
+        var customersCount = customerRole != null ? await _context.UserRoles.CountAsync(ur => ur.RoleId == customerRole.Id, cancellationToken) : 0;
+        var suppliersCount = supplierRole != null ? await _context.UserRoles.CountAsync(ur => ur.RoleId == supplierRole.Id, cancellationToken) : 0;
+        var driversCount = driverRole != null ? await _context.UserRoles.CountAsync(ur => ur.RoleId == driverRole.Id, cancellationToken) : 0;
+        var inspectorsCount = inspectorRole != null ? await _context.UserRoles.CountAsync(ur => ur.RoleId == inspectorRole.Id, cancellationToken) : 0;
+
+        var stats = new UserStatsDto(
+            TotalUsers: totalUsers,
+            Customers: customersCount,
+            Suppliers: suppliersCount,
+            Drivers: driversCount,
+            Inspectors: inspectorsCount,
+            BlockedUsers: blockedUsers
+        );
+
+        // Optimize Role filtering avoiding loading all users into memory
         List<Guid>? userIdsInRole = null;
         if (filter != null && !string.IsNullOrWhiteSpace(filter.Role))
         {
-            var usersInRole = await _userManager.GetUsersInRoleAsync(filter.Role);
-            userIdsInRole = usersInRole.Select(u => u.Id).ToList();
+            var targetRole = await _roleManager.FindByNameAsync(filter.Role);
+            if (targetRole != null)
+            {
+                userIdsInRole = await _context.UserRoles
+                    .Where(ur => ur.RoleId == targetRole.Id)
+                    .Select(ur => ur.UserId)
+                    .ToListAsync(cancellationToken);
+            }
+            else
+            {
+                userIdsInRole = new List<Guid>();
+            }
+
             if (userIdsInRole.Count == 0)
             {
                 // No users in this role, return empty
-                return new PagedResult<UserManagementDto>(new List<UserManagementDto>(), page, pageSize, 0, 0);
+                return new UserManagementListResponse(new List<UserManagementDto>(), page, pageSize, 0, 0, stats);
             }
         }
 
@@ -140,22 +206,14 @@ public class UserManagementService : IUserManagementService
             );
             userDtos.Add(userDto);
         }
-
-        var result = new PagedResult<UserManagementDto>(
-            Data: userDtos,
-            Page: pagedUsers.Page,
-            PageSize: pagedUsers.PageSize,
-            TotalCount: pagedUsers.TotalCount,
-            TotalPages: pagedUsers.TotalPages
+        return new UserManagementListResponse(
+            userDtos,
+            pagedUsers.Page,
+            pagedUsers.PageSize,
+            pagedUsers.TotalCount,
+            pagedUsers.TotalPages,
+            stats
         );
-
-        _logger.LogInformation(
-            "Successfully retrieved {Count} users from page {Page} of {TotalPages}",
-            userDtos.Count,
-            page,
-            result.TotalPages);
-
-        return result;
     }
 
     /// <summary>

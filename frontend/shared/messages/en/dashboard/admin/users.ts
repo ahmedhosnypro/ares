@@ -19,6 +19,11 @@ const users: AdminUsersLabels = {
     drivers: "Drivers",
     inspectors: "Inspectors",
   },
+  page: {
+    title: "Users Management",
+    subtitle: "Manage customers, suppliers, drivers and inspectors across the platform.",
+    addUser: "Add User",
+  },
   stats: {
     totalUsers: "Total Users",
     admins: "Admins",
@@ -26,6 +31,7 @@ const users: AdminUsersLabels = {
     suppliers: "Suppliers",
     drivers: "Drivers",
     inspectors: "Inspectors",
+    blockedUsers: "Blocked Users",
     active: "Active",
     blocked: "Blocked",
     thisMonth: "this month",

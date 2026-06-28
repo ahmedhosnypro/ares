@@ -20,6 +20,7 @@ public interface IApplicationDbContext
     IQueryable<Favorite> Favorites { get; }
     IQueryable<VehicleFeature> VehicleFeatures { get; }
     IQueryable<ApplicationUser> Users { get; }
+    IQueryable<Microsoft.AspNetCore.Identity.IdentityUserRole<Guid>> UserRoles { get; }
     IQueryable<BookingCancellation> BookingCancellations { get; }
     IQueryable<UserAddress> UserAddresses { get; }
     IQueryable<Verification> Verifications { get; }

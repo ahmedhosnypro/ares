@@ -19,6 +19,11 @@ const users: AdminUsersLabels = {
     drivers: "السائقين",
     inspectors: "المفتشين",
   },
+  page: {
+    title: "إدارة المستخدمين",
+    subtitle: "إدارة العملاء والموردين والسائقين والمفتشين عبر المنصة.",
+    addUser: "إضافة مستخدم",
+  },
   stats: {
     totalUsers: "إجمالي المستخدمين",
     admins: "المدراء",
@@ -26,6 +31,7 @@ const users: AdminUsersLabels = {
     suppliers: "الموردين",
     drivers: "السائقين",
     inspectors: "المفتشين",
+    blockedUsers: "المحظورين",
     active: "النشطين",
     blocked: "المحظورين",
     thisMonth: "هذا الشهر",

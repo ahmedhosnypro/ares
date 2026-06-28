@@ -17,6 +17,11 @@ export type AdminUsersLabels = {
     readonly drivers: string;
     readonly inspectors: string;
   };
+  readonly page: {
+    readonly title: string;
+    readonly subtitle: string;
+    readonly addUser: string;
+  };
   readonly stats: {
     readonly totalUsers: string;
     readonly admins: string;
@@ -24,6 +29,7 @@ export type AdminUsersLabels = {
     readonly suppliers: string;
     readonly drivers: string;
     readonly inspectors: string;
+    readonly blockedUsers: string;
     readonly active: string;
     readonly blocked: string;
     readonly thisMonth: string;

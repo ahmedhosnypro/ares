@@ -11,6 +11,7 @@ import {
   MenuItem,
   FormControl,
   Paper,
+  TableContainer,
   Table,
   TableHead,
   TableBody,
@@ -40,8 +41,8 @@ import AddIcon from "@mui/icons-material/Add";
 import PeopleIcon from "@mui/icons-material/People";
 import { listInspectors, updateInspectorStatus, type Inspector } from "@/api-clients/inspectors/inspectors";
 import { logger } from "@/utils/logger";
+import VehicleStats, { type StatItem } from "@/app/[locale]/(dashboard)/_components/VehicleStats";
 import AddInspectorDialog from "./_components/AddInspectorDialog";
-import VehicleStats from "@/app/[locale]/(dashboard)/_components/VehicleStats";
 
 export default function InspectorsPage() {
   const theme = useTheme();
@@ -96,7 +97,7 @@ export default function InspectorsPage() {
     };
   }, [inspectors]);
 
-  const inspectorStatsItems = useMemo(
+  const inspectorStatsItems: StatItem[] = useMemo(
     () => [
       {
         label: t("stats.totalInspectors"),
@@ -142,7 +143,6 @@ export default function InspectorsPage() {
 
   return (
     <Box sx={{ p: { xs: 1.5, sm: 3, md: 4 }, maxWidth: 1300, mx: "auto" }}>
-      {/* HEADER */}
       <Stack
         direction={{ xs: "column", sm: "row" }}
         sx={{ gap: 2, justifyContent: "space-between", alignItems: { xs: "flex-start", sm: "center" }, mb: 4 }}
@@ -177,23 +177,27 @@ export default function InspectorsPage() {
         </Button>
       </Stack>
 
-      {/* STATS */}
       <VehicleStats items={inspectorStatsItems} />
 
-      {/* FILTERS */}
       <Paper
         elevation={0}
         sx={{
-          p: 2,
           mb: 3,
-          mt: 1,
-          borderRadius: 3,
+          borderRadius: 2,
           border: "1px solid",
           borderColor: "divider",
-          bgcolor: "background.paper",
+          overflow: "hidden",
         }}
       >
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          spacing={2}
+          sx={{
+            p: 2,
+            bgcolor: "background.paper",
+            alignItems: { md: "center" },
+          }}
+        >
           <TextField
             fullWidth
             placeholder={t("searchPlaceholder")}
@@ -201,42 +205,54 @@ export default function InspectorsPage() {
             onChange={e => {
               setSearch(e.target.value);
             }}
-            size={isMobile ? "small" : "medium"}
+            size="small"
+            sx={{ flexGrow: 1, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
             slotProps={{
               input: {
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon color="action" />
+                    <SearchIcon sx={{ color: "text.secondary", fontSize: 20 }} />
                   </InputAdornment>
                 ),
-                sx: { borderRadius: 2, bgcolor: "background.default" },
               },
             }}
           />
-          <FormControl sx={{ minWidth: { xs: "100%", sm: 160 } }} size={isMobile ? "small" : "medium"}>
+          <FormControl size="small" sx={{ minWidth: 160 }}>
             <Select
               value={statusFilter}
               onChange={(e: SelectChangeEvent) => {
                 setStatusFilter(e.target.value);
               }}
               displayEmpty
-              sx={{ borderRadius: 2, bgcolor: "background.default" }}
+              sx={{ borderRadius: 2 }}
             >
               <MenuItem value="all">{t("statusAll")}</MenuItem>
               <MenuItem value="active">{t("statusActive")}</MenuItem>
               <MenuItem value="inactive">{t("statusDisabled")}</MenuItem>
             </Select>
           </FormControl>
+
+          <Stack direction="row" spacing={1} sx={{ ml: { md: "auto" } }}>
+            <Button
+              variant="outlined"
+              color="inherit"
+              onClick={() => {
+                setSearch("");
+                setStatusFilter("all");
+              }}
+              sx={{ borderRadius: 2 }}
+            >
+              {t("reset")}
+            </Button>
+          </Stack>
         </Stack>
       </Paper>
 
-      {/* LIST */}
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
           <CircularProgress />
         </Box>
       ) : isMobile ? (
-        // Mobile cards
         <Stack spacing={1.5}>
           {filtered.length === 0 ? (
             <EmptyState />
@@ -245,106 +261,141 @@ export default function InspectorsPage() {
           )}
         </Stack>
       ) : (
-        <Paper sx={{ borderRadius: 3, overflow: "hidden", border: "1px solid", borderColor: "divider", elevation: 0 }}>
-          <Table>
-            <TableHead sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 700 }}>{t("table.inspector")}</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>{t("table.contact")}</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>{t("table.employeeCode")}</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>{t("table.availability")}</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>{t("table.status")}</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700 }}>
-                  {t("table.actions")}
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filtered.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 10 }}>
-                    <EmptyState />
-                  </TableCell>
+        <Paper elevation={0} sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
+          <TableContainer sx={{ overflowX: "auto", maxHeight: 600 }}>
+            <Table stickyHeader sx={{ minWidth: 800 }}>
+              <TableHead>
+                <TableRow
+                  sx={{
+                    "& .MuiTableCell-head": {
+                      fontWeight: 700,
+                      fontSize: 12,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      color: "text.secondary",
+                      borderBottom: "1px solid",
+                      borderColor: "divider",
+                      py: 2,
+                      bgcolor: (t: Theme) => alpha(t.palette.primary.main, 0.03),
+                    },
+                  }}
+                >
+                  <TableCell sx={{ pl: 3 }}>{t("table.inspector")}</TableCell>
+                  <TableCell>{t("table.employeeCode")}</TableCell>
+                  <TableCell>{t("table.availability")}</TableCell>
+                  <TableCell>{t("table.status")}</TableCell>
+                  <TableCell align="right" sx={{ pr: 3 }}>{t("table.actions")}</TableCell>
                 </TableRow>
-              ) : (
-                filtered.map(i => (
-                  <TableRow key={i.inspectorId} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
-                    <TableCell>
-                      <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-                        <Avatar sx={{ bgcolor: theme.palette.primary.light, fontWeight: 700 }}>
-                          {i.firstName[0] || "?"}
-                          {i.lastName[0] || ""}
-                        </Avatar>
-                        <Box>
-                          <Typography sx={{ fontWeight: 600 }}>
-                            {i.firstName} {i.lastName}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {new Date(i.createdAt).toLocaleDateString()}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">{i.email}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {i.phoneNumber || "—"}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip label={i.employeeCode} size="small" sx={{ fontWeight: 600 }} />
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={i.isAvailable ? t("table.available") : t("table.unavailable")}
-                        size="small"
-                        sx={{
-                          bgcolor: i.isAvailable
-                            ? alpha(theme.palette.info.main, 0.15)
-                            : alpha(theme.palette.warning.main, 0.15),
-                          color: i.isAvailable ? theme.palette.info.main : theme.palette.warning.main,
-                          fontWeight: 700,
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={i.isActive ? t("table.activeStatus") : t("table.disabledStatus")}
-                        size="small"
-                        sx={{
-                          bgcolor: i.isActive
-                            ? alpha(theme.palette.success.main, 0.15)
-                            : alpha(theme.palette.error.main, 0.15),
-                          color: i.isActive ? theme.palette.success.main : theme.palette.error.main,
-                          fontWeight: 700,
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell align="right">
-                      <Stack direction="row" spacing={0.5} sx={{ justifyContent: "flex-end" }}>
-                        <Tooltip title={t("table.viewDetails")}>
-                          <IconButton component={Link} href={`/admin/inspectors/${i.inspectorId}`} size="small">
-                            <VisibilityOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title={i.isActive ? t("table.disable") : t("table.enable")}>
-                          <IconButton
-                            size="small"
-                            onClick={() => {
-                              handleToggleActive(i);
-                            }}
-                            sx={{ color: i.isActive ? theme.palette.error.main : theme.palette.success.main }}
-                          >
-                            {i.isActive ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
-                          </IconButton>
-                        </Tooltip>
-                      </Stack>
+              </TableHead>
+              <TableBody>
+                {filtered.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} align="center" sx={{ py: 10 }}>
+                      <EmptyState />
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  filtered.map(i => (
+                    <TableRow
+                      key={i.inspectorId}
+                      hover
+                      sx={{
+                        transition: "all 0.2s ease",
+                        "&:last-child td": { border: 0 },
+                        "&:hover": { bgcolor: (t: Theme) => alpha(t.palette.primary.main, 0.03) },
+                      }}
+                    >
+                      <TableCell sx={{ pl: 3 }}>
+                        <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                          <Avatar
+                            sx={{
+                              bgcolor: (t: Theme) => alpha(t.palette.primary.main, 0.08),
+                              color: "primary.main",
+                              fontWeight: 700,
+                              width: 40,
+                              height: 40,
+                              fontSize: 16,
+                            }}
+                          >
+                            {i.firstName[0] || "?"}
+                            {i.lastName[0] || ""}
+                          </Avatar>
+                          <Box>
+                            <Typography sx={{ fontWeight: 700, fontSize: 14 }}>
+                              {i.firstName} {i.lastName}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {i.email || i.phoneNumber || "—"}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={i.employeeCode}
+                          size="small"
+                          sx={{ fontWeight: 700, borderRadius: 1.5 }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={i.isAvailable ? t("table.available") : t("table.unavailable")}
+                          size="small"
+                          sx={{
+                            borderRadius: 1.5,
+                            bgcolor: i.isAvailable
+                              ? (t: Theme) => alpha(t.palette.info.main, 0.15)
+                              : (t: Theme) => alpha(t.palette.warning.main, 0.15),
+                            color: i.isAvailable ? "info.main" : "warning.main",
+                            fontWeight: 700,
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={i.isActive ? t("table.activeStatus") : t("table.disabledStatus")}
+                          size="small"
+                          sx={{
+                            borderRadius: 1.5,
+                            bgcolor: i.isActive
+                              ? (t: Theme) => alpha(t.palette.success.main, 0.15)
+                              : (t: Theme) => alpha(t.palette.error.main, 0.15),
+                            color: i.isActive ? "success.main" : "error.main",
+                            fontWeight: 700,
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell align="right" sx={{ pr: 3 }}>
+                        <Stack direction="row" spacing={0.5} sx={{ justifyContent: "flex-end" }}>
+                          <Tooltip title={t("table.viewDetails")}>
+                            <IconButton
+                              component={Link}
+                              href={`/admin/inspectors/${i.inspectorId}`}
+                              size="small"
+                              sx={{ color: "text.secondary" }}
+                            >
+                              <VisibilityOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title={i.isActive ? t("table.disable") : t("table.enable")}>
+                            <IconButton
+                              size="small"
+                              onClick={() => {
+                                handleToggleActive(i);
+                              }}
+                              sx={{ color: i.isActive ? "error.main" : "success.main" }}
+                            >
+                              {i.isActive ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
+                            </IconButton>
+                          </Tooltip>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </Paper>
       )}
 
@@ -406,7 +457,15 @@ function InspectorMobileCard({
     >
       <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
         <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", flex: 1, minWidth: 0 }}>
-          <Avatar sx={{ bgcolor: theme.palette.primary.light, fontWeight: 700, width: 40, height: 40 }}>
+          <Avatar
+            sx={{
+              bgcolor: alpha(theme.palette.primary.main, 0.08),
+              color: theme.palette.primary.main,
+              fontWeight: 700,
+              width: 40,
+              height: 40,
+            }}
+          >
             {inspector.firstName[0]}
             {inspector.lastName[0]}
           </Avatar>
@@ -423,6 +482,7 @@ function InspectorMobileCard({
           label={inspector.isActive ? t("table.activeStatus") : t("table.disabledStatus")}
           size="small"
           sx={{
+            borderRadius: 1.5,
             bgcolor: inspector.isActive
               ? alpha(theme.palette.success.main, 0.15)
               : alpha(theme.palette.error.main, 0.15),

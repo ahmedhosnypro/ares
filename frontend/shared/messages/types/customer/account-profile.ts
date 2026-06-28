@@ -28,6 +28,8 @@ export type AccountProfileLabels = {
     readonly valuedCustomer: string;
     readonly noEmailProvided: string;
     readonly changePhotoAriaLabel: string;
+    readonly invalidFileType: string;
+    readonly fileTooLarge: string;
   };
   readonly personalInfo: {
     readonly title: string;
