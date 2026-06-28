@@ -53,9 +53,14 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // If already has locale prefix, serve as-is
+  // If already has locale prefix, redirect to clean path and set NEXT_LOCALE cookie
   if (hasLocalePrefix) {
-    return NextResponse.next();
+    const locale = pathname.split("/")[1];
+    const url = request.nextUrl.clone();
+    url.pathname = cleanPath;
+    const response = NextResponse.redirect(url);
+    response.cookies.set("NEXT_LOCALE", locale, { path: "/" });
+    return response;
   }
 
   // Rewrite internally to add locale (URL stays the same in browser)

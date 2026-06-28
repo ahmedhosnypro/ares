@@ -35,6 +35,17 @@ import compliance from "./en/dashboard/admin/admin/compliance";
 import security from "./en/dashboard/admin/admin/security";
 import vehicles from "./en/dashboard/admin/admin/vehicles";
 import bankDetails from "./en/dashboard/admin/bank-details";
+import about from "./en/public/about";
+import privacy from "./en/public/privacy";
+import terms from "./en/public/terms";
+import adminBookings from "./en/dashboard/admin/bookings";
+import createBooking from "./en/dashboard/admin/bookings/create";
+import bookingDetails from "./en/dashboard/admin/bookings/_id/details";
+import editBooking from "./en/dashboard/admin/bookings/_id/edit";
+import categories from "./en/dashboard/admin/categories";
+import categoryDetails from "./en/dashboard/admin/categories/detail";
+import countries from "./en/dashboard/admin/countries";
+import createCountry from "./en/dashboard/admin/countries/create";
 
 const en: MessageSchema = {
   common,
@@ -81,8 +92,21 @@ const en: MessageSchema = {
       vehicles,
     },
     bankDetails,
+    bookings: adminBookings,
+    createBooking,
+    bookingDetails,
+    editBooking,
+    categories,
+    categoryDetails,
+    countries,
+    createCountry,
   },
   deleteNotificationDialog,
+  publicPages: {
+    about,
+    privacy,
+    terms,
+  },
 };
 
 export default en;

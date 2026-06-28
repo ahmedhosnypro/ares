@@ -14,7 +14,6 @@ import {
   Paper,
   Chip,
   Stack,
-  CircularProgress,
   LinearProgress,
   Button,
   alpha,
@@ -24,7 +23,6 @@ import {
   InputAdornment,
   MenuItem,
   Pagination,
-  Grid,
   Card,
   useTheme,
 } from "@mui/material";
@@ -41,6 +39,8 @@ import {
 } from "@mui/icons-material";
 import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { ApiError } from "@/utils/api-client";
 import {
   searchCategories,
   getCategorySummary,
@@ -55,92 +55,13 @@ import CategoryForm from "./_components/CategoryForm";
 import Image from "next/image";
 import { toImageUrl } from "@/utils/image-url";
 
-// ── Summary Card Component ──
-function StatCard({
-  label,
-  value,
-  color,
-  icon,
-}: {
-  label: string;
-  value: number | string;
-  color: string;
-  icon: React.ReactNode;
-}) {
-  const theme = useTheme();
-  const mainColor = color in theme.palette ? (theme.palette as any)[color].main : color;
-
-  return (
-    <Card
-      elevation={0}
-      sx={{
-        p: { xs: 2, sm: 2.5 },
-        borderRadius: 2,
-        border: "1px solid",
-        borderColor: "divider",
-        position: "relative",
-        overflow: "hidden",
-        height: "100%",
-        background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${alpha(
-          mainColor,
-          0.08
-        )} 100%)`,
-        transition: "transform 0.2s, box-shadow 0.2s",
-        "&:hover": {
-          transform: "translateY(-2px)",
-          boxShadow: `0 8px 24px ${alpha(mainColor, 0.18)}`,
-        },
-      }}
-    >
-      <Box
-        sx={{
-          position: "absolute",
-          top: -18,
-          right: -18,
-          width: 80,
-          height: 80,
-          borderRadius: "50%",
-          bgcolor: alpha(mainColor, 0.1),
-        }}
-      />
-      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-        <Avatar sx={{ bgcolor: alpha(mainColor, 0.15), color: mainColor, width: 40, height: 40 }}>
-          {icon}
-        </Avatar>
-        <Box sx={{ minWidth: 0, flexGrow: 1 }}>
-          <Typography
-            variant="overline"
-            color="text.secondary"
-            sx={{ fontWeight: 700, lineHeight: 1.2 }}
-            noWrap
-          >
-            {label}
-          </Typography>
-          <Typography
-            variant="h4"
-            sx={{
-              fontWeight: 800,
-              color: mainColor,
-              lineHeight: 1.1,
-              fontSize: { xs: "1.6rem", sm: "2.125rem" },
-            }}
-            noWrap
-          >
-            {value}
-          </Typography>
-        </Box>
-      </Stack>
-    </Card>
-  );
-}
-
 // ── Empty State Component ──
 function EmptyState({
   filtersActive,
   handleClearFilters,
 }: {
-  filtersActive: boolean;
-  handleClearFilters: () => void;
+  readonly filtersActive: boolean;
+  readonly handleClearFilters: () => void;
 }) {
   return (
     <Box sx={{ py: 8, textAlign: "center" }}>
@@ -150,7 +71,7 @@ function EmptyState({
           height: 64,
           mx: "auto",
           mb: 2,
-          bgcolor: (t) => alpha(t.palette.text.disabled, 0.1),
+          bgcolor: t => alpha(t.palette.text.disabled, 0.1),
         }}
       >
         <SearchIcon sx={{ fontSize: 32, color: "text.disabled" }} />
@@ -181,6 +102,8 @@ export default function AdminCategoriesPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const theme = useTheme();
+  const t = useTranslations("dashboardAdmin.categories");
+  const tc = useTranslations("common");
 
   const [categories, setCategories] = useState<AdminCategoryListDto[]>([]);
   const [summary, setSummary] = useState<CategorySummary | null>(null);
@@ -212,9 +135,11 @@ export default function AdminCategoriesPage() {
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(search);
-      setPage(1); // Reset page on new search
+      setPage(1);
     }, 300);
-    return () => clearTimeout(handler);
+    return () => {
+      clearTimeout(handler);
+    };
   }, [search]);
 
   // Fetch summary stats
@@ -247,11 +172,11 @@ export default function AdminCategoriesPage() {
       setTotalCount(res.totalCount);
       setTotalPages(res.totalPages);
     } catch {
-      setError("Failed to load categories. Please try again later.");
+      setError(t("alerts.loadError"));
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, status, offer, sortBy, page, pageSize]);
+  }, [t, debouncedSearch, status, offer, sortBy, page, pageSize]);
 
   useEffect(() => {
     if (session?.accessToken) {
@@ -262,29 +187,27 @@ export default function AdminCategoriesPage() {
 
   const handleDelete = async (id: string, vehicleCount: number) => {
     if (vehicleCount > 0) {
-      setSnackbar({ open: true, message: "Cannot delete a category that contains vehicles.", severity: "error" });
+      setSnackbar({ open: true, message: t("alerts.deleteHasVehiclesError"), severity: "error" });
       return;
     }
 
-    if (!window.confirm("Are you sure you want to delete this category?")) return;
+    if (!window.confirm(t("actions.deleteConfirm"))) return;
 
     try {
       await deleteCategory(id);
       void fetchSummary();
       void fetchCategories();
-      setSnackbar({ open: true, message: "Category deleted successfully.", severity: "success" });
-    } catch (err: any) {
-      const errorResponse = err?.response?.data?.message || "Failed to delete category.";
+      setSnackbar({ open: true, message: t("alerts.deleteSuccess"), severity: "success" });
+    } catch (err: unknown) {
       setSnackbar({
         open: true,
-        message: errorResponse,
+        message: err instanceof ApiError ? err.message : t("alerts.deleteError"),
         severity: "error",
       });
     }
   };
 
   const handleEdit = (dto: AdminCategoryListDto) => {
-    // Map DTO to Category interface for the form
     const category: Category = {
       id: dto.id,
       name: dto.name,
@@ -316,7 +239,7 @@ export default function AdminCategoriesPage() {
     setFormOpen(false);
     void fetchSummary();
     void fetchCategories();
-    setSnackbar({ open: true, message: "Category saved successfully.", severity: "success" });
+    setSnackbar({ open: true, message: t("alerts.saveSuccess"), severity: "success" });
   };
 
   const filtersActive = Boolean(debouncedSearch || status || offer);
@@ -328,7 +251,6 @@ export default function AdminCategoriesPage() {
     setPage(1);
   };
 
-  // Helper to format remaining days
   const getRemainingDays = (endDateString?: string) => {
     if (!endDateString) return 0;
     const end = new Date(endDateString);
@@ -337,11 +259,20 @@ export default function AdminCategoriesPage() {
     return Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
   };
 
+  // Summary card color resolution with proper typing
+  const resolvePaletteColor = useMemo(
+    () => (color: string) => {
+      const isPaletteColor = color in theme.palette;
+      return isPaletteColor ? (theme.palette[color as keyof typeof theme.palette] as { main: string }).main : color;
+    },
+    [theme, theme.palette]
+  );
+
   return (
     <Box sx={{ width: "100%", maxWidth: 1200, mx: "auto", p: { xs: 2, sm: 3 } }}>
       <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 3 }}>
         <Typography variant="h4" sx={{ fontWeight: 800 }}>
-          Categories
+          {t("title")}
         </Typography>
       </Stack>
 
@@ -355,30 +286,89 @@ export default function AdminCategoriesPage() {
           width: "100%",
         }}
       >
-        <StatCard
-          icon={<CategoryIcon fontSize="small" />}
-          label="Categories"
-          value={summaryLoading ? "..." : summary?.totalCategories ?? 0}
-          color="primary"
-        />
-        <StatCard
-          icon={<CarIcon fontSize="small" />}
-          label="Vehicles"
-          value={summaryLoading ? "..." : summary?.totalVehicles ?? 0}
-          color="info"
-        />
-        <StatCard
-          icon={<OfferIcon fontSize="small" />}
-          label="With Offers"
-          value={summaryLoading ? "..." : summary?.categoriesWithOffers ?? 0}
-          color="warning"
-        />
-        <StatCard
-          icon={<CommissionIcon fontSize="small" />}
-          label="Avg Commission"
-          value={summaryLoading ? "..." : `${Math.round(summary?.averageCommission ?? 0)}%`}
-          color="success"
-        />
+        {[
+          {
+            icon: <CategoryIcon fontSize="small" />,
+            label: "Categories",
+            value: summary?.totalCategories ?? 0,
+            color: "primary",
+          },
+          { icon: <CarIcon fontSize="small" />, label: "Vehicles", value: summary?.totalVehicles ?? 0, color: "info" },
+          {
+            icon: <OfferIcon fontSize="small" />,
+            label: "With Offers",
+            value: summary?.categoriesWithOffers ?? 0,
+            color: "warning",
+          },
+          {
+            icon: <CommissionIcon fontSize="small" />,
+            label: "Avg Commission",
+            value: summaryLoading ? "..." : `${Math.round(summary?.averageCommission ?? 0)}%`,
+            color: "success",
+          },
+        ].map(card => {
+          const mainColor = resolvePaletteColor(card.color);
+          return (
+            <Card
+              key={card.label}
+              elevation={0}
+              sx={{
+                p: { xs: 2, sm: 2.5 },
+                borderRadius: 2,
+                border: "1px solid",
+                borderColor: "divider",
+                position: "relative",
+                overflow: "hidden",
+                height: "100%",
+                background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${alpha(mainColor, 0.08)} 100%)`,
+                transition: "transform 0.2s, box-shadow 0.2s",
+                "&:hover": {
+                  transform: "translateY(-2px)",
+                  boxShadow: `0 8px 24px ${alpha(mainColor, 0.18)}`,
+                },
+              }}
+            >
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: -18,
+                  right: -18,
+                  width: 80,
+                  height: 80,
+                  borderRadius: "50%",
+                  bgcolor: alpha(mainColor, 0.1),
+                }}
+              />
+              <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+                <Avatar sx={{ bgcolor: alpha(mainColor, 0.15), color: mainColor, width: 40, height: 40 }}>
+                  {card.icon}
+                </Avatar>
+                <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+                  <Typography
+                    variant="overline"
+                    color="text.secondary"
+                    sx={{ fontWeight: 700, lineHeight: 1.2 }}
+                    noWrap
+                  >
+                    {card.label}
+                  </Typography>
+                  <Typography
+                    variant="h4"
+                    sx={{
+                      fontWeight: 800,
+                      color: mainColor,
+                      lineHeight: 1.1,
+                      fontSize: { xs: "1.6rem", sm: "2.125rem" },
+                    }}
+                    noWrap
+                  >
+                    {summaryLoading && card.label !== "Avg Commission" ? "..." : card.value}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Card>
+          );
+        })}
       </Box>
 
       {/* Toolbar */}
@@ -392,7 +382,9 @@ export default function AdminCategoriesPage() {
             size="small"
             placeholder="Search categories..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={e => {
+              setSearch(e.target.value);
+            }}
             slotProps={{
               input: {
                 startAdornment: (
@@ -409,7 +401,7 @@ export default function AdminCategoriesPage() {
             size="small"
             label="Status"
             value={status}
-            onChange={(e) => {
+            onChange={e => {
               setStatus(e.target.value);
               setPage(1);
             }}
@@ -424,7 +416,7 @@ export default function AdminCategoriesPage() {
             size="small"
             label="Offer"
             value={offer}
-            onChange={(e) => {
+            onChange={e => {
               setOffer(e.target.value);
               setPage(1);
             }}
@@ -440,7 +432,7 @@ export default function AdminCategoriesPage() {
             size="small"
             label="Sort By"
             value={sortBy}
-            onChange={(e) => {
+            onChange={e => {
               setSortBy(e.target.value);
               setPage(1);
             }}
@@ -459,7 +451,7 @@ export default function AdminCategoriesPage() {
           onClick={handleCreate}
           sx={{ borderRadius: 2, textTransform: "none", fontWeight: 700, flexShrink: 0 }}
         >
-          Add Category
+          {t("addCategory")}
         </Button>
       </Stack>
 
@@ -488,26 +480,31 @@ export default function AdminCategoriesPage() {
         {error && categories.length === 0 ? (
           <Box sx={{ p: 4, textAlign: "center" }}>
             <Alert severity="error">{error}</Alert>
-            <Button onClick={fetchCategories} sx={{ mt: 2 }}>
-              Retry
+            <Button
+              onClick={() => {
+                void fetchCategories();
+              }}
+              sx={{ mt: 2 }}
+            >
+              {tc("retry")}
             </Button>
           </Box>
         ) : (
           <TableContainer sx={{ opacity: loading ? 0.6 : 1, transition: "opacity 0.15s ease" }}>
             <Table>
               <TableHead>
-                <TableRow sx={{ bgcolor: (t) => alpha(t.palette.primary.main, 0.04) }}>
-                  <TableCell>Category</TableCell>
-                  <TableCell>Commission</TableCell>
-                  <TableCell>Vehicles</TableCell>
-                  <TableCell>Offer</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="right">Actions</TableCell>
+                <TableRow sx={{ bgcolor: t => alpha(t.palette.primary.main, 0.04) }}>
+                  <TableCell>{t("table.headers.name")}</TableCell>
+                  <TableCell>{t("table.headers.commission")}</TableCell>
+                  <TableCell>{t("table.headers.vehicles")}</TableCell>
+                  <TableCell>{t("table.headers.offer")}</TableCell>
+                  <TableCell>{t("table.headers.status")}</TableCell>
+                  <TableCell align="right">{t("table.headers.actions")}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {categories.length > 0 ? (
-                  categories.map((c) => {
+                  categories.map(c => {
                     const daysRemaining = getRemainingDays(c.offerEndDate);
                     return (
                       <TableRow
@@ -518,7 +515,9 @@ export default function AdminCategoriesPage() {
                           transition: "background 0.15s",
                           "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.03) },
                         }}
-                        onClick={() => router.push(`/admin/categories/${c.id}`)}
+                        onClick={() => {
+                          router.push(`/admin/categories/${c.id}`);
+                        }}
                       >
                         <TableCell>
                           <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
@@ -634,11 +633,10 @@ export default function AdminCategoriesPage() {
                         </TableCell>
                         <TableCell>
                           <Chip
-                            label={c.isActive ? "Active" : "Inactive"}
+                            label={c.isActive ? t("table.statusActive") : t("table.statusInactive")}
                             size="small"
                             sx={{
-                              bgcolor: (t) =>
-                                alpha(c.isActive ? t.palette.success.main : t.palette.text.disabled, 0.15),
+                              bgcolor: t => alpha(c.isActive ? t.palette.success.main : t.palette.text.disabled, 0.15),
                               color: c.isActive ? "success.main" : "text.secondary",
                               fontWeight: 700,
                             }}
@@ -646,10 +644,10 @@ export default function AdminCategoriesPage() {
                         </TableCell>
                         <TableCell align="right">
                           <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end" }}>
-                            <Tooltip title="View">
+                            <Tooltip title={t("actions.edit")}>
                               <IconButton
                                 size="small"
-                                onClick={(e) => {
+                                onClick={e => {
                                   e.stopPropagation();
                                   router.push(`/admin/categories/${c.id}`);
                                 }}
@@ -657,10 +655,10 @@ export default function AdminCategoriesPage() {
                                 <ViewIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
-                            <Tooltip title="Edit">
+                            <Tooltip title={t("actions.edit")}>
                               <IconButton
                                 size="small"
-                                onClick={(e) => {
+                                onClick={e => {
                                   e.stopPropagation();
                                   handleEdit(c);
                                 }}
@@ -669,15 +667,13 @@ export default function AdminCategoriesPage() {
                               </IconButton>
                             </Tooltip>
                             <Tooltip
-                              title={
-                                c.vehicleCount > 0 ? "Cannot delete category with vehicles" : "Delete"
-                              }
+                              title={c.vehicleCount > 0 ? t("alerts.deleteHasVehiclesError") : t("actions.delete")}
                             >
                               <span>
                                 <IconButton
                                   size="small"
                                   disabled={c.vehicleCount > 0}
-                                  onClick={(e) => {
+                                  onClick={e => {
                                     e.stopPropagation();
                                     void handleDelete(c.id, c.vehicleCount);
                                   }}
@@ -722,7 +718,9 @@ export default function AdminCategoriesPage() {
           <Pagination
             count={totalPages}
             page={page}
-            onChange={(_, val) => setPage(val)}
+            onChange={(_, val) => {
+              setPage(val);
+            }}
             size="small"
             sx={{ "& .MuiPaginationItem-root": { borderRadius: 2 } }}
           />

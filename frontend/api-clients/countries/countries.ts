@@ -115,3 +115,34 @@ export const deleteCountry = async (accessToken: string, id: string): Promise<un
 
   return await res.json();
 };
+
+export const createCountry = async (
+  accessToken: string,
+  payload: { values: { language: string; name: string }[] }
+): Promise<{ _id: string }> => {
+  return apiFetchJson<{ _id: string }>("/api/create-country", {
+    method: "POST",
+    accessToken,
+    body: JSON.stringify(payload),
+  });
+};
+
+export const validateCountry = async (accessToken: string, language: string, name: string): Promise<boolean> => {
+  const res = await fetch(toApiUrl("/api/validate-country"), {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({ language, name }),
+  });
+
+  if (res.status === 200) {
+    return true; // Name is available
+  }
+  if (res.status === 204) {
+    return false; // Name already in use
+  }
+  throw new Error("Failed to validate country name");
+};

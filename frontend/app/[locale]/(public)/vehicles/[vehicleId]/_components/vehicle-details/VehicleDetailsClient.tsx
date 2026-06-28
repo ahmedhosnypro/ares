@@ -330,7 +330,7 @@ export default function VehicleDetailsClient({
   };
 
   const verification = useVerificationStatus();
-  const isDetails = !onSave;
+  const isDetails = mode === "details";
 
   return (
     <FormProvider {...methods}>

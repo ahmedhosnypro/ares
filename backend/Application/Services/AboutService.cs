@@ -1,3 +1,4 @@
+using Backend.Application.DTOs;
 using Backend.Application.DTOs.About;
 using Backend.Application.Exceptions;
 using Backend.Application.Interfaces;
@@ -17,17 +18,17 @@ public class AboutService : IAboutService
         _context = context;
     }
 
-    public async Task<List<AboutSectionDto>> GetAllAsync(CancellationToken ct = default) =>
+    public async Task<List<AboutSectionDto>> GetAllAsync(string? locale = null, CancellationToken ct = default) =>
         await _context.AboutSections
             .OrderBy(a => a.Order)
-            .Select(a => Map(a))
+            .Select(a => Map(a, locale))
             .ToListAsync(ct);
 
-    public async Task<AboutSectionDto> GetByIdAsync(Guid id, CancellationToken ct = default)
+    public async Task<AboutSectionDto> GetByIdAsync(Guid id, string? locale = null, CancellationToken ct = default)
     {
         var section = await _repo.GetByIdAsync(id, ct)
             ?? throw new NotFoundException($"About section {id} not found.");
-        return Map(section);
+        return Map(section, locale);
     }
 
     public async Task<AboutSectionDto> CreateAsync(CreateAboutSectionRequest request, CancellationToken ct = default)
@@ -37,7 +38,8 @@ public class AboutService : IAboutService
             Title = request.Title,
             Content = request.Content,
             Order = request.Order,
-            SectionType = request.SectionType
+            SectionType = request.SectionType,
+            Localizations = MapLocalizations(request.Localizations)
         };
         await _repo.AddAsync(section, ct);
         await _repo.SaveChangesAsync(ct);
@@ -52,6 +54,7 @@ public class AboutService : IAboutService
         section.Content = request.Content;
         section.Order = request.Order;
         section.SectionType = request.SectionType;
+        section.Localizations = MapLocalizations(request.Localizations);
         await _repo.UpdateAsync(section, ct);
         await _repo.SaveChangesAsync(ct);
         return Map(section);
@@ -65,13 +68,33 @@ public class AboutService : IAboutService
         await _repo.SaveChangesAsync(ct);
     }
 
-    private static AboutSectionDto Map(AboutSection a) => new()
+    private static AboutSectionDto Map(AboutSection a, string? locale = null)
     {
-        Id = a.Id,
-        Title = a.Title,
-        Content = a.Content,
-        Order = a.Order,
-        SectionType = a.SectionType,
-        UpdatedAt = a.UpdatedAt
-    };
+        var (title, content) = ResolveLocale(a, locale);
+        return new()
+        {
+            Id = a.Id,
+            Title = title,
+            Content = content,
+            Order = a.Order,
+            SectionType = a.SectionType,
+            UpdatedAt = a.UpdatedAt,
+            Localizations = string.IsNullOrEmpty(locale)
+                ? a.Localizations.ToDictionary(k => k.Key, v => new SectionLocalizationDto { Title = v.Value.Title, Content = v.Value.Content })
+                : new()
+        };
+    }
+
+    private static (string Title, string Content) ResolveLocale(AboutSection a, string? locale)
+    {
+        if (string.IsNullOrEmpty(locale)) return (a.Title, a.Content);
+        if (a.Localizations.TryGetValue(locale, out var loc) && !string.IsNullOrEmpty(loc.Title))
+            return (loc.Title, loc.Content);
+        return (a.Title, a.Content);
+    }
+
+    private static Dictionary<string, SectionLocalization> MapLocalizations(Dictionary<string, SectionLocalizationDto> dto)
+    {
+        return dto.ToDictionary(k => k.Key, v => new SectionLocalization { Title = v.Value.Title, Content = v.Value.Content });
+    }
 }

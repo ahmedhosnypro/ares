@@ -34,6 +34,17 @@ import type { AdminComplianceLabels } from "./dashboard/admin/admin/compliance";
 import type { AdminSecurityLabels } from "./dashboard/admin/admin/security";
 import type { AdminVehiclesMgmtLabels } from "./dashboard/admin/admin/vehicles";
 import type { BankDetailsLabels } from "./dashboard/admin/bank-details";
+import type { AboutLabels } from "./public/about";
+import type { PrivacyLabels } from "./public/privacy";
+import type { TermsLabels } from "./public/terms";
+import type { AdminBookingsLabels } from "./dashboard/admin/bookings";
+import type { CreateBookingLabels } from "./dashboard/admin/bookings/create";
+import type { BookingDetailsLabels } from "./dashboard/admin/bookings/_id/details";
+import type { EditBookingLabels } from "./dashboard/admin/bookings/_id/edit";
+import type { CategoriesLabels } from "./dashboard/admin/categories";
+import type { CategoryDetailsLabels } from "./dashboard/admin/categories/detail";
+import type { CountriesLabels } from "./dashboard/admin/countries";
+import type { CreateCountryLabels } from "./dashboard/admin/countries/create";
 
 export type {
   AuthLabels,
@@ -72,6 +83,17 @@ export type {
   DriverEarningsLabels,
   DriverNotificationsLabels,
   DriverProfileLabels,
+  BookingDetailsLabels,
+  EditBookingLabels,
+  CategoriesLabels,
+  CategoryDetailsLabels,
+  CountriesLabels,
+  CreateCountryLabels,
+  AboutLabels,
+  PrivacyLabels,
+  TermsLabels,
+  AdminBookingsLabels,
+  CreateBookingLabels,
 };
 
 export type AuthPagesSchema = {
@@ -119,6 +141,20 @@ export type DashboardAdminAdminSchema = {
 export type DashboardAdminSchema = {
   readonly admin: DashboardAdminAdminSchema;
   readonly bankDetails: BankDetailsLabels;
+  readonly bookings: AdminBookingsLabels;
+  readonly createBooking: CreateBookingLabels;
+  readonly bookingDetails: BookingDetailsLabels;
+  readonly editBooking: EditBookingLabels;
+  readonly categories: CategoriesLabels;
+  readonly categoryDetails: CategoryDetailsLabels;
+  readonly countries: CountriesLabels;
+  readonly createCountry: CreateCountryLabels;
+};
+
+export type PublicPagesSchema = {
+  readonly about: AboutLabels;
+  readonly privacy: PrivacyLabels;
+  readonly terms: TermsLabels;
 };
 
 export type MessageSchema = {
@@ -131,4 +167,5 @@ export type MessageSchema = {
   readonly dashboard: DashboardSchema;
   readonly dashboardAdmin: DashboardAdminSchema;
   readonly deleteNotificationDialog: DeleteNotificationDialogLabels;
+  readonly publicPages: PublicPagesSchema;
 };

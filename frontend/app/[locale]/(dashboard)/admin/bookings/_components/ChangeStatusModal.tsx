@@ -15,6 +15,7 @@ import {
   CircularProgress,
   Chip,
 } from "@mui/material";
+import { useTranslations } from "next-intl";
 import { updateBookingStatus } from "@/api-clients/bookings/bookings";
 import { logger } from "@/utils/logger";
 
@@ -51,6 +52,8 @@ export default function ChangeStatusModal({
   onSuccess,
   onClose,
 }: ChangeStatusModalProps) {
+  const t = useTranslations("dashboardAdmin.bookings");
+  const tCommon = useTranslations("common");
   const [selected, setSelected] = useState<OperationalStatus | "">("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +78,7 @@ export default function ChangeStatusModal({
         onClose();
       } catch (e) {
         logger.error("Failed to change booking status", e);
-        let displayError = "Failed to change status. Please try again.";
+        let displayError = t("alerts.changeStatusError");
         if (e instanceof Error) {
           displayError = e.message;
         }
@@ -84,6 +87,30 @@ export default function ChangeStatusModal({
         setSubmitting(false);
       }
     })();
+  };
+
+  const getOperationalStatusLabel = (status: OperationalStatus) => {
+    switch (status) {
+      case "PaymentPending":
+        return t("changeStatusModal.statuses.paymentPending");
+      case "Confirmed":
+        return t("changeStatusModal.statuses.confirmed");
+      case "Active":
+        return t("changeStatusModal.statuses.active");
+      case "Completed":
+        return t("changeStatusModal.statuses.completed");
+      case "Cancelled":
+        return t("changeStatusModal.statuses.cancelled");
+      default:
+        return status;
+    }
+  };
+
+  const getStatusLabelText = (status?: string | null) => {
+    if (!status) return "";
+    const match = OPERATIONAL_STATUSES.find(s => s.toLowerCase() === status.toLowerCase());
+    if (match) return getOperationalStatusLabel(match);
+    return status;
   };
 
   const disabled = submitting || !selected || selected === currentStatus;
@@ -96,21 +123,25 @@ export default function ChangeStatusModal({
       }}
       slotProps={{ paper: { sx: { borderRadius: 2, p: 1, minWidth: 380 } } }}
     >
-      <DialogTitle sx={{ fontWeight: 700, pb: 1 }}>Change Booking Status</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 700, pb: 1 }}>{t("changeStatusModal.title")}</DialogTitle>
       <DialogContent>
         <Stack spacing={2.5} sx={{ mt: 1 }}>
           {currentStatus && (
             <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
               <Typography variant="body2" color="text.secondary">
-                Current:
+                {t("changeStatusModal.currentLabel")}
               </Typography>
-              <Chip size="small" label={currentStatus} sx={{ fontWeight: 600, textTransform: "capitalize" }} />
+              <Chip
+                size="small"
+                label={getStatusLabelText(currentStatus)}
+                sx={{ fontWeight: 600, textTransform: "capitalize" }}
+              />
             </Stack>
           )}
 
           <Stack spacing={1}>
             <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-              New status
+              {t("changeStatusModal.newStatusLabel")}
             </Typography>
             <ToggleButtonGroup
               exclusive
@@ -136,7 +167,7 @@ export default function ChangeStatusModal({
             >
               {OPERATIONAL_STATUSES.map(s => (
                 <ToggleButton key={s} value={s}>
-                  {s}
+                  {getOperationalStatusLabel(s)}
                 </ToggleButton>
               ))}
             </ToggleButtonGroup>
@@ -151,7 +182,7 @@ export default function ChangeStatusModal({
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
         <Button variant="outlined" disabled={submitting} onClick={onClose} sx={{ borderRadius: 2 }}>
-          Cancel
+          {tCommon("cancel")}
         </Button>
         <Button
           variant="contained"
@@ -159,7 +190,7 @@ export default function ChangeStatusModal({
           onClick={handleSave}
           sx={{ borderRadius: 2, fontWeight: 700, minWidth: 120 }}
         >
-          {submitting ? <CircularProgress size={22} color="inherit" /> : "Save"}
+          {submitting ? <CircularProgress size={22} color="inherit" /> : tCommon("save")}
         </Button>
       </DialogActions>
     </Dialog>

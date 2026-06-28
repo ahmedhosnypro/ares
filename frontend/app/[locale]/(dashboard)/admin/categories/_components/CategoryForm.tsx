@@ -17,6 +17,8 @@ import {
   Divider,
 } from "@mui/material";
 import { createCategory, updateCategory, Category } from "@/api-clients/categories/categories";
+import { useTranslations } from "next-intl";
+import { ApiError } from "@/utils/api-client";
 
 interface CategoryFormProps {
   readonly open: boolean;
@@ -26,6 +28,8 @@ interface CategoryFormProps {
 }
 
 export default function CategoryForm({ open, category, onClose, onSuccess }: CategoryFormProps) {
+  const t = useTranslations("dashboardAdmin.categories");
+  const tc = useTranslations("common");
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -85,7 +89,7 @@ export default function CategoryForm({ open, category, onClose, onSuccess }: Cat
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!formData.name.trim()) {
-      setError("Name is required.");
+      setError(t("form.validation.nameRequired"));
       return;
     }
 
@@ -109,8 +113,7 @@ export default function CategoryForm({ open, category, onClose, onSuccess }: Cat
       }
       onSuccess();
     } catch (err: unknown) {
-      const errorResponse = err as { response?: { data?: { message?: string } } };
-      setError(errorResponse.response?.data?.message || "Failed to save category. Please try again.");
+      setError(err instanceof ApiError ? err.message : t("form.errors.saveFailed"));
     } finally {
       setLoading(false);
     }
@@ -118,7 +121,7 @@ export default function CategoryForm({ open, category, onClose, onSuccess }: Cat
 
   return (
     <Dialog open={open} onClose={loading ? undefined : onClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ fontWeight: 700 }}>{category ? "Edit Category" : "Add Category"}</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 700 }}>{category ? t("form.editTitle") : t("form.addTitle")}</DialogTitle>
       <form
         onSubmit={e => {
           void handleSubmit(e);
@@ -127,7 +130,7 @@ export default function CategoryForm({ open, category, onClose, onSuccess }: Cat
         <DialogContent dividers>
           <Stack spacing={3}>
             <TextField
-              label="Name"
+              label={t("form.fields.name")}
               name="name"
               value={formData.name}
               onChange={handleChange}
@@ -137,7 +140,7 @@ export default function CategoryForm({ open, category, onClose, onSuccess }: Cat
             />
 
             <TextField
-              label="Description"
+              label={t("form.fields.description")}
               name="description"
               value={formData.description}
               onChange={handleChange}
@@ -148,7 +151,7 @@ export default function CategoryForm({ open, category, onClose, onSuccess }: Cat
             />
 
             <TextField
-              label="Commission Percentage"
+              label={t("form.fields.commission")}
               name="commissionPercentage"
               type="number"
               value={formData.commissionPercentage}
@@ -173,16 +176,16 @@ export default function CategoryForm({ open, category, onClose, onSuccess }: Cat
                   color="primary"
                 />
               }
-              label={formData.isActive ? "Active" : "Inactive"}
+              label={formData.isActive ? t("table.statusActive") : t("table.statusInactive")}
             />
 
             <Divider />
             <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-              Promotional Offer (Optional)
+              {t("form.fields.offerTitle")}
             </Typography>
 
             <TextField
-              label="Offer Name"
+              label={t("form.fields.offerName")}
               name="offerName"
               value={formData.offerName}
               onChange={handleChange}
@@ -191,7 +194,7 @@ export default function CategoryForm({ open, category, onClose, onSuccess }: Cat
             />
 
             <TextField
-              label="Discount Percentage"
+              label={t("form.fields.discount")}
               name="offerDiscountPercentage"
               type="number"
               value={formData.offerDiscountPercentage}
@@ -207,7 +210,7 @@ export default function CategoryForm({ open, category, onClose, onSuccess }: Cat
             />
 
             <TextField
-              label="Start Date"
+              label={t("form.fields.startDate")}
               name="offerStartDate"
               type="date"
               value={formData.offerStartDate}
@@ -220,7 +223,7 @@ export default function CategoryForm({ open, category, onClose, onSuccess }: Cat
             />
 
             <TextField
-              label="End Date"
+              label={t("form.fields.endDate")}
               name="offerEndDate"
               type="date"
               value={formData.offerEndDate}
@@ -242,7 +245,7 @@ export default function CategoryForm({ open, category, onClose, onSuccess }: Cat
                   color="primary"
                 />
               }
-              label={formData.offerIsActive ? "Offer Active" : "Offer Inactive"}
+              label={formData.offerIsActive ? t("form.fields.offerActive") : t("form.fields.offerInactive")}
             />
 
             {error && (
@@ -254,7 +257,7 @@ export default function CategoryForm({ open, category, onClose, onSuccess }: Cat
         </DialogContent>
         <DialogActions sx={{ p: 2, px: 3 }}>
           <Button onClick={onClose} disabled={loading} color="inherit">
-            Cancel
+            {tc("cancel")}
           </Button>
           <Button
             type="submit"
@@ -262,7 +265,7 @@ export default function CategoryForm({ open, category, onClose, onSuccess }: Cat
             disabled={loading || !formData.name.trim()}
             sx={{ fontWeight: 700, borderRadius: 2 }}
           >
-            {loading ? <CircularProgress size={24} color="inherit" /> : "Save"}
+            {loading ? <CircularProgress size={24} color="inherit" /> : tc("save")}
           </Button>
         </DialogActions>
       </form>

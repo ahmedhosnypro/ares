@@ -88,3 +88,9 @@ words:
   - executesql
   - NVARCHAR
   - smol
+  - IBAN
+  - iban
+  - Iban
+  - Mgmt
+  - ARESUAEAXXX
+  - subcontent

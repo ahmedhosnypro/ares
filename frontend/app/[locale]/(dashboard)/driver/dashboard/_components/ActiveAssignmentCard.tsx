@@ -410,9 +410,9 @@ export default function ActiveAssignmentCard({ assignment }: ActiveAssignmentCar
                     icon={<DurationIcon />}
                     label={(() => {
                       const d = assignment.rentalDuration;
-                      const drm = d.match(/^(\d+)\s+Days?\s+Remaining$/i);
+                      const drm = /^(\d+)\s+Days?\s+Remaining$/i.exec(d);
                       if (drm) return t("daysRemaining", { count: Number(drm[1]) });
-                      const dm = d.match(/^(\d+)\s+Days?$/i);
+                      const dm = /^(\d+)\s+Days?$/i.exec(d);
                       if (dm) {
                         const c = Number(dm[1]);
                         return c === 1 ? t("day") : t("days", { count: c });

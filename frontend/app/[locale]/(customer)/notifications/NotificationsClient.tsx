@@ -70,8 +70,7 @@ export default function NotificationsClient() {
         if (!background) setLoading(false);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [token]
+    [t, token]
   );
 
   useEffect(() => {

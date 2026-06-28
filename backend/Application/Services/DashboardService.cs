@@ -234,6 +234,9 @@ public class DashboardService : IDashboardService
     {
         var query = _context.Bookings
             .AsNoTracking()
+            .Include(b => b.User)
+            .Include(b => b.Vehicle)
+            .ThenInclude(v => v.Images)
             .AsQueryable();
 
         if (supplierId.HasValue)

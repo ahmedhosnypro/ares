@@ -7,12 +7,7 @@ import { apiFetchJson } from "@/utils/api-client";
 import { DashboardSummary, RecentSummaryItem } from "./types";
 import { SummaryItem } from "./_components/StatCardGrid";
 import { BookingListItem } from "./_components/RecentBookings";
-import {
-  mockActivities,
-  QuickAction,
-  mockQuickActions,
-  TopVehicle,
-} from "./_components/mockData";
+import { mockActivities, QuickAction, mockQuickActions, TopVehicle } from "./_components/mockData";
 import { logger } from "@/utils/logger";
 import { redirect } from "@/shared/i18n/routing";
 
@@ -102,11 +97,51 @@ async function getSummary(
   } catch (error) {
     logger.warn(`Failed to fetch real summary data: ${error instanceof Error ? error.message : String(error)}`);
     const defaultSummary: readonly SummaryItem[] = [
-      { title: "Total Users", value: "0", change: "0%", isUp: true, iconName: "PeopleAlt", color: "primary", href: "/admin/users" },
-      { title: "Active Bookings", value: "0", change: "0%", isUp: true, iconName: "EventAvailable", color: "primary", href: "/admin/bookings" },
-      { title: "Pending Verifications", value: "0", change: "0%", isUp: false, iconName: "GppMaybe", color: "warning", href: "/admin/verifications" },
-      { title: "Available Vehicles", value: "0", change: "0%", isUp: true, iconName: "DirectionsCar", color: "info", href: "/admin/vehicles" },
-      { title: "Pending Inspections", value: "0", change: "0%", isUp: false, iconName: "BuildCircle", color: "error", href: "/admin/vehicle-inspections" },
+      {
+        title: "Total Users",
+        value: "0",
+        change: "0%",
+        isUp: true,
+        iconName: "PeopleAlt",
+        color: "primary",
+        href: "/admin/users",
+      },
+      {
+        title: "Active Bookings",
+        value: "0",
+        change: "0%",
+        isUp: true,
+        iconName: "EventAvailable",
+        color: "primary",
+        href: "/admin/bookings",
+      },
+      {
+        title: "Pending Verifications",
+        value: "0",
+        change: "0%",
+        isUp: false,
+        iconName: "GppMaybe",
+        color: "warning",
+        href: "/admin/verifications",
+      },
+      {
+        title: "Available Vehicles",
+        value: "0",
+        change: "0%",
+        isUp: true,
+        iconName: "DirectionsCar",
+        color: "info",
+        href: "/admin/vehicles",
+      },
+      {
+        title: "Pending Inspections",
+        value: "0",
+        change: "0%",
+        isUp: false,
+        iconName: "BuildCircle",
+        color: "error",
+        href: "/admin/vehicle-inspections",
+      },
     ];
     return { summary: defaultSummary, rawData: null };
   }
@@ -122,16 +157,14 @@ interface RecentBookingFromApi {
   status: string;
 }
 
-async function getRecentBookings(
-  accessToken: string
-): Promise<readonly BookingListItem[]> {
+async function getRecentBookings(accessToken: string): Promise<readonly BookingListItem[]> {
   try {
     const bookingsData = await apiFetchJson<RecentBookingFromApi[]>("api/dashboard/recent-bookings", {
       method: "GET",
       accessToken,
     });
 
-    if (!bookingsData || bookingsData.length === 0) {
+    if (bookingsData.length === 0) {
       return MOCK_RECENT_BOOKINGS;
     }
 
@@ -149,8 +182,6 @@ async function getRecentBookings(
     return MOCK_RECENT_BOOKINGS;
   }
 }
-
-
 
 async function getActivities(accessToken: string): Promise<readonly RecentSummaryItem[]> {
   try {

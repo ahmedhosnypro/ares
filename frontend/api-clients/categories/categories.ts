@@ -120,7 +120,8 @@ export async function searchCategories(params: {
   if (params.pageSize) queryParams.append("pageSize", params.pageSize.toString());
 
   const queryString = queryParams.toString();
-  const endpoint = `/api/admin/categories/search${queryString ? `?${queryString}` : ""}`;
+  const searchPath = "/api/admin/categories/search";
+  const endpoint = queryString ? `${searchPath}?${queryString}` : searchPath;
 
   return apiFetchJson<PagedResult<AdminCategoryListDto>>(endpoint, {
     method: "GET",

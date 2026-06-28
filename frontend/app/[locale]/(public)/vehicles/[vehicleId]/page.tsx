@@ -220,5 +220,7 @@ export default async function VehicleDetailsPage({ params }: PageProps) {
   const isOwner = session?.user.id === vehicle.supplierId;
   const canEdit = isAdmin || isOwner;
 
-  return <VehicleDetailsClient vehicle={vehicle} reviews={reviews} locations={locations} canEdit={canEdit} mode="details" />;
+  return (
+    <VehicleDetailsClient vehicle={vehicle} reviews={reviews} locations={locations} canEdit={canEdit} mode="details" />
+  );
 }

@@ -30,11 +30,11 @@ export default function GalleryEditor() {
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const images = watch("images") || [];
+  const images = watch("images") ?? [];
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [fileError, setFileError] = useState<string | null>(null);
 
-  const activeImage = images[activeIndex];
+  const activeImage: ImageFormItem | undefined = images[activeIndex];
 
   const handleSetPrimary = (index: number) => {
     const updatedImages = images.map((img: ImageFormItem, i: number) => ({
@@ -117,21 +117,21 @@ export default function GalleryEditor() {
 
         {images[activeIndex] ? (
           <Box sx={{ position: "absolute", bottom: 16, right: 16, display: "flex", gap: 1 }}>
-            <Tooltip title={images[activeIndex].isPrimary ? "Featured Image" : "Set as Featured"}>
+            <Tooltip title={images[activeIndex]?.isPrimary ? "Featured Image" : "Set as Featured"}>
               <IconButton
                 onClick={() => {
                   handleSetPrimary(activeIndex);
                 }}
                 sx={{
-                  bgcolor: images[activeIndex].isPrimary ? "primary.main" : "background.paper",
-                  color: images[activeIndex].isPrimary ? "primary.contrastText" : "text.primary",
+                  bgcolor: images[activeIndex]?.isPrimary ? "primary.main" : "background.paper",
+                  color: images[activeIndex]?.isPrimary ? "primary.contrastText" : "text.primary",
                   "&:hover": {
-                    bgcolor: images[activeIndex].isPrimary ? "primary.dark" : "action.hover",
+                    bgcolor: images[activeIndex]?.isPrimary ? "primary.dark" : "action.hover",
                   },
                   boxShadow: 2,
                 }}
               >
-                {images[activeIndex].isPrimary ? <StarRoundedIcon /> : <StarOutlinedRoundedIcon />}
+                {images[activeIndex]?.isPrimary ? <StarRoundedIcon /> : <StarOutlinedRoundedIcon />}
               </IconButton>
             </Tooltip>
             <IconButton

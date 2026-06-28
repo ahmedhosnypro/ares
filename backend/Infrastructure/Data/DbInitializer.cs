@@ -334,6 +334,7 @@ public static class DbInitializer
 
         await TermsSeeder.SeedAsync(context);
         await AboutSeeder.SeedAsync(context);
+        await PrivacySeeder.SeedAsync(context);
         await SeedActivityDataAsync(context, userManager, logger);
         await SeedDriverModuleAsync(context, userManager, logger);
 
