@@ -277,22 +277,39 @@ export default function AdminDriversClient() {
                   <TableCell>{t("table.availability")}</TableCell>
                   <TableCell>{t("table.rating")}</TableCell>
                   <TableCell>{t("table.active")}</TableCell>
-                  <TableCell align="right" sx={{ pr: 3 }}>{t("table.actions")}</TableCell>
+                  <TableCell align="right" sx={{ pr: 3 }}>
+                    {t("table.actions")}
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {filtered.map(d => (
-                  <TableRow key={d.driverProfileId} hover sx={{ transition: "all 0.2s ease", "&:last-child td": { border: 0 }, "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.03) } }}>
+                  <TableRow
+                    key={d.driverProfileId}
+                    hover
+                    sx={{
+                      transition: "all 0.2s ease",
+                      "&:last-child td": { border: 0 },
+                      "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.03) },
+                    }}
+                  >
                     <TableCell sx={{ pl: 3 }}>
                       <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-                        <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.08), color: "primary.main", fontWeight: 700, width: 40, height: 40, fontSize: 16 }}>
+                        <Avatar
+                          sx={{
+                            bgcolor: alpha(theme.palette.primary.main, 0.08),
+                            color: "primary.main",
+                            fontWeight: 700,
+                            width: 40,
+                            height: 40,
+                            fontSize: 16,
+                          }}
+                        >
                           {d.firstName?.[0] || ""}
                           {d.lastName?.[0] || ""}
                         </Avatar>
                         <Box>
-                          <Typography sx={{ fontWeight: 700, fontSize: 14 }}>
-                            {fullName(d)}
-                          </Typography>
+                          <Typography sx={{ fontWeight: 700, fontSize: 14 }}>{fullName(d)}</Typography>
                           <Typography variant="caption" color="text.secondary">
                             {d.email || d.phoneNumber || "—"}
                           </Typography>
@@ -300,7 +317,12 @@ export default function AdminDriversClient() {
                       </Stack>
                     </TableCell>
                     <TableCell>
-                      <Chip label={getStatusFilterLabel(d.status)} color={statusColor(d.status)} size="small" sx={{ fontWeight: 700, borderRadius: 1.5 }} />
+                      <Chip
+                        label={getStatusFilterLabel(d.status)}
+                        color={statusColor(d.status)}
+                        size="small"
+                        sx={{ fontWeight: 700, borderRadius: 1.5 }}
+                      />
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2" sx={{ fontWeight: 500 }}>

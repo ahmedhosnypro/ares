@@ -133,13 +133,7 @@ function UsersHubInner() {
         }}
       >
         {statCards.map((card, idx) => (
-          <StatCard
-            key={idx}
-            label={card.title}
-            value={card.value}
-            color={card.color}
-            icon={card.icon}
-          />
+          <StatCard key={idx} label={card.title} value={card.value} color={card.color} icon={card.icon} />
         ))}
       </Box>
 
