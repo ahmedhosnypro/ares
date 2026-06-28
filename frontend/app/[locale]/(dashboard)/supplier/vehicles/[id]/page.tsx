@@ -123,7 +123,10 @@ function normalizeVehicle(vehicle: ApiVehicleDto): VehicleDetailsViewModel {
   };
 }
 
-function normalizeReviews(reviews: readonly ApiReviewDto[], customerDefault: string): readonly VehicleReviewViewModel[] {
+function normalizeReviews(
+  reviews: readonly ApiReviewDto[],
+  customerDefault: string
+): readonly VehicleReviewViewModel[] {
   return reviews.map(review => ({
     reviewId: asString(review.reviewId),
     userName: asString(review.userName, customerDefault),
@@ -154,7 +157,10 @@ async function fetchVehicleDetails(vehicleId: string): Promise<VehicleDetailsVie
   return normalizeVehicle(payload);
 }
 
-async function fetchVehicleReviews(vehicleId: string, customerDefault: string): Promise<readonly VehicleReviewViewModel[]> {
+async function fetchVehicleReviews(
+  vehicleId: string,
+  customerDefault: string
+): Promise<readonly VehicleReviewViewModel[]> {
   const response = await fetch(toApiUrl(`/api/vehicles/${vehicleId}/reviews?page=1&pageSize=8&sortBy=date`), {
     cache: "no-store",
   });

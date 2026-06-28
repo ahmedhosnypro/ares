@@ -1,4 +1,4 @@
-import type { InspectionDetailLabels } from "../../../../../types/dashboard/inspector/inspections/_id";
+import type { InspectionDetailLabels } from "../../../../types/dashboard/inspector/inspections/_id";
 
 export const inspectionDetail: InspectionDetailLabels = {
   pageTitle: "تقرير الفحص",
@@ -58,7 +58,8 @@ export const inspectionDetail: InspectionDetailLabels = {
   },
   dialog: {
     title: "تقديم تقرير الفحص؟",
-    description: "أنت على وشك تحديد حالة هذه المركبة كـ <strong>{decision}</strong>. هذا الإجراء نهائي وسيتم إبلاغ الأطراف المعنية.",
+    description:
+      "أنت على وشك تحديد حالة هذه المركبة كـ <strong>{decision}</strong>. هذا الإجراء نهائي وسيتم إبلاغ الأطراف المعنية.",
     confirmAndSubmit: "تأكيد وتقديم",
   },
   submitButton: "تقديم التقرير النهائي",

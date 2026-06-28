@@ -13,8 +13,8 @@
 
 ## Shared Components
 
-- VehicleStats (from dashboard/_components) — receives `StatItem[]` with label/subtitle strings
-- DemoDataBadge (from supplier/_components) — not used on this page currently
+- VehicleStats (from dashboard/\_components) — receives `StatItem[]` with label/subtitle strings
+- DemoDataBadge (from supplier/\_components) — not used on this page currently
 
 ## Component Discovery
 

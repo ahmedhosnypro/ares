@@ -47,18 +47,18 @@ function getPayoutChipColor(status: string): "warning" | "info" | "success" | "e
 }
 
 interface PayoutHistoryProps {
-  payouts: DriverPayout[] | null;
-  loading: boolean;
-  error: string | null;
-  labels: {
-    payoutHistory: string;
-    noPayoutHistory: string;
-    requested: string;
-    approved: string;
-    processing: string;
-    completed: string;
-    rejected: string;
-    failed: string;
+  readonly payouts: DriverPayout[] | null;
+  readonly loading: boolean;
+  readonly error: string | null;
+  readonly labels: {
+    readonly payoutHistory: string;
+    readonly noPayoutHistory: string;
+    readonly requested: string;
+    readonly approved: string;
+    readonly processing: string;
+    readonly completed: string;
+    readonly rejected: string;
+    readonly failed: string;
   };
 }
 
@@ -74,7 +74,7 @@ const STATUS_LABELS_MAP = new Map<string, string>([
 function resolveStatusLabel(status: string, labels: PayoutHistoryProps["labels"]): string {
   const key = STATUS_LABELS_MAP.get(status);
   if (!key) return status;
-  return labels[key as keyof PayoutHistoryProps["labels"]] ?? status;
+  return labels[key as keyof PayoutHistoryProps["labels"]];
 }
 
 export default function PayoutHistory({ payouts, loading, error, labels }: PayoutHistoryProps) {

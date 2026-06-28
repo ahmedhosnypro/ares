@@ -75,11 +75,23 @@ Run `bun run pdf` after generation to get the accurate count, then re-run `bun r
 scripts/docs/
 ├── _quarto.yml          # Quarto book project config (PDF format, margins, fonts)
 ├── index.md             # Book landing page (required by Quarto)
-├── pdf.ts               # Bun script: render PDF + count pages
 ├── generate.ts          # Main generation entry point
-├── index.ts             # Generation logic + PDF-aware page validation
+├── index.ts             # Generation logic + mermaid rule injection + page validation
+├── pdf.ts               # Bun script: render PDF + count pages
+├── validate-mermaid.ts  # Mermaid diagram validator (CLI + library)
+├── mermaid-iterate.ts   # Mermaid iteration loop (validate→improve→regenerate)
+├── chapters.ts          # Chapter config registry + ChapterConfig type
+├── chapters/            # Chapter definitions (prompts, patterns, includePatterns)
 ├── lib/                 # Shared utilities
-├── chapters/            # Chapter definitions (prompts, patterns)
+│   ├── ai-client.ts     # OpenAI streaming client
+│   ├── aggregate.ts     # Multi-part chapter aggregation
+│   ├── chapter-splitter.ts  # Token-based chapter splitting
+│   ├── config.ts        # Zod-validated env config
+│   ├── logger.ts        # Spinner + colorized logging
+│   ├── mermaid-rules.ts # Single source of truth for Mermaid prompt rules
+│   ├── output.ts        # Markdown file writer + cleaner
+│   ├── repomix.ts       # Repository context packing
+│   └── token-utils.ts   # Token budget estimation
 ├── generated/           # Output Markdown chapters (input to Quarto)
 └── _pdf/                # PDF output (gitignored)
     └── ares-docs.pdf

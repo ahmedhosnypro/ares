@@ -96,7 +96,7 @@ function ReportReviewDialogInner({ open, review, submitting, onClose, onSubmit }
 
   const presetValues = PRESET_REASON_KEYS.map(key => ({
     key,
-    label: t(`reportDialog.presetReasons.${key}` as Parameters<typeof t>[0]),
+    label: t(`reportDialog.presetReasons.${key}`),
   }));
 
   return (
@@ -177,7 +177,13 @@ function ReportReviewDialogInner({ open, review, submitting, onClose, onSubmit }
             }}
             disabled={submitting}
             error={Boolean(error)}
-            helperText={error ?? t("reportDialog.charactersCount", { current: finalReason.length.toString(), max: MAX_REASON_LENGTH.toString() })}
+            helperText={
+              error ??
+              t("reportDialog.charactersCount", {
+                current: finalReason.length.toString(),
+                max: MAX_REASON_LENGTH.toString(),
+              })
+            }
             sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "background.paper" } }}
           />
 

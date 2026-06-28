@@ -152,6 +152,7 @@ export type DashboardSchema = {
   readonly inspectorInspections: InspectorInspectionsLabels;
   readonly inspectionDetail: InspectionDetailLabels;
   readonly inspectorProfile: InspectorProfileLabels;
+  readonly inspectorHistory: InspectorHistoryLabels;
   readonly driverCompleteProfile: DriverCompleteProfileLabels;
   readonly driverDashboard: DriverDashboardLabels;
   readonly driverEarnings: DriverEarningsLabels;

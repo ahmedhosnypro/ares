@@ -282,9 +282,16 @@ export default function NotificationsClient() {
                 void handleItemClick(n);
               }}
             >
-              <Avatar sx={{ width: 36, height: 36, flexShrink: 0, ...getNotificationTypeConfig(n.type).avatarSx }}>
-                {React.createElement(getNotificationTypeConfig(n.type).icon, { fontSize: "small" })}
-              </Avatar>
+              {(() => {
+                const cfg = getNotificationTypeConfig(n.type);
+                return (
+                  <Avatar
+                    sx={{ ...{ width: 36, height: 36, flexShrink: 0 }, ...(cfg.avatarSx as Record<string, unknown>) }}
+                  >
+                    {React.createElement(cfg.icon, { fontSize: "small" })}
+                  </Avatar>
+                );
+              })()}
               <Box sx={{ flex: 1 }}>
                 <Typography
                   variant="subtitle1"

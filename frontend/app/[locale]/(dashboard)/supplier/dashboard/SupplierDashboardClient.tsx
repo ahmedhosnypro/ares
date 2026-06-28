@@ -123,10 +123,34 @@ const DEMO_ACTIVITY_ITEMS: { id: string; type: ActivityItem["type"]; messageKey:
   { id: "a5", type: "user", messageKey: "customerReview", timeKey: "yesterday" },
 ];
 
-const DEMO_PENDING_ACTION_ITEMS: { id: string; severity: PendingAction["severity"]; titleKey: string; descriptionKey: string; actionLabelKey: string }[] = [
-  { id: "p1", severity: "warning", titleKey: "vehiclesAwaitingApproval.title", descriptionKey: "vehiclesAwaitingApproval.description", actionLabelKey: "vehiclesAwaitingApproval.actionLabel" },
-  { id: "p2", severity: "error", titleKey: "bookingNeedsConfirmation.title", descriptionKey: "bookingNeedsConfirmation.description", actionLabelKey: "bookingNeedsConfirmation.actionLabel" },
-  { id: "p3", severity: "info", titleKey: "completeProfile.title", descriptionKey: "completeProfile.description", actionLabelKey: "completeProfile.actionLabel" },
+const DEMO_PENDING_ACTION_ITEMS: {
+  id: string;
+  severity: PendingAction["severity"];
+  titleKey: string;
+  descriptionKey: string;
+  actionLabelKey: string;
+}[] = [
+  {
+    id: "p1",
+    severity: "warning",
+    titleKey: "vehiclesAwaitingApproval.title",
+    descriptionKey: "vehiclesAwaitingApproval.description",
+    actionLabelKey: "vehiclesAwaitingApproval.actionLabel",
+  },
+  {
+    id: "p2",
+    severity: "error",
+    titleKey: "bookingNeedsConfirmation.title",
+    descriptionKey: "bookingNeedsConfirmation.description",
+    actionLabelKey: "bookingNeedsConfirmation.actionLabel",
+  },
+  {
+    id: "p3",
+    severity: "info",
+    titleKey: "completeProfile.title",
+    descriptionKey: "completeProfile.description",
+    actionLabelKey: "completeProfile.actionLabel",
+  },
 ];
 
 export default function SupplierDashboardClient() {
@@ -138,7 +162,13 @@ export default function SupplierDashboardClient() {
 
   const [stats, setStats] = useState<SupplierDashboardStats | null>(null);
   const [earningsChartData, setEarningsChartData] = useState<MonthlyRevenuePoint[] | null>(null);
-  const [bookingsChartRaw, setBookingsChartRaw] = useState<{ pending: number; confirmed: number; active: number; completed: number; cancelled: number } | null>(null);
+  const [bookingsChartRaw, setBookingsChartRaw] = useState<{
+    pending: number;
+    confirmed: number;
+    active: number;
+    completed: number;
+    cancelled: number;
+  } | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
   const [statsError, setStatsError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -200,7 +230,7 @@ export default function SupplierDashboardClient() {
     return () => {
       cancelled = true;
     };
-  }, [session?.accessToken, sessionStatus]);
+  }, [session?.accessToken, sessionStatus, t]);
 
   const bookingsChartData = useMemo(() => {
     if (!bookingsChartRaw) return null;
@@ -249,7 +279,8 @@ export default function SupplierDashboardClient() {
     <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: "background.default", fontFamily: "inherit" }}>
       <Box sx={{ mb: 3 }}>
         <Typography variant="body1" color="text.secondary">
-          {t("greeting.welcomeBack")}{session?.user.firstName ? `, ${session.user.firstName}` : ""}. {t("greeting.fleetPerformance")}
+          {t("greeting.welcomeBack")}
+          {session?.user.firstName ? `, ${session.user.firstName}` : ""}. {t("greeting.fleetPerformance")}
         </Typography>
       </Box>
 
@@ -312,7 +343,10 @@ export default function SupplierDashboardClient() {
                             tickFormatter={(value: number) => `$${value.toLocaleString()}`}
                           />
                           <Tooltip
-                            formatter={(value: unknown) => [`$${(value as number).toLocaleString()}`, t("charts.earnings")]}
+                            formatter={(value: unknown) => [
+                              `$${(value as number).toLocaleString()}`,
+                              t("charts.earnings"),
+                            ]}
                             contentStyle={{
                               borderRadius: 8,
                               border: `1px solid ${theme.palette.divider}`,

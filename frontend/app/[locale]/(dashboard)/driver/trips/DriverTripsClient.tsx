@@ -91,7 +91,7 @@ export default function DriverTripsClient() {
     } finally {
       setIsLoading(false);
     }
-  }, [session?.accessToken]);
+  }, [session?.accessToken, t]);
 
   const handleCancelTrip = useCallback(
     async (bookingId: string) => {
@@ -110,7 +110,7 @@ export default function DriverTripsClient() {
         alert(e instanceof Error ? e.message : t("failedToCancelTrip"));
       }
     },
-    [session?.accessToken, fetchAssignments]
+    [session?.accessToken, fetchAssignments, t]
   );
 
   useEffect(() => {

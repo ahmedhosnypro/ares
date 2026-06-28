@@ -145,7 +145,7 @@ public class PaymobClient : IPaymobClient
         var id = result.TryGetProperty("id", out var idProp) ? idProp.GetInt64() : 0;
         var success = result.TryGetProperty("success", out var s) && s.GetBoolean();
         string? reason = null;
-        if (result.TryGetProperty("data", out var data) && data.TryGetProperty("txn_response_code", out var rCode))
+        if (!success && result.TryGetProperty("data", out var data) && data.TryGetProperty("txn_response_code", out var rCode))
         {
             reason = rCode.GetString();
         }

@@ -20,6 +20,9 @@
     "format:check": "prettier --check .",
     "typecheck": "tsgo -b --noEmit --extendedDiagnostics",
     "validate-mermaid": "bun run validate-mermaid.ts",
+    "mermaid-compile": "bun run validate-mermaid.ts",
+    "mermaid-check": "bun run validate-mermaid.ts",
+    "mermaid-iterate": "bun run mermaid-iterate.ts",
     "pdf": "bun run pdf.ts",
     "pdf:count": "bun run pdf.ts --count-only",
     "pdf:clean": "bun run pdf.ts --clean"
@@ -36,6 +39,7 @@
     "@cspell/dict-ar": "^1.1.7",
     "@cspell/eslint-plugin": "^10.0.0",
     "@eslint/js": "^10.0.1",
+    "@mermaid-js/mermaid-cli": "^11.15.0",
     "@types/bun": "latest",
     "@typescript-eslint/eslint-plugin": "^8.58.2",
     "@typescript-eslint/parser": "^8.58.2",

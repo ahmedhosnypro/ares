@@ -31,9 +31,10 @@ import {
   TextField,
   Tooltip,
   Typography,
-  useTheme,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import type { Theme } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import VerifiedUserOutlinedIcon from "@mui/icons-material/VerifiedUserOutlined";
@@ -71,7 +72,7 @@ function safeNum(v: unknown): number {
   return typeof v === "number" && Number.isFinite(v) ? v : 0;
 }
 
-function getPayoutStatusColor(status: string, theme: ReturnType<typeof useTheme>): string {
+function getPayoutStatusColor(status: string, theme: Theme): string {
   const s = status.toLowerCase();
   if (s === "completed" || s === "approved") return theme.palette.success.main;
   if (s === "rejected" || s === "failed") return theme.palette.error.main;

@@ -19,14 +19,14 @@
 
 ## Component Discovery
 
-| Component | File | Hardcoded Strings |
-|---|---|---|
-| page.tsx | page.tsx | metaTitle, metaDescription |
-| SupplierReviewsClient | SupplierReviewsClient.tsx | ~55 strings (filters, stats, table, empty states, toasts, errors, tooltips, chips) |
-| RatingStars | _components/RatingStars.tsx | None (pure visual) |
-| ReplyReviewDialog | _components/ReplyReviewDialog.tsx | ~16 strings (title, labels, validation, buttons, alert, placeholder) |
-| ReportReviewDialog | _components/ReportReviewDialog.tsx | ~15 strings (title, description, alert, preset reasons, labels, validation, buttons) |
-| ReviewDetailsDialog | _components/ReviewDetailsDialog.tsx | ~14 strings (title, section labels, buttons, status text) |
+| Component             | File                                 | Hardcoded Strings                                                                    |
+| --------------------- | ------------------------------------ | ------------------------------------------------------------------------------------ |
+| page.tsx              | page.tsx                             | metaTitle, metaDescription                                                           |
+| SupplierReviewsClient | SupplierReviewsClient.tsx            | ~55 strings (filters, stats, table, empty states, toasts, errors, tooltips, chips)   |
+| RatingStars           | \_components/RatingStars.tsx         | None (pure visual)                                                                   |
+| ReplyReviewDialog     | \_components/ReplyReviewDialog.tsx   | ~16 strings (title, labels, validation, buttons, alert, placeholder)                 |
+| ReportReviewDialog    | \_components/ReportReviewDialog.tsx  | ~15 strings (title, description, alert, preset reasons, labels, validation, buttons) |
+| ReviewDetailsDialog   | \_components/ReviewDetailsDialog.tsx | ~14 strings (title, section labels, buttons, status text)                            |
 
 ## Translation Tasks
 

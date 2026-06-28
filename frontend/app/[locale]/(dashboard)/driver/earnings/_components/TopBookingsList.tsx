@@ -12,8 +12,8 @@ import {
   Stack,
   Typography,
   alpha,
-  useTheme,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import type { DriverTopBooking } from "@/api-clients/driver-earnings/driver-earnings";
@@ -27,13 +27,13 @@ function formatCurrency(value: number): string {
 }
 
 interface TopBookingsListProps {
-  bookings: DriverTopBooking[] | null;
-  loading: boolean;
-  error: string | null;
-  labels: {
-    topBookings: string;
-    noTopBookings: string;
-    topBookingsWillAppear: string;
+  readonly bookings: DriverTopBooking[] | null;
+  readonly loading: boolean;
+  readonly error: string | null;
+  readonly labels: {
+    readonly topBookings: string;
+    readonly noTopBookings: string;
+    readonly topBookingsWillAppear: string;
   };
 }
 

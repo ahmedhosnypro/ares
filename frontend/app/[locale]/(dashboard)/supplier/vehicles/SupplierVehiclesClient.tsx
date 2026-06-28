@@ -439,9 +439,7 @@ export default function SupplierVehiclesClient() {
                 {filtersActive ? t("empty.noVehiclesMatchFilters") : t("empty.noVehiclesYet")}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                {filtersActive
-                  ? t("empty.tryClearingFilters")
-                  : t("empty.addFirstVehicle")}
+                {filtersActive ? t("empty.tryClearingFilters") : t("empty.addFirstVehicle")}
               </Typography>
             </Paper>
           );
@@ -504,7 +502,8 @@ export default function SupplierVehiclesClient() {
                   <TableRow>
                     <TableCell colSpan={4}>
                       <Typography variant="caption" color="text.secondary">
-                        {t("table.showing")} <strong>{rows.length}</strong> {t("table.of")} {totalCount} {t("table.vehicles")}
+                        {t("table.showing")} <strong>{rows.length}</strong> {t("table.of")} {totalCount}{" "}
+                        {t("table.vehicles")}
                       </Typography>
                     </TableCell>
                     <TableCell colSpan={3} align="right">
@@ -546,7 +545,7 @@ export default function SupplierVehiclesClient() {
               {t.rich("deleteDialog.body", {
                 make: deleteTarget.make,
                 model: deleteTarget.model,
-                strong: (chunks) => <strong>{chunks}</strong>,
+                strong: chunks => <strong>{chunks}</strong>,
               })}
             </>
           )}

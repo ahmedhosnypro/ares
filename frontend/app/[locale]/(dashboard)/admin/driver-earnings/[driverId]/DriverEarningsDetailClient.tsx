@@ -16,7 +16,6 @@ import {
   CircularProgress,
   Grid,
   IconButton,
-  Paper,
   Skeleton,
   Snackbar,
   Stack,
@@ -28,9 +27,10 @@ import {
   TableRow,
   Tooltip,
   Typography,
-  useTheme,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import type { Theme } from "@mui/material/styles";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
@@ -39,7 +39,6 @@ import DirectionsCarFilledOutlinedIcon from "@mui/icons-material/DirectionsCarFi
 import VehicleStats, { type StatItem } from "@/app/[locale]/(dashboard)/_components/VehicleStats";
 import {
   type AdminDriverEarningsOverview,
-  type AdminDriverPayoutListItem,
   type DriverEarningRow,
   getAdminDriverEarningsHistory,
   getAdminDriverEarningsOverview,
@@ -62,7 +61,7 @@ function safeNum(v: unknown): number {
   return typeof v === "number" && Number.isFinite(v) ? v : 0;
 }
 
-function getEarningStatusColor(status: string, theme: ReturnType<typeof useTheme>): string {
+function getEarningStatusColor(status: string, theme: Theme): string {
   const s = status.toLowerCase();
   if (s === "completed") return theme.palette.success.main;
   if (s === "cancelled") return theme.palette.error.main;
@@ -232,7 +231,7 @@ export default function DriverEarningsDetailClient() {
                     height: 40,
                   }}
                 >
-                  {overview?.driverName?.[0] ?? "?"}
+                  {overview?.driverName[0] ?? "?"}
                 </Avatar>
               )}
               <Typography

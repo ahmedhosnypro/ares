@@ -18,6 +18,7 @@
 ## Component Discovery
 
 ### page.tsx
+
 - Title: "Inspection History"
 - Description: "View all your submitted inspections."
 - Search placeholder: "Search by Booking Number, Vehicle, or Status..."
@@ -32,6 +33,7 @@
 - Table action: "View Details"
 
 ### InspectionStatusBadge.tsx
+
 - Status labels: "Pending", "Approved", "Rejected"
 
 ## Translation Tasks

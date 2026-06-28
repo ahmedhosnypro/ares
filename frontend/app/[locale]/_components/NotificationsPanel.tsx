@@ -401,10 +401,8 @@ export default function NotificationsPanel({ iconColor = "inherit" }: Notificati
                 >
                   <Avatar
                     sx={{
-                      width: 36,
-                      height: 36,
-                      flexShrink: 0,
-                      ...getNotificationTypeConfig(n.type).avatarSx,
+                      ...{ width: 36, height: 36, flexShrink: 0 },
+                      ...(getNotificationTypeConfig(n.type).avatarSx as Record<string, unknown>),
                     }}
                   >
                     {React.createElement(getNotificationTypeConfig(n.type).icon, { fontSize: "small" })}

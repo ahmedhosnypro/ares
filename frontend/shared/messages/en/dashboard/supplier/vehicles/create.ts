@@ -1,4 +1,4 @@
-import type { CreateSupplierVehicleLabels } from "../../types/dashboard/supplier/vehicles/create";
+import type { CreateSupplierVehicleLabels } from "../../../../types/dashboard/supplier/vehicles/create";
 
 export const createSupplierVehicle: CreateSupplierVehicleLabels = {
   title: "Create New Vehicle",

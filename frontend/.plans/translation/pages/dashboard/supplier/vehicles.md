@@ -19,13 +19,13 @@
 
 ## Component Discovery
 
-| Component | File | Hardcoded Strings |
-|---|---|---|
-| page.tsx | page.tsx | 2 (metaTitle, metaDescription) |
-| SupplierVehiclesClient | SupplierVehiclesClient.tsx | ~45 strings (title, description, filters, empty states, table headers/footers, delete dialog, tooltips, toasts, errors) |
-| VehicleTableRow | SupplierVehiclesClient.tsx (inline) | ~10 strings (tooltips, perDay label) |
-| StatusChips | _components/StatusChips.tsx | 2 ("Unknown" x2) + 6 chip labels |
-| VehicleForm.schema | _components/VehicleForm.schema.ts | Already translated via `dashboard.createSupplierVehicle.validation` |
+| Component              | File                                | Hardcoded Strings                                                                                                       |
+| ---------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| page.tsx               | page.tsx                            | 2 (metaTitle, metaDescription)                                                                                          |
+| SupplierVehiclesClient | SupplierVehiclesClient.tsx          | ~45 strings (title, description, filters, empty states, table headers/footers, delete dialog, tooltips, toasts, errors) |
+| VehicleTableRow        | SupplierVehiclesClient.tsx (inline) | ~10 strings (tooltips, perDay label)                                                                                    |
+| StatusChips            | \_components/StatusChips.tsx        | 2 ("Unknown" x2) + 6 chip labels                                                                                        |
+| VehicleForm.schema     | \_components/VehicleForm.schema.ts  | Already translated via `dashboard.createSupplierVehicle.validation`                                                     |
 
 ## Translation Tasks
 
@@ -42,15 +42,15 @@
 
 ## Key Translation Paths
 
-| Key | English | Arabic |
-|-----|---------|--------|
-| metaTitle | My Vehicles \| ARES Supplier | مركباتي \| ARES المورد |
-| title | My Vehicles | مركباتي |
-| addNewVehicle | Add New Vehicle | إضافة مركبة جديدة |
-| chips.pending | Pending | قيد المراجعة |
-| chips.approved | Approved | معتمد |
-| chips.rejected | Rejected | مرفوض |
-| chips.available | Available | متاح |
-| chips.unavailable | Unavailable | غير متاح |
-| chips.fullyBooked | Fully Booked | محجوز بالكامل |
+| Key               | English                                  | Arabic                              |
+| ----------------- | ---------------------------------------- | ----------------------------------- |
+| metaTitle         | My Vehicles \| ARES Supplier             | مركباتي \| ARES المورد              |
+| title             | My Vehicles                              | مركباتي                             |
+| addNewVehicle     | Add New Vehicle                          | إضافة مركبة جديدة                   |
+| chips.pending     | Pending                                  | قيد المراجعة                        |
+| chips.approved    | Approved                                 | معتمد                               |
+| chips.rejected    | Rejected                                 | مرفوض                               |
+| chips.available   | Available                                | متاح                                |
+| chips.unavailable | Unavailable                              | غير متاح                            |
+| chips.fullyBooked | Fully Booked                             | محجوز بالكامل                       |
 | deleteDialog.body | You're about to remove {make} {model}... | أنت على وشك إزالة {make} {model}... |

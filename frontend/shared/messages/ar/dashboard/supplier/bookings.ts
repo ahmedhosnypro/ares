@@ -1,4 +1,4 @@
-import type { SupplierBookingsLabels } from "../../types/dashboard/supplier/bookings";
+import type { SupplierBookingsLabels } from "../../../types/dashboard/supplier/bookings";
 
 export const supplierBookings: SupplierBookingsLabels = {
   metaTitle: "الحجوزات | موردي ARES",

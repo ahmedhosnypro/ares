@@ -83,20 +83,39 @@ const DEFAULT_LABELS: VehicleDetailsLabels = {
 
 function buildSchema(v?: VehicleFormValidationLabels) {
   return z.object({
-    make: z.string().trim().min(2, v?.makeRequired ?? "Make is required"),
-    model: z.string().trim().min(2, v?.modelRequired ?? "Model is required"),
+    make: z
+      .string()
+      .trim()
+      .min(2, v?.makeRequired ?? "Make is required"),
+    model: z
+      .string()
+      .trim()
+      .min(2, v?.modelRequired ?? "Model is required"),
     year: z
       .number()
       .int(v?.yearWholeNumber)
       .min(1900, v?.yearMin)
       .max(new Date().getFullYear() + 1, v?.yearMax),
-    color: z.string().trim().min(2, v?.colorRequired ?? "Color is required"),
-    licensePlate: z.string().trim().min(2, v?.licensePlateRequired ?? "License plate is required"),
+    color: z
+      .string()
+      .trim()
+      .min(2, v?.colorRequired ?? "Color is required"),
+    licensePlate: z
+      .string()
+      .trim()
+      .min(2, v?.licensePlateRequired ?? "License plate is required"),
     transmission: z.string().min(1, v?.transmissionRequired ?? "Transmission is required"),
     fuelType: z.string().min(1, v?.fuelTypeRequired ?? "Fuel type is required"),
-    seats: z.number().int().min(1, v?.seatsMin ?? "At least 1 seat required").max(50, v?.seatsMax),
+    seats: z
+      .number()
+      .int()
+      .min(1, v?.seatsMin ?? "At least 1 seat required")
+      .max(50, v?.seatsMax),
     pricePerDay: z.number().min(0.01, v?.priceMin ?? "Price must be greater than 0"),
-    locationCity: z.string().trim().min(2, v?.cityRequired ?? "City is required"),
+    locationCity: z
+      .string()
+      .trim()
+      .min(2, v?.cityRequired ?? "City is required"),
     description: z.string().optional(),
     images: z.array(
       z.object({
@@ -118,9 +137,9 @@ function buildSchema(v?: VehicleFormValidationLabels) {
   });
 }
 
-const defaultSchema = buildSchema();
+const _defaultSchema = buildSchema();
 
-export type FormValues = z.infer<typeof defaultSchema>;
+export type FormValues = z.infer<typeof _defaultSchema>;
 
 interface VehicleDetailsClientProps {
   readonly vehicle: VehicleDetailsViewModel;

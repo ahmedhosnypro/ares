@@ -300,9 +300,10 @@ namespace Backend.Application.Services
             if (existing != null)
                 return existing;
 
+            var driverFee = booking.DriverFee ?? 0m;
             var driverCommissionPercentage = await GetDriverCommissionPercentageAsync(cancellationToken);
-            var platformDeduction = booking.DriverFee * driverCommissionPercentage / 100;
-            var netEarning = booking.DriverFee - platformDeduction;
+            var platformDeduction = driverFee * driverCommissionPercentage / 100;
+            var netEarning = driverFee - platformDeduction;
 
             var earning = new DriverEarning
             {

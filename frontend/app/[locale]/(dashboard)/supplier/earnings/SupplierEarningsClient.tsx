@@ -519,11 +519,7 @@ function TopVehicleRow({
   );
 }
 
-function TopVehiclesSkeleton({
-  t,
-}: {
-  readonly t: ReturnType<typeof useTranslations<"dashboard.supplierEarnings">>;
-}) {
+function TopVehiclesSkeleton({ t }: { readonly t: ReturnType<typeof useTranslations<"dashboard.supplierEarnings">> }) {
   const theme = useTheme();
   const slots = [0, 1, 2, 3, 4];
   return (

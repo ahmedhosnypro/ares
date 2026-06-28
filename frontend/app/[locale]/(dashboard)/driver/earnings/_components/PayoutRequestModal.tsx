@@ -16,23 +16,23 @@ import { requestDriverPayout } from "@/api-clients/driver-earnings/driver-earnin
 import { logger } from "@/utils/logger";
 
 interface PayoutRequestModalProps {
-  open: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
-  availableBalance: number;
-  accessToken: string;
-  labels: {
-    requestPayout: string;
-    availablePayoutBalance: string;
-    minimumPayout: string;
-    amountToWithdraw: string;
-    cancel: string;
-    confirm: string;
-    payoutRequested: string;
-    amountExceedsBalance: string;
-    amountBelowMinimum: string;
-    payoutInfoNotVerified: string;
-    payoutInfoMissing: string;
+  readonly open: boolean;
+  readonly onClose: () => void;
+  readonly onSuccess: () => void;
+  readonly availableBalance: number;
+  readonly accessToken: string;
+  readonly labels: {
+    readonly requestPayout: string;
+    readonly availablePayoutBalance: string;
+    readonly minimumPayout: string;
+    readonly amountToWithdraw: string;
+    readonly cancel: string;
+    readonly confirm: string;
+    readonly payoutRequested: string;
+    readonly amountExceedsBalance: string;
+    readonly amountBelowMinimum: string;
+    readonly payoutInfoNotVerified: string;
+    readonly payoutInfoMissing: string;
   };
 }
 
@@ -143,7 +143,7 @@ export default function PayoutRequestModal({
           size="small"
           error={Boolean(validationError)}
           helperText={validationError}
-          inputProps={{ min: MINIMUM_PAYOUT, max: availableBalance, step: "0.01" }}
+          slotProps={{ htmlInput: { min: MINIMUM_PAYOUT, max: availableBalance, step: "0.01" } }}
           sx={{ mt: 1 }}
         />
       </DialogContent>

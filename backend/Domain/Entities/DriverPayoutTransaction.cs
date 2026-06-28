@@ -4,27 +4,15 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Backend.Domain.Entities
 {
-    /// <summary>
-    /// Join table linking a payout to the specific earnings it covers.
-    /// Enables full traceability: booking → earning → payout.
-    /// </summary>
     [Table("driver_payout_transactions")]
     public class DriverPayoutTransaction
     {
-        /// <summary>
-        /// The payout that includes this earning.
-        /// </summary>
-        [Key, Column(Order = 0)]
         [Required]
         public Guid DriverPayoutId { get; set; }
 
         [ForeignKey(nameof(DriverPayoutId))]
         public DriverPayout? DriverPayout { get; set; }
 
-        /// <summary>
-        /// The earning being paid out.
-        /// </summary>
-        [Key, Column(Order = 1)]
         [Required]
         public Guid DriverEarningId { get; set; }
 

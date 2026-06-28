@@ -449,7 +449,7 @@ export default function SupplierReviewsClient() {
           >
             {REPLY_STATUS_VALUES.map(opt => (
               <MenuItem key={opt.value} value={opt.value}>
-                {t(opt.labelKey as Parameters<typeof t>[0])}
+                {t(opt.labelKey)}
               </MenuItem>
             ))}
           </TextField>
@@ -496,7 +496,7 @@ export default function SupplierReviewsClient() {
           >
             {SORT_VALUES.map(opt => (
               <MenuItem key={opt.value} value={opt.value}>
-                {t(opt.labelKey as Parameters<typeof t>[0])}
+                {t(opt.labelKey)}
               </MenuItem>
             ))}
           </TextField>
@@ -547,9 +547,7 @@ export default function SupplierReviewsClient() {
                 {filtersActive ? t("empty.noReviewsMatchFilters") : t("empty.noReviewsYet")}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                {filtersActive
-                  ? t("empty.tryClearingFilters")
-                  : t("empty.reviewsWillAppear")}
+                {filtersActive ? t("empty.tryClearingFilters") : t("empty.reviewsWillAppear")}
               </Typography>
             </Paper>
           );

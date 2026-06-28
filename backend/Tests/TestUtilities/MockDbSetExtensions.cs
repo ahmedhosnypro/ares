@@ -10,11 +10,14 @@ public static class MockDbSetExtensions
     public static Mock<DbSet<T>> BuildMockDbSet<T>(this IQueryable<T> data) where T : class
     {
         var mockSet = new Mock<DbSet<T>>();
+        var asyncEnumerable = new TestAsyncEnumerable<T>(data);
 
         mockSet.As<IQueryable<T>>().Setup(m => m.Provider).Returns(new TestAsyncQueryProvider<T>(data.Provider));
         mockSet.As<IQueryable<T>>().Setup(m => m.Expression).Returns(data.Expression);
         mockSet.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(data.ElementType);
         mockSet.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(data.GetEnumerator());
+        mockSet.As<IAsyncEnumerable<T>>().Setup(m => m.GetAsyncEnumerator(It.IsAny<CancellationToken>()))
+            .Returns(asyncEnumerable.GetAsyncEnumerator());
 
         return mockSet;
     }
@@ -41,17 +44,17 @@ internal class TestAsyncQueryProvider<TEntity> : IAsyncQueryProvider
 
     public object? Execute(Expression expression)
     {
-        return _inner.Execute(RemoveIncludeVisitor.Visit(expression));
+        return _inner.Execute(RemoveIncludeVisitor.RemoveIncludes(expression));
     }
 
     public TResult Execute<TResult>(Expression expression)
     {
-        return _inner.Execute<TResult>(RemoveIncludeVisitor.Visit(expression));
+        return _inner.Execute<TResult>(RemoveIncludeVisitor.RemoveIncludes(expression));
     }
 
     public TResult ExecuteAsync<TResult>(Expression expression, CancellationToken cancellationToken = default)
     {
-        var cleanedExpression = RemoveIncludeVisitor.Visit(expression);
+        var cleanedExpression = RemoveIncludeVisitor.RemoveIncludes(expression);
         var expectedResultType = typeof(TResult).GetGenericArguments()[0];
         var executionResult = typeof(IQueryProvider)
             .GetMethod(
@@ -83,7 +86,7 @@ internal class RemoveIncludeVisitor : ExpressionVisitor
         "AsTracking", "IgnoreQueryFilters", "IgnoreAutoIncludes"
     ];
 
-    public static Expression Visit(Expression expression)
+    public static Expression RemoveIncludes(Expression expression)
     {
         return new RemoveIncludeVisitor().Visit(expression);
     }

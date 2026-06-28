@@ -28,12 +28,16 @@ This is a **documentation generation pipeline** for the Ares Car Rental graduati
 | `bun run typecheck` | TypeScript check (uses tsgo) |
 | `bun run lint` | ESLint |
 | `bun run format:check` | Prettier formatting check |
+| `bun run validate-mermaid` | Validate Mermaid diagrams (mmdc + style lint) |
+| `bun run mermaid-compile` | mmdc compilation only (no style warnings) |
+| `bun run mermaid-check` | Run both mmdc compilation and style lint in one pass |
+| `bun run mermaid-iterate --chapter 3` | Validate + auto-improve mermaid prompt + regenerate chapter |
 
 ## Code Quality Checks
 
 **Run in this order after any code changes:**
 
-1. `bun run typecheck` — must pass (pre-existing errors in `validate-mermaid.ts` are known)
+1. `bun run typecheck` — must pass
 2. `bun run lint` — must pass
 3. `bun run format:check` — must pass
 
@@ -45,7 +49,7 @@ This is a **documentation generation pipeline** for the Ares Car Rental graduati
   - Runs `quarto render --to pdf`
   - Parses the generated PDF for accurate page count
   - Accepts `--count-only`, `--clean` flags
-- **`index.ts`** — After generation, checks for `_pdf/ares-docs.pdf` to report accurate pages; falls back to char-based estimation if PDF is absent.
+- **`index.ts`** — Mermaid rule injection for `includeDiagrams` chapters, then after generation checks for `_pdf/ares-docs.pdf` to report accurate pages; falls back to char-based estimation if PDF is absent.
 
 ## Rules
 
@@ -73,10 +77,56 @@ This is a **documentation generation pipeline** for the Ares Car Rental graduati
 ### Generation Flow
 
 1. Pack repository context (per-chapter include patterns)
-2. Split large chapters into parts (token-based)
-3. Stream AI generation per part
-4. Aggregate parts → final chapter `.md`
-5. (Separate step) Run `bun run pdf` to render all chapters to PDF
+2. Auto-inject Mermaid rules into system prompt for diagram chapters
+3. Split large chapters into parts (token-based)
+4. Stream AI generation per part
+5. Aggregate parts → final chapter `.md`
+6. (Separate step) Run `bun run pdf` to render all chapters to PDF
+
+### Mermaid Diagram Pipeline
+
+- **`lib/mermaid-rules.ts`** — Single source of truth for all Mermaid prompt rules. Every chapter that needs diagrams imports `getMermaidSystemPromptSection()` from here. NEVER duplicate mermaid rules in chapter configs — always add new rules to `lib/mermaid-rules.ts` and they will be auto-injected.
+- **`lib/mermaid-compiler.ts`** — mmdc-based compilation validation. Runs each mermaid diagram through the real Mermaid parser via `@mermaid-js/mermaid-cli` (Puppeteer/Chromium). Catches all syntax errors that regex checks cannot detect (invalid arrows, unclosed brackets, Unicode issues, etc.). Dynamically resolves Chrome path from `CHROME_PATH` env var, common install locations, or `where chrome`. Infrastructure errors (Chrome launch failures, timeouts) are flagged with `infrastructureError: true` and mapped to warnings, so `mermaid-iterate` doesn't loop on non-fixable infrastructure issues.
+- **`validate-mermaid.ts`** — Two-tier validation:
+  1. **Primary: mmdc compilation** — real Mermaid parser; errors are `severity: "error"`
+  2. **Secondary: project-style lint** — regex checks for conventions (hardcoded colors, `<br/>` tags, etc.); warnings are `severity: "warning"`
+  Falls back to regex-only if mmdc unavailable. Accepts `--no-compiler` flag. Run as CLI: `bun run validate-mermaid`.
+- **`mermaid-iterate.ts`** — Automated validate→improve→regenerate→revalidate loop. Use when a chapter has mermaid errors: `bun run mermaid-iterate --chapter 3`. It will:
+   1. Validate the chapter's generated mermaid diagrams (using mmdc compilation + style lint)
+   2. Categorize errors and generate targeted prompt improvements
+   3. Regenerate the chapter with improved mermaid rules (improvements accumulate across iterations)
+   4. Re-validate and repeat until clean or max iterations (default: 3)
+
+  CLI options:
+  | Flag | Default | Description |
+  |------|---------|-------------|
+  | `--chapter <id>` | required | Chapter ID (must have `includeDiagrams: true`) |
+  | `--max-iterations <n>` | 3 | Maximum regeneration attempts |
+  | `--dry-run` | false | Validate only, skip regeneration |
+  | `--debug` | false | Enable debug logging |
+
+  Error-to-improvement mapping:
+  | Error Category | Targeted Improvement |
+  |----------------|----------------------|
+  | `<br/>` tags in labels | Remind to use `\n` for line breaks |
+  | Pie chart sum ≠ 100 | Double-check arithmetic, must sum to exactly 100 |
+  | gitGraph no branches | Require at least one `branch` statement |
+  | gitGraph commit ID spaces | Use hyphens/camelCase, no spaces in IDs |
+  | quadrantChart missing axes | Require x-axis and y-axis declarations |
+  | quadrantChart invalid format | Use `quadrant-1 Label` not `quadrant-1[Label]` |
+  | gantt missing dateFormat | Require `dateFormat` declaration |
+  | Hardcoded hex colors | Use semantic class names only, no `fill:#xxx` |
+  | mmdc parse/lexical error | Review Mermaid syntax for the diagram type |
+- **`ChapterConfig.includeDiagrams`** — Set `true` on chapters that contain mermaid diagrams. The generation flow (`index.ts`) auto-injects mermaid rules into the system prompt for these chapters.
+- **Post-generation validation**: After generation (`bun run generate --validate-mermaid`), every diagram chapter is auto-checked by `validate-mermaid.ts`. Errors are appended to `mermaid-errors.log` containing:
+  ```
+  File: file.md:line
+  Diagram: diagramType
+  [error] error message
+  ```
+- **Error log hygiene**: Use `--clear-mermaid-log` to start fresh, `--validate-mermaid` to auto-log errors.
+- **Automation-ready**: The log is machine-readable — suitable for LLM parsing to suggest prompt improvements.
+- **Goal is to improve the PROMPT** — `mermaid-iterate --chapter 3` tweaks system prompt rules based on error patterns.
 
 ## TypeScript Style
 
@@ -104,3 +154,8 @@ This is a **documentation generation pipeline** for the Ares Car Rental graduati
 - Don't forget to set `.env` before running generation
 - Don't assume page count from Markdown length — always use the PDF for accurate counts
 - Don't use `tsc` — use `tsgo` (the native TypeScript compiler)
+- Don't duplicate mermaid rules in chapter configs — add them to `lib/mermaid-rules.ts` and they auto-inject via `includeDiagrams`
+- Don't fix mermaid errors in generated `.md` files — run `mermaid-iterate` to improve the prompt instead
+- Don't forget that `mermaid-iterate` requires `.env` configured with API credentials (it calls the AI to regenerate)
+- Don't forget that `mermaid-compile` and `validate-mermaid` both need Chrome/Chromium for mmdc — set `CHROME_PATH` env var if Chrome isn't at the default location
+- Use `--no-compiler` flag to skip mmdc and fall back to regex-only validation if Chrome is unavailable

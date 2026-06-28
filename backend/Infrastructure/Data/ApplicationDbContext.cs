@@ -208,6 +208,10 @@ namespace Backend.Infrastructure.Data
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+            builder.Entity<DriverPayoutTransaction>(entity =>
+            {
+                entity.HasKey(e => new { e.DriverPayoutId, e.DriverEarningId });
+            });
             builder.ApplyConfigurationsFromAssembly(System.Reflection.Assembly.GetExecutingAssembly());
         }
     }

@@ -46,12 +46,12 @@ namespace Backend.Application.Interfaces
         /// <summary>
         /// Gets payout history for the driver.
         /// </summary>
-        Task<IReadOnlyList<DriverPayoutDto>> GetPautHistoryAsync(Guid driverProfileId, CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<DriverPayoutDto>> GetPayoutHistoryAsync(Guid driverProfileId, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Creates an earning record for a completed booking.
         /// </summary>
-        Task CreateEarningForBookingAsync(Booking booking, CancellationToken cancellationToken = default);
+        Task<DriverEarning> CreateEarningForBookingAsync(Booking booking, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Reverses an earning if the booking is cancelled/refunded.

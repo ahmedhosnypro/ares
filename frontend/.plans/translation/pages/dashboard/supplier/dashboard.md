@@ -13,7 +13,7 @@
 
 ## Shared Components
 
-- DemoDataBadge.tsx (from supplier/_components) — has generic "Demo Data" label/tooltip defaults; NOT page-specific, noted for future i18n
+- DemoDataBadge.tsx (from supplier/\_components) — has generic "Demo Data" label/tooltip defaults; NOT page-specific, noted for future i18n
 
 ## Component Discovery
 

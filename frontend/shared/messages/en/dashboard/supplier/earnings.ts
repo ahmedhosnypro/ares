@@ -1,4 +1,4 @@
-import type { SupplierEarningsLabels } from "../../types/dashboard/supplier/earnings";
+import type { SupplierEarningsLabels } from "../../../types/dashboard/supplier/earnings";
 
 export const supplierEarnings: SupplierEarningsLabels = {
   title: "Earnings | ARES Supplier",

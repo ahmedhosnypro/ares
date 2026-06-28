@@ -1,4 +1,4 @@
-import type { InspectionDetailLabels } from "../../../../../types/dashboard/inspector/inspections/_id";
+import type { InspectionDetailLabels } from "../../../../types/dashboard/inspector/inspections/_id";
 
 export const inspectionDetail: InspectionDetailLabels = {
   pageTitle: "Inspection Report",
@@ -58,7 +58,8 @@ export const inspectionDetail: InspectionDetailLabels = {
   },
   dialog: {
     title: "Submit Inspection Report?",
-    description: "You are about to mark this vehicle as <strong>{decision}</strong>. This action is permanent and will notify the relevant parties.",
+    description:
+      "You are about to mark this vehicle as <strong>{decision}</strong>. This action is permanent and will notify the relevant parties.",
     confirmAndSubmit: "Confirm & Submit",
   },
   submitButton: "Submit Final Report",

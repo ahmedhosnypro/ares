@@ -1,4 +1,4 @@
-import type { SupplierDashboardLabels } from "../../types/dashboard/supplier/dashboard";
+import type { SupplierDashboardLabels } from "../../../types/dashboard/supplier/dashboard";
 
 export const supplierDashboard: SupplierDashboardLabels = {
   title: "Supplier Dashboard | ARES Car Rental",

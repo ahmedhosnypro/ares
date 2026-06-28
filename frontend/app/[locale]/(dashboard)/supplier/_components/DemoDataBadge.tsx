@@ -9,10 +9,7 @@ interface DemoDataBadgeProps {
   readonly tooltip?: string;
 }
 
-export default function DemoDataBadge({
-  label,
-  tooltip,
-}: DemoDataBadgeProps) {
+export default function DemoDataBadge({ label, tooltip }: DemoDataBadgeProps) {
   const theme = useTheme();
   const t = useTranslations("dashboard.supplierNotifications");
 

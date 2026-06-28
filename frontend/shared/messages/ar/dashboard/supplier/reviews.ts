@@ -1,4 +1,4 @@
-import type { SupplierReviewsLabels } from "../../types/dashboard/supplier/reviews";
+import type { SupplierReviewsLabels } from "../../../types/dashboard/supplier/reviews";
 
 export const supplierReviews: SupplierReviewsLabels = {
   metaTitle: "التقييمات | موردي ARES",
@@ -99,7 +99,8 @@ export const supplierReviews: SupplierReviewsLabels = {
   reportDialog: {
     updateTitle: "تحديث البلاغ",
     reportTitle: "الإبلاغ عن هذا التقييم",
-    description: "أبلغ عن هذا التقييم ليتمكن المسؤولون من مراجعته. لا يمكن للموردين حذف تقييمات العملاء - الإبلاغ يحيل القضية إلى قائمة المراجعة.",
+    description:
+      "أبلغ عن هذا التقييم ليتمكن المسؤولون من مراجعته. لا يمكن للموردين حذف تقييمات العملاء - الإبلاغ يحيل القضية إلى قائمة المراجعة.",
     editAlert: "لقد أبلغت عن هذا التقييم مسبقًا. الإرسال مرة أخرى سيستبدل السبب السابق.",
     reason: "السبب",
     chooseReason: "اختر سببًا...",

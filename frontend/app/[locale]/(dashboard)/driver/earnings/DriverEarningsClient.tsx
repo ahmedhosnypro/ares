@@ -92,7 +92,11 @@ export default function DriverEarningsClient() {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
         if (res.ok && !abortState.cancelled) {
-          const data = await res.json();
+          const data = (await res.json()) as {
+            walletPhoneNumber: string | null;
+            payoutMethod: string;
+            isVerified: boolean;
+          };
           setPayoutInfo(data);
         }
       } catch {
@@ -365,7 +369,6 @@ export default function DriverEarningsClient() {
   );
 
   const availableBalance = stats ? safeNum(stats.availableBalance) : 0;
-  const pendingPayoutAmount = stats ? safeNum(stats.pendingPayoutAmount) : 0;
   const isMissing = !payoutInfo || !payoutInfo.walletPhoneNumber;
   const isUnverified = payoutInfo?.walletPhoneNumber != null && !payoutInfo.isVerified;
   const showPayoutInfoPrompt = isMissing || isUnverified;

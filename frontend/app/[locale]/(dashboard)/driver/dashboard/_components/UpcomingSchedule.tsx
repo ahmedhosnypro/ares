@@ -86,7 +86,7 @@ export default function UpcomingSchedule({ trips }: UpcomingScheduleProps) {
                     <Box component="span">•</Box>
                     <Box component="span" dir="auto">
                       {(() => {
-                        const dm = trip.duration.match(/^(\d+)\s+Days?$/i);
+                        const dm = /^(\d+)\s+Days?$/i.exec(trip.duration);
                         if (dm) {
                           const c = Number(dm[1]);
                           return c === 1 ? t("day") : t("days", { count: c });

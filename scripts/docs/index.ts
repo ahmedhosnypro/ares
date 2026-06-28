@@ -6,9 +6,11 @@ import { calculateTokenBudget, formatTokenCount } from "./lib/token-utils";
 import { splitChapterIntoParts, type ChapterSplit } from "./lib/chapter-splitter";
 import { aggregateChapterParts } from "./lib/aggregate";
 import { CHAPTERS, getChapterById, getChaptersByIds, type ChapterConfig } from "./chapters";
+import { getMermaidSystemPromptSection } from "./lib/mermaid-rules";
+import { validateAllDiagrams, clearErrorLog, MERMAID_ERROR_LOG } from "./validate-mermaid";
 import { resolve, join } from "node:path";
 import { readdir, unlink } from "node:fs/promises";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, appendFileSync, mkdirSync } from "node:fs";
 import {
   printBanner,
   logStep,
@@ -38,6 +40,8 @@ export interface GenerateOptions {
   aggregateParts: number | null;
   includeDiagrams: boolean | null;
   pageTarget: number | null;
+  validateMermaid: boolean;
+  clearMermaidLog: boolean;
 }
 
 function parseArgs(): GenerateOptions {
@@ -94,6 +98,8 @@ function parseArgs(): GenerateOptions {
     aggregateParts,
     includeDiagrams,
     pageTarget,
+    validateMermaid: args.includes("--validate-mermaid") || args.includes("--mermaid-check"),
+    clearMermaidLog: args.includes("--clear-mermaid-log"),
   };
 }
 
@@ -133,6 +139,8 @@ Options:
   --page-target <n>          Target A4 page count for validation (default: 200, uses PDF if available)
   --aggregate <filename>     Aggregate existing part files into a final chapter
   --parts <n>                Expected number of parts (used with --aggregate)
+  --validate-mermaid         Run mermaid validation after generation, log errors
+  --clear-mermaid-log        Clear mermaid error log before generation
   --help, -h                 Show this help message
 
 Chapter IDs:
@@ -170,7 +178,7 @@ function selectChapters(options: GenerateOptions): ChapterConfig[] {
   if (options.all) return CHAPTERS;
   if (options.chapters.length > 0) {
     const selected = getChaptersByIds(options.chapters);
-    const notFound = options.chapters.filter((id) => !getChapterById(id));
+    const notFound = options.chapters.filter(id => !getChapterById(id));
     for (const id of notFound) {
       logWarn(`Chapter '${id}' not found, skipping`);
     }
@@ -229,15 +237,12 @@ async function generateOnePart(
   startSpinner(`Streaming part ${String(split.index + 1)}/${String(split.total)}...`);
 
   try {
-    const result = await generateChapter(
-      config,
-      split.systemPrompt,
-      split.userPrompt,
-      context,
-      timeoutMinutes
-    );
+    const result = await generateChapter(config, split.systemPrompt, split.userPrompt, context, timeoutMinutes);
 
-    stopSpinner(true, `Part ${String(split.index + 1)} done (${result.finishReason}, ${String(result.content.length)} chars)`);
+    stopSpinner(
+      true,
+      `Part ${String(split.index + 1)} done (${result.finishReason}, ${String(result.content.length)} chars)`
+    );
     return { success: true, content: result.content };
   } catch (error) {
     stopSpinner(false, `Part ${String(split.index + 1)} failed`);
@@ -258,7 +263,11 @@ async function generateOneChapter(
 ): Promise<{ success: boolean; error?: string }> {
   logStep(`Generating ${chapter.title}`);
 
-  const splits = splitChapterIntoParts(chapter, config, packResult);
+  const effectiveChapter = chapter.includeDiagrams
+    ? { ...chapter, systemPrompt: `${chapter.systemPrompt}\n\n${getMermaidSystemPromptSection()}` }
+    : chapter;
+
+  const splits = splitChapterIntoParts(effectiveChapter, config, packResult);
 
   const timeoutMinutes = options.timeout ?? config.GENERATION_TIMEOUT;
 
@@ -303,9 +312,7 @@ async function generateOneChapter(
   const failCount = partResults.filter(r => !r.success).length;
   if (failCount > 0) {
     logError(`${String(failCount)} of ${String(splits.length)} parts failed for ${chapter.title}`);
-    const failedPartIndices = partResults
-      .map((r, i) => (!r.success ? i : -1))
-      .filter(i => i >= 0);
+    const failedPartIndices = partResults.map((r, i) => (!r.success ? i : -1)).filter(i => i >= 0);
     logWarn(`Failed parts: ${failedPartIndices.map(i => String(i + 1)).join(", ")}`);
 
     await cleanupOrphanPartFiles(config.OUTPUT_DIR, chapter.filename, splits.length);
@@ -409,7 +416,7 @@ async function main(): Promise<void> {
     logInfo(`Max input tokens: ${String(config.MAX_INPUT_TOKENS)}`);
     logInfo(`Max output tokens: ${String(config.MAX_OUTPUT_TOKENS)}`);
     logInfo(`Generation timeout: ${String(config.GENERATION_TIMEOUT)}min`);
-  logInfo(`Output directory: ${config.OUTPUT_DIR}`);
+    logInfo(`Output directory: ${config.OUTPUT_DIR}`);
 
     logInfo(`Concurrency: ${String(config.CONCURRENCY)}`);
     if (options.splitThreshold !== null) {
@@ -485,21 +492,19 @@ async function main(): Promise<void> {
   logStep("Packing All Chapter Contexts");
 
   const packResults: (PackResult | null)[] = Array.from({ length: chapters.length }, () => null as PackResult | null);
-  const packTasks = chapters.map(
-    async (chapter, index) => {
-      try {
-        packResults[index] = await packForChapter(config, chapter, options.forceCompress);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Unknown error";
-        logError(`Failed to pack context for ${chapter.title}: ${message}`);
-        packResults[index] = null;
-      }
+  const packTasks = chapters.map(async (chapter, index) => {
+    try {
+      packResults[index] = await packForChapter(config, chapter, options.forceCompress);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      logError(`Failed to pack context for ${chapter.title}: ${message}`);
+      packResults[index] = null;
     }
-  );
+  });
 
   await Promise.all(packTasks);
 
-  const successfulPacks = packResults.filter((r) => r !== null).length;
+  const successfulPacks = packResults.filter(r => r !== null).length;
   if (successfulPacks === 0) {
     logError("No chapter contexts were packed successfully. Aborting.");
     process.exit(1);
@@ -519,12 +524,10 @@ async function main(): Promise<void> {
   const results = await runWithConcurrency(generationTasks, config.CONCURRENCY);
 
   type GenResult = { success: boolean; error?: string };
-  const typedResults: GenResult[] = results.map((r) =>
-    r ?? { success: false, error: "Task returned undefined" }
-  );
-  const successCount = typedResults.filter((r) => r.success).length;
-  const failCount = typedResults.filter((r) => !r.success).length;
-  const undefCount = results.filter((r) => r === undefined).length;
+  const typedResults: GenResult[] = results.map(r => r ?? { success: false, error: "Task returned undefined" });
+  const successCount = typedResults.filter(r => r.success).length;
+  const failCount = typedResults.filter(r => !r.success).length;
+  const undefCount = results.filter(r => r === undefined).length;
 
   logStep("Generation Summary");
   logSuccess(`Generated: ${String(successCount)} chapter(s)`);
@@ -539,6 +542,65 @@ async function main(): Promise<void> {
     }
   }
   logInfo(`Output directory: ${config.OUTPUT_DIR}`);
+
+  logInfo(`Output directory: ${config.OUTPUT_DIR}`);
+
+  if (options.validateMermaid || options.clearMermaidLog) {
+    if (options.clearMermaidLog) {
+      clearErrorLog();
+      logInfo("Cleared mermaid error log");
+    }
+
+    logStep("Mermaid Validation (post-generation)");
+
+    const diagramChapters = chapters.filter(ch => ch.includeDiagrams);
+    if (diagramChapters.length === 0) {
+      logWarn("No diagram chapters found in this run — skipping mermaid validation");
+    } else {
+      const outputDir = resolve(import.meta.dirname, config.OUTPUT_DIR);
+      const { results, totalErrors, totalWarnings } = await validateAllDiagrams(outputDir, true);
+
+      if (totalErrors > 0) {
+        logWarn(`Found ${String(totalErrors)} mermaid error(s), ${String(totalWarnings)} warning(s)`);
+        logInfo(`Appending errors to: ${MERMAID_ERROR_LOG}`);
+
+        const timestamp = new Date().toISOString();
+        let logContent = `\n=== Post-Generation Validation - ${timestamp} ===\n`;
+
+        for (const result of results) {
+          if (result.errors.length === 0) continue;
+          const fileName = result.filePath.split(/[/\\]/).pop() ?? result.filePath;
+          const errorEntries = result.errors
+            .filter(e => e.severity === "error")
+            .map(e => `  [${e.severity}] ${e.message}`);
+          if (errorEntries.length > 0) {
+            logContent += `\nFile: ${fileName}:${String(result.lineNumber)}\n`;
+            logContent += `Diagram: ${result.diagramType}\n`;
+            logContent += errorEntries.join("\n") + "\n";
+          }
+        }
+        logContent += `\nTotal errors: ${String(totalErrors)}\n`;
+
+        const logDir = resolve(import.meta.dirname);
+        mkdirSync(logDir, { recursive: true });
+        appendFileSync(MERMAID_ERROR_LOG, logContent, "utf-8");
+        logInfo(`Error log updated: ${MERMAID_ERROR_LOG}`);
+      } else {
+        logSuccess(`All mermaid diagrams valid (${String(totalWarnings)} style warnings)`);
+      }
+
+      const diagramsWithErrors = results.filter(r => r.errors.some(e => e.severity === "error"));
+      if (diagramsWithErrors.length > 0) {
+        logWarn(`Diagrams with errors: ${String(diagramsWithErrors.length)}`);
+        for (const r of diagramsWithErrors) {
+          const fileName = r.filePath.split(/[/\\]/).pop() ?? r.filePath;
+          const errorCount = r.errors.filter(e => e.severity === "error").length;
+          logSubstep(`${fileName}:${String(r.lineNumber)} (${r.diagramType}) — ${String(errorCount)} error(s)`);
+        }
+        logInfo("Run `bun run mermaid-iterate --chapter <id>` to auto-fix via prompt improvement");
+      }
+    }
+  }
 
   if (undefCount > 0) {
     logWarn(`${String(undefCount)} chapter(s) did not return a result. Check error logs above.`);
@@ -556,7 +618,9 @@ async function main(): Promise<void> {
         const pageCount = pageMatches ? pageMatches.length : 0;
         logInfo(`Accurate A4 page count (from PDF): ${String(pageCount)}`);
         if (pageCount < effectivePageTarget) {
-          logWarn(`Actual ${String(pageCount)} pages is below target of ${String(effectivePageTarget)}. Consider increasing MAX_OUTPUT_TOKENS or expanding chapter prompts.`);
+          logWarn(
+            `Actual ${String(pageCount)} pages is below target of ${String(effectivePageTarget)}. Consider increasing MAX_OUTPUT_TOKENS or expanding chapter prompts.`
+          );
         } else {
           logSuccess(`Actual ${String(pageCount)} pages meets target of ${String(effectivePageTarget)}`);
         }
@@ -577,7 +641,9 @@ async function main(): Promise<void> {
         logInfo(`Total characters across ${String(mdFiles.length)} files: ${totalChars.toLocaleString()}`);
         logInfo(`Estimated A4 pages (approx 3000 chars/page): ${String(estimatedPages)}`);
         if (estimatedPages < effectivePageTarget) {
-          logWarn(`Estimated ${String(estimatedPages)} pages is below target of ${String(effectivePageTarget)}. Consider increasing MAX_OUTPUT_TOKENS or expanding chapter prompts.`);
+          logWarn(
+            `Estimated ${String(estimatedPages)} pages is below target of ${String(effectivePageTarget)}. Consider increasing MAX_OUTPUT_TOKENS or expanding chapter prompts.`
+          );
         } else {
           logSuccess(`Estimated ${String(estimatedPages)} pages meets target of ${String(effectivePageTarget)}`);
         }

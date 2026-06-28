@@ -118,7 +118,9 @@ export default function ReviewDetailsDialog({ open, review, onClose, onReply, on
               {review.vehicleMake} {review.vehicleModel}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {review.vehicleYear ? `${t("detailsDialog.year")} ${String(review.vehicleYear)}` : `${t("detailsDialog.year")} —`}
+              {review.vehicleYear
+                ? `${t("detailsDialog.year")} ${String(review.vehicleYear)}`
+                : `${t("detailsDialog.year")} —`}
             </Typography>
           </Box>
         </Box>

@@ -21,13 +21,13 @@ function safeNum(v: unknown): number {
 }
 
 interface EarningsStatsRowProps {
-  stats: DriverEarningsStats | null;
-  loading: boolean;
-  labels: {
-    totalEarnings: string;
-    thisMonth: string;
-    lastMonth: string;
-    availableBalance: string;
+  readonly stats: DriverEarningsStats | null;
+  readonly loading: boolean;
+  readonly labels: {
+    readonly totalEarnings: string;
+    readonly thisMonth: string;
+    readonly lastMonth: string;
+    readonly availableBalance: string;
   };
 }
 

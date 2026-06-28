@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import { Alert, Box, Card, CardContent, MenuItem, Select, Skeleton, Typography, alpha, useTheme } from "@mui/material";
+import { Alert, Box, Card, CardContent, MenuItem, Select, Skeleton, Typography, alpha } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import type { DriverMonthlyEarningPoint } from "@/api-clients/driver-earnings/driver-earnings";
@@ -19,18 +20,18 @@ function safeNum(v: unknown): number {
 }
 
 interface MonthlyEarningsChartProps {
-  data: DriverMonthlyEarningPoint[] | null;
-  loading: boolean;
-  error: string | null;
-  currentYear: number;
-  yearOptions: readonly number[];
-  year: number;
-  onYearChange: (year: number) => void;
-  mounted: boolean;
-  labels: {
-    monthlyEarnings: string;
-    noRevenueRecorded: string;
-    completedBookingsWillAppear: string;
+  readonly data: DriverMonthlyEarningPoint[] | null;
+  readonly loading: boolean;
+  readonly error: string | null;
+  readonly currentYear: number;
+  readonly yearOptions: readonly number[];
+  readonly year: number;
+  readonly onYearChange: (year: number) => void;
+  readonly mounted: boolean;
+  readonly labels: {
+    readonly monthlyEarnings: string;
+    readonly noRevenueRecorded: string;
+    readonly completedBookingsWillAppear: string;
   };
 }
 
@@ -78,9 +79,9 @@ export default function MonthlyEarningsChart({
             size="small"
             value={year}
             onChange={e => {
-              onYearChange(e.target.value as number);
+              onYearChange(e.target.value);
             }}
-            inputProps={{ "aria-label": "Year selector" }}
+            slotProps={{ input: { "aria-label": "Year selector" } }}
             sx={{
               minWidth: 96,
               "& .MuiSelect-select": { fontWeight: 600, py: 0.75 },

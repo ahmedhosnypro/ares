@@ -64,6 +64,50 @@ interface PayoutInfoDto {
   isWalletVerified: boolean;
 }
 
+function buildProfileData(
+  profile: DriverProfileDetails,
+  session: { user: { id: string } },
+  t: (key: string) => string,
+  currentLocale: string
+): ProfileData {
+  const addressParts = profile.address ? profile.address.split(",").map(p => p.trim()) : [];
+  const mappedAddress = {
+    street: addressParts[0] || "",
+    city: addressParts[1] || "",
+    state: addressParts[2] || "",
+    postalCode: addressParts[3] || "",
+    country: addressParts[4] || "",
+  };
+  const isVerified = profile.status === "Verified";
+
+  return {
+    userId: session.user.id || "",
+    firstName: profile.firstName ?? "",
+    lastName: profile.lastName ?? "",
+    email: profile.email ?? "",
+    emailVerified: isVerified,
+    phone: profile.phoneNumber ?? "",
+    phoneVerified: isVerified,
+    profileCompleteness: isVerified ? 100 : profile.licenseNumber ? 80 : 40,
+    profilePhotoUrl: profile.profilePictureUrl,
+    address: mappedAddress,
+    emergencyContact: {
+      name: profile.emergencyContactName ?? "",
+      phone: profile.emergencyContactPhone ?? "",
+      relationship: t("emergencyContactRelationship"),
+    },
+    verificationStatus: {
+      email: isVerified,
+      phone: isVerified,
+      driverLicense: isVerified,
+      kyc: isVerified ? t("kycApproved") : t("kycPending"),
+    },
+    dateOfBirth: "",
+    languagePreference: currentLocale,
+    currencyPreference: "USD",
+  };
+}
+
 export default function DriverProfileClient() {
   const { data: session } = useSession();
   const t = useTranslations("dashboard.driverProfile");
@@ -167,41 +211,7 @@ export default function DriverProfileClient() {
     );
   }
 
-  const addressParts = profile.address ? profile.address.split(",").map(p => p.trim()) : [];
-  const mappedAddress = {
-    street: addressParts[0] || "",
-    city: addressParts[1] || "",
-    state: addressParts[2] || "",
-    postalCode: addressParts[3] || "",
-    country: addressParts[4] || "",
-  };
-
-  const profileData: ProfileData = {
-    userId: session.user.id || "",
-    firstName: profile.firstName ?? "",
-    lastName: profile.lastName ?? "",
-    email: profile.email ?? "",
-    emailVerified: profile.status === "Verified",
-    phone: profile.phoneNumber ?? "",
-    phoneVerified: profile.status === "Verified",
-    profileCompleteness: profile.status === "Verified" ? 100 : profile.licenseNumber ? 80 : 40,
-    profilePhotoUrl: profile.profilePictureUrl,
-    address: mappedAddress,
-    emergencyContact: {
-      name: profile.emergencyContactName ?? "",
-      phone: profile.emergencyContactPhone ?? "",
-      relationship: t("emergencyContactRelationship"),
-    },
-    verificationStatus: {
-      email: profile.status === "Verified",
-      phone: profile.status === "Verified",
-      driverLicense: profile.status === "Verified",
-      kyc: profile.status === "Verified" ? t("kycApproved") : t("kycPending"),
-    },
-    dateOfBirth: "",
-    languagePreference: currentLocale,
-    currencyPreference: "USD",
-  };
+  const profileData = buildProfileData(profile, session, t, currentLocale);
 
   return (
     <SharedProfileContainer session={session} profileData={profileData} showVerification={true} showPreferences={false}>
@@ -320,7 +330,14 @@ export default function DriverProfileClient() {
         </CardContent>
       </ProfileCard>
 
-      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={editDialogOpen}
+        onClose={() => {
+          setEditDialogOpen(false);
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>{payoutInfo ? t("editPayoutInfo") : t("setupPayoutInfo")}</DialogTitle>
         <DialogContent>
           <TextField
@@ -328,14 +345,28 @@ export default function DriverProfileClient() {
             label={t("walletPhoneNumber")}
             placeholder={t("walletPhonePlaceholder")}
             value={walletPhone}
-            onChange={e => setWalletPhone(e.target.value)}
+            onChange={e => {
+              setWalletPhone(e.target.value);
+            }}
             margin="normal"
             slotProps={{ htmlInput: { autoComplete: "off" } }}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEditDialogOpen(false)}>{tc("cancel")}</Button>
-          <Button variant="contained" onClick={handleSavePayoutInfo} disabled={saving || !walletPhone.trim()}>
+          <Button
+            onClick={() => {
+              setEditDialogOpen(false);
+            }}
+          >
+            {tc("cancel")}
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              void handleSavePayoutInfo();
+            }}
+            disabled={saving || !walletPhone.trim()}
+          >
             {t("save")}
           </Button>
         </DialogActions>

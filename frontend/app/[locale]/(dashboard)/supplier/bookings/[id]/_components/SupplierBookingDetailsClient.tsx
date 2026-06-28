@@ -281,7 +281,10 @@ export default function SupplierBookingDetailsClient({ bookingId }: { readonly b
         <SectionCard icon={<EventIcon />} title={t("bookingInfo.title")}>
           <FieldRow label={t("bookingInfo.pickupDate")} value={formatDateLong(booking.pickupDate)} />
           <FieldRow label={t("bookingInfo.returnDate")} value={formatDateLong(booking.returnDate)} />
-          <FieldRow label={t("bookingInfo.totalDays")} value={booking.totalDays != null ? t("bookingInfo.daysUnit", { count: booking.totalDays }) : "—"} />
+          <FieldRow
+            label={t("bookingInfo.totalDays")}
+            value={booking.totalDays != null ? t("bookingInfo.daysUnit", { count: booking.totalDays }) : "—"}
+          />
           <Divider />
           <FieldRow
             label={t("bookingInfo.pickupLocation")}

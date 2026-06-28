@@ -202,7 +202,10 @@ function ReplyReviewDialogInner({ open, review, submitting, onClose, onSubmit }:
           }}
           disabled={submitting}
           error={Boolean(error)}
-          helperText={error ?? t("replyDialog.charactersCount", { current: reply.length.toString(), max: MAX_REPLY_LENGTH.toString() })}
+          helperText={
+            error ??
+            t("replyDialog.charactersCount", { current: reply.length.toString(), max: MAX_REPLY_LENGTH.toString() })
+          }
           sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "background.paper" } }}
         />
       </DialogContent>

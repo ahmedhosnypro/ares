@@ -156,7 +156,7 @@ public class DriverEarningsControllerTests : IDisposable
             new(Guid.NewGuid(), DateTime.UtcNow, 300m, DriverPayoutStatus.Completed,
                 DateTime.UtcNow, null, "12345", DateTime.UtcNow)
         }.AsReadOnly();
-        _serviceMock.Setup(s => s.GetPautHistoryAsync(_driverProfileId, It.IsAny<CancellationToken>()))
+        _serviceMock.Setup(s => s.GetPayoutHistoryAsync(_driverProfileId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(payouts);
 
         var result = await _controller.GetPayoutHistory(CancellationToken.None);

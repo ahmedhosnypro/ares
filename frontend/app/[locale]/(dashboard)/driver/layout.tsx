@@ -95,8 +95,8 @@ export default function DriverLayout({ children }: { readonly children: React.Re
     <DashboardShell
       menuItems={isRestricted ? [] : menuItems}
       sidebarLabel={t("sidebarLabel")}
-      userFallbackName={session?.user?.firstName ?? t("userFallbackName")}
-      userFallbackInitial={session?.user?.firstName?.[0] ?? t("userFallbackInitial")}
+      userFallbackName={session?.user.firstName ?? t("userFallbackName")}
+      userFallbackInitial={session?.user.firstName[0] ?? t("userFallbackInitial")}
       userRoleFallback={t("userRoleFallback")}
       notificationsHref="/driver/notifications"
     >

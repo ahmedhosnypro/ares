@@ -1,4 +1,4 @@
-import type { InspectorInspectionsLabels } from "../../types/dashboard/inspector/inspections";
+import type { InspectorInspectionsLabels } from "../../../types/dashboard/inspector/inspections";
 
 export const inspectorInspections: InspectorInspectionsLabels = {
   page: {

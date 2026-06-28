@@ -49,25 +49,25 @@ function formatStatusLabel(status: string, labels: Map<string, string>): string 
 }
 
 interface EarningsHistoryTableProps {
-  rows: DriverEarningRow[] | null;
-  loading: boolean;
-  error: string | null;
-  page: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-  labels: {
-    date: string;
-    bookingId: string;
-    grossEarning: string;
-    platformDeduction: string;
-    netEarning: string;
-    status: string;
-    page: string;
-    of: string;
-    available: string;
-    pendingPayoutStatus: string;
-    paid: string;
-    reversed: string;
+  readonly rows: DriverEarningRow[] | null;
+  readonly loading: boolean;
+  readonly error: string | null;
+  readonly page: number;
+  readonly totalPages: number;
+  readonly onPageChange: (page: number) => void;
+  readonly labels: {
+    readonly date: string;
+    readonly bookingId: string;
+    readonly grossEarning: string;
+    readonly platformDeduction: string;
+    readonly netEarning: string;
+    readonly status: string;
+    readonly page: string;
+    readonly of: string;
+    readonly available: string;
+    readonly pendingPayoutStatus: string;
+    readonly paid: string;
+    readonly reversed: string;
   };
 }
 

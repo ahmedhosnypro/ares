@@ -1,4 +1,4 @@
-import type { SupplierVehicleDetailLabels } from "../../types/dashboard/supplier/vehicles/_id";
+import type { SupplierVehicleDetailLabels } from "../../../../types/dashboard/supplier/vehicles/_id";
 
 export const supplierVehicleDetail: SupplierVehicleDetailLabels = {
   metaTitle: "تفاصيل المركبة | موردي ARES",

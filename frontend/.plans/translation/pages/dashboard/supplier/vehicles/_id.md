@@ -17,19 +17,21 @@
 
 ## Component Discovery
 
-| Component | File | Hardcoded Strings |
-|---|---|---|
-| page.tsx | page.tsx | metaTitle, metaDescription, "Vehicle Details", "We were unable to load this vehicle right now.", "Customer" (default name) |
-| SupplierVehicleDetailsClient | SupplierVehicleDetailsClient.tsx | "You must be signed in to save changes.", "Failed to upload one or more images. Please try again." |
+| Component                    | File                             | Hardcoded Strings                                                                                                          |
+| ---------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| page.tsx                     | page.tsx                         | metaTitle, metaDescription, "Vehicle Details", "We were unable to load this vehicle right now.", "Customer" (default name) |
+| SupplierVehicleDetailsClient | SupplierVehicleDetailsClient.tsx | "You must be signed in to save changes.", "Failed to upload one or more images. Please try again."                         |
 
 ## Hardcoded String Audit
 
 ### page.tsx
+
 - L127: `"Customer"` — default user name in `normalizeReviews`
 - L200: `"We were unable to load this vehicle right now."` — error message
 - L234: `"Vehicle Details"` — page heading
 
 ### SupplierVehicleDetailsClient.tsx
+
 - L33: `"You must be signed in to save changes."` — auth error
 - L49: `"Failed to upload one or more images. Please try again."` — upload error
 

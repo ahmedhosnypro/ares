@@ -1,4 +1,4 @@
-import type { SupplierNotificationsLabels } from "../../types/dashboard/supplier/notifications";
+import type { SupplierNotificationsLabels } from "../../../types/dashboard/supplier/notifications";
 
 export const supplierNotifications: SupplierNotificationsLabels = {
   metaTitle: "إشعارات المورّد | ARES Car Rental",

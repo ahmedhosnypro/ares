@@ -1,16 +1,17 @@
 "use client";
 
-import { Box, Button, Card, CardContent, Typography, alpha, useTheme } from "@mui/material";
+import { Box, Button, Card, CardContent, Typography, alpha } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import WarningAmberOutlinedIcon from "@mui/icons-material/WarningAmberOutlined";
 import { useRouter } from "next/navigation";
 
 interface PayoutInfoPromptProps {
-  variant: "missing" | "unverified";
-  labels: {
-    payoutInfoMissing: string;
-    payoutInfoNotVerified: string;
-    completePayoutSetup: string;
-    goToProfile: string;
+  readonly variant: "missing" | "unverified";
+  readonly labels: {
+    readonly payoutInfoMissing: string;
+    readonly payoutInfoNotVerified: string;
+    readonly completePayoutSetup: string;
+    readonly goToProfile: string;
   };
 }
 

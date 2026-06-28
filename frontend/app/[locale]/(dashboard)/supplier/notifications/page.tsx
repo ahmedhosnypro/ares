@@ -18,9 +18,7 @@ export default async function SupplierNotificationsPage() {
         <Typography variant="h4" sx={{ fontWeight: 800, letterSpacing: "-0.5px" }}>
           {t("title")}
         </Typography>
-        <Typography color="text.secondary">
-          {t("placeholderDescription")}
-        </Typography>
+        <Typography color="text.secondary">{t("placeholderDescription")}</Typography>
       </Stack>
     </Box>
   );

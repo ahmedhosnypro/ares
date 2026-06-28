@@ -15,7 +15,7 @@ interface BookingActionsMenuProps {
   readonly onEdit: () => void;
   readonly onChangeStatus: () => void;
   readonly onDelete: () => void;
-  readonly t: any;
+  readonly t: (key: string) => string;
 }
 
 export default function BookingActionsMenu({

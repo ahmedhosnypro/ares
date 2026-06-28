@@ -360,7 +360,6 @@ public class DriverEarningsAdminServiceTests
             Status = DriverPayoutStatus.Requested
         };
         var trackedPayouts = new List<DriverPayout> { payout }.AsQueryable().BuildMockDbSet();
-        _contextMock.Setup(c => c.DriverPayouts).Returns(trackedPayouts.Object);
 
         var concurrentPayout = new DriverPayout
         {
@@ -369,7 +368,6 @@ public class DriverEarningsAdminServiceTests
         };
         var freshPayouts = new List<DriverPayout> { concurrentPayout }.AsQueryable().BuildMockDbSet();
         _contextMock.SetupSequence(c => c.DriverPayouts)
-            .Returns(trackedPayouts.Object)
             .Returns(trackedPayouts.Object)
             .Returns(freshPayouts.Object);
         #endregion

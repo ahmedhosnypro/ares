@@ -272,7 +272,7 @@ export default function InspectionDetailsClient({ inspectionId }: Props): JSX.El
               {t("pageTitle")}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {t("subtitle", { bookingNumber: details.bookingNumber })}
+              {t("subtitle", { bookingNumber: details.bookingNumber ?? "" })}
             </Typography>
           </Box>
         </Stack>
@@ -322,7 +322,7 @@ export default function InspectionDetailsClient({ inspectionId }: Props): JSX.El
           <Typography variant="body1" color="text.secondary">
             {t.rich("dialog.description", {
               decision: decision?.toUpperCase() ?? "",
-              strong: (chunks) => <strong>{chunks}</strong>,
+              strong: chunks => <strong>{chunks}</strong>,
             })}
           </Typography>
         </DialogContent>
@@ -413,7 +413,9 @@ function BookingInfoSection({ details }: { readonly details: InspectionDetails }
         <InfoRow label={t("bookingInfo.vehicle")} value={details.vehicleDisplayName} />
         <InfoRow label={t("bookingInfo.assignedTo")} value={details.inspectorFullName} />
         <InfoRow label={t("bookingInfo.scheduledDate")} value={new Date(details.inspectionDate).toLocaleString()} />
-        {details.submittedAt && <InfoRow label={t("bookingInfo.submittedAt")} value={new Date(details.submittedAt).toLocaleString()} />}
+        {details.submittedAt && (
+          <InfoRow label={t("bookingInfo.submittedAt")} value={new Date(details.submittedAt).toLocaleString()} />
+        )}
       </Stack>
     </Paper>
   );

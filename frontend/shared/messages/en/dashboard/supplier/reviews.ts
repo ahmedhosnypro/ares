@@ -1,4 +1,4 @@
-import type { SupplierReviewsLabels } from "../../types/dashboard/supplier/reviews";
+import type { SupplierReviewsLabels } from "../../../types/dashboard/supplier/reviews";
 
 export const supplierReviews: SupplierReviewsLabels = {
   metaTitle: "Reviews | ARES Supplier",
@@ -99,7 +99,8 @@ export const supplierReviews: SupplierReviewsLabels = {
   reportDialog: {
     updateTitle: "Update report",
     reportTitle: "Report this review",
-    description: "Flag this review so administrators can review it. Suppliers can't delete customer reviews - reporting forwards the case to the moderation queue.",
+    description:
+      "Flag this review so administrators can review it. Suppliers can't delete customer reviews - reporting forwards the case to the moderation queue.",
     editAlert: "You already reported this review. Submitting again will replace your previous reason.",
     reason: "Reason",
     chooseReason: "Choose a reason...",
