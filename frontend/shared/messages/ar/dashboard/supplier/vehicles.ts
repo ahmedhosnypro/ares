@@ -1,0 +1,67 @@
+import type { SupplierVehiclesLabels } from "../../types/dashboard/supplier/vehicles";
+
+export const supplierVehicles: SupplierVehiclesLabels = {
+  metaTitle: "مركباتي | ARES المورد",
+  metaDescription: "أدر أسطولك — أضف، عدّل، احذف، وبدّل التوفر.",
+  title: "مركباتي",
+  description: "أدر أسطولك — أضف، عدّل، احذف، وبدّل التوفر.",
+  addNewVehicle: "إضافة مركبة جديدة",
+  searchPlaceholder: "ابحث عن الصانع، الموديل، أو لوحة الترخيص…",
+  filters: {
+    status: "الحالة",
+    availability: "التوفر",
+    allStatuses: "جميع الحالات",
+    allAvailability: "جميع التوفر",
+  },
+  empty: {
+    noVehiclesMatchFilters: "لا توجد مركبات تطابق هذه الفلاتر",
+    noVehiclesYet: "ليس لديك أي مركبات بعد",
+    tryClearingFilters: "جرّب إزالة الفلاتر أو تعديل البحث.",
+    addFirstVehicle: 'انقر على "إضافة مركبة جديدة" لإدراج أول مركبة.',
+  },
+  table: {
+    vehicle: "المركبة",
+    pricePerDay: "السعر / يوم",
+    status: "الحالة",
+    availability: "التوفر",
+    bookings: "الحجوزات",
+    created: "تاريخ الإنشاء",
+    actions: "الإجراءات",
+    showing: "عرض",
+    of: "من",
+    vehicles: "مركبات",
+    perDay: "/ يوم",
+  },
+  deleteDialog: {
+    title: "حذف المركبة؟",
+    body: "أنت على وشك إزالة <strong>{make} {model}</strong> من أسطولك. سيتم إخفاؤها من لوحة التحكم الخاصة بك. الحجوزات والمدفوعات والسجل الحالي سيتم الاحتفاظ بها.",
+  },
+  tooltips: {
+    view: "عرض",
+    accountRestricted: "الحساب مقيّد",
+    onlyApprovedAvailable: "فقط المركبات المعتمدة يمكن أن تكون متاحة",
+    setUnavailable: "تعيين كغير متاح",
+    setAvailable: "تعيين كمتاح",
+  },
+  toasts: {
+    vehicleDeleted: "تم حذف المركبة بنجاح.",
+    vehicleNowAvailable: "المركبة متاحة الآن.",
+    vehicleNowUnavailable: "المركبة غير متاحة الآن.",
+    failedToDelete: "فشل حذف المركبة.",
+    onlyApprovedAvailable: "فقط المركبات المعتمدة يمكن أن تكون متاحة.",
+    failedToUpdateAvailability: "فشل تحديث التوفر.",
+  },
+  errors: {
+    notSignedIn: "يجب تسجيل الدخول لعرض مركباتك.",
+    loadFailed: "تعذر تحميل مركباتك. يرجى المحاولة مرة أخرى قريبًا.",
+  },
+  chips: {
+    unknown: "غير معروف",
+    pending: "قيد المراجعة",
+    approved: "معتمد",
+    rejected: "مرفوض",
+    available: "متاح",
+    unavailable: "غير متاح",
+    fullyBooked: "محجوز بالكامل",
+  },
+};

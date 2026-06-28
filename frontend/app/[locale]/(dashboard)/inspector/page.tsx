@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Box, Typography, useTheme } from "@mui/material";
 import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
 import CarRepairIcon from "@mui/icons-material/CarRepair";
@@ -18,6 +19,7 @@ import TodayTasksList from "./_components/TodayTasksList";
 
 export default function InspectorDashboardPage() {
   const theme = useTheme();
+  const t = useTranslations("dashboard.inspectorInspections");
   const [tasks, setTasks] = useState<InspectorTask[]>([]);
   const [stats, setStats] = useState<InspectorTodayStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,32 +43,32 @@ export default function InspectorDashboardPage() {
 
   const dashboardStats = [
     {
-      label: "Check-Outs",
+      label: t("stats.checkOuts"),
       value: stats?.checkOutsCount ?? 0,
       color: "success",
       icon: <DirectionsCarIcon fontSize="small" />,
-      subtitle: "Deliveries today",
+      subtitle: t("stats.checkOutsSubtitle"),
     },
     {
-      label: "Check-Ins",
+      label: t("stats.checkIns"),
       value: stats?.checkInsCount ?? 0,
       color: "error",
       icon: <CarRepairIcon fontSize="small" />,
-      subtitle: "Returns today",
+      subtitle: t("stats.checkInsSubtitle"),
     },
     {
-      label: "Overdue Tasks",
+      label: t("stats.overdueTasks"),
       value: stats?.overdueCount ?? 0,
       color: "warning",
       icon: <WarningAmberIcon fontSize="small" />,
-      subtitle: "Past due",
+      subtitle: t("stats.overdueTasksSubtitle"),
     },
     {
-      label: "Completed Today",
+      label: t("stats.completedToday"),
       value: stats?.completedTodayCount ?? 0,
       color: "info",
       icon: <CheckCircleOutlinedIcon fontSize="small" />,
-      subtitle: "Done today",
+      subtitle: t("stats.completedTodaySubtitle"),
     },
   ];
 
@@ -75,10 +77,10 @@ export default function InspectorDashboardPage() {
       {/* Page header */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" sx={{ fontWeight: 800 }}>
-          Inspector Dashboard
+          {t("page.title")}
         </Typography>
         <Typography sx={{ color: "text.secondary" }} variant="body2">
-          Overview of your assignments and today&apos;s metrics.
+          {t("page.subtitle")}
         </Typography>
       </Box>
 
@@ -99,10 +101,10 @@ export default function InspectorDashboardPage() {
       >
         <Box sx={{ mb: 2.5 }}>
           <Typography variant="h6" sx={{ fontWeight: 800 }}>
-            Today&apos;s Tasks
+            {t("page.todayTasksTitle")}
           </Typography>
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            Tap a card to open the inspection form · Use the action buttons to call or navigate.
+            {t("page.todayTasksSubtitle")}
           </Typography>
         </Box>
 

@@ -23,12 +23,25 @@ import adminSidebar from "./ar/dashboard/admin-sidebar";
 import driverSidebar from "./ar/dashboard/driver-sidebar";
 import supplierSidebar from "./ar/dashboard/supplier-sidebar";
 import inspectorSidebar from "./ar/dashboard/inspector-sidebar";
+import { inspectorProfile } from "./ar/dashboard/inspector/profile";
+import { inspectorInspections } from "./ar/dashboard/inspector/inspections";
+import { inspectionDetail } from "./ar/dashboard/inspector/inspections/_id";
+import { inspectorHistory } from "./ar/dashboard/inspector/history";
 import { driverCompleteProfile } from "./ar/dashboard/driver-complete-profile";
 import { driverDashboard } from "./ar/dashboard/driver-dashboard";
 import { driverEarnings } from "./ar/dashboard/driver-earnings";
 import { driverNotifications } from "./ar/dashboard/driver-notifications";
 import { driverProfile } from "./ar/dashboard/driver-profile";
 import { driverTrips } from "./ar/dashboard/driver-trips";
+import { supplierDashboard } from "./ar/dashboard/supplier/dashboard";
+import { supplierEarnings } from "./ar/dashboard/supplier/earnings";
+import { supplierNotifications } from "./ar/dashboard/supplier/notifications";
+import { supplierReviews } from "./ar/dashboard/supplier/reviews";
+import { supplierBookings } from "./ar/dashboard/supplier/bookings";
+import { supplierBookingDetail } from "./ar/dashboard/supplier/bookings/_id";
+import { supplierVehicles } from "./ar/dashboard/supplier/vehicles";
+import { createSupplierVehicle } from "./ar/dashboard/supplier/vehicles/create";
+import { supplierVehicleDetail } from "./ar/dashboard/supplier/vehicles/_id";
 import logoutDialog from "./ar/dashboard/logout-dialog";
 import deleteNotificationDialog from "./ar/delete-notification-dialog";
 import compliance from "./ar/dashboard/admin/admin/compliance";
@@ -77,12 +90,25 @@ const ar: MessageSchema = {
     driverSidebar,
     supplierSidebar,
     inspectorSidebar,
+    inspectorProfile,
+    inspectorInspections,
+    inspectionDetail,
+    inspectorHistory,
     driverCompleteProfile,
     driverDashboard,
     driverEarnings,
     driverNotifications,
     driverProfile,
     driverTrips,
+    supplierDashboard,
+    supplierEarnings,
+    supplierNotifications,
+    supplierReviews,
+    supplierBookings,
+    supplierBookingDetail,
+    supplierVehicles,
+    createSupplierVehicle,
+    supplierVehicleDetail,
     logoutDialog,
   },
   dashboardAdmin: {

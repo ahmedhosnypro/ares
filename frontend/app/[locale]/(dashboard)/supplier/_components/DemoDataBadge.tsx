@@ -2,30 +2,28 @@
 
 import { Chip, Tooltip, alpha, useTheme } from "@mui/material";
 import ScienceIcon from "@mui/icons-material/Science";
+import { useTranslations } from "next-intl";
 
 interface DemoDataBadgeProps {
-  /** Optional override label. Defaults to "Demo Data". */
   readonly label?: string;
-  /** Optional explanation shown on hover. */
   readonly tooltip?: string;
 }
 
-/**
- * Subtle "Demo Data" indicator used across the supplier dashboard while we
- * surface mocked / placeholder analytics. It is intentionally low-contrast so
- * it doesn't compete with real metrics — just enough to make the source clear.
- */
 export default function DemoDataBadge({
-  label = "Demo Data",
-  tooltip = "Showing placeholder data — will be replaced with live metrics once available.",
+  label,
+  tooltip,
 }: DemoDataBadgeProps) {
   const theme = useTheme();
+  const t = useTranslations("dashboard.supplierNotifications");
+
+  const resolvedLabel = label ?? t("demoDataLabel");
+  const resolvedTooltip = tooltip ?? t("demoDataTooltip");
 
   return (
-    <Tooltip title={tooltip} arrow placement="top">
+    <Tooltip title={resolvedTooltip} arrow placement="top">
       <Chip
         icon={<ScienceIcon sx={{ fontSize: 14 }} />}
-        label={label}
+        label={resolvedLabel}
         size="small"
         variant="outlined"
         sx={{

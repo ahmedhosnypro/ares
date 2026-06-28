@@ -1,18 +1,5 @@
 "use client";
 
-/**
- * Report-review dialog used on the supplier reviews page.
- *
- * Suppliers cannot delete reviews; this modal lets them flag a review
- * as inappropriate so admins can act on it later. It hits
- * `POST /api/supplier/reviews/{reviewId}/report`. Per backend behavior
- * the request is idempotent - calling it again overwrites the reason
- * and timestamp.
- *
- * Validation mirrors the backend `SupplierReportReviewRequestValidator`
- * (1-1000 chars, required).
- */
-
 import { useState } from "react";
 import {
   Alert,
@@ -31,18 +18,19 @@ import {
 } from "@mui/material";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import ReportProblemRoundedIcon from "@mui/icons-material/ReportProblemRounded";
+import { useTranslations } from "next-intl";
 import type { SupplierReviewListItem } from "@/api-clients/supplier-reviews/supplier-reviews";
 
 const MAX_REASON_LENGTH = 1000;
 
-const PRESET_REASONS = [
-  "Inappropriate language",
-  "Spam or advertising",
-  "Personal attack or harassment",
-  "Untrue or misleading information",
-  "Discloses private information",
-  "Off-topic - not about the rental",
-  "Other (describe below)",
+const PRESET_REASON_KEYS = [
+  "inappropriateLanguage",
+  "spamOrAdvertising",
+  "personalAttack",
+  "untrueInformation",
+  "disclosesPrivateInfo",
+  "offTopic",
+  "other",
 ] as const;
 
 export interface ReportReviewDialogProps {
@@ -75,29 +63,29 @@ interface ReportReviewDialogInnerProps {
   readonly onSubmit: (reviewId: string, reason: string) => Promise<void>;
 }
 
-function composeReason(category: string, details: string): string {
-  const detailTrim = details.trim();
-  if (!category) return detailTrim;
-  if (!detailTrim) return category;
-  return `${category} - ${detailTrim}`;
-}
-
-function computeError(touched: boolean, empty: boolean, tooLong: boolean): string | null {
-  if (!touched) return null;
-  if (empty) return "Please choose a reason or describe the issue.";
-  if (tooLong) return `Reason must not exceed ${MAX_REASON_LENGTH.toString()} characters.`;
-  return null;
-}
-
 function ReportReviewDialogInner({ open, review, submitting, onClose, onSubmit }: ReportReviewDialogInnerProps) {
+  const t = useTranslations("dashboard.supplierReviews");
+  const tc = useTranslations("common");
   const [category, setCategory] = useState<string>("");
   const [details, setDetails] = useState<string>(review.reportReason ?? "");
   const [touched, setTouched] = useState(false);
 
-  const finalReason = composeReason(category, details);
+  const detailTrim = details.trim();
+  const finalReason = (() => {
+    if (!category) return detailTrim;
+    if (!detailTrim) return category;
+    return `${category} - ${detailTrim}`;
+  })();
+
   const empty = finalReason.length === 0;
   const tooLong = finalReason.length > MAX_REASON_LENGTH;
-  const error = computeError(touched, empty, tooLong);
+
+  let error: string | null = null;
+  if (touched) {
+    if (empty) error = t("reportDialog.validation.required");
+    else if (tooLong) error = t("reportDialog.validation.maxLength", { max: MAX_REASON_LENGTH });
+  }
+
   const canSubmit = !submitting && !empty && !tooLong;
 
   const handleSubmit = async () => {
@@ -105,6 +93,11 @@ function ReportReviewDialogInner({ open, review, submitting, onClose, onSubmit }
     if (!canSubmit) return;
     await onSubmit(review.reviewId, finalReason);
   };
+
+  const presetValues = PRESET_REASON_KEYS.map(key => ({
+    key,
+    label: t(`reportDialog.presetReasons.${key}` as Parameters<typeof t>[0]),
+  }));
 
   return (
     <Dialog
@@ -128,7 +121,7 @@ function ReportReviewDialogInner({ open, review, submitting, onClose, onSubmit }
       >
         <Stack direction="row" spacing={1.25} sx={{ alignItems: "center" }}>
           <ReportProblemRoundedIcon color="error" />
-          <span>{review.isReported ? "Update report" : "Report this review"}</span>
+          <span>{review.isReported ? t("reportDialog.updateTitle") : t("reportDialog.reportTitle")}</span>
         </Stack>
         <IconButton size="small" onClick={onClose} disabled={submitting} aria-label="close" sx={{ borderRadius: 2 }}>
           <CloseRoundedIcon fontSize="small" />
@@ -137,13 +130,12 @@ function ReportReviewDialogInner({ open, review, submitting, onClose, onSubmit }
 
       <DialogContent sx={{ pt: 2 }}>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Flag this review so administrators can review it. Suppliers can&apos;t delete customer reviews - reporting
-          forwards the case to the moderation queue.
+          {t("reportDialog.description")}
         </Typography>
 
         {review.isReported && (
           <Alert severity="info" variant="outlined" sx={{ borderRadius: 2, mb: 2 }}>
-            You already reported this review. Submitting again will replace your previous reason.
+            {t("reportDialog.editAlert")}
           </Alert>
         )}
 
@@ -151,7 +143,7 @@ function ReportReviewDialogInner({ open, review, submitting, onClose, onSubmit }
           <TextField
             select
             fullWidth
-            label="Reason"
+            label={t("reportDialog.reason")}
             value={category}
             onChange={e => {
               setCategory(e.target.value);
@@ -160,11 +152,11 @@ function ReportReviewDialogInner({ open, review, submitting, onClose, onSubmit }
             sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "background.paper" } }}
           >
             <MenuItem value="">
-              <em>Choose a reason...</em>
+              <em>{t("reportDialog.chooseReason")}</em>
             </MenuItem>
-            {PRESET_REASONS.map(r => (
-              <MenuItem key={r} value={r}>
-                {r}
+            {presetValues.map(pv => (
+              <MenuItem key={pv.key} value={pv.label}>
+                {pv.label}
               </MenuItem>
             ))}
           </TextField>
@@ -174,8 +166,8 @@ function ReportReviewDialogInner({ open, review, submitting, onClose, onSubmit }
             multiline
             minRows={3}
             maxRows={8}
-            label="Additional details"
-            placeholder="Add context that will help admins evaluate the report..."
+            label={t("reportDialog.additionalDetails")}
+            placeholder={t("reportDialog.detailsPlaceholder")}
             value={details}
             onChange={e => {
               setDetails(e.target.value);
@@ -185,7 +177,7 @@ function ReportReviewDialogInner({ open, review, submitting, onClose, onSubmit }
             }}
             disabled={submitting}
             error={Boolean(error)}
-            helperText={error ?? `${finalReason.length.toString()} / ${MAX_REASON_LENGTH.toString()} characters`}
+            helperText={error ?? t("reportDialog.charactersCount", { current: finalReason.length.toString(), max: MAX_REASON_LENGTH.toString() })}
             sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "background.paper" } }}
           />
 
@@ -200,7 +192,7 @@ function ReportReviewDialogInner({ open, review, submitting, onClose, onSubmit }
               }}
             >
               <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                Will be submitted as:
+                {t("reportDialog.willBeSubmitted")}
               </Typography>
               <Typography variant="body2" sx={{ mt: 0.5, whiteSpace: "pre-line" }}>
                 {finalReason}
@@ -217,7 +209,7 @@ function ReportReviewDialogInner({ open, review, submitting, onClose, onSubmit }
           disabled={submitting}
           sx={{ borderRadius: 2, fontWeight: 600, textTransform: "none", flex: { xs: 1, sm: "none" } }}
         >
-          Cancel
+          {tc("cancel")}
         </Button>
         <Button
           onClick={() => {
@@ -228,7 +220,7 @@ function ReportReviewDialogInner({ open, review, submitting, onClose, onSubmit }
           disabled={!canSubmit}
           sx={{ borderRadius: 2, fontWeight: 700, textTransform: "none", flex: { xs: 1, sm: "none" } }}
         >
-          {submitting ? <CircularProgress size={20} color="inherit" /> : "Submit report"}
+          {submitting ? <CircularProgress size={20} color="inherit" /> : t("reportDialog.submitReport")}
         </Button>
       </DialogActions>
     </Dialog>

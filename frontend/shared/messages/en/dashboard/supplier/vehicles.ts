@@ -1,0 +1,67 @@
+import type { SupplierVehiclesLabels } from "../../types/dashboard/supplier/vehicles";
+
+export const supplierVehicles: SupplierVehiclesLabels = {
+  metaTitle: "My Vehicles | ARES Supplier",
+  metaDescription: "Manage your fleet — add, edit, delete, and toggle availability.",
+  title: "My Vehicles",
+  description: "Manage your fleet — add, edit, delete, and toggle availability.",
+  addNewVehicle: "Add New Vehicle",
+  searchPlaceholder: "Search make, model, or license plate…",
+  filters: {
+    status: "Status",
+    availability: "Availability",
+    allStatuses: "All statuses",
+    allAvailability: "All availability",
+  },
+  empty: {
+    noVehiclesMatchFilters: "No vehicles match these filters",
+    noVehiclesYet: "You don't have any vehicles yet",
+    tryClearingFilters: "Try clearing filters or adjusting your search.",
+    addFirstVehicle: 'Click "Add New Vehicle" to list your first one.',
+  },
+  table: {
+    vehicle: "Vehicle",
+    pricePerDay: "Price / day",
+    status: "Status",
+    availability: "Availability",
+    bookings: "Bookings",
+    created: "Created",
+    actions: "Actions",
+    showing: "Showing",
+    of: "of",
+    vehicles: "vehicles",
+    perDay: "/ day",
+  },
+  deleteDialog: {
+    title: "Delete vehicle?",
+    body: "You're about to remove <strong>{make} {model}</strong> from your fleet. This will hide it from your dashboard. Existing bookings, payments, and history are preserved.",
+  },
+  tooltips: {
+    view: "View",
+    accountRestricted: "Account restricted",
+    onlyApprovedAvailable: "Only approved vehicles can be made available",
+    setUnavailable: "Set unavailable",
+    setAvailable: "Set available",
+  },
+  toasts: {
+    vehicleDeleted: "Vehicle deleted successfully.",
+    vehicleNowAvailable: "Vehicle is now available.",
+    vehicleNowUnavailable: "Vehicle is now unavailable.",
+    failedToDelete: "Failed to delete vehicle.",
+    onlyApprovedAvailable: "Only approved vehicles can be made available.",
+    failedToUpdateAvailability: "Failed to update availability.",
+  },
+  errors: {
+    notSignedIn: "You must be signed in to view your vehicles.",
+    loadFailed: "Could not load your vehicles. Please try again shortly.",
+  },
+  chips: {
+    unknown: "Unknown",
+    pending: "Pending",
+    approved: "Approved",
+    rejected: "Rejected",
+    available: "Available",
+    unavailable: "Unavailable",
+    fullyBooked: "Fully Booked",
+  },
+};

@@ -16,6 +16,9 @@ namespace Backend.Domain.Entities
         [MaxLength(100)]
         public string LastName { get; set; } = string.Empty;
 
+        [NotMapped]
+        public string FullName => $"{FirstName} {LastName}".Trim();
+
         // PhoneNumber is inherited from IdentityUser
 
         [MaxLength(50)]

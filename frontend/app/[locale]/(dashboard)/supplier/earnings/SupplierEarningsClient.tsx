@@ -1,26 +1,5 @@
 "use client";
 
-/**
- * Supplier Earnings — live data wiring.
- *
- * Same layout, primitives and spacing as the original scaffolding pass;
- * only the data flow changed:
- *
- *   - 4 stat cards          ← GET /api/supplier/earnings/stats
- *   - Monthly revenue chart ← GET /api/supplier/earnings/chart
- *   - Top vehicles list     ← GET /api/supplier/earnings/top-vehicles
- *
- * Auth uses NextAuth's `useSession()` (same pattern as the supplier
- * dashboard). Every fetch is ownership-scoped server-side by the
- * supplier's user id, so the frontend just renders what the backend
- * returns.
- *
- * Visual language matches `app/(dashboard)/supplier/dashboard/SupplierDashboardClient.tsx`
- * intentionally — same Card/Avatar/Skeleton primitives and Recharts
- * styling, so the earnings page feels like a natural sibling of the
- * dashboard.
- */
-
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
@@ -41,6 +20,7 @@ import {
 } from "@mui/material";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import HistoryIcon from "@mui/icons-material/History";
@@ -59,17 +39,10 @@ import {
 } from "@/api-clients/supplier-earnings/supplier-earnings";
 import { logger } from "@/utils/logger";
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-/** Format an integer count with thousand separators. */
 function formatCount(value: number): string {
   return Number.isFinite(value) ? Math.trunc(value).toLocaleString() : "0";
 }
 
-/**
- * Format a money amount. Whole-dollar values hide decimals to keep the
- * stat cards uncluttered — same convention as the supplier dashboard.
- */
 function formatCurrency(value: number): string {
   if (!Number.isFinite(value)) return "$0";
   return `$${value.toLocaleString(undefined, {
@@ -78,26 +51,19 @@ function formatCurrency(value: number): string {
   })}`;
 }
 
-/** Defensive coercion — backend can in theory send null/undefined. */
 function safeNum(v: unknown): number {
   return typeof v === "number" && Number.isFinite(v) ? v : 0;
 }
 
-// ── Component ────────────────────────────────────────────────────────────────
-
 export default function SupplierEarningsClient() {
   const theme = useTheme();
   const { data: session, status: sessionStatus } = useSession();
+  const t = useTranslations("dashboard.supplierEarnings");
 
-  // Year selector for the chart. Defaults to the current UTC year and
-  // can be switched to one of the previous four years; covers the
-  // common "how did I do this year vs last year" use case without
-  // adding a full date-range picker.
   const currentYear = useMemo(() => new Date().getUTCFullYear(), []);
   const yearOptions = useMemo(() => [currentYear, currentYear - 1, currentYear - 2, currentYear - 3], [currentYear]);
   const [year, setYear] = useState<number>(currentYear);
 
-  // ── Stats state ────────────────────────────────────────────────────────────
   const [stats, setStats] = useState<SupplierEarningsStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
   const [statsError, setStatsError] = useState<string | null>(null);
@@ -112,24 +78,21 @@ export default function SupplierEarningsClient() {
     };
   }, []);
 
-  // ── Chart state ────────────────────────────────────────────────────────────
   const [chart, setChart] = useState<MonthlyRevenuePoint[] | null>(null);
   const [chartLoading, setChartLoading] = useState(true);
   const [chartError, setChartError] = useState<string | null>(null);
 
-  // ── Top vehicles state ─────────────────────────────────────────────────────
   const [topVehicles, setTopVehicles] = useState<SupplierTopVehicle[] | null>(null);
   const [topLoading, setTopLoading] = useState(true);
   const [topError, setTopError] = useState<string | null>(null);
 
   const accessToken = session?.accessToken;
 
-  // ── Fetch: stats ───────────────────────────────────────────────────────────
   useEffect(() => {
     if (sessionStatus === "loading") return;
     if (!accessToken) {
       setStatsLoading(false);
-      setStatsError("You must be signed in to view earnings.");
+      setStatsError(t("errors.notSignedIn"));
       return;
     }
 
@@ -144,7 +107,7 @@ export default function SupplierEarningsClient() {
       } catch (err) {
         if (abortState.cancelled) return;
         logger.error("Failed to load supplier earnings stats", err);
-        setStatsError("Could not load your earnings stats. Please try again shortly.");
+        setStatsError(t("errors.loadStatsFailed"));
       } finally {
         if (!abortState.cancelled) setStatsLoading(false);
       }
@@ -153,14 +116,13 @@ export default function SupplierEarningsClient() {
     return () => {
       abortState.cancelled = true;
     };
-  }, [accessToken, sessionStatus]);
+  }, [accessToken, sessionStatus, t]);
 
-  // ── Fetch: top vehicles (lifetime — does not depend on year selector) ──────
   useEffect(() => {
     if (sessionStatus === "loading") return;
     if (!accessToken) {
       setTopLoading(false);
-      setTopError("You must be signed in to view earnings.");
+      setTopError(t("errors.notSignedIn"));
       return;
     }
 
@@ -175,7 +137,7 @@ export default function SupplierEarningsClient() {
       } catch (err) {
         if (abortState.cancelled) return;
         logger.error("Failed to load supplier top vehicles", err);
-        setTopError("Could not load your top vehicles. Please try again shortly.");
+        setTopError(t("errors.loadTopVehiclesFailed"));
       } finally {
         if (!abortState.cancelled) setTopLoading(false);
       }
@@ -184,14 +146,13 @@ export default function SupplierEarningsClient() {
     return () => {
       abortState.cancelled = true;
     };
-  }, [accessToken, sessionStatus]);
+  }, [accessToken, sessionStatus, t]);
 
-  // ── Fetch: chart (re-fetches when the year selector changes) ───────────────
   useEffect(() => {
     if (sessionStatus === "loading") return;
     if (!accessToken) {
       setChartLoading(false);
-      setChartError("You must be signed in to view earnings.");
+      setChartError(t("errors.notSignedIn"));
       return;
     }
 
@@ -206,7 +167,7 @@ export default function SupplierEarningsClient() {
       } catch (err) {
         if (abortState.cancelled) return;
         logger.error("Failed to load supplier earnings chart", err);
-        setChartError("Could not load the monthly chart. Please try again shortly.");
+        setChartError(t("errors.loadChartFailed"));
       } finally {
         if (!abortState.cancelled) setChartLoading(false);
       }
@@ -215,46 +176,42 @@ export default function SupplierEarningsClient() {
     return () => {
       abortState.cancelled = true;
     };
-  }, [accessToken, sessionStatus, year]);
+  }, [accessToken, sessionStatus, year, t]);
 
-  // ── Derived: stat card items ───────────────────────────────────────────────
   const earningsStatsItems = useMemo<readonly StatItem[]>(
     () => [
       {
-        label: "Total Earnings",
+        label: t("stats.totalEarnings"),
         value: stats ? formatCurrency(safeNum(stats.totalEarnings)) : "—",
-        subtitle: "Lifetime, completed bookings",
+        subtitle: t("stats.totalEarningsSubtitle"),
         icon: <AttachMoneyIcon fontSize="medium" />,
         color: "success",
       },
       {
-        label: "This Month",
+        label: t("stats.thisMonth"),
         value: stats ? formatCurrency(safeNum(stats.thisMonthRevenue)) : "—",
-        subtitle: "Revenue this calendar month",
+        subtitle: t("stats.thisMonthSubtitle"),
         icon: <CalendarMonthIcon fontSize="medium" />,
         color: "primary",
       },
       {
-        label: "Last Month",
+        label: t("stats.lastMonth"),
         value: stats ? formatCurrency(safeNum(stats.lastMonthRevenue)) : "—",
-        subtitle: "Revenue previous calendar month",
+        subtitle: t("stats.lastMonthSubtitle"),
         icon: <HistoryIcon fontSize="medium" />,
         color: "info",
       },
       {
-        label: "Completed Bookings",
+        label: t("stats.completedBookings"),
         value: stats ? formatCount(safeNum(stats.completedBookingsCount)) : "—",
-        subtitle: "Lifetime, completed only",
+        subtitle: t("stats.completedBookingsSubtitle"),
         icon: <EventAvailableIcon fontSize="medium" />,
         color: "warning",
       },
     ],
-    [stats]
+    [stats, t]
   );
 
-  // ── Derived: does the chart contain any non-zero revenue? ──────────────────
-  // Used to swap between the real BarChart and an empty-state hint, so
-  // suppliers who haven't completed any bookings yet don't see a flat axis.
   const hasChartData = useMemo(() => Boolean(chart && chart.some(p => safeNum(p.revenue) > 0)), [chart]);
 
   const handleYearChange = useCallback((next: number) => {
@@ -263,18 +220,15 @@ export default function SupplierEarningsClient() {
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: "background.default", fontFamily: "inherit" }}>
-      {/* ── Page header ───────────────────────────────────────────────── */}
       <Box sx={{ mb: 3 }}>
         <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: "-0.4px" }}>
-          Earnings Dashboard
+          {t("heading")}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          Track your revenue, monthly trend, and top performing vehicles. Figures are scoped to your account and
-          aggregated from completed bookings only.
+          {t("subtitle")}
         </Typography>
       </Box>
 
-      {/* ── Stat cards row ───────────────────────────────────────────── */}
       {statsError && (
         <Alert severity="error" sx={{ mb: 2 }} variant="outlined">
           {statsError}
@@ -282,9 +236,7 @@ export default function SupplierEarningsClient() {
       )}
       <VehicleStats items={earningsStatsItems} loading={statsLoading} sx={{ mb: 3 }} />
 
-      {/* ── Chart + Top vehicles row ─────────────────────────────────── */}
       <Grid container spacing={3}>
-        {/* Monthly revenue chart */}
         <Grid size={{ xs: 12, lg: 7 }}>
           <Card
             elevation={0}
@@ -308,7 +260,7 @@ export default function SupplierEarningsClient() {
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
                   <BarChartIcon sx={{ color: "primary.main" }} />
                   <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                    Monthly Revenue
+                    {t("chart.monthlyRevenue")}
                   </Typography>
                 </Box>
                 <Select
@@ -317,7 +269,7 @@ export default function SupplierEarningsClient() {
                   onChange={e => {
                     handleYearChange(e.target.value);
                   }}
-                  inputProps={{ "aria-label": "Year selector" }}
+                  inputProps={{ "aria-label": t("chart.yearSelectorAriaLabel") }}
                   sx={{
                     minWidth: 96,
                     "& .MuiSelect-select": { fontWeight: 600, py: 0.75 },
@@ -339,8 +291,6 @@ export default function SupplierEarningsClient() {
               ) : chartLoading ? (
                 <Skeleton variant="rectangular" width="100%" height={280} sx={{ borderRadius: 2 }} />
               ) : !hasChartData ? (
-                // Empty-state — same dashed frame the scaffold used so the
-                // page doesn't reflow once the supplier has revenue.
                 <Box
                   sx={{
                     width: "100%",
@@ -358,10 +308,10 @@ export default function SupplierEarningsClient() {
                 >
                   <BarChartIcon sx={{ fontSize: 40, color: "text.disabled" }} />
                   <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
-                    No revenue recorded for {year} yet.
+                    {t("chart.noRevenueRecorded", { year })}
                   </Typography>
                   <Typography variant="caption" color="text.disabled">
-                    Completed bookings will appear here once your customers return their vehicles.
+                    {t("chart.completedBookingsWillAppear")}
                   </Typography>
                 </Box>
               ) : (
@@ -391,11 +341,11 @@ export default function SupplierEarningsClient() {
                             background: theme.palette.background.paper,
                             boxShadow: theme.shadows[3],
                           }}
-                          formatter={(value: unknown) => [formatCurrency(Number(value)), "Revenue"]}
+                          formatter={(value: unknown) => [formatCurrency(Number(value)), t("chart.revenue")]}
                         />
                         <Bar
                           dataKey="revenue"
-                          name="Revenue"
+                          name={t("chart.revenueBarName")}
                           fill={theme.palette.primary.main}
                           radius={[8, 8, 0, 0]}
                           maxBarSize={42}
@@ -409,7 +359,6 @@ export default function SupplierEarningsClient() {
           </Card>
         </Grid>
 
-        {/* Top vehicles list */}
         <Grid size={{ xs: 12, lg: 5 }}>
           <Card
             elevation={0}
@@ -433,11 +382,11 @@ export default function SupplierEarningsClient() {
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
                   <EmojiEventsIcon sx={{ color: "warning.main" }} />
                   <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                    Top Performing Vehicles
+                    {t("topVehicles.heading")}
                   </Typography>
                 </Box>
                 <Chip
-                  label="Top 5"
+                  label={t("topVehicles.top5")}
                   size="small"
                   sx={{
                     fontWeight: 700,
@@ -453,11 +402,11 @@ export default function SupplierEarningsClient() {
                   {topError}
                 </Alert>
               ) : topLoading ? (
-                <TopVehiclesSkeleton />
+                <TopVehiclesSkeleton t={t} />
               ) : topVehicles && topVehicles.length > 0 ? (
                 <Stack divider={<Divider flexItem />} spacing={0}>
                   {topVehicles.map((v, idx) => (
-                    <TopVehicleRow key={v.vehicleId} vehicle={v} rank={idx + 1} />
+                    <TopVehicleRow key={v.vehicleId} vehicle={v} rank={idx + 1} t={t} />
                   ))}
                 </Stack>
               ) : (
@@ -474,10 +423,10 @@ export default function SupplierEarningsClient() {
                 >
                   <EmojiEventsIcon sx={{ fontSize: 40, color: "text.disabled" }} />
                   <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
-                    No completed bookings yet.
+                    {t("topVehicles.noCompletedBookings")}
                   </Typography>
                   <Typography variant="caption" color="text.disabled" sx={{ maxWidth: 280 }}>
-                    Once your vehicles start completing rentals, the top performers will rank here.
+                    {t("topVehicles.topPerformersWillAppear")}
                   </Typography>
                 </Box>
               )}
@@ -489,15 +438,17 @@ export default function SupplierEarningsClient() {
   );
 }
 
-// ── Sub-components ───────────────────────────────────────────────────────────
-
-/**
- * One row in the Top Vehicles leaderboard. Kept inline since it's only
- * used here and the layout is highly specific to this card.
- */
-function TopVehicleRow({ vehicle, rank }: { readonly vehicle: SupplierTopVehicle; readonly rank: number }) {
+function TopVehicleRow({
+  vehicle,
+  rank,
+  t,
+}: {
+  readonly vehicle: SupplierTopVehicle;
+  readonly rank: number;
+  readonly t: ReturnType<typeof useTranslations<"dashboard.supplierEarnings">>;
+}) {
   const theme = useTheme();
-  const name = [vehicle.make, vehicle.model].filter(Boolean).join(" ").trim() || "Unnamed vehicle";
+  const name = [vehicle.make, vehicle.model].filter(Boolean).join(" ").trim() || t("topVehicles.unnamedVehicle");
   const hasImage = vehicle.imageUrl && vehicle.imageUrl.trim().length > 0;
 
   return (
@@ -551,7 +502,8 @@ function TopVehicleRow({ vehicle, rank }: { readonly vehicle: SupplierTopVehicle
           {name}
         </Typography>
         <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-          {formatCount(vehicle.completedBookingsCount)} {vehicle.completedBookingsCount === 1 ? "booking" : "bookings"}
+          {formatCount(vehicle.completedBookingsCount)}{" "}
+          {vehicle.completedBookingsCount === 1 ? t("topVehicles.booking") : t("topVehicles.bookings")}
         </Typography>
       </Box>
 
@@ -560,18 +512,18 @@ function TopVehicleRow({ vehicle, rank }: { readonly vehicle: SupplierTopVehicle
           {formatCurrency(vehicle.totalEarnings)}
         </Typography>
         <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600 }}>
-          earnings
+          {t("topVehicles.earnings")}
         </Typography>
       </Box>
     </Box>
   );
 }
 
-/**
- * Loading state for the top vehicles list. Renders five skeleton rows so
- * the card height matches the loaded state (no layout shift).
- */
-function TopVehiclesSkeleton() {
+function TopVehiclesSkeleton({
+  t,
+}: {
+  readonly t: ReturnType<typeof useTranslations<"dashboard.supplierEarnings">>;
+}) {
   const theme = useTheme();
   const slots = [0, 1, 2, 3, 4];
   return (
@@ -598,7 +550,7 @@ function TopVehiclesSkeleton() {
           <Box sx={{ textAlign: "right", flexShrink: 0 }}>
             <Skeleton variant="text" width={72} sx={{ fontSize: "0.95rem", lineHeight: 1.2 }} />
             <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600 }}>
-              earnings
+              {t("topVehicles.earnings")}
             </Typography>
           </Box>
         </Box>

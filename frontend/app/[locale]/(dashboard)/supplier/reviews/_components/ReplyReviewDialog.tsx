@@ -1,18 +1,5 @@
 "use client";
 
-/**
- * Reply / Edit-Reply modal for the supplier reviews page.
- *
- * Used in two modes (driven by the caller via `review.hasReply`):
- *   - **Reply** when there is no existing supplier reply
- *   - **Edit Reply** when one already exists (overwrites server-side)
- *
- * The backend has a single endpoint for both operations
- * (`PUT /api/supplier/reviews/{reviewId}/reply`) - calling it again is
- * the edit operation. This matches the controller doc which describes
- * the call as idempotent "save" semantics.
- */
-
 import { useState } from "react";
 import {
   Alert,
@@ -34,6 +21,7 @@ import {
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import ChatBubbleOutlinedRoundedIcon from "@mui/icons-material/ChatBubbleOutlineRounded";
 import PersonOutlinedRoundedIcon from "@mui/icons-material/PersonOutlineRounded";
+import { useTranslations } from "next-intl";
 import RatingStars from "./RatingStars";
 import type { SupplierReviewListItem } from "@/api-clients/supplier-reviews/supplier-reviews";
 
@@ -75,15 +63,10 @@ interface ReplyReviewDialogInnerProps {
   readonly onSubmit: (reviewId: string, reply: string) => Promise<void>;
 }
 
-function computeError(touched: boolean, empty: boolean, tooLong: boolean): string | null {
-  if (!touched) return null;
-  if (empty) return "Reply text is required.";
-  if (tooLong) return `Reply must not exceed ${MAX_REPLY_LENGTH.toString()} characters.`;
-  return null;
-}
-
 function ReplyReviewDialogInner({ open, review, submitting, onClose, onSubmit }: ReplyReviewDialogInnerProps) {
   const theme = useTheme();
+  const t = useTranslations("dashboard.supplierReviews");
+  const tc = useTranslations("common");
   const [reply, setReply] = useState(review.supplierReply ?? "");
   const [touched, setTouched] = useState(false);
 
@@ -91,7 +74,13 @@ function ReplyReviewDialogInner({ open, review, submitting, onClose, onSubmit }:
   const trimmed = reply.trim();
   const tooLong = reply.length > MAX_REPLY_LENGTH;
   const empty = trimmed.length === 0;
-  const error = computeError(touched, empty, tooLong);
+
+  let error: string | null = null;
+  if (touched) {
+    if (empty) error = t("replyDialog.validation.required");
+    else if (tooLong) error = t("replyDialog.validation.maxLength", { max: MAX_REPLY_LENGTH });
+  }
+
   const canSubmit = !submitting && !empty && !tooLong;
 
   const handleSubmit = async () => {
@@ -100,11 +89,11 @@ function ReplyReviewDialogInner({ open, review, submitting, onClose, onSubmit }:
     await onSubmit(review.reviewId, trimmed);
   };
 
-  let submitLabel: React.ReactNode = "Submit reply";
+  let submitLabel: React.ReactNode = t("replyDialog.submitReply");
   if (submitting) {
     submitLabel = <CircularProgress size={20} color="inherit" />;
   } else if (isEdit) {
-    submitLabel = "Save changes";
+    submitLabel = t("replyDialog.saveChanges");
   }
 
   return (
@@ -129,7 +118,7 @@ function ReplyReviewDialogInner({ open, review, submitting, onClose, onSubmit }:
       >
         <Stack direction="row" spacing={1.25} sx={{ alignItems: "center" }}>
           <ChatBubbleOutlinedRoundedIcon color="primary" />
-          <span>{isEdit ? "Edit your reply" : "Reply to review"}</span>
+          <span>{isEdit ? t("replyDialog.editTitle") : t("replyDialog.replyTitle")}</span>
         </Stack>
         <IconButton size="small" onClick={onClose} disabled={submitting} aria-label="close" sx={{ borderRadius: 2 }}>
           <CloseRoundedIcon fontSize="small" />
@@ -164,7 +153,7 @@ function ReplyReviewDialogInner({ open, review, submitting, onClose, onSubmit }:
               </Avatar>
               <Box>
                 <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                  {review.customerName || "Customer"}
+                  {review.customerName || t("replyDialog.customerDefault")}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   {formatReviewDate(review.createdAt)}
@@ -175,7 +164,7 @@ function ReplyReviewDialogInner({ open, review, submitting, onClose, onSubmit }:
           </Stack>
 
           <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: "block", mb: 0.5 }}>
-            Vehicle: {review.vehicleMake} {review.vehicleModel}
+            {t("replyDialog.vehicleLabel")}: {review.vehicleMake} {review.vehicleModel}
             {review.vehicleYear ? ` · ${String(review.vehicleYear)}` : ""}
           </Typography>
 
@@ -187,13 +176,13 @@ function ReplyReviewDialogInner({ open, review, submitting, onClose, onSubmit }:
               fontStyle: review.comment ? "normal" : "italic",
             }}
           >
-            {review.comment?.trim() || "Customer didn't leave a comment."}
+            {review.comment?.trim() || t("replyDialog.noComment")}
           </Typography>
         </Box>
 
         {isEdit && (
           <Alert severity="info" variant="outlined" sx={{ borderRadius: 2, mb: 2 }}>
-            You already replied to this review. Saving will overwrite your previous reply.
+            {t("replyDialog.editAlert")}
           </Alert>
         )}
 
@@ -202,8 +191,8 @@ function ReplyReviewDialogInner({ open, review, submitting, onClose, onSubmit }:
           multiline
           minRows={4}
           maxRows={10}
-          label="Your reply"
-          placeholder="Thank the customer, address their concerns, or share more context…"
+          label={t("replyDialog.yourReply")}
+          placeholder={t("replyDialog.replyPlaceholder")}
           value={reply}
           onChange={e => {
             setReply(e.target.value);
@@ -213,7 +202,7 @@ function ReplyReviewDialogInner({ open, review, submitting, onClose, onSubmit }:
           }}
           disabled={submitting}
           error={Boolean(error)}
-          helperText={error ?? `${reply.length.toString()} / ${MAX_REPLY_LENGTH.toString()} characters`}
+          helperText={error ?? t("replyDialog.charactersCount", { current: reply.length.toString(), max: MAX_REPLY_LENGTH.toString() })}
           sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "background.paper" } }}
         />
       </DialogContent>
@@ -225,7 +214,7 @@ function ReplyReviewDialogInner({ open, review, submitting, onClose, onSubmit }:
           disabled={submitting}
           sx={{ borderRadius: 2, fontWeight: 600, textTransform: "none", flex: { xs: 1, sm: "none" } }}
         >
-          Cancel
+          {tc("cancel")}
         </Button>
         <Button
           onClick={() => {

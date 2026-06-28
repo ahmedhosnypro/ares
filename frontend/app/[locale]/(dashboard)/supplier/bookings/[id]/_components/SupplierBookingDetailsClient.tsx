@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Box,
   Typography,
@@ -126,6 +127,7 @@ export default function SupplierBookingDetailsClient({ bookingId }: { readonly b
   const router = useRouter();
   const theme = useTheme();
   const { data: session } = useSession();
+  const t = useTranslations("dashboard.supplierBookingDetail");
 
   const [booking, setBooking] = useState<SupplierBookingDetailsDto | null>(null);
   const [loading, setLoading] = useState(true);
@@ -143,25 +145,25 @@ export default function SupplierBookingDetailsClient({ bookingId }: { readonly b
         logger.error("Failed to load supplier booking details", e);
         if (e instanceof ApiError) {
           if (e.status === 404) {
-            setError("Booking not found, or you don't have permission to view it.");
+            setError(t("errors.notFoundOrDenied"));
           } else if (e.status === 401) {
-            setError("Your session has expired. Please sign in again.");
+            setError(t("errors.sessionExpired"));
           } else if (e.status === 403) {
-            setError("You don't have permission to view this booking.");
+            setError(t("errors.forbidden"));
           } else {
-            setError(`Failed to load booking details (${String(e.status)}).`);
+            setError(t("errors.loadFailedWithStatus", { status: String(e.status) }));
           }
         } else if (e instanceof Error) {
           setError(e.message);
         } else {
-          setError("Failed to load booking details.");
+          setError(t("errors.loadFailed"));
         }
       } finally {
         setLoading(false);
       }
     };
     void run();
-  }, [bookingId, session?.accessToken]);
+  }, [bookingId, session?.accessToken, t]);
 
   if (loading) {
     return (
@@ -174,7 +176,7 @@ export default function SupplierBookingDetailsClient({ bookingId }: { readonly b
   if (error || !booking) {
     return (
       <Box sx={{ p: 3, maxWidth: 900, mx: "auto" }}>
-        <Alert severity="error">{error ?? "Booking not found."}</Alert>
+        <Alert severity="error">{error ?? t("errors.notFound")}</Alert>
         <Button
           sx={{ mt: 2 }}
           variant="outlined"
@@ -183,7 +185,7 @@ export default function SupplierBookingDetailsClient({ bookingId }: { readonly b
             router.push("/supplier/bookings");
           }}
         >
-          Back to Bookings
+          {t("backToBookings")}
         </Button>
       </Box>
     );
@@ -205,7 +207,7 @@ export default function SupplierBookingDetailsClient({ bookingId }: { readonly b
         }}
       >
         <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-          <Tooltip title="Back to bookings">
+          <Tooltip title={t("backToBookingsTooltip")}>
             <IconButton
               onClick={() => {
                 router.push("/supplier/bookings");
@@ -217,17 +219,17 @@ export default function SupplierBookingDetailsClient({ bookingId }: { readonly b
           </Tooltip>
           <Box>
             <Typography variant="h4" sx={{ fontWeight: 800 }}>
-              Booking #{shortRef}
+              {t("header.title", { ref: shortRef })}
             </Typography>
             <Stack direction="row" spacing={1} sx={{ alignItems: "center", mt: 0.5 }}>
               <Chip
                 size="small"
-                label={booking.status ?? "Draft"}
+                label={booking.status ?? t("header.statusDraft")}
                 color={statusColorKey}
                 sx={{ fontWeight: 700, textTransform: "capitalize" }}
               />
               <Typography variant="body2" color="text.secondary">
-                Created {formatDateLong(booking.createdAt)}
+                {t("header.created", { date: formatDateLong(booking.createdAt) })}
               </Typography>
             </Stack>
           </Box>
@@ -243,14 +245,14 @@ export default function SupplierBookingDetailsClient({ bookingId }: { readonly b
         }}
       >
         {/* Customer */}
-        <SectionCard icon={<PersonIcon />} title="Customer Information">
-          <FieldRow label="Name" value={booking.customer?.name ?? "—"} />
-          <FieldRow label="Email" value={booking.customer?.email ?? "—"} />
-          <FieldRow label="Phone" value={booking.customer?.phone ?? "—"} />
+        <SectionCard icon={<PersonIcon />} title={t("customerInfo.title")}>
+          <FieldRow label={t("customerInfo.name")} value={booking.customer?.name ?? "—"} />
+          <FieldRow label={t("customerInfo.email")} value={booking.customer?.email ?? "—"} />
+          <FieldRow label={t("customerInfo.phone")} value={booking.customer?.phone ?? "—"} />
         </SectionCard>
 
         {/* Vehicle */}
-        <SectionCard icon={<CarIcon />} title="Vehicle Information">
+        <SectionCard icon={<CarIcon />} title={t("vehicleInfo.title")}>
           <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
             <Avatar
               variant="rounded"
@@ -269,20 +271,20 @@ export default function SupplierBookingDetailsClient({ bookingId }: { readonly b
                 {booking.vehicle?.make} {booking.vehicle?.model} {booking.vehicle?.year}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Plate: {booking.vehicle?.licensePlate ?? "—"}
+                {t("vehicleInfo.plate", { plate: booking.vehicle?.licensePlate ?? "—" })}
               </Typography>
             </Box>
           </Stack>
         </SectionCard>
 
         {/* Booking */}
-        <SectionCard icon={<EventIcon />} title="Booking Information">
-          <FieldRow label="Pickup Date" value={formatDateLong(booking.pickupDate)} />
-          <FieldRow label="Return Date" value={formatDateLong(booking.returnDate)} />
-          <FieldRow label="Total Days" value={booking.totalDays != null ? `${String(booking.totalDays)} days` : "—"} />
+        <SectionCard icon={<EventIcon />} title={t("bookingInfo.title")}>
+          <FieldRow label={t("bookingInfo.pickupDate")} value={formatDateLong(booking.pickupDate)} />
+          <FieldRow label={t("bookingInfo.returnDate")} value={formatDateLong(booking.returnDate)} />
+          <FieldRow label={t("bookingInfo.totalDays")} value={booking.totalDays != null ? t("bookingInfo.daysUnit", { count: booking.totalDays }) : "—"} />
           <Divider />
           <FieldRow
-            label="Pickup Location"
+            label={t("bookingInfo.pickupLocation")}
             value={
               <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", justifyContent: "flex-end" }}>
                 <PlaceIcon sx={{ fontSize: 14, color: "text.secondary" }} />
@@ -291,7 +293,7 @@ export default function SupplierBookingDetailsClient({ bookingId }: { readonly b
             }
           />
           <FieldRow
-            label="Dropoff Location"
+            label={t("bookingInfo.dropoffLocation")}
             value={
               <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", justifyContent: "flex-end" }}>
                 <PlaceIcon sx={{ fontSize: 14, color: "text.secondary" }} />
@@ -302,9 +304,9 @@ export default function SupplierBookingDetailsClient({ bookingId }: { readonly b
         </SectionCard>
 
         {/* Payment */}
-        <SectionCard icon={<CreditCardIcon />} title="Payment Information">
+        <SectionCard icon={<CreditCardIcon />} title={t("paymentInfo.title")}>
           <FieldRow
-            label="Total Amount"
+            label={t("paymentInfo.totalAmount")}
             value={
               <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", justifyContent: "flex-end" }}>
                 <MoneyIcon sx={{ fontSize: 16, color: "success.main" }} />
@@ -316,11 +318,11 @@ export default function SupplierBookingDetailsClient({ bookingId }: { readonly b
           />
           <Divider />
           <FieldRow
-            label="Status"
+            label={t("paymentInfo.status")}
             value={
               <Chip
                 size="small"
-                label={booking.payment?.latestKnownStatus ?? "Pending"}
+                label={booking.payment?.latestKnownStatus ?? t("paymentInfo.pendingStatus")}
                 color={
                   booking.payment?.latestKnownStatus?.toLowerCase() === "captured" ||
                   booking.payment?.latestKnownStatus?.toLowerCase() === "paid"
@@ -331,8 +333,8 @@ export default function SupplierBookingDetailsClient({ bookingId }: { readonly b
               />
             }
           />
-          <FieldRow label="Method" value={booking.payment?.paymentMethod ?? "—"} />
-          <FieldRow label="Processed At" value={formatDateLong(booking.payment?.processedTimestamp)} />
+          <FieldRow label={t("paymentInfo.method")} value={booking.payment?.paymentMethod ?? "—"} />
+          <FieldRow label={t("paymentInfo.processedAt")} value={formatDateLong(booking.payment?.processedTimestamp)} />
         </SectionCard>
       </Box>
     </Box>

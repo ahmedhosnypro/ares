@@ -9,7 +9,6 @@ using Backend.Application.DTOs.Earnings;
 using Backend.Application.Interfaces;
 using Backend.Domain.Entities;
 using Backend.Domain.Entities.Enums;
-using Backend.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Application.Services

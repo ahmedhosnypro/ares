@@ -2,6 +2,7 @@ using Backend.Application.Interfaces;
 using Backend.Domain.Entities;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Backend.Infrastructure.Data.Interceptors;
 
 namespace Backend.Infrastructure.Data
@@ -81,14 +82,16 @@ namespace Backend.Infrastructure.Data
         IQueryable<TermsSection> IApplicationDbContext.TermsSections => TermsSections;
         IQueryable<AboutSection> IApplicationDbContext.AboutSections => AboutSections;
         IQueryable<PrivacySection> IApplicationDbContext.PrivacySections => PrivacySections;
-        IQueryable<Driver> IApplicationDbContext.Drivers => Drivers;
-        IQueryable<DriverProfile> IApplicationDbContext.DriverProfiles => DriverProfiles;
-        IQueryable<DriverWorkArea> IApplicationDbContext.DriverWorkAreas => DriverWorkAreas;
-        IQueryable<ServiceArea> IApplicationDbContext.ServiceAreas => ServiceAreas;
-        IQueryable<DriverReview> IApplicationDbContext.DriverReviews => DriverReviews;
-        IQueryable<DriverEarning> IApplicationDbContext.DriverEarnings => DriverEarnings;
-        IQueryable<DriverPayout> IApplicationDbContext.DriverPayouts => DriverPayouts;
-        IQueryable<DriverPaymentInfo> IApplicationDbContext.DriverPaymentInfo => DriverPaymentInfo;
+    IQueryable<Driver> IApplicationDbContext.Drivers => Drivers;
+    // Driver Module (Phase 1+) — additive, see DriverProfile entity.
+        DbSet<DriverProfile> IApplicationDbContext.DriverProfiles => DriverProfiles;
+        DbSet<DriverWorkArea> IApplicationDbContext.DriverWorkAreas => DriverWorkAreas;
+        DbSet<ServiceArea> IApplicationDbContext.ServiceAreas => ServiceAreas;
+        DbSet<DriverReview> IApplicationDbContext.DriverReviews => DriverReviews;
+        DbSet<DriverEarning> IApplicationDbContext.DriverEarnings => DriverEarnings;
+        DbSet<DriverPayout> IApplicationDbContext.DriverPayouts => DriverPayouts;
+        DbSet<DriverPayoutTransaction> IApplicationDbContext.DriverPayoutTransactions => DriverPayoutTransactions;
+        DbSet<DriverPaymentInfo> IApplicationDbContext.DriverPaymentInfo => DriverPaymentInfo;
         IQueryable<VehicleInspection> IApplicationDbContext.VehicleInspections => VehicleInspections;
         IQueryable<InspectionImage> IApplicationDbContext.InspectionImages => InspectionImages;
         IQueryable<Inspector> IApplicationDbContext.Inspectors => Inspectors;
@@ -195,6 +198,11 @@ namespace Backend.Infrastructure.Data
         public void RemoveCategoryOffer(CategoryOffer offer)
         {
             CategoryOffers.Remove(offer);
+        }
+
+        public Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
+        {
+            return Database.BeginTransactionAsync(cancellationToken);
         }
 
         protected override void OnModelCreating(ModelBuilder builder)

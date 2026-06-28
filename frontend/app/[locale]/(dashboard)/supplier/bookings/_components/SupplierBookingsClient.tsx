@@ -39,6 +39,7 @@ import {
 } from "@mui/icons-material";
 import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import {
   useSupplierBookings,
   type SupplierBookingListItemDto,
@@ -46,14 +47,26 @@ import {
 import { toImageUrl } from "@/utils/image-url";
 
 // ── CONSTANTS & HELPERS ─────────────────────────────────────────────────
-const getStatusConfig = (status?: string) => {
+type TFunction = (key: string) => string;
+
+const getStatusConfig = (status: string | undefined, t: TFunction, tc: TFunction) => {
   const s = status?.toLowerCase() ?? "";
   if (s === "active" || s === "confirmed" || s === "pickup")
-    return { label: status ?? "Active", colorKey: "success" as const };
-  if (s === "completed") return { label: status ?? "Completed", colorKey: "info" as const };
-  if (s === "cancelled" || s === "returned") return { label: status ?? "Cancelled", colorKey: "error" as const };
-  if (s === "draft") return { label: status ?? "Draft", colorKey: "warning" as const };
-  return { label: status ?? "PaymentPending", colorKey: "warning" as const };
+    return { label: tc("active"), colorKey: "success" as const };
+  if (s === "completed") return { label: t("statusLabels.completed"), colorKey: "info" as const };
+  if (s === "cancelled" || s === "returned") return { label: t("statusLabels.cancelled"), colorKey: "error" as const };
+  if (s === "draft") return { label: t("statusLabels.draft"), colorKey: "warning" as const };
+  return { label: t("statusLabels.paymentPending"), colorKey: "warning" as const };
+};
+
+const getPaymentStatusLabel = (status: string | undefined | null, t: TFunction): string => {
+  const s = status?.toLowerCase() ?? "";
+  if (s === "pending") return t("filters.paymentStatusOptions.pending");
+  if (s === "authorized") return t("filters.paymentStatusOptions.authorized");
+  if (s === "captured" || s === "paid") return t("filters.paymentStatusOptions.captured");
+  if (s === "failed") return t("filters.paymentStatusOptions.failed");
+  if (s === "refunded") return t("filters.paymentStatusOptions.refunded");
+  return status ?? t("paymentDefault");
 };
 
 const formatCompactDate = (dateString?: string) => {
@@ -84,6 +97,8 @@ export default function SupplierBookingsClient() {
   const theme = useTheme();
   const router = useRouter();
   const { data: session } = useSession();
+  const t = useTranslations("dashboard.supplierBookings");
+  const tc = useTranslations("common");
 
   // Filters / paging
   const [search, setSearch] = useState("");
@@ -168,10 +183,10 @@ export default function SupplierBookingsClient() {
                 <SearchIcon sx={{ fontSize: 32, color: "text.disabled" }} />
               </Avatar>
               <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 700 }}>
-                No bookings found
+                {t("empty.title")}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Try adjusting your filters.
+                {t("empty.description")}
               </Typography>
             </Box>
           </TableCell>
@@ -180,10 +195,10 @@ export default function SupplierBookingsClient() {
     }
 
     return bookings.map((booking: SupplierBookingListItemDto) => {
-      const statusConfig = getStatusConfig(booking.bookingStatus);
+      const statusConfig = getStatusConfig(booking.bookingStatus, t, tc);
       const statusColor = theme.palette[statusConfig.colorKey].main;
       const customerLabel =
-        booking.customerName && booking.customerName.trim().length > 0 ? booking.customerName : "Unknown Customer";
+        booking.customerName && booking.customerName.trim().length > 0 ? booking.customerName : t("customerDefault");
 
       return (
         <TableRow
@@ -269,7 +284,7 @@ export default function SupplierBookingsClient() {
                 }}
               />
               <Typography variant="body2" sx={{ fontSize: 13, fontWeight: 500 }}>
-                {booking.paymentStatus ?? "Pending"}
+                {getPaymentStatusLabel(booking.paymentStatus, t)}
               </Typography>
             </Stack>
           </TableCell>
@@ -322,9 +337,9 @@ export default function SupplierBookingsClient() {
       >
         <Box>
           <Typography variant="h4" sx={{ fontSize: { xs: "1.6rem", sm: "2rem" }, fontWeight: 800 }}>
-            Bookings
+            {t("title")}
           </Typography>
-          <Typography color="text.secondary">Monitor and manage all bookings for your vehicles</Typography>
+          <Typography color="text.secondary">{t("subtitle")}</Typography>
         </Box>
       </Stack>
 
@@ -343,7 +358,7 @@ export default function SupplierBookingsClient() {
           }}
         >
           <TextField
-            placeholder="Search by ID, customer, or vehicle…"
+            placeholder={t("search.placeholder")}
             value={search}
             onChange={handleSearchChange}
             size="small"
@@ -359,42 +374,42 @@ export default function SupplierBookingsClient() {
             }}
           />
           <FormControl size="small" sx={{ minWidth: 160 }}>
-            <InputLabel>Booking Status</InputLabel>
+            <InputLabel>{t("filters.bookingStatus")}</InputLabel>
             <Select
               value={statusFilter}
-              label="Booking Status"
+              label={t("filters.bookingStatus")}
               onChange={e => {
                 setStatusFilter(e.target.value);
                 setPage(1);
               }}
               sx={{ borderRadius: 2 }}
             >
-              <MenuItem value="All">All Statuses</MenuItem>
-              <MenuItem value="Draft">Draft</MenuItem>
-              <MenuItem value="PaymentPending">Payment Pending</MenuItem>
-              <MenuItem value="Confirmed">Confirmed</MenuItem>
-              <MenuItem value="Active">Active</MenuItem>
-              <MenuItem value="Completed">Completed</MenuItem>
-              <MenuItem value="Cancelled">Cancelled</MenuItem>
+              <MenuItem value="All">{t("filters.allStatuses")}</MenuItem>
+              <MenuItem value="Draft">{t("filters.bookingStatusOptions.draft")}</MenuItem>
+              <MenuItem value="PaymentPending">{t("filters.bookingStatusOptions.paymentPending")}</MenuItem>
+              <MenuItem value="Confirmed">{t("filters.bookingStatusOptions.confirmed")}</MenuItem>
+              <MenuItem value="Active">{t("filters.bookingStatusOptions.active")}</MenuItem>
+              <MenuItem value="Completed">{t("filters.bookingStatusOptions.completed")}</MenuItem>
+              <MenuItem value="Cancelled">{t("filters.bookingStatusOptions.cancelled")}</MenuItem>
             </Select>
           </FormControl>
           <FormControl size="small" sx={{ minWidth: 160 }}>
-            <InputLabel>Payment Status</InputLabel>
+            <InputLabel>{t("filters.paymentStatus")}</InputLabel>
             <Select
               value={paymentFilter}
-              label="Payment Status"
+              label={t("filters.paymentStatus")}
               onChange={e => {
                 setPaymentFilter(e.target.value);
                 setPage(1);
               }}
               sx={{ borderRadius: 2 }}
             >
-              <MenuItem value="All">All Statuses</MenuItem>
-              <MenuItem value="Pending">Pending</MenuItem>
-              <MenuItem value="Authorized">Authorized</MenuItem>
-              <MenuItem value="Captured">Captured</MenuItem>
-              <MenuItem value="Failed">Failed</MenuItem>
-              <MenuItem value="Refunded">Refunded</MenuItem>
+              <MenuItem value="All">{t("filters.allStatuses")}</MenuItem>
+              <MenuItem value="Pending">{t("filters.paymentStatusOptions.pending")}</MenuItem>
+              <MenuItem value="Authorized">{t("filters.paymentStatusOptions.authorized")}</MenuItem>
+              <MenuItem value="Captured">{t("filters.paymentStatusOptions.captured")}</MenuItem>
+              <MenuItem value="Failed">{t("filters.paymentStatusOptions.failed")}</MenuItem>
+              <MenuItem value="Refunded">{t("filters.paymentStatusOptions.refunded")}</MenuItem>
             </Select>
           </FormControl>
         </Stack>
@@ -418,15 +433,15 @@ export default function SupplierBookingsClient() {
                   },
                 }}
               >
-                <TableCell sx={{ pl: 3 }}>Customer</TableCell>
-                <TableCell>Vehicle</TableCell>
-                <TableCell>Period</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Payment</TableCell>
-                <TableCell>Total</TableCell>
-                <TableCell>Created</TableCell>
+                <TableCell sx={{ pl: 3 }}>{t("table.customer")}</TableCell>
+                <TableCell>{t("table.vehicle")}</TableCell>
+                <TableCell>{t("table.period")}</TableCell>
+                <TableCell>{tc("status")}</TableCell>
+                <TableCell>{t("table.payment")}</TableCell>
+                <TableCell>{t("table.total")}</TableCell>
+                <TableCell>{t("table.created")}</TableCell>
                 <TableCell align="right" sx={{ pr: 3 }}>
-                  Actions
+                  {tc("actions")}
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -438,7 +453,7 @@ export default function SupplierBookingsClient() {
                 <TableRow>
                   <TableCell colSpan={4}>
                     <Typography variant="caption" color="text.secondary">
-                      Showing page <strong>{page}</strong> of {totalPages || 1} ({totalCount} total)
+                      {t("footer.showingPage", { page, totalPages: totalPages || 1, totalCount })}
                     </Typography>
                   </TableCell>
                   <TableCell colSpan={4} align="right">
@@ -470,7 +485,7 @@ export default function SupplierBookingsClient() {
       >
         <MenuItem onClick={handleViewDetails} sx={{ fontSize: 14, gap: 1.5 }}>
           <ViewIcon fontSize="small" />
-          View Details
+          {t("actions.viewDetails")}
         </MenuItem>
       </Menu>
     </Box>

@@ -58,6 +58,7 @@ import {
 import Image from "next/image";
 import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 
 import {
   deleteSupplierVehicle,
@@ -72,19 +73,6 @@ import { logger } from "@/utils/logger";
 import { AvailabilityChip, StatusChip } from "./_components/StatusChips";
 
 // ── Filter dropdown options — kept in sync with the backend status strings ────
-const STATUS_OPTIONS = [
-  { label: "All statuses", value: "" },
-  { label: "Pending", value: "Pending" },
-  { label: "Approved", value: "Approved" },
-  { label: "Rejected", value: "Rejected" },
-];
-
-const AVAILABILITY_OPTIONS = [
-  { label: "All availability", value: "" },
-  { label: "Available", value: "Available" },
-  { label: "Unavailable", value: "Unavailable" },
-];
-
 const PAGE_SIZE = 10;
 
 // Lightweight debounce so search keystrokes don't spam the backend.
@@ -110,9 +98,30 @@ interface SnackbarState {
 export default function SupplierVehiclesClient() {
   const theme = useTheme();
   const router = useRouter();
+  const t = useTranslations("dashboard.supplierVehicles");
+  const tc = useTranslations("common");
   const { data: session, status: sessionStatus } = useSession();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isRestricted = session?.user.status?.toLowerCase() === "restricted";
+
+  const STATUS_OPTIONS = useMemo(
+    () => [
+      { label: t("filters.allStatuses"), value: "" },
+      { label: t("chips.pending"), value: "Pending" },
+      { label: t("chips.approved"), value: "Approved" },
+      { label: t("chips.rejected"), value: "Rejected" },
+    ],
+    [t]
+  );
+
+  const AVAILABILITY_OPTIONS = useMemo(
+    () => [
+      { label: t("filters.allAvailability"), value: "" },
+      { label: t("chips.available"), value: "Available" },
+      { label: t("chips.unavailable"), value: "Unavailable" },
+    ],
+    [t]
+  );
 
   // ── Filter state ──────────────────────────────────────────────────────────
   const [searchInput, setSearchInput] = useState("");
@@ -150,7 +159,7 @@ export default function SupplierVehiclesClient() {
     const accessToken = session?.accessToken;
     if (!accessToken) {
       setLoading(false);
-      setError("You must be signed in to view your vehicles.");
+      setError(t("errors.notSignedIn"));
       return;
     }
 
@@ -167,12 +176,12 @@ export default function SupplierVehiclesClient() {
       setData(result);
     } catch (err) {
       logger.error("Failed to load supplier vehicles", err);
-      setError("Could not load your vehicles. Please try again shortly.");
+      setError(t("errors.loadFailed"));
       setData(null);
     } finally {
       setLoading(false);
     }
-  }, [session?.accessToken, sessionStatus, debouncedSearch, statusFilter, availabilityFilter, page]);
+  }, [session?.accessToken, sessionStatus, debouncedSearch, statusFilter, availabilityFilter, page, t]);
 
   useEffect(() => {
     void fetchVehicles();
@@ -202,18 +211,18 @@ export default function SupplierVehiclesClient() {
             }
           : prev
       );
-      showToast("Vehicle deleted successfully.", "success");
+      showToast(t("toasts.vehicleDeleted"), "success");
       setDeleteTarget(null);
       // Refresh so totals/pages re-align with backend truth.
       void fetchVehicles();
     } catch (err) {
       logger.error("Failed to delete supplier vehicle", err);
-      const msg = err instanceof Error ? err.message : "Failed to delete vehicle.";
+      const msg = err instanceof Error ? err.message : t("toasts.failedToDelete");
       showToast(msg, "error");
     } finally {
       setDeleting(false);
     }
-  }, [deleteTarget, session?.accessToken, fetchVehicles, showToast]);
+  }, [deleteTarget, session?.accessToken, fetchVehicles, showToast, t]);
 
   const handleAvailabilityToggle = useCallback(
     async (row: SupplierVehicleListItem) => {
@@ -223,7 +232,7 @@ export default function SupplierVehiclesClient() {
       const currentlyAvailable = row.availabilityStatus.toLowerCase() === "available";
       const next = !currentlyAvailable;
       if (next && !isApprovedStatus(row.status)) {
-        showToast("Only approved vehicles can be made available.", "info");
+        showToast(t("toasts.onlyApprovedAvailable"), "info");
         return;
       }
 
@@ -242,10 +251,10 @@ export default function SupplierVehiclesClient() {
 
       try {
         await setSupplierVehicleAvailability(session.accessToken, row.vehicleId, next);
-        showToast(next ? "Vehicle is now available." : "Vehicle is now unavailable.", "success");
+        showToast(next ? t("toasts.vehicleNowAvailable") : t("toasts.vehicleNowUnavailable"), "success");
       } catch (err) {
         logger.error("Failed to toggle availability", err);
-        showToast("Failed to update availability.", "error");
+        showToast(t("toasts.failedToUpdateAvailability"), "error");
         // Roll back on failure.
         setData(prev =>
           prev
@@ -263,7 +272,7 @@ export default function SupplierVehiclesClient() {
         setTogglingId(null);
       }
     },
-    [session?.accessToken, showToast, isRestricted]
+    [session?.accessToken, showToast, isRestricted, t]
   );
 
   // ── Derived helpers ───────────────────────────────────────────────────────
@@ -291,10 +300,10 @@ export default function SupplierVehiclesClient() {
       >
         <Box>
           <Typography variant="h4" sx={{ fontWeight: 800, fontSize: { xs: "1.5rem", sm: "1.6rem", md: "2rem" } }}>
-            My Vehicles
+            {t("title")}
           </Typography>
           <Typography color="text.secondary" variant="body2">
-            Manage your fleet — add, edit, delete, and toggle availability.
+            {t("description")}
           </Typography>
         </Box>
 
@@ -318,7 +327,7 @@ export default function SupplierVehiclesClient() {
               "&:hover": { transform: "translateY(-2px)", boxShadow: 6 },
             }}
           >
-            Add New Vehicle
+            {t("addNewVehicle")}
           </Button>
         )}
       </Stack>
@@ -329,7 +338,7 @@ export default function SupplierVehiclesClient() {
           <TextField
             fullWidth
             size="small"
-            placeholder="Search make, model, or license plate…"
+            placeholder={t("searchPlaceholder")}
             value={searchInput}
             onChange={e => {
               setSearchInput(e.target.value);
@@ -351,7 +360,7 @@ export default function SupplierVehiclesClient() {
             select
             fullWidth
             size="small"
-            label="Status"
+            label={t("filters.status")}
             value={statusFilter}
             onChange={e => {
               setStatusFilter(e.target.value);
@@ -370,7 +379,7 @@ export default function SupplierVehiclesClient() {
             select
             fullWidth
             size="small"
-            label="Availability"
+            label={t("filters.availability")}
             value={availabilityFilter}
             onChange={e => {
               setAvailabilityFilter(e.target.value);
@@ -427,12 +436,12 @@ export default function SupplierVehiclesClient() {
                 <CarIcon sx={{ fontSize: 32, color: "text.disabled" }} />
               </Avatar>
               <Typography variant="h6" sx={{ fontWeight: 700 }} color="text.secondary">
-                {filtersActive ? "No vehicles match these filters" : "You don't have any vehicles yet"}
+                {filtersActive ? t("empty.noVehiclesMatchFilters") : t("empty.noVehiclesYet")}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                 {filtersActive
-                  ? "Try clearing filters or adjusting your search."
-                  : 'Click "Add New Vehicle" to list your first one.'}
+                  ? t("empty.tryClearingFilters")
+                  : t("empty.addFirstVehicle")}
               </Typography>
             </Paper>
           );
@@ -466,14 +475,14 @@ export default function SupplierVehiclesClient() {
                       },
                     }}
                   >
-                    <TableCell sx={{ pl: 3 }}>Vehicle</TableCell>
-                    <TableCell>Price / day</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Availability</TableCell>
-                    <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Bookings</TableCell>
-                    <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Created</TableCell>
+                    <TableCell sx={{ pl: 3 }}>{t("table.vehicle")}</TableCell>
+                    <TableCell>{t("table.pricePerDay")}</TableCell>
+                    <TableCell>{t("table.status")}</TableCell>
+                    <TableCell>{t("table.availability")}</TableCell>
+                    <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{t("table.bookings")}</TableCell>
+                    <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{t("table.created")}</TableCell>
                     <TableCell align="right" sx={{ pr: 3 }}>
-                      Actions
+                      {t("table.actions")}
                     </TableCell>
                   </TableRow>
                 </TableHead>
@@ -495,7 +504,7 @@ export default function SupplierVehiclesClient() {
                   <TableRow>
                     <TableCell colSpan={4}>
                       <Typography variant="caption" color="text.secondary">
-                        Showing <strong>{rows.length}</strong> of {totalCount} vehicles
+                        {t("table.showing")} <strong>{rows.length}</strong> {t("table.of")} {totalCount} {t("table.vehicles")}
                       </Typography>
                     </TableCell>
                     <TableCell colSpan={3} align="right">
@@ -530,16 +539,15 @@ export default function SupplierVehiclesClient() {
         maxWidth="xs"
         slotProps={{ paper: { sx: { borderRadius: 2, p: 1, mx: { xs: 2, sm: "auto" } } } }}
       >
-        <DialogTitle sx={{ fontWeight: 700 }}>Delete vehicle?</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>{t("deleteDialog.title")}</DialogTitle>
         <DialogContent>
           {deleteTarget && (
             <>
-              You&apos;re about to remove{" "}
-              <strong>
-                {deleteTarget.make} {deleteTarget.model}
-              </strong>{" "}
-              from your fleet. This will hide it from your dashboard. Existing bookings, payments, and history are
-              preserved.
+              {t.rich("deleteDialog.body", {
+                make: deleteTarget.make,
+                model: deleteTarget.model,
+                strong: (chunks) => <strong>{chunks}</strong>,
+              })}
             </>
           )}
         </DialogContent>
@@ -552,7 +560,7 @@ export default function SupplierVehiclesClient() {
             disabled={deleting}
             sx={{ borderRadius: 2, flex: { xs: 1, sm: "none" } }}
           >
-            Cancel
+            {tc("cancel")}
           </Button>
           <Button
             onClick={() => {
@@ -563,7 +571,7 @@ export default function SupplierVehiclesClient() {
             disabled={deleting}
             sx={{ borderRadius: 2, fontWeight: 700, flex: { xs: 1, sm: "none" } }}
           >
-            {deleting ? <CircularProgress size={20} color="inherit" /> : "Delete"}
+            {deleting ? <CircularProgress size={20} color="inherit" /> : tc("delete")}
           </Button>
         </DialogActions>
       </Dialog>
@@ -609,6 +617,8 @@ function VehicleTableRow({
   readonly onDelete: (v: SupplierVehicleListItem) => void;
   readonly onToggleAvailability: (v: SupplierVehicleListItem) => Promise<void>;
 }) {
+  const t = useTranslations("dashboard.supplierVehicles");
+  const tc = useTranslations("common");
   const canBeAvailable = isApprovedStatus(v.status);
   const isAvailable = v.availabilityStatus.toLowerCase() === "available";
   const isToggling = togglingId === v.vehicleId;
@@ -619,9 +629,9 @@ function VehicleTableRow({
   };
 
   const switchTooltip = (() => {
-    if (isRestricted) return "Account restricted";
-    if (!canBeAvailable) return "Only approved vehicles can be made available";
-    return isAvailable ? "Set unavailable" : "Set available";
+    if (isRestricted) return t("tooltips.accountRestricted");
+    if (!canBeAvailable) return t("tooltips.onlyApprovedAvailable");
+    return isAvailable ? t("tooltips.setUnavailable") : t("tooltips.setAvailable");
   })();
 
   return (
@@ -629,7 +639,7 @@ function VehicleTableRow({
       hover
       sx={{
         "&:last-child td": { border: 0 },
-        "&:hover": { bgcolor: t => alpha(t.palette.primary.main, 0.03) },
+        "&:hover": { bgcolor: theme => alpha(theme.palette.primary.main, 0.03) },
       }}
     >
       <TableCell sx={{ py: 1.8, pl: 3 }}>
@@ -641,7 +651,7 @@ function VehicleTableRow({
               borderRadius: 2,
               overflow: "hidden",
               flexShrink: 0,
-              bgcolor: t => alpha(t.palette.primary.main, 0.08),
+              bgcolor: theme => alpha(theme.palette.primary.main, 0.08),
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -676,7 +686,7 @@ function VehicleTableRow({
           ${v.pricePerDay.toLocaleString()}
           <Typography component="span" variant="caption" color="text.secondary" sx={{ fontWeight: 400 }}>
             {" "}
-            / day
+            {t("table.perDay")}
           </Typography>
         </Typography>
       </TableCell>
@@ -710,7 +720,7 @@ function VehicleTableRow({
           sx={{
             borderRadius: 2,
             fontWeight: 700,
-            bgcolor: t => alpha(t.palette.primary.main, 0.08),
+            bgcolor: theme => alpha(theme.palette.primary.main, 0.08),
             color: "primary.main",
           }}
         />
@@ -724,7 +734,7 @@ function VehicleTableRow({
 
       <TableCell align="right" sx={{ pr: 3 }}>
         <Stack direction="row" spacing={0.5} sx={{ justifyContent: "flex-end" }}>
-          <Tooltip title="View">
+          <Tooltip title={t("tooltips.view")}>
             <IconButton
               size="small"
               sx={{ borderRadius: 2 }}
@@ -737,7 +747,7 @@ function VehicleTableRow({
           </Tooltip>
           {!isRestricted && (
             <>
-              <Tooltip title="Edit">
+              <Tooltip title={tc("edit")}>
                 <IconButton
                   size="small"
                   sx={{ borderRadius: 2 }}
@@ -748,13 +758,13 @@ function VehicleTableRow({
                   <EditIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
-              <Tooltip title="Delete">
+              <Tooltip title={tc("delete")}>
                 <IconButton
                   size="small"
                   sx={{
                     borderRadius: 2,
                     "&:hover": {
-                      bgcolor: t => alpha(t.palette.error.main, 0.1),
+                      bgcolor: theme => alpha(theme.palette.error.main, 0.1),
                       color: "error.main",
                     },
                   }}
