@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { Box, CircularProgress, Alert, Button, Snackbar } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { format } from "date-fns";
@@ -50,6 +51,7 @@ export default function DriverDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const { data: session } = useSession();
+  const t = useTranslations("dashboardAdmin.users");
   const token = session?.accessToken;
 
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -77,11 +79,11 @@ export default function DriverDetailsPage() {
       setDetails(data);
     } catch (err) {
       logger.error("Error loading driver details", err);
-      setError("Could not load driver details.");
+      setError(t("details.loadingUser"));
     } finally {
       setLoading(false);
     }
-  }, [token, id]);
+  }, [token, id, t]);
 
   useEffect(() => {
     if (token) {
@@ -107,19 +109,36 @@ export default function DriverDetailsPage() {
         throw new Error(d.message ?? `Failed to ${action} driver`);
       }
 
+      let successMessage = "";
+      if (action === "approve") {
+        successMessage = t("details.approveSuccess");
+      } else if (action === "reject") {
+        successMessage = t("details.rejectSuccess");
+      } else {
+        successMessage = t("details.toggleStatusSuccess");
+      }
+
       setToast({
         open: true,
         severity: "success",
-        message: `Driver account successfully updated: ${action}`,
+        message: successMessage,
       });
 
       await fetchDetails();
     } catch (err) {
       logger.error(`Driver action ${action} failed`, err);
+      let errorMessage: string;
+      if (action === "approve") {
+        errorMessage = t("details.approveError");
+      } else if (action === "reject") {
+        errorMessage = t("details.rejectError");
+      } else {
+        errorMessage = t("details.toggleStatusError");
+      }
       setToast({
         open: true,
         severity: "error",
-        message: err instanceof Error ? err.message : `Failed to ${action} driver`,
+        message: err instanceof Error && err.message !== `Failed to ${action} driver` ? err.message : errorMessage,
       });
     } finally {
       setActionBusy(false);
@@ -151,7 +170,7 @@ export default function DriverDetailsPage() {
   if (error || !details) {
     return (
       <Box sx={{ maxWidth: 900, mx: "auto", p: 4 }}>
-        <Alert severity="error">{error || "Driver not found"}</Alert>
+        <Alert severity="error">{error || t("details.userNotFound")}</Alert>
         <Button
           startIcon={<ArrowBackIcon />}
           sx={{ mt: 2 }}
@@ -159,7 +178,7 @@ export default function DriverDetailsPage() {
             router.push("/admin/users?tab=drivers");
           }}
         >
-          Back to Drivers
+          {t("details.back")}
         </Button>
       </Box>
     );

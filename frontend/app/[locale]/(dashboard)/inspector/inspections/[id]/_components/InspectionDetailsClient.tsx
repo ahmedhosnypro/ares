@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from "react";
-import { useTranslations } from "next-intl";
 import {
   Box,
   Typography,
@@ -26,6 +25,7 @@ import {
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { useRouter } from "@/shared/i18n/routing";
+import { useTranslations } from "next-intl";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlineRounded";
@@ -61,8 +61,7 @@ const MIN_IMAGES = 1;
 export default function InspectionDetailsClient({ inspectionId }: Props): JSX.Element {
   const router = useRouter();
   const theme = useTheme();
-  const t = useTranslations("dashboard.inspectionDetail");
-  const tc = useTranslations("common");
+  const t = useTranslations("dashboardInspector.inspectionDetail");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [details, setDetails] = useState<InspectionDetails | null>(null);
@@ -103,12 +102,12 @@ export default function InspectionDetailsClient({ inspectionId }: Props): JSX.El
       } else if (err instanceof ApiError && err.status === 404) {
         setLoadError(t("errors.notFound"));
       } else {
-        setLoadError(t("errors.loadFailed"));
+        setLoadError(t("errors.failedToLoad"));
       }
     } finally {
       setLoading(false);
     }
-  }, [inspectionId, t]);
+  }, [inspectionId]);
 
   useEffect(() => {
     void fetchData();
@@ -131,7 +130,7 @@ export default function InspectionDetailsClient({ inspectionId }: Props): JSX.El
 
     const remainingSlots = MAX_IMAGES - totalImageCount;
     if (remainingSlots <= 0) {
-      setToast({ open: true, severity: "error", message: t("images.maxImagesError", { max: MAX_IMAGES }) });
+      setToast({ open: true, severity: "error", message: t("errors.maxImages", { max: MAX_IMAGES }) });
       event.target.value = "";
       return;
     }
@@ -160,10 +159,10 @@ export default function InspectionDetailsClient({ inspectionId }: Props): JSX.El
 
   const validate = (): boolean => {
     const errors: Record<string, string> = {};
-    if (!decision) errors.decision = t("decision.selectDecisionError");
-    if (!notes.trim()) errors.notes = t("validation.notesRequired");
-    if (odometerReading === "" || odometerReading < 0) errors.odometerReading = t("validation.odometerInvalid");
-    if (totalImageCount < MIN_IMAGES) errors.images = t("images.minImagesError", { min: MIN_IMAGES });
+    if (!decision) errors.decision = t("errors.selectDecision");
+    if (!notes.trim()) errors.notes = t("errors.provideNotes");
+    if (odometerReading === "" || odometerReading < 0) errors.odometerReading = t("errors.enterOdometer");
+    if (totalImageCount < MIN_IMAGES) errors.images = t("errors.photoRequired", { min: MIN_IMAGES });
 
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
@@ -193,11 +192,11 @@ export default function InspectionDetailsClient({ inspectionId }: Props): JSX.El
         approve: decision === "approve",
       });
 
-      setToast({ open: true, severity: "success", message: t("toast.submittedSuccessfully") });
+      setToast({ open: true, severity: "success", message: t("success.submitted") });
       void fetchData();
     } catch (err) {
       logger.error("Failed to submit inspection", err);
-      const msg = err instanceof Error ? err.message : t("toast.submissionFailed");
+      const msg = err instanceof Error ? err.message : t("errors.submitFailed");
       setToast({ open: true, severity: "error", message: msg });
     } finally {
       setSubmitting(false);
@@ -240,7 +239,7 @@ export default function InspectionDetailsClient({ inspectionId }: Props): JSX.El
                 router.back();
               }}
             >
-              {t("goBack")}
+              {t("actions.goBack")}
             </Button>
           }
         >
@@ -250,7 +249,7 @@ export default function InspectionDetailsClient({ inspectionId }: Props): JSX.El
     );
   }
 
-  if (!details) return <Box>{t("errors.notFoundShort")}</Box>;
+  if (!details) return <Box>{t("labels.notFound")}</Box>;
 
   return (
     <Box sx={{ maxWidth: 1200, mx: "auto" }}>
@@ -269,10 +268,10 @@ export default function InspectionDetailsClient({ inspectionId }: Props): JSX.El
           </IconButton>
           <Box>
             <Typography variant="h4" sx={{ fontWeight: 800 }}>
-              {t("pageTitle")}
+              {t("labels.title")}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {t("subtitle", { bookingNumber: details.bookingNumber ?? "" })}
+              {t("labels.subtitle", { bookingNumber: details.bookingNumber ?? "" })}
             </Typography>
           </Box>
         </Stack>
@@ -317,12 +316,12 @@ export default function InspectionDetailsClient({ inspectionId }: Props): JSX.El
         }}
         sx={{ "& .MuiDialog-paper": { borderRadius: 3, p: 1 } }}
       >
-        <DialogTitle sx={{ fontWeight: 800 }}>{t("dialog.title")}</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 800 }}>{t("labels.dialogTitle")}</DialogTitle>
         <DialogContent>
           <Typography variant="body1" color="text.secondary">
-            {t.rich("dialog.description", {
-              decision: decision?.toUpperCase() ?? "",
-              strong: chunks => <strong>{chunks}</strong>,
+            {t.rich("labels.dialogText", {
+              decision: decision === "approve" ? t("actions.approveVehicle") : t("actions.rejectVehicle"),
+              bold: chunks => <strong>{chunks}</strong>,
             })}
           </Typography>
         </DialogContent>
@@ -334,7 +333,7 @@ export default function InspectionDetailsClient({ inspectionId }: Props): JSX.El
             color="inherit"
             sx={{ fontWeight: 600 }}
           >
-            {tc("cancel")}
+            {t("actions.cancel")}
           </Button>
           <Button
             onClick={() => {
@@ -344,7 +343,7 @@ export default function InspectionDetailsClient({ inspectionId }: Props): JSX.El
             color="primary"
             sx={{ fontWeight: 700, borderRadius: 2, px: 3 }}
           >
-            {t("dialog.confirmAndSubmit")}
+            {t("actions.confirmSubmit")}
           </Button>
         </DialogActions>
       </Dialog>
@@ -390,7 +389,7 @@ function InfoRow({ label, value }: { readonly label: string; readonly value: str
 }
 
 function BookingInfoSection({ details }: { readonly details: InspectionDetails }) {
-  const t = useTranslations("dashboard.inspectionDetail");
+  const t = useTranslations("dashboardInspector.inspectionDetail");
 
   return (
     <Paper
@@ -405,16 +404,16 @@ function BookingInfoSection({ details }: { readonly details: InspectionDetails }
       }}
     >
       <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
-        {t("bookingInfo.title")}
+        {t("labels.detailsTitle")}
       </Typography>
       <Divider sx={{ mb: 3 }} />
       <Stack spacing={3}>
-        <InfoRow label={t("bookingInfo.bookingNumber")} value={details.bookingNumber || "—"} />
-        <InfoRow label={t("bookingInfo.vehicle")} value={details.vehicleDisplayName} />
-        <InfoRow label={t("bookingInfo.assignedTo")} value={details.inspectorFullName} />
-        <InfoRow label={t("bookingInfo.scheduledDate")} value={new Date(details.inspectionDate).toLocaleString()} />
+        <InfoRow label={t("labels.bookingNumber")} value={details.bookingNumber || "—"} />
+        <InfoRow label={t("labels.vehicle")} value={details.vehicleDisplayName} />
+        <InfoRow label={t("labels.assignedTo")} value={details.inspectorFullName} />
+        <InfoRow label={t("labels.scheduledDate")} value={new Date(details.inspectionDate).toLocaleString()} />
         {details.submittedAt && (
-          <InfoRow label={t("bookingInfo.submittedAt")} value={new Date(details.submittedAt).toLocaleString()} />
+          <InfoRow label={t("labels.submittedAt")} value={new Date(details.submittedAt).toLocaleString()} />
         )}
       </Stack>
     </Paper>
@@ -466,7 +465,7 @@ function InspectionReportForm({
   handleConfirmSubmit,
   theme,
 }: InspectionReportFormProps) {
-  const t = useTranslations("dashboard.inspectionDetail");
+  const t = useTranslations("dashboardInspector.inspectionDetail");
 
   return (
     <Paper
@@ -481,23 +480,23 @@ function InspectionReportForm({
     >
       {isLocked && (
         <Alert icon={<LockIcon />} severity="info" sx={{ borderRadius: 2, mb: 4 }}>
-          {t("lockedAlert")}
+          {t("labels.lockedAlert")}
         </Alert>
       )}
 
       <Box sx={{ mb: 4 }}>
         <Typography variant="h6" sx={{ fontWeight: 800, mb: 3 }}>
-          {t("vehicleMetrics.title")}
+          {t("labels.vehicleMetrics")}
         </Typography>
         <Grid container spacing={4}>
           <Grid size={{ xs: 12, sm: 6 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
-              {t("vehicleMetrics.odometerReading")}
+              {t("labels.odometerReading")}
             </Typography>
             <TextField
               fullWidth
               type="number"
-              placeholder={t("vehicleMetrics.odometerPlaceholder")}
+              placeholder={t("labels.odometerPlaceholder")}
               value={odometerReading}
               onChange={e => {
                 const val = e.target.value;
@@ -513,7 +512,7 @@ function InspectionReportForm({
                       <SpeedIcon />
                     </InputAdornment>
                   ),
-                  endAdornment: <InputAdornment position="end">{t("vehicleMetrics.odometerUnit")}</InputAdornment>,
+                  endAdornment: <InputAdornment position="end">{t("labels.odometerUnit")}</InputAdornment>,
                   sx: { borderRadius: 2 },
                 },
               }}
@@ -521,7 +520,7 @@ function InspectionReportForm({
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
-              {t("vehicleMetrics.fuelLevel", { level: fuelLevel })}
+              {t("labels.fuelLevel", { level: fuelLevel })}
             </Typography>
             <Box
               sx={{
@@ -542,11 +541,11 @@ function InspectionReportForm({
                 max={100}
                 step={5}
                 marks={[
-                  { value: 0, label: t("vehicleMetrics.fuelMarksE") },
+                  { value: 0, label: t("labels.fuelMarksE") },
                   { value: 25 },
-                  { value: 50, label: t("vehicleMetrics.fuelMarksHalf") },
+                  { value: 50, label: t("labels.fuelMarksHalf") },
                   { value: 75 },
-                  { value: 100, label: t("vehicleMetrics.fuelMarksF") },
+                  { value: 100, label: t("labels.fuelMarksF") },
                 ]}
                 onChange={(_, newVal) => {
                   if (typeof newVal === "number") setFuelLevel(newVal);
@@ -564,7 +563,7 @@ function InspectionReportForm({
       <Box sx={{ mb: 4 }}>
         <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 2 }}>
           <Typography variant="h6" sx={{ fontWeight: 800 }}>
-            {t("images.title", { current: totalImageCount, max: MAX_IMAGES })}
+            {t("labels.visualEvidence", { count: totalImageCount, max: MAX_IMAGES })}
           </Typography>
           {!isLocked && (
             <Button
@@ -577,7 +576,7 @@ function InspectionReportForm({
               disabled={totalImageCount >= MAX_IMAGES || submitting}
               sx={{ borderRadius: 2, fontWeight: 700 }}
             >
-              {t("images.uploadButton")}
+              {t("actions.uploadPhotos")}
             </Button>
           )}
         </Stack>
@@ -609,11 +608,11 @@ function InspectionReportForm({
           >
             <AddPhotoAlternateIcon sx={{ fontSize: 48, color: "text.disabled", mb: 2 }} />
             <Typography variant="h6" sx={{ fontWeight: 700 }}>
-              {isLocked ? t("images.noPhotosProvided") : t("images.uploadPrompt")}
+              {isLocked ? t("labels.noPhotos") : t("labels.uploadTitle")}
             </Typography>
             {!isLocked && (
               <Typography variant="body2" color="text.secondary">
-                {t("images.dragDropHint", { min: MIN_IMAGES, max: MAX_IMAGES })}
+                {t("labels.uploadSubtitle", { min: MIN_IMAGES, max: MAX_IMAGES })}
               </Typography>
             )}
           </Box>
@@ -637,7 +636,7 @@ function InspectionReportForm({
                     <Box
                       component="img"
                       src={img.src}
-                      alt={t("images.altText")}
+                      alt={t("labels.imageAltText")}
                       sx={{
                         width: "100%",
                         height: "100%",
@@ -656,7 +655,7 @@ function InspectionReportForm({
                         top: 8,
                         right: 8,
                         bgcolor: alpha(theme.palette.error.main, 0.9),
-                        color: "white",
+                        color: "common.white",
                         backdropFilter: "blur(4px)",
                         "&:hover": { bgcolor: theme.palette.error.main, transform: "scale(1.1)" },
                         transition: "all 0.2s",
@@ -681,17 +680,17 @@ function InspectionReportForm({
 
       <Box sx={{ mb: 4 }}>
         <Typography variant="h6" sx={{ fontWeight: 800, mb: 3 }}>
-          {t("conditions.title")}
+          {t("labels.conditionTitle")}
         </Typography>
 
         <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
-          {t("conditions.generalConditionLabel")}
+          {t("labels.damageReport")}
         </Typography>
         <TextField
           fullWidth
           multiline
           rows={2}
-          placeholder={t("conditions.generalConditionPlaceholder")}
+          placeholder={t("labels.damagePlaceholder")}
           value={generalCondition}
           onChange={e => {
             setGeneralCondition(e.target.value);
@@ -702,13 +701,13 @@ function InspectionReportForm({
         />
 
         <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
-          {t("conditions.notesLabel")}
+          {t("labels.finalNotes")}
         </Typography>
         <TextField
           fullWidth
           multiline
           rows={4}
-          placeholder={t("conditions.notesPlaceholder")}
+          placeholder={t("labels.finalNotesPlaceholder")}
           value={notes}
           onChange={e => {
             setNotes(e.target.value);
@@ -722,7 +721,7 @@ function InspectionReportForm({
 
       <Box sx={{ mb: 4 }}>
         <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
-          {t("decision.title")}
+          {t("labels.finalDecision")}
         </Typography>
         <Grid container spacing={2}>
           <Grid size={{ xs: 12, sm: 6 }}>
@@ -737,7 +736,7 @@ function InspectionReportForm({
               startIcon={<CheckCircleIcon />}
               sx={{ py: 2, borderRadius: 2, fontWeight: 800, fontSize: "1.1rem" }}
             >
-              {t("decision.approve")}
+              {t("actions.approveVehicle")}
             </Button>
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
@@ -752,7 +751,7 @@ function InspectionReportForm({
               startIcon={<CancelIcon />}
               sx={{ py: 2, borderRadius: 2, fontWeight: 800, fontSize: "1.1rem" }}
             >
-              {t("decision.reject")}
+              {t("actions.rejectVehicle")}
             </Button>
           </Grid>
         </Grid>
@@ -774,7 +773,7 @@ function InspectionReportForm({
             disabled={submitting}
             sx={{ py: 2, borderRadius: 3, fontWeight: 800, fontSize: "1.1rem" }}
           >
-            {submitting ? <CircularProgress size={26} color="inherit" /> : t("submitButton")}
+            {submitting ? <CircularProgress size={26} color="inherit" /> : t("actions.submitFinalReport")}
           </Button>
         </Box>
       )}

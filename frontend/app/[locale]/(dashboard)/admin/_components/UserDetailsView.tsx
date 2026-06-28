@@ -3,6 +3,7 @@
 // cspell:ignore pendingverification
 
 import React, { useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Box,
   Typography,
@@ -172,18 +173,18 @@ function SectionLabel({ children }: { readonly children: React.ReactNode }) {
   );
 }
 
-const BREADCRUMB_CATEGORIES: Record<UserType, string> = {
-  supplier: "Suppliers",
-  driver: "Drivers",
-  inspector: "Inspectors",
-  user: "Users",
+const BREADCRUMB_KEYS: Record<UserType, string> = {
+  supplier: "breadcrumbs.suppliers",
+  driver: "tabs.drivers",
+  inspector: "tabs.inspectors",
+  user: "breadcrumbs.users",
 };
 
-const PAGE_TITLES: Record<UserType, string> = {
-  supplier: "Supplier Details",
-  driver: "Driver Details",
-  inspector: "Inspector Details",
-  user: "User Details",
+const PAGE_TITLE_KEYS: Record<UserType, string> = {
+  supplier: "details.supplierDetailsTitle",
+  driver: "details.driverDetailsTitle",
+  inspector: "details.inspectorDetailsTitle",
+  user: "details.userDetailsTitle",
 };
 
 const STATUS_CATEGORIES: Record<string, "success" | "warning" | "error" | undefined> = {
@@ -197,33 +198,42 @@ const STATUS_CATEGORIES: Record<string, "success" | "warning" | "error" | undefi
   suspended: "error",
 };
 
-function getCompletenessItems(userType: UserType, data: UserDetailsViewProps["data"]) {
+function getCompletenessItems(userType: UserType, data: UserDetailsViewProps["data"], t: (key: string) => string) {
   const statusLower = (data.status || "").toLowerCase();
   const items = [
     {
-      label: "Status: " + statusLower,
+      label:
+        t("details.status") +
+        ": " +
+        (statusLower === "active" || statusLower === "approved" || statusLower === "verified"
+          ? t("details.statusActive")
+          : statusLower === "pending" || statusLower === "pendingverification"
+            ? t("details.statusPending")
+            : statusLower === "blocked" || statusLower === "rejected" || statusLower === "suspended"
+              ? t("details.statusBlocked")
+              : statusLower),
       done:
         statusLower === "active" ||
         statusLower === "verified" ||
         statusLower === "approved" ||
         statusLower === "pending",
     },
-    { label: "Email configured", done: Boolean(data.email) },
-    { label: "Phone Number configured", done: Boolean(data.phoneNumber) },
+    { label: t("details.emailConfigured"), done: Boolean(data.email) },
+    { label: t("details.phoneConfigured"), done: Boolean(data.phoneNumber) },
   ];
   if (userType === "supplier") {
-    items.push({ label: "Company profile details", done: Boolean(data.companyProfile?.companyName) });
+    items.push({ label: t("details.companyConfigured"), done: Boolean(data.companyProfile?.companyName) });
   } else if (userType === "driver") {
-    items.push({ label: "License verification uploaded", done: Boolean(data.licenseNumber && data.licenseImage) });
+    items.push({ label: t("details.licenseConfigured"), done: Boolean(data.licenseNumber && data.licenseImage) });
   } else if (userType === "inspector") {
-    items.push({ label: "Employee code assigned", done: Boolean(data.employeeCode) });
+    items.push({ label: t("details.employeeConfigured"), done: Boolean(data.employeeCode) });
   } else {
-    items.push({ label: "Role assigned", done: Boolean(data.roles && data.roles.length > 0) });
+    items.push({ label: t("details.roleConfigured"), done: Boolean(data.roles && data.roles.length > 0) });
   }
   return items;
 }
 
-function getStatusDetails(statusVal: string, theme: Theme) {
+function getStatusDetails(statusVal: string, theme: Theme, t: (key: string) => string) {
   const s = (statusVal || "").toLowerCase();
   const category = STATUS_CATEGORIES[s];
 
@@ -234,8 +244,8 @@ function getStatusDetails(statusVal: string, theme: Theme) {
       bgColor: alpha(mainColor, 0.12),
       borderColor: alpha(mainColor, 0.25),
       icon: <CheckCircleOutlineIcon sx={{ fontSize: 15 }} />,
-      label: statusVal || "Active",
-      desc: "This account is active and verified with full platform access.",
+      label: t("details.statusActive"),
+      desc: t("details.statusActiveDesc"),
     };
   }
 
@@ -246,8 +256,8 @@ function getStatusDetails(statusVal: string, theme: Theme) {
       bgColor: alpha(mainColor, 0.12),
       borderColor: alpha(mainColor, 0.25),
       icon: <AccessTimeIcon sx={{ fontSize: 15 }} />,
-      label: statusVal || "Pending",
-      desc: "This account is awaiting confirmation or verification.",
+      label: t("details.statusPending"),
+      desc: t("details.statusPendingDesc"),
     };
   }
 
@@ -258,8 +268,8 @@ function getStatusDetails(statusVal: string, theme: Theme) {
       bgColor: alpha(mainColor, 0.12),
       borderColor: alpha(mainColor, 0.25),
       icon: <BlockIcon sx={{ fontSize: 15 }} />,
-      label: statusVal || "Blocked",
-      desc: "This account is restricted from accessing the platform.",
+      label: t("details.statusBlocked"),
+      desc: t("details.statusBlockedDesc"),
     };
   }
 
@@ -269,8 +279,8 @@ function getStatusDetails(statusVal: string, theme: Theme) {
     bgColor: theme.palette.action.hover,
     borderColor: theme.palette.divider,
     icon: <AccessTimeIcon sx={{ fontSize: 15 }} />,
-    label: statusVal || "Unknown",
-    desc: "Status is undefined.",
+    label: t("details.statusUnknown"),
+    desc: t("details.statusUnknownDesc"),
   };
 }
 
@@ -282,6 +292,7 @@ interface ExtraActionButtonsProps {
   readonly onApprove?: () => void | Promise<void>;
   readonly onReject?: (reason: string) => void | Promise<void>;
   readonly setRejectOpen: (open: boolean) => void;
+  readonly t: (key: string) => string;
 }
 
 function ExtraActionButtons({
@@ -292,6 +303,7 @@ function ExtraActionButtons({
   onApprove,
   onReject,
   setRejectOpen,
+  t,
 }: ExtraActionButtonsProps) {
   if (userType === "inspector" && onToggleStatus) {
     return (
@@ -311,7 +323,7 @@ function ExtraActionButtons({
           fontSize: 13,
         }}
       >
-        {data.isActive ? "Disable Inspector" : "Enable Inspector"}
+        {data.isActive ? t("details.disableInspector") : t("details.enableInspector")}
       </Button>
     );
   }
@@ -329,7 +341,7 @@ function ExtraActionButtons({
             }}
             sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600 }}
           >
-            Approve
+            {t("details.approve")}
           </Button>
         )}
         {data.status !== "Rejected" && onReject && (
@@ -342,7 +354,7 @@ function ExtraActionButtons({
             }}
             sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600 }}
           >
-            Reject
+            {t("details.reject")}
           </Button>
         )}
         {onToggleStatus && (
@@ -355,7 +367,7 @@ function ExtraActionButtons({
             }}
             sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600 }}
           >
-            {data.isActive ? "Disable Account" : "Enable Account"}
+            {data.isActive ? t("details.disableAccount") : t("details.enableAccount")}
           </Button>
         )}
       </>
@@ -462,16 +474,21 @@ export default function UserDetailsView({
 
   const name = [data.firstName, data.lastName].filter(Boolean).join(" ") || "User";
 
-  // Breadcrumbs title
-  const breadcrumbCategory = BREADCRUMB_CATEGORIES[userType];
-  const pageTitle = PAGE_TITLES[userType];
+  const t = useTranslations("dashboardAdmin.users");
 
-  const statusInfo = getStatusDetails(data.status, theme);
+  // Breadcrumbs title
+  const breadcrumbCategory = t(BREADCRUMB_KEYS[userType]);
+  const pageTitle = t(PAGE_TITLE_KEYS[userType]);
+
+  const statusInfo = getStatusDetails(data.status, theme, t);
 
   // Profile Completeness Score
-  const completenessItems = getCompletenessItems(userType, data);
+  const completenessItems = getCompletenessItems(userType, data, t);
 
-  const completenessScore = Math.round((completenessItems.filter(i => i.done).length / completenessItems.length) * 100);
+  const completenessScore =
+    completenessItems.length > 0
+      ? Math.round((completenessItems.filter(i => i.done).length / completenessItems.length) * 100)
+      : 0;
 
   // Theme-compliant avatar backgrounds
   const avatarColors = [
@@ -516,7 +533,7 @@ export default function UserDetailsView({
 
       {isMock && (
         <Alert severity="warning" sx={{ mb: 3, borderRadius: 2, fontSize: 13 }}>
-          Failed to load live data. Showing mock data for demonstration purposes.
+          {t("details.mockWarning")}
         </Alert>
       )}
 
@@ -546,7 +563,7 @@ export default function UserDetailsView({
             background:
               theme.palette.mode === "dark"
                 ? `linear-gradient(135deg, ${alpha(theme.palette.common.black, 0.6)}, ${alpha(theme.palette.primary.main, 0.15)})`
-                : `linear-gradient(135deg, #0f172a 0%, #1e293b 100%)`,
+                : `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.common.black} 100%)`,
             position: "relative",
             overflow: "hidden",
           }}
@@ -569,7 +586,7 @@ export default function UserDetailsView({
                 bgcolor: avatarBg,
                 fontWeight: 800,
                 fontSize: 22,
-                boxShadow: `0 0 0 2px ${alpha(avatarBg, 0.4)}, 0 4px 16px ${alpha("#000", 0.4)}`,
+                boxShadow: `0 0 0 2px ${alpha(avatarBg, 0.4)}, 0 4px 16px ${alpha(theme.palette.common.black, 0.4)}`,
               }}
             >
               {data.firstName.charAt(0).toUpperCase() || "?"}
@@ -584,18 +601,27 @@ export default function UserDetailsView({
                 height: 12,
                 borderRadius: "50%",
                 bgcolor: statusInfo.color,
-                border: "2px solid #1e293b",
+                border: `2px solid ${theme.palette.common.black}`,
                 boxShadow: `0 0 8px ${alpha(statusInfo.color, 0.7)}`,
               }}
             />
           </Box>
           <Box sx={{ minWidth: 0, zIndex: 1 }}>
             <Typography
-              sx={{ fontWeight: 800, fontSize: { xs: 17, sm: 19 }, color: "#f8fafc", lineHeight: 1.2, mb: 0.4 }}
+              sx={{
+                fontWeight: 800,
+                fontSize: { xs: 17, sm: 19 },
+                color: theme.palette.common.white,
+                lineHeight: 1.2,
+                mb: 0.4,
+              }}
             >
               {name}
             </Typography>
-            <Typography sx={{ fontSize: 12, color: alpha("#f8fafc", 0.5), mb: 1.25, fontWeight: 400 }} noWrap>
+            <Typography
+              sx={{ fontSize: 12, color: alpha(theme.palette.common.white, 0.5), mb: 1.25, fontWeight: 400 }}
+              noWrap
+            >
               {data.email}
             </Typography>
             <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", gap: 0.5 }}>
@@ -615,15 +641,15 @@ export default function UserDetailsView({
               {userType === "inspector" && data.employeeCode && (
                 <Chip
                   size="small"
-                  label={`Code: ${data.employeeCode}`}
+                  label={`${t("details.employeeCodeLabel")}: ${data.employeeCode}`}
                   sx={{
                     height: 20,
                     fontWeight: 600,
                     fontSize: 10,
-                    bgcolor: alpha("#fff", 0.08),
-                    color: alpha("#f8fafc", 0.8),
+                    bgcolor: alpha(theme.palette.common.white, 0.08),
+                    color: alpha(theme.palette.common.white, 0.8),
                     border: "1px solid",
-                    borderColor: alpha("#fff", 0.12),
+                    borderColor: alpha(theme.palette.common.white, 0.12),
                   }}
                 />
               )}
@@ -636,10 +662,10 @@ export default function UserDetailsView({
                     height: 20,
                     fontWeight: 600,
                     fontSize: 10,
-                    bgcolor: alpha("#fff", 0.08),
-                    color: alpha("#f8fafc", 0.8),
+                    bgcolor: alpha(theme.palette.common.white, 0.08),
+                    color: alpha(theme.palette.common.white, 0.8),
                     border: "1px solid",
-                    borderColor: alpha("#fff", 0.12),
+                    borderColor: alpha(theme.palette.common.white, 0.12),
                   }}
                 />
               ))}
@@ -682,7 +708,7 @@ export default function UserDetailsView({
                     variant="caption"
                     sx={{ color: theme.palette.text.disabled, fontWeight: 500, mt: 0.3, display: "block" }}
                   >
-                    Rating
+                    {t("details.rating")}
                   </Typography>
                 </Box>
                 <Box>
@@ -693,7 +719,7 @@ export default function UserDetailsView({
                     variant="caption"
                     sx={{ color: theme.palette.text.disabled, fontWeight: 500, mt: 0.3, display: "block" }}
                   >
-                    Trips
+                    {t("details.trips")}
                   </Typography>
                 </Box>
               </>
@@ -708,7 +734,7 @@ export default function UserDetailsView({
                     variant="caption"
                     sx={{ color: theme.palette.text.disabled, fontWeight: 500, mt: 0.3, display: "block" }}
                   >
-                    Assigned
+                    {t("details.assigned")}
                   </Typography>
                 </Box>
                 <Box>
@@ -719,7 +745,7 @@ export default function UserDetailsView({
                     variant="caption"
                     sx={{ color: theme.palette.text.disabled, fontWeight: 500, mt: 0.3, display: "block" }}
                   >
-                    Inspected
+                    {t("details.inspected")}
                   </Typography>
                 </Box>
               </>
@@ -733,7 +759,7 @@ export default function UserDetailsView({
                   variant="caption"
                   sx={{ color: theme.palette.text.disabled, fontWeight: 500, mt: 0.3, display: "block" }}
                 >
-                  Profile Score
+                  {t("details.profileScore")}
                 </Typography>
               </Box>
             )}
@@ -748,13 +774,13 @@ export default function UserDetailsView({
                     textTransform: "capitalize",
                   }}
                 >
-                  {data.status}
+                  {statusInfo.label}
                 </Typography>
                 <Typography
                   variant="caption"
                   sx={{ color: theme.palette.text.disabled, fontWeight: 500, mt: 0.3, display: "block" }}
                 >
-                  Status
+                  {t("details.status")}
                 </Typography>
               </Box>
             )}
@@ -776,7 +802,7 @@ export default function UserDetailsView({
                 "&:hover": { borderColor: theme.palette.text.secondary, bgcolor: theme.palette.action.hover },
               }}
             >
-              Back
+              {t("details.back")}
             </Button>
 
             {onEdit && (
@@ -796,7 +822,7 @@ export default function UserDetailsView({
                   "&:hover": { boxShadow: `0 6px 20px ${alpha(theme.palette.primary.main, 0.45)}` },
                 }}
               >
-                Edit
+                {t("details.edit")}
               </Button>
             )}
 
@@ -808,6 +834,7 @@ export default function UserDetailsView({
               onApprove={onApprove}
               onReject={onReject}
               setRejectOpen={setRejectOpen}
+              t={t}
             />
           </Stack>
         </Box>
@@ -856,17 +883,19 @@ export default function UserDetailsView({
                 <LockOutlinedIcon sx={{ fontSize: 17 }} />
               </Box>
               <Box>
-                <Typography sx={{ fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>Account Profile</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>
+                  {t("details.accountInfo")}
+                </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  System registration details
+                  {t("details.accountInfoDesc")}
                 </Typography>
               </Box>
             </Box>
             <Box sx={{ px: 1, py: 1 }}>
               <FieldRow
                 icon={<EmailOutlinedIcon sx={{ fontSize: 17 }} />}
-                label="Email Address"
-                value={data.email || "No email assigned"}
+                label={t("details.email")}
+                value={data.email || t("details.noEmail")}
                 accentColor={theme.palette.primary.main}
               />
             </Box>
@@ -912,9 +941,11 @@ export default function UserDetailsView({
                   <BusinessIcon sx={{ fontSize: 17 }} />
                 </Box>
                 <Box>
-                  <Typography sx={{ fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>Business Information</Typography>
+                  <Typography sx={{ fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>
+                    {t("details.companyProfile")}
+                  </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Corporate registry & tax settings
+                    {t("details.companyProfileDesc")}
                   </Typography>
                 </Box>
               </Box>
@@ -923,15 +954,15 @@ export default function UserDetailsView({
                   <Grid size={12}>
                     <FieldRow
                       icon={<BusinessIcon sx={{ fontSize: 17 }} />}
-                      label="Company Name"
-                      value={data.companyProfile?.companyName || "No company name"}
+                      label={t("details.companyName")}
+                      value={data.companyProfile?.companyName || t("details.noCompanyName")}
                       accentColor={theme.palette.secondary.main || theme.palette.primary.main}
                     />
                   </Grid>
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <FieldRow
                       icon={<ReceiptLongIcon sx={{ fontSize: 17 }} />}
-                      label="Commercial Registration Number"
+                      label={t("details.crNumber")}
                       value={data.companyProfile?.commercialRegistrationNumber || "—"}
                       accentColor={theme.palette.secondary.main || theme.palette.primary.main}
                     />
@@ -939,7 +970,7 @@ export default function UserDetailsView({
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <FieldRow
                       icon={<AssignmentOutlinedIcon sx={{ fontSize: 17 }} />}
-                      label="Tax ID"
+                      label={t("details.taxId")}
                       value={data.companyProfile?.taxId || "—"}
                       accentColor={theme.palette.secondary.main || theme.palette.primary.main}
                     />
@@ -988,9 +1019,11 @@ export default function UserDetailsView({
                 <PersonOutlineIcon sx={{ fontSize: 17 }} />
               </Box>
               <Box>
-                <Typography sx={{ fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>Personal Information</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>
+                  {t("details.personalDetails")}
+                </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Contact and basic credentials
+                  {t("details.personalDetailsDesc")}
                 </Typography>
               </Box>
             </Box>
@@ -999,7 +1032,7 @@ export default function UserDetailsView({
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <FieldRow
                     icon={<PersonOutlineIcon sx={{ fontSize: 17 }} />}
-                    label="First Name"
+                    label={t("details.firstName")}
                     value={data.firstName || ""}
                     accentColor={theme.palette.info.main}
                   />
@@ -1007,7 +1040,7 @@ export default function UserDetailsView({
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <FieldRow
                     icon={<PersonOutlineIcon sx={{ fontSize: 17 }} />}
-                    label="Last Name"
+                    label={t("details.lastName")}
                     value={data.lastName || ""}
                     accentColor={theme.palette.info.main}
                   />
@@ -1015,15 +1048,15 @@ export default function UserDetailsView({
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <FieldRow
                     icon={<PhoneIcon sx={{ fontSize: 17 }} />}
-                    label="Phone Number"
-                    value={data.phoneNumber || "No phone number registered"}
+                    label={t("details.phone")}
+                    value={data.phoneNumber || t("details.noPhone")}
                     accentColor={theme.palette.info.main}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <FieldRow
                     icon={<DateRangeIcon sx={{ fontSize: 17 }} />}
-                    label="Date of Birth"
+                    label={t("details.dob")}
                     value={data.dateOfBirth || "—"}
                     accentColor={theme.palette.info.main}
                   />
@@ -1032,7 +1065,7 @@ export default function UserDetailsView({
                   <Grid size={12}>
                     <FieldRow
                       icon={<HomeOutlinedIcon sx={{ fontSize: 17 }} />}
-                      label="Address"
+                      label={t("details.address")}
                       value={data.address}
                       accentColor={theme.palette.info.main}
                     />
@@ -1085,9 +1118,11 @@ export default function UserDetailsView({
                       <ContactPhoneOutlinedIcon sx={{ fontSize: 17 }} />
                     </Box>
                     <Box>
-                      <Typography sx={{ fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>Emergency Contact</Typography>
+                      <Typography sx={{ fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>
+                        {t("details.emergencyContact")}
+                      </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        In case of unexpected events
+                        {t("details.emergencyContactDesc")}
                       </Typography>
                     </Box>
                   </Box>
@@ -1096,7 +1131,7 @@ export default function UserDetailsView({
                       <Grid size={{ xs: 12, sm: 6 }}>
                         <FieldRow
                           icon={<PersonOutlineIcon sx={{ fontSize: 17 }} />}
-                          label="Emergency Contact Name"
+                          label={t("details.emergencyContactName")}
                           value={data.emergencyContactName || "—"}
                           accentColor={theme.palette.secondary.main}
                         />
@@ -1104,7 +1139,7 @@ export default function UserDetailsView({
                       <Grid size={{ xs: 12, sm: 6 }}>
                         <FieldRow
                           icon={<PhoneIcon sx={{ fontSize: 17 }} />}
-                          label="Emergency Phone"
+                          label={t("details.emergencyPhone")}
                           value={data.emergencyContactPhone || "—"}
                           accentColor={theme.palette.secondary.main}
                         />
@@ -1126,10 +1161,10 @@ export default function UserDetailsView({
                   p: 3,
                 }}
               >
-                <SectionLabel>Assigned Work Areas</SectionLabel>
+                <SectionLabel>{t("details.workAreas")}</SectionLabel>
                 {!data.workAreas || data.workAreas.length === 0 ? (
                   <Typography variant="body2" color="text.secondary">
-                    No work areas selected for this driver.
+                    {t("details.noWorkAreas")}
                   </Typography>
                 ) : (
                   <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
@@ -1162,12 +1197,12 @@ export default function UserDetailsView({
                   p: 3,
                 }}
               >
-                <SectionLabel>Uploaded Verification Documents</SectionLabel>
+                <SectionLabel>{t("details.verificationDocs")}</SectionLabel>
                 <Grid container spacing={2}>
                   {[
-                    { label: "Driver License Image", url: data.licenseImage },
-                    { label: "National ID (Front)", url: data.nationalIdFrontImage },
-                    { label: "National ID (Back)", url: data.nationalIdBackImage },
+                    { label: t("details.driversLicense"), url: data.licenseImage },
+                    { label: t("details.nationalIdFront"), url: data.nationalIdFrontImage },
+                    { label: t("details.nationalIdBack"), url: data.nationalIdBackImage },
                   ].map(doc => (
                     <Grid size={{ xs: 12, sm: 4 }} key={doc.label}>
                       <Typography
@@ -1206,7 +1241,7 @@ export default function UserDetailsView({
                         </Box>
                       ) : (
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontStyle: "italic" }}>
-                          Not uploaded
+                          {t("details.noImage")}
                         </Typography>
                       )}
                     </Grid>
@@ -1222,25 +1257,29 @@ export default function UserDetailsView({
               {/* Stat grid */}
               <Grid container spacing={2} sx={{ mb: 2.5 }}>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <StatCard label="Total Assigned" value={data.assignedCount ?? 0} color={theme.palette.primary.main} />
+                  <StatCard
+                    label={t("details.totalAssigned")}
+                    value={data.assignedCount ?? 0}
+                    color={theme.palette.primary.main}
+                  />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <StatCard
-                    label="Pending"
+                    label={t("details.statusPending")}
                     value={data.pendingCount ?? 0}
                     color={theme.palette.status.pending.main || theme.palette.warning.main}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <StatCard
-                    label="Approved"
+                    label={t("details.statusActive")}
                     value={data.approvedCount ?? 0}
                     color={theme.palette.status.active.main || theme.palette.success.main}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <StatCard
-                    label="Rejected"
+                    label={t("details.statusBlocked")}
                     value={data.rejectedCount ?? 0}
                     color={theme.palette.status.blocked.main || theme.palette.error.main}
                   />
@@ -1259,27 +1298,27 @@ export default function UserDetailsView({
                 }}
               >
                 <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
-                  Recent Inspections
+                  {t("details.recentInspections")}
                 </Typography>
                 {!data.recentInspections || data.recentInspections.length === 0 ? (
                   <Typography variant="body2" color="text.secondary">
-                    No inspections recorded yet.
+                    {t("details.noInspections")}
                   </Typography>
                 ) : (
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ fontWeight: 700 }}>Booking</TableCell>
-                        <TableCell sx={{ fontWeight: 700 }}>Inspection Date</TableCell>
-                        <TableCell sx={{ fontWeight: 700 }}>Submitted At</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>{t("details.bookingNum")}</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>{t("details.date")}</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>{t("details.submitted")}</TableCell>
                         <TableCell align="right" sx={{ fontWeight: 700 }}>
-                          Status
+                          {t("details.status")}
                         </TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {data.recentInspections.map(r => {
-                        const chip = getStatusDetails(r.status, theme);
+                        const chip = getStatusDetails(r.status, theme, t);
                         return (
                           <TableRow key={r.inspectionId} hover>
                             <TableCell>{r.bookingNumber || r.bookingId.split("-")[0]}</TableCell>
@@ -1287,7 +1326,7 @@ export default function UserDetailsView({
                             <TableCell>{r.submittedAt ? new Date(r.submittedAt).toLocaleString() : "—"}</TableCell>
                             <TableCell align="right">
                               <Chip
-                                label={r.status}
+                                label={chip.label}
                                 size="small"
                                 sx={{ bgcolor: chip.bgColor, color: chip.color, fontWeight: 700 }}
                               />
@@ -1344,9 +1383,9 @@ export default function UserDetailsView({
                 <ShieldOutlinedIcon sx={{ fontSize: 16 }} />
               </Box>
               <Box>
-                <Typography sx={{ fontWeight: 700, fontSize: 13 }}>Access Control</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: 13 }}>{t("form.accessControl")}</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Permissions and status
+                  {t("form.accessControlDesc")}
                 </Typography>
               </Box>
             </Box>
@@ -1354,7 +1393,7 @@ export default function UserDetailsView({
             <Box sx={{ p: 2.5 }}>
               {/* Assigned Role */}
               <Box sx={{ mb: 2.5 }}>
-                <Typography sx={{ ...fieldLabel, mb: 1 }}>Assigned Role</Typography>
+                <Typography sx={{ ...fieldLabel, mb: 1 }}>{t("details.assignedRole")}</Typography>
                 <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", gap: 0.5 }}>
                   {data.roles && data.roles.length > 0 ? (
                     data.roles.map((role: string, index: number) => (
@@ -1393,7 +1432,7 @@ export default function UserDetailsView({
 
               {/* Account Status banner */}
               <Box>
-                <Typography sx={{ ...fieldLabel, mb: 1 }}>Account Status</Typography>
+                <Typography sx={{ ...fieldLabel, mb: 1 }}>{t("form.accountStatus")}</Typography>
                 <Box
                   sx={{
                     p: 2,
@@ -1419,7 +1458,7 @@ export default function UserDetailsView({
                       sx={{ color: statusInfo.color, opacity: 0.8, lineHeight: 1.45, display: "block" }}
                     >
                       {userType === "driver" && data.rejectionReason
-                        ? `Reason: ${data.rejectionReason}`
+                        ? `${t("details.rejectReasonLabel")}: ${data.rejectionReason}`
                         : statusInfo.desc}
                     </Typography>
                   </Box>
@@ -1444,7 +1483,7 @@ export default function UserDetailsView({
               <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid", borderColor: theme.palette.divider }}>
                 <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
                   <Typography sx={{ fontWeight: 600, fontSize: 12.5, color: "text.secondary" }}>
-                    Profile Completeness
+                    {t("details.completeness")}
                   </Typography>
                   <Typography
                     sx={{
@@ -1527,21 +1566,21 @@ export default function UserDetailsView({
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle sx={{ fontWeight: 800 }}>Reject Driver Application</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 800 }}>{t("details.rejectModalTitle")}</DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ mb: 2, color: theme.palette.text.secondary }}>
-            Please state the reason for rejecting this driver profile. This will be shared with the driver.
+            {t("details.rejectModalDesc")}
           </Typography>
           <TextField
             fullWidth
             multiline
             minRows={3}
-            label="Rejection Reason"
+            label={t("details.rejectReasonLabel")}
             value={rejectReason}
             onChange={e => {
               setRejectReason(e.target.value);
             }}
-            placeholder="e.g. License documents are illegible or expired."
+            placeholder={t("details.rejectReasonPlaceholder")}
           />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
@@ -1551,10 +1590,10 @@ export default function UserDetailsView({
             }}
             color="inherit"
           >
-            Cancel
+            {t("details.cancel")}
           </Button>
           <Button onClick={handleConfirmReject} variant="contained" color="error" disabled={!rejectReason.trim()}>
-            Confirm Rejection
+            {t("details.confirmReject")}
           </Button>
         </DialogActions>
       </Dialog>

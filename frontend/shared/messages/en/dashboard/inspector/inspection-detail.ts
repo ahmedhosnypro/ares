@@ -1,0 +1,63 @@
+import type { InspectorInspectionDetailLabels } from "../../../types/dashboard/inspector/inspection-detail";
+
+const inspectionDetail: InspectorInspectionDetailLabels = {
+  errors: {
+    accessDenied: "You do not have access to this inspection.",
+    notFound: "Inspection not found.",
+    failedToLoad: "Failed to load inspection details.",
+    maxImages: "Maximum {max} images allowed",
+    selectDecision: "Please select a decision (Approve or Reject)",
+    provideNotes: "Please provide inspection notes",
+    enterOdometer: "Please enter a valid odometer reading",
+    photoRequired: "At least {min} photo is required",
+    submitFailed: "Submission failed. Please try again.",
+  },
+  success: {
+    submitted: "Inspection submitted successfully",
+  },
+  actions: {
+    goBack: "Go Back",
+    cancel: "Cancel",
+    confirmSubmit: "Confirm & Submit",
+    uploadPhotos: "Upload Photos",
+    submitFinalReport: "Submit Final Report",
+    approveVehicle: "Approve Vehicle",
+    rejectVehicle: "Reject Vehicle",
+  },
+  labels: {
+    notFound: "Not found",
+    title: "Inspection Report",
+    subtitle: "Review details and submit for booking #{bookingNumber}",
+    dialogTitle: "Submit Inspection Report?",
+    dialogText:
+      "You are about to mark this vehicle as <bold>{decision}</bold>. This action is permanent and will notify the relevant parties.",
+    detailsTitle: "Details",
+    bookingNumber: "Booking Number",
+    vehicle: "Vehicle",
+    assignedTo: "Assigned To",
+    scheduledDate: "Scheduled Date",
+    submittedAt: "Submitted At",
+    lockedAlert: "This inspection report has been submitted and is locked for editing.",
+    vehicleMetrics: "Vehicle Metrics",
+    odometerReading: "Odometer Reading",
+    odometerPlaceholder: "e.g. 45000",
+    odometerUnit: "km",
+    fuelLevel: "Fuel Level: {level}%",
+    fuelMarksE: "E",
+    fuelMarksHalf: "1/2",
+    fuelMarksF: "F",
+    visualEvidence: "Visual Evidence ({count}/{max})",
+    noPhotos: "No photos provided",
+    uploadTitle: "Upload Inspection Photos",
+    uploadSubtitle: "Drag and drop or click to browse (Min {min}, Max {max})",
+    imageAltText: "Inspection",
+    conditionTitle: "Condition & Notes",
+    damageReport: "Damage Report / General Condition (Optional)",
+    damagePlaceholder: "List any visible damage, scratches, or general condition remarks...",
+    finalNotes: "Final Inspection Notes (Required)",
+    finalNotesPlaceholder: "Detailed observations to support your final decision...",
+    finalDecision: "Final Decision",
+  },
+};
+
+export default inspectionDetail;

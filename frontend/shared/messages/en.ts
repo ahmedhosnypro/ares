@@ -23,10 +23,6 @@ import adminSidebar from "./en/dashboard/admin-sidebar";
 import driverSidebar from "./en/dashboard/driver-sidebar";
 import supplierSidebar from "./en/dashboard/supplier-sidebar";
 import inspectorSidebar from "./en/dashboard/inspector-sidebar";
-import { inspectorInspections } from "./en/dashboard/inspector/inspections";
-import { inspectionDetail } from "./en/dashboard/inspector/inspections/_id";
-import { inspectorProfile } from "./en/dashboard/inspector/profile";
-import { inspectorHistory } from "./en/dashboard/inspector/history";
 import { driverCompleteProfile } from "./en/dashboard/driver-complete-profile";
 import { driverDashboard } from "./en/dashboard/driver-dashboard";
 import { driverEarnings } from "./en/dashboard/driver-earnings";
@@ -59,6 +55,19 @@ import categories from "./en/dashboard/admin/categories";
 import categoryDetails from "./en/dashboard/admin/categories/detail";
 import countries from "./en/dashboard/admin/countries";
 import createCountry from "./en/dashboard/admin/countries/create";
+import locationsEdit from "./en/dashboard/admin/locations/edit";
+import adminNotifications from "./en/dashboard/admin/notifications";
+import scheduler from "./en/dashboard/admin/scheduler";
+import settings from "./en/dashboard/admin/settings";
+import users from "./en/dashboard/admin/users";
+import drivers from "./en/dashboard/admin/drivers";
+import inspectors from "./en/dashboard/admin/inspectors";
+import vehiclesAdmin from "./en/dashboard/admin/vehicles";
+import verifications from "./en/dashboard/admin/verifications";
+import inspectorHistory from "./en/dashboard/inspector/history";
+import inspectorInspections from "./en/dashboard/inspector/inspections";
+import inspectorInspectionDetail from "./en/dashboard/inspector/inspection-detail";
+import inspectorProfile from "./en/dashboard/inspector/profile";
 
 const en: MessageSchema = {
   common,
@@ -90,10 +99,6 @@ const en: MessageSchema = {
     driverSidebar,
     supplierSidebar,
     inspectorSidebar,
-    inspectorProfile,
-    inspectorInspections,
-    inspectionDetail,
-    inspectorHistory,
     driverCompleteProfile,
     driverDashboard,
     driverEarnings,
@@ -126,6 +131,21 @@ const en: MessageSchema = {
     categoryDetails,
     countries,
     createCountry,
+    locationsEdit,
+    notifications: adminNotifications,
+    scheduler,
+    settings,
+    users,
+    drivers,
+    inspectors,
+    vehicles: vehiclesAdmin,
+    verifications,
+  },
+  dashboardInspector: {
+    history: inspectorHistory,
+    inspections: inspectorInspections,
+    inspectionDetail: inspectorInspectionDetail,
+    profile: inspectorProfile,
   },
   deleteNotificationDialog,
   publicPages: {

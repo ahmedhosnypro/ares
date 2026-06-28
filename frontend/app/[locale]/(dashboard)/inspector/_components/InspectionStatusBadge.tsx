@@ -10,23 +10,22 @@ interface Props {
 
 export default function InspectionStatusBadge({ status, size = "small" }: Props) {
   const theme = useTheme();
-  const t = useTranslations("dashboard.inspectorInspections.statusBadge");
-
+  const t = useTranslations("dashboardInspector.inspections");
   const palette: Record<string, { bg: string; color: string; label: string }> = {
     Pending: {
       bg: alpha(theme.palette.warning.main, 0.15),
       color: theme.palette.warning.main,
-      label: t("pending"),
+      label: t("status.pending"),
     },
     Approved: {
       bg: alpha(theme.palette.success.main, 0.15),
       color: theme.palette.success.main,
-      label: t("approved"),
+      label: t("status.approved"),
     },
     Rejected: {
       bg: alpha(theme.palette.error.main, 0.15),
       color: theme.palette.error.main,
-      label: t("rejected"),
+      label: t("status.rejected"),
     },
   };
   const c = palette[status] ?? {

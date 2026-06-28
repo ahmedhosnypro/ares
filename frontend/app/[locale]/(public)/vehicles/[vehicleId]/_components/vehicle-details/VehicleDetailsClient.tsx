@@ -21,6 +21,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "@/shared/i18n/routing";
 import { useFormUndoRedo } from "./useFormUndoRedo";
 import Gallery from "./Gallery";
@@ -43,43 +44,6 @@ import { getCategories, type Category } from "@/api-clients/categories/categorie
 import { logger } from "@/utils/logger";
 import { ApiError } from "@/utils/api-client";
 import type { VehicleDetailsViewModel, VehicleReviewViewModel, BookingLocationOption } from "./types";
-
-export interface VehicleDetailsLabels {
-  readonly fab: {
-    readonly undo: string;
-    readonly create: string;
-    readonly saveAll: string;
-    readonly redo: string;
-  };
-  readonly toast: {
-    readonly created: string;
-    readonly updated: string;
-  };
-  readonly errors: {
-    readonly unknownUpdateError: string;
-    readonly validationFailed: string;
-  };
-  readonly galleryEditor?: GalleryEditorLabels;
-  readonly vehicleInfoEditor?: VehicleInfoEditorLabels;
-  readonly validation?: VehicleFormValidationLabels;
-}
-
-const DEFAULT_LABELS: VehicleDetailsLabels = {
-  fab: {
-    undo: "Undo",
-    create: "Create Vehicle",
-    saveAll: "Save All Changes",
-    redo: "Redo",
-  },
-  toast: {
-    created: "Vehicle created successfully",
-    updated: "Vehicle updated successfully",
-  },
-  errors: {
-    unknownUpdateError: "Unknown error occurred while updating the vehicle",
-    validationFailed: "Validation failed",
-  },
-};
 
 function buildSchema(v?: VehicleFormValidationLabels) {
   return z.object({
@@ -148,7 +112,7 @@ interface VehicleDetailsClientProps {
   readonly canEdit: boolean;
   readonly isCreateMode?: boolean;
   readonly onSave?: (values: FormValues) => Promise<void>;
-  readonly labels?: VehicleDetailsLabels;
+  readonly hideReviews?: boolean;
 }
 
 export default function VehicleDetailsClient({
@@ -158,16 +122,38 @@ export default function VehicleDetailsClient({
   canEdit,
   isCreateMode = false,
   onSave,
-  labels = DEFAULT_LABELS,
+  hideReviews = false,
 }: VehicleDetailsClientProps) {
   const theme = useTheme();
   const router = useRouter();
   const { data: session } = useSession();
+  const t = useTranslations("dashboardAdmin.vehicles");
+  const tv = useTranslations("dashboardAdmin.vehicles.validation");
   const [submitting, setSubmitting] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [successToastOpen, setSuccessToastOpen] = useState(false);
 
-  const schema = useMemo(() => buildSchema(labels.validation), [labels.validation]);
+  const validationLabels: VehicleFormValidationLabels = useMemo(
+    () => ({
+      makeRequired: tv("makeRequired"),
+      modelRequired: tv("modelRequired"),
+      yearWholeNumber: tv("yearWholeNumber"),
+      yearMin: tv("yearMin"),
+      yearMax: tv("yearMax"),
+      colorRequired: tv("colorRequired"),
+      licensePlateRequired: tv("licensePlateRequired"),
+      transmissionRequired: tv("transmissionRequired"),
+      fuelTypeRequired: tv("fuelTypeRequired"),
+      seatsMin: tv("seatsMin"),
+      seatsMax: tv("seatsMax"),
+      priceMin: tv("priceMin"),
+      cityRequired: tv("cityRequired"),
+      categoryRequired: tv("categoryRequired"),
+    }),
+    [tv]
+  );
+
+  const schema = useMemo(() => buildSchema(validationLabels), [validationLabels]);
 
   const isAdmin = session?.user.roles.includes("Admin") ?? false;
 
@@ -244,6 +230,67 @@ export default function VehicleDetailsClient({
     formState: { isDirty },
   } = methods;
 
+  const galleryEditorLabels: GalleryEditorLabels = useMemo(
+    () => ({
+      alt: t("gallery.alt"),
+      noImageSelected: t("gallery.noImageSelected"),
+      featuredImage: t("gallery.featuredImage"),
+      setAsFeatured: t("gallery.setAsFeatured"),
+      noPreview: t("gallery.noPreview"),
+      add: t("gallery.add"),
+      fileSizeError: t("gallery.fileSizeError"),
+    }),
+    [t]
+  );
+
+  const vehicleInfoEditorLabels: VehicleInfoEditorLabels = useMemo(
+    () => ({
+      sections: {
+        vehicleIdentity: t("editor.vehicleIdentity"),
+        aboutVehicle: t("editor.aboutVehicle"),
+        specifications: t("editor.specifications"),
+        includedFeatures: t("editor.includedFeatures"),
+        carSettings: t("editor.carSettings"),
+      },
+      fields: {
+        make: t("editor.make"),
+        model: t("editor.model"),
+        year: t("editor.year"),
+        color: t("editor.color"),
+        licensePlate: t("editor.licensePlate"),
+        description: t("editor.description"),
+        transmission: t("editor.transmission"),
+        fuelType: t("editor.fuelType"),
+        seats: t("editor.seats"),
+        pricePerDay: t("editor.pricePerDay"),
+        locationCity: t("editor.locationCity"),
+        category: t("editor.category"),
+        availabilityStatus: t("editor.availabilityStatus"),
+        approvalStatus: t("editor.approvalStatus"),
+        featureName: t("editor.featureName"),
+        featureDescription: t("editor.featureDescription"),
+      },
+      dropdowns: {
+        automatic: t("editor.automatic"),
+        manual: t("editor.manual"),
+        gasoline: t("editor.gasoline"),
+        diesel: t("editor.diesel"),
+        electric: t("editor.electric"),
+        hybrid: t("editor.hybrid"),
+        pluginHybrid: t("editor.pluginHybrid"),
+        available: t("editor.available"),
+        unavailable: t("editor.unavailable"),
+        pendingReview: t("editor.pendingReview"),
+        approvedActive: t("editor.approvedActive"),
+        rejected: t("editor.rejected"),
+      },
+      features: {
+        addFeature: t("editor.addFeature"),
+      },
+    }),
+    [t]
+  );
+
   async function handleCreateMode(values: FormValues, accessToken: string): Promise<void> {
     const payload: CarPayload = {
       userId: session?.user.id ?? "",
@@ -269,7 +316,7 @@ export default function VehicleDetailsClient({
     const vehicleId = vehicleIdMatch ? vehicleIdMatch[0] : null;
 
     if (!vehicleId) {
-      throw new Error("Failed to get vehicle ID from response");
+      throw new Error(t("alerts.createVehicleIdError"));
     }
 
     if (values.images.length > 0) {
@@ -302,7 +349,7 @@ export default function VehicleDetailsClient({
             return { url: res.url, isPrimary: img.isPrimary };
           } catch (uploadErr) {
             logger.error("Failed to upload image during update", uploadErr);
-            throw new Error("Failed to upload one or more images. Please try again.", { cause: uploadErr });
+            throw new Error(t("alerts.uploadImageError"), { cause: uploadErr });
           }
         }
         return { url: img.url, isPrimary: img.isPrimary };
@@ -369,7 +416,7 @@ export default function VehicleDetailsClient({
         const validationErrors = errorData.errors ? Object.values(errorData.errors).flat().join(", ") : null;
 
         if (validationErrors) {
-          msg = `${labels.errors.validationFailed}: ${validationErrors}`;
+          msg = `${t("errors.validationFailed")}: ${validationErrors}`;
         } else if (detail) {
           msg = detail;
         }
@@ -384,7 +431,7 @@ export default function VehicleDetailsClient({
       setSaveError(err.message);
     } else {
       logger.error("Failed to update vehicle", "Unknown error");
-      setSaveError(labels.errors.unknownUpdateError);
+      setSaveError(t("errors.generic"));
     }
   };
 
@@ -413,7 +460,7 @@ export default function VehicleDetailsClient({
 
                 <Paper elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: 2 }}>
                   {canEdit ? (
-                    <GalleryEditor labels={labels.galleryEditor} />
+                    <GalleryEditor labels={galleryEditorLabels} />
                   ) : (
                     <Gallery images={vehicle.images} vehicleLabel={`${vehicle.make} ${vehicle.model}`} />
                   )}
@@ -424,18 +471,20 @@ export default function VehicleDetailsClient({
                   sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: { xs: 2, md: 3 } }}
                 >
                   {canEdit ? (
-                    <VehicleInfoEditor isAdmin={isAdmin} categories={categories} labels={labels.vehicleInfoEditor} />
+                    <VehicleInfoEditor isAdmin={isAdmin} categories={categories} labels={vehicleInfoEditorLabels} />
                   ) : (
                     <VehicleInfo vehicle={vehicle} />
                   )}
                 </Paper>
 
-                <Paper
-                  elevation={0}
-                  sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: { xs: 2, md: 3 } }}
-                >
-                  <ReviewSection reviews={reviews} />
-                </Paper>
+                {!isCreateMode && !hideReviews && (
+                  <Paper
+                    elevation={0}
+                    sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: { xs: 2, md: 3 } }}
+                  >
+                    <ReviewSection reviews={reviews} />
+                  </Paper>
+                )}
               </Stack>
             </Grid>
 
@@ -472,7 +521,7 @@ export default function VehicleDetailsClient({
                 sx={{ px: 3, fontWeight: 700, boxShadow: theme.shadows[10] }}
               >
                 <UndoRoundedIcon sx={{ mr: 1 }} />
-                {labels.fab.undo}
+                {t("undoBtn")}
               </Fab>
 
               <Fab
@@ -494,7 +543,7 @@ export default function VehicleDetailsClient({
                 ) : (
                   <SaveRoundedIcon sx={{ mr: 1 }} />
                 )}
-                {isCreateMode ? labels.fab.create : labels.fab.saveAll}
+                {isCreateMode ? t("createVehicleBtn") : t("saveAllBtn")}
               </Fab>
 
               <Fab
@@ -504,7 +553,7 @@ export default function VehicleDetailsClient({
                 disabled={!canRedo || submitting}
                 sx={{ px: 3, fontWeight: 700, boxShadow: theme.shadows[10] }}
               >
-                {labels.fab.redo}
+                {t("redoBtn")}
                 <RedoRoundedIcon sx={{ ml: 1 }} />
               </Fab>
             </Stack>
@@ -527,7 +576,7 @@ export default function VehicleDetailsClient({
           variant="filled"
           sx={{ width: "100%", borderRadius: 2 }}
         >
-          {isCreateMode ? labels.toast.created : labels.toast.updated}
+          {isCreateMode ? t("alerts.createSuccess") : t("alerts.updateSuccess")}
         </Alert>
       </Snackbar>
     </FormProvider>

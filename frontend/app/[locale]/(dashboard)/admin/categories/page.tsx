@@ -32,7 +32,7 @@ import {
   DeleteOutlineRounded as DeleteIcon,
   Category as CategoryIcon,
   SearchRounded as SearchIcon,
-  VisibilityOutlined as ViewIcon,
+  VisibilityRounded as ViewIcon,
   LocalOfferTwoTone as OfferIcon,
   DirectionsCarFilledTwoTone as CarIcon,
   AccountBalanceWalletTwoTone as CommissionIcon,
@@ -47,21 +47,20 @@ import {
   deleteCategory,
   AdminCategoryListDto,
   CategorySummary,
-  Category,
 } from "@/api-clients/categories/categories";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
-import CategoryForm from "./_components/CategoryForm";
 import Image from "next/image";
 import { toImageUrl } from "@/utils/image-url";
 
-// ── Empty State Component ──
 function EmptyState({
   filtersActive,
   handleClearFilters,
+  t,
 }: {
   readonly filtersActive: boolean;
   readonly handleClearFilters: () => void;
+  readonly t: (key: string) => string;
 }) {
   return (
     <Box sx={{ py: 8, textAlign: "center" }}>
@@ -71,18 +70,16 @@ function EmptyState({
           height: 64,
           mx: "auto",
           mb: 2,
-          bgcolor: t => alpha(t.palette.text.disabled, 0.1),
+          bgcolor: theme => alpha(theme.palette.text.disabled, 0.1),
         }}
       >
         <SearchIcon sx={{ fontSize: 32, color: "text.disabled" }} />
       </Avatar>
       <Typography variant="h6" sx={{ fontWeight: 700 }} color="text.secondary">
-        {filtersActive ? "No categories match these filters" : "No categories yet"}
+        {filtersActive ? t("emptyState.noMatchTitle") : t("emptyState.noCategoriesTitle")}
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2 }}>
-        {filtersActive
-          ? "Try clearing filters or adjusting your search."
-          : 'Click "Add Category" to create your first one.'}
+        {filtersActive ? t("emptyState.noMatchDesc") : t("emptyState.noCategoriesDesc")}
       </Typography>
       {filtersActive && (
         <Button
@@ -91,7 +88,7 @@ function EmptyState({
           onClick={handleClearFilters}
           sx={{ fontWeight: 700, borderRadius: 2, textTransform: "none" }}
         >
-          Clear filters
+          {t("emptyState.clearFiltersBtn")}
         </Button>
       )}
     </Box>
@@ -111,16 +108,12 @@ export default function AdminCategoriesPage() {
   const [summaryLoading, setSummaryLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [formOpen, setFormOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "success" | "error" }>({
     open: false,
     message: "",
     severity: "success",
   });
 
-  // Filters & Pagination State
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [status, setStatus] = useState("");
@@ -131,7 +124,6 @@ export default function AdminCategoriesPage() {
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Debounce effect
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(search);
@@ -142,7 +134,6 @@ export default function AdminCategoriesPage() {
     };
   }, [search]);
 
-  // Fetch summary stats
   const fetchSummary = useCallback(async () => {
     try {
       setSummaryLoading(true);
@@ -155,7 +146,6 @@ export default function AdminCategoriesPage() {
     }
   }, []);
 
-  // Fetch paginated categories
   const fetchCategories = useCallback(async () => {
     try {
       setLoading(true);
@@ -207,41 +197,6 @@ export default function AdminCategoriesPage() {
     }
   };
 
-  const handleEdit = (dto: AdminCategoryListDto) => {
-    const category: Category = {
-      id: dto.id,
-      name: dto.name,
-      description: dto.description,
-      commissionPercentage: dto.commissionPercentage,
-      isActive: dto.isActive,
-      vehicleCount: dto.vehicleCount,
-      activeOffer:
-        dto.offerStatus === "Active"
-          ? {
-              offerName: dto.offerName || "Special Offer",
-              discountPercentage: dto.offerPercentage || 0,
-              startDate: new Date().toISOString(),
-              endDate: dto.offerEndDate || new Date().toISOString(),
-              isActive: true,
-            }
-          : null,
-    };
-    setEditingCategory(category);
-    setFormOpen(true);
-  };
-
-  const handleCreate = () => {
-    setEditingCategory(null);
-    setFormOpen(true);
-  };
-
-  const handleFormSuccess = () => {
-    setFormOpen(false);
-    void fetchSummary();
-    void fetchCategories();
-    setSnackbar({ open: true, message: t("alerts.saveSuccess"), severity: "success" });
-  };
-
   const filtersActive = Boolean(debouncedSearch || status || offer);
   const handleClearFilters = () => {
     setSearch("");
@@ -259,7 +214,6 @@ export default function AdminCategoriesPage() {
     return Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
   };
 
-  // Summary card color resolution with proper typing
   const resolvePaletteColor = useMemo(
     () => (color: string) => {
       const isPaletteColor = color in theme.palette;
@@ -276,7 +230,6 @@ export default function AdminCategoriesPage() {
         </Typography>
       </Stack>
 
-      {/* Summary Cards */}
       <Box
         sx={{
           display: "grid",
@@ -289,20 +242,25 @@ export default function AdminCategoriesPage() {
         {[
           {
             icon: <CategoryIcon fontSize="small" />,
-            label: "Categories",
+            label: t("summaryCards.categories"),
             value: summary?.totalCategories ?? 0,
             color: "primary",
           },
-          { icon: <CarIcon fontSize="small" />, label: "Vehicles", value: summary?.totalVehicles ?? 0, color: "info" },
+          {
+            icon: <CarIcon fontSize="small" />,
+            label: t("summaryCards.vehicles"),
+            value: summary?.totalVehicles ?? 0,
+            color: "info",
+          },
           {
             icon: <OfferIcon fontSize="small" />,
-            label: "With Offers",
+            label: t("summaryCards.withOffers"),
             value: summary?.categoriesWithOffers ?? 0,
             color: "warning",
           },
           {
             icon: <CommissionIcon fontSize="small" />,
-            label: "Avg Commission",
+            label: t("summaryCards.avgCommission"),
             value: summaryLoading ? "..." : `${Math.round(summary?.averageCommission ?? 0)}%`,
             color: "success",
           },
@@ -362,7 +320,7 @@ export default function AdminCategoriesPage() {
                     }}
                     noWrap
                   >
-                    {summaryLoading && card.label !== "Avg Commission" ? "..." : card.value}
+                    {summaryLoading && card.label !== t("summaryCards.avgCommission") ? "..." : card.value}
                   </Typography>
                 </Box>
               </Stack>
@@ -371,7 +329,6 @@ export default function AdminCategoriesPage() {
         })}
       </Box>
 
-      {/* Toolbar */}
       <Stack
         direction={{ xs: "column", lg: "row" }}
         spacing={2}
@@ -380,7 +337,7 @@ export default function AdminCategoriesPage() {
         <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ flexGrow: 1, flexWrap: "wrap" }}>
           <TextField
             size="small"
-            placeholder="Search categories..."
+            placeholder={t("toolbar.searchPlaceholder")}
             value={search}
             onChange={e => {
               setSearch(e.target.value);
@@ -399,7 +356,7 @@ export default function AdminCategoriesPage() {
           <TextField
             select
             size="small"
-            label="Status"
+            label={t("toolbar.statusLabel")}
             value={status}
             onChange={e => {
               setStatus(e.target.value);
@@ -407,14 +364,14 @@ export default function AdminCategoriesPage() {
             }}
             sx={{ width: { xs: "100%", sm: 150 } }}
           >
-            <MenuItem value="">All Statuses</MenuItem>
-            <MenuItem value="Active">Active</MenuItem>
-            <MenuItem value="Inactive">Inactive</MenuItem>
+            <MenuItem value="">{t("toolbar.allStatuses")}</MenuItem>
+            <MenuItem value="Active">{t("table.statusActive")}</MenuItem>
+            <MenuItem value="Inactive">{t("table.statusInactive")}</MenuItem>
           </TextField>
           <TextField
             select
             size="small"
-            label="Offer"
+            label={t("toolbar.offerLabel")}
             value={offer}
             onChange={e => {
               setOffer(e.target.value);
@@ -422,15 +379,15 @@ export default function AdminCategoriesPage() {
             }}
             sx={{ width: { xs: "100%", sm: 150 } }}
           >
-            <MenuItem value="">All Offers</MenuItem>
-            <MenuItem value="Active Offer">Active Offer</MenuItem>
-            <MenuItem value="Expired Offer">Expired Offer</MenuItem>
-            <MenuItem value="No Offer">No Offer</MenuItem>
+            <MenuItem value="">{t("toolbar.allOffers")}</MenuItem>
+            <MenuItem value="Active Offer">{t("toolbar.activeOffer")}</MenuItem>
+            <MenuItem value="Expired Offer">{t("toolbar.expiredOffer")}</MenuItem>
+            <MenuItem value="No Offer">{t("toolbar.noOffer")}</MenuItem>
           </TextField>
           <TextField
             select
             size="small"
-            label="Sort By"
+            label={t("toolbar.sortByLabel")}
             value={sortBy}
             onChange={e => {
               setSortBy(e.target.value);
@@ -438,17 +395,19 @@ export default function AdminCategoriesPage() {
             }}
             sx={{ width: { xs: "100%", sm: 160 } }}
           >
-            <MenuItem value="Name A-Z">Name A-Z</MenuItem>
-            <MenuItem value="Name Z-A">Name Z-A</MenuItem>
-            <MenuItem value="Vehicles Count">Vehicles Count</MenuItem>
-            <MenuItem value="Commission">Commission</MenuItem>
-            <MenuItem value="Created Date">Created Date</MenuItem>
+            <MenuItem value="Name A-Z">{t("toolbar.sortNameAZ")}</MenuItem>
+            <MenuItem value="Name Z-A">{t("toolbar.sortNameZA")}</MenuItem>
+            <MenuItem value="Vehicles Count">{t("toolbar.sortVehiclesCount")}</MenuItem>
+            <MenuItem value="Commission">{t("toolbar.sortCommission")}</MenuItem>
+            <MenuItem value="Created Date">{t("toolbar.sortCreatedDate")}</MenuItem>
           </TextField>
         </Stack>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={handleCreate}
+          onClick={() => {
+            router.push("/admin/categories/create");
+          }}
           sx={{ borderRadius: 2, textTransform: "none", fontWeight: 700, flexShrink: 0 }}
         >
           {t("addCategory")}
@@ -493,7 +452,7 @@ export default function AdminCategoriesPage() {
           <TableContainer sx={{ opacity: loading ? 0.6 : 1, transition: "opacity 0.15s ease" }}>
             <Table>
               <TableHead>
-                <TableRow sx={{ bgcolor: t => alpha(t.palette.primary.main, 0.04) }}>
+                <TableRow sx={{ bgcolor: theme => alpha(theme.palette.primary.main, 0.04) }}>
                   <TableCell>{t("table.headers.name")}</TableCell>
                   <TableCell>{t("table.headers.commission")}</TableCell>
                   <TableCell>{t("table.headers.vehicles")}</TableCell>
@@ -510,13 +469,13 @@ export default function AdminCategoriesPage() {
                       <TableRow
                         key={c.id}
                         hover
+                        onClick={() => {
+                          router.push(`/admin/vehicles?categoryId=${c.id}`);
+                        }}
                         sx={{
                           cursor: "pointer",
                           transition: "background 0.15s",
                           "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.03) },
-                        }}
-                        onClick={() => {
-                          router.push(`/admin/categories/${c.id}`);
                         }}
                       >
                         <TableCell>
@@ -587,7 +546,7 @@ export default function AdminCategoriesPage() {
                         </TableCell>
                         <TableCell>
                           <Chip
-                            label={`${c.vehicleCount} Vehicles`}
+                            label={`${c.vehicleCount} ${t("table.headers.vehicles")}`}
                             size="small"
                             sx={{
                               bgcolor: alpha(theme.palette.info.main, 0.1),
@@ -598,9 +557,9 @@ export default function AdminCategoriesPage() {
                         </TableCell>
                         <TableCell>
                           {c.offerStatus === "Active" ? (
-                            <Tooltip title={`Ends in ${daysRemaining} days`}>
+                            <Tooltip title={t("table.offerEndsIn", { days: daysRemaining })}>
                               <Chip
-                                label={`${c.offerPercentage}% - Ends in ${daysRemaining} days`}
+                                label={`${c.offerPercentage}% - ${t("table.offerEndsIn", { days: daysRemaining })}`}
                                 size="small"
                                 sx={{
                                   bgcolor: alpha(theme.palette.warning.main, 0.15),
@@ -611,7 +570,7 @@ export default function AdminCategoriesPage() {
                             </Tooltip>
                           ) : c.offerStatus === "Expired" ? (
                             <Chip
-                              label="Expired Offer"
+                              label={t("table.expiredOffer")}
                               size="small"
                               sx={{
                                 bgcolor: alpha(theme.palette.text.disabled, 0.15),
@@ -621,7 +580,7 @@ export default function AdminCategoriesPage() {
                             />
                           ) : (
                             <Chip
-                              label="No Offer"
+                              label={t("table.offerNone")}
                               size="small"
                               sx={{
                                 bgcolor: alpha(theme.palette.text.disabled, 0.1),
@@ -636,7 +595,8 @@ export default function AdminCategoriesPage() {
                             label={c.isActive ? t("table.statusActive") : t("table.statusInactive")}
                             size="small"
                             sx={{
-                              bgcolor: t => alpha(c.isActive ? t.palette.success.main : t.palette.text.disabled, 0.15),
+                              bgcolor: theme =>
+                                alpha(c.isActive ? theme.palette.success.main : theme.palette.text.disabled, 0.15),
                               color: c.isActive ? "success.main" : "text.secondary",
                               fontWeight: 700,
                             }}
@@ -644,7 +604,7 @@ export default function AdminCategoriesPage() {
                         </TableCell>
                         <TableCell align="right">
                           <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end" }}>
-                            <Tooltip title={t("actions.edit")}>
+                            <Tooltip title={t("actions.viewDetails")}>
                               <IconButton
                                 size="small"
                                 onClick={e => {
@@ -660,7 +620,7 @@ export default function AdminCategoriesPage() {
                                 size="small"
                                 onClick={e => {
                                   e.stopPropagation();
-                                  handleEdit(c);
+                                  router.push(`/admin/categories/${c.id}/edit`);
                                 }}
                               >
                                 <EditIcon fontSize="small" />
@@ -691,7 +651,7 @@ export default function AdminCategoriesPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={6} align="center" sx={{ py: 0 }}>
-                      <EmptyState filtersActive={filtersActive} handleClearFilters={handleClearFilters} />
+                      <EmptyState filtersActive={filtersActive} handleClearFilters={handleClearFilters} t={t} />
                     </TableCell>
                   </TableRow>
                 )}
@@ -700,7 +660,6 @@ export default function AdminCategoriesPage() {
           </TableContainer>
         )}
 
-        {/* Pagination */}
         <Stack
           direction={{ xs: "column", sm: "row" }}
           sx={{
@@ -713,7 +672,7 @@ export default function AdminCategoriesPage() {
           }}
         >
           <Typography variant="caption" color="text.secondary">
-            Showing <strong>{categories.length}</strong> of {totalCount} categories
+            {t("pagination.showing", { count: categories.length, total: totalCount })}
           </Typography>
           <Pagination
             count={totalPages}
@@ -726,17 +685,6 @@ export default function AdminCategoriesPage() {
           />
         </Stack>
       </Paper>
-
-      {formOpen && (
-        <CategoryForm
-          open={formOpen}
-          category={editingCategory}
-          onClose={() => {
-            setFormOpen(false);
-          }}
-          onSuccess={handleFormSuccess}
-        />
-      )}
 
       <Snackbar
         open={snackbar.open}

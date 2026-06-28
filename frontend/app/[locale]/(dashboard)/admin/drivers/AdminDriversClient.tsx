@@ -28,6 +28,7 @@ import { useTheme } from "@mui/material/styles";
 import { useRouter } from "@/shared/i18n/routing";
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
+import { useTranslations } from "next-intl";
 
 interface DriverListItem {
   driverProfileId: string;
@@ -68,6 +69,26 @@ export default function AdminDriversClient() {
   const router = useRouter();
   const token = session?.accessToken;
 
+  const t = useTranslations("dashboardAdmin.drivers");
+  const getStatusFilterLabel = (status: string) => {
+    switch (status) {
+      case "All":
+        return t("statuses.all");
+      case "Incomplete":
+        return t("statuses.incomplete");
+      case "PendingVerification":
+        return t("statuses.pendingVerification");
+      case "Verified":
+        return t("statuses.verified");
+      case "Rejected":
+        return t("statuses.rejected");
+      case "Suspended":
+        return t("statuses.suspended");
+      default:
+        return status;
+    }
+  };
+
   const [tab, setTab] = useState(0); // 0 = All, 1 = Pending
   const [statusFilter, setStatusFilter] = useState("All");
   const [search, setSearch] = useState("");
@@ -92,7 +113,7 @@ export default function AdminDriversClient() {
       setDrivers((await res.json()) as DriverListItem[]);
     } catch (err) {
       logger.error("Error loading admin drivers", err);
-      setError("Could not load drivers.");
+      setError(t("errorLoad"));
     } finally {
       setIsLoading(false);
     }
@@ -116,10 +137,10 @@ export default function AdminDriversClient() {
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <Typography variant="h4" component="h1" sx={{ fontWeight: 800, mb: 1 }}>
-        Driver Management
+        {t("title")}
       </Typography>
       <Typography color="text.secondary" sx={{ mb: 3 }}>
-        Review driver documents, verify, approve or reject applications, and enable or disable accounts.
+        {t("subtitle")}
       </Typography>
 
       <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
@@ -130,15 +151,15 @@ export default function AdminDriversClient() {
           }}
           aria-label="driver tabs"
         >
-          <Tab label="All Drivers" />
-          <Tab label="Pending Verification" />
+          <Tab label={t("tabs.allDrivers")} />
+          <Tab label={t("tabs.pendingVerification")} />
         </Tabs>
       </Box>
 
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>
         <TextField
           size="small"
-          label="Search by name, email or phone"
+          label={t("searchPlaceholder")}
           value={search}
           onChange={e => {
             setSearch(e.target.value);
@@ -149,7 +170,7 @@ export default function AdminDriversClient() {
           <TextField
             size="small"
             select
-            label="Status"
+            label={t("status")}
             value={statusFilter}
             onChange={e => {
               setStatusFilter(e.target.value);
@@ -158,7 +179,7 @@ export default function AdminDriversClient() {
           >
             {STATUS_FILTERS.map(s => (
               <MenuItem key={s} value={s}>
-                {s}
+                {getStatusFilterLabel(s)}
               </MenuItem>
             ))}
           </TextField>
@@ -181,7 +202,7 @@ export default function AdminDriversClient() {
           sx={{ p: 8, textAlign: "center", borderRadius: 2, border: `1px dashed ${theme.palette.divider}` }}
         >
           <Typography variant="h6" color="text.secondary">
-            No drivers found
+            {t("noDrivers")}
           </Typography>
         </Paper>
       ) : (
@@ -193,14 +214,14 @@ export default function AdminDriversClient() {
           <Table sx={{ minWidth: 800 }}>
             <TableHead sx={{ bgcolor: "background.default" }}>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700 }}>Driver</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Email</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Availability</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Rating</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Active</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{t("table.driver")}</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{t("table.email")}</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{t("table.status")}</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{t("table.availability")}</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{t("table.rating")}</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{t("table.active")}</TableCell>
                 <TableCell align="right" sx={{ fontWeight: 700 }}>
-                  Actions
+                  {t("table.actions")}
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -210,7 +231,12 @@ export default function AdminDriversClient() {
                   <TableCell sx={{ fontWeight: 600 }}>{fullName(d)}</TableCell>
                   <TableCell>{d.email || "—"}</TableCell>
                   <TableCell>
-                    <Chip label={d.status} color={statusColor(d.status)} size="small" sx={{ fontWeight: 700 }} />
+                    <Chip
+                      label={getStatusFilterLabel(d.status)}
+                      color={statusColor(d.status)}
+                      size="small"
+                      sx={{ fontWeight: 700 }}
+                    />
                   </TableCell>
                   <TableCell>{d.availability}</TableCell>
                   <TableCell>
@@ -223,7 +249,7 @@ export default function AdminDriversClient() {
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={d.isActive ? "Active" : "Disabled"}
+                      label={d.isActive ? t("table.activeStatus") : t("table.disabledStatus")}
                       color={d.isActive ? "success" : "default"}
                       size="small"
                     />
@@ -236,7 +262,7 @@ export default function AdminDriversClient() {
                         router.push(`/admin/drivers/${d.driverProfileId}`);
                       }}
                     >
-                      View
+                      {t("table.view")}
                     </Button>
                   </TableCell>
                 </TableRow>

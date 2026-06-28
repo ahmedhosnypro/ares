@@ -1,0 +1,63 @@
+import type { InspectorInspectionDetailLabels } from "../../../types/dashboard/inspector/inspection-detail";
+
+const inspectionDetail: InspectorInspectionDetailLabels = {
+  errors: {
+    accessDenied: "ليس لديك صلاحية الوصول إلى هذا الفحص.",
+    notFound: "الفحص غير موجود.",
+    failedToLoad: "فشل تحميل تفاصيل الفحص.",
+    maxImages: "الحد الأقصى المسموح به {max} صور",
+    selectDecision: "يرجى تحديد قرار الفحص (قبول أو رفض)",
+    provideNotes: "يرجى تقديم ملاحظات الفحص",
+    enterOdometer: "يرجى إدخال قراءة صحيحة لعداد المسافات",
+    photoRequired: "يلزم تحميل صورة واحدة على الأقل ({min})",
+    submitFailed: "فشل تقديم التقرير. يرجى المحاولة مرة أخرى.",
+  },
+  success: {
+    submitted: "تم تقديم الفحص بنجاح",
+  },
+  actions: {
+    goBack: "العودة",
+    cancel: "إلغاء",
+    confirmSubmit: "تأكيد وتقديم",
+    uploadPhotos: "تحميل الصور",
+    submitFinalReport: "تقديم التقرير النهائي",
+    approveVehicle: "موافقة على المركبة",
+    rejectVehicle: "رفض المركبة",
+  },
+  labels: {
+    notFound: "غير موجود",
+    title: "تقرير الفحص",
+    subtitle: "مراجعة التفاصيل والتقديم للحجز رقم #{bookingNumber}",
+    dialogTitle: "تقديم تقرير الفحص؟",
+    dialogText:
+      "أنت على وشك تحديد حالة هذه المركبة كـ <bold>{decision}</bold>. هذا الإجراء نهائي وسيتم إخطار الأطراف المعنية.",
+    detailsTitle: "التفاصيل",
+    bookingNumber: "رقم الحجز",
+    vehicle: "المركبة",
+    assignedTo: "مُسند إلى",
+    scheduledDate: "التاريخ المجدول",
+    submittedAt: "تاريخ التقديم",
+    lockedAlert: "تم تقديم تقرير الفحص هذا وتم قفله من التعديل.",
+    vehicleMetrics: "مقاييس المركبة",
+    odometerReading: "قراءة عداد المسافات",
+    odometerPlaceholder: "مثال: 45000",
+    odometerUnit: "كم",
+    fuelLevel: "مستوى الوقود: {level}%",
+    fuelMarksE: "ف",
+    fuelMarksHalf: "١/٢",
+    fuelMarksF: "م",
+    visualEvidence: "الأدلة المرئية ({count}/{max})",
+    noPhotos: "لا توجد صور مقدمة",
+    uploadTitle: "تحميل صور الفحص",
+    uploadSubtitle: "اسحب وأسقط أو انقر للتصفح (الحد الأدنى {min}، الحد الأقصى {max})",
+    imageAltText: "فحص",
+    conditionTitle: "الحالة والملاحظات",
+    damageReport: "تقرير الأضرار / الحالة العامة (اختياري)",
+    damagePlaceholder: "اذكر أي أضرار مرئية، خدوش، أو ملاحظات على الحالة العامة...",
+    finalNotes: "الملاحظات النهائية للفحص (مطلوب)",
+    finalNotesPlaceholder: "ملاحظات تفصيلية لدعم قرارك النهائي...",
+    finalDecision: "القرار النهائي",
+  },
+};
+
+export default inspectionDetail;

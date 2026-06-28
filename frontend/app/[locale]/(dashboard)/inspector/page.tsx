@@ -19,7 +19,7 @@ import TodayTasksList from "./_components/TodayTasksList";
 
 export default function InspectorDashboardPage() {
   const theme = useTheme();
-  const t = useTranslations("dashboard.inspectorInspections");
+  const t = useTranslations("dashboardInspector.inspections");
   const [tasks, setTasks] = useState<InspectorTask[]>([]);
   const [stats, setStats] = useState<InspectorTodayStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,32 +43,32 @@ export default function InspectorDashboardPage() {
 
   const dashboardStats = [
     {
-      label: t("stats.checkOuts"),
+      label: t("checkOuts"),
       value: stats?.checkOutsCount ?? 0,
       color: "success",
       icon: <DirectionsCarIcon fontSize="small" />,
-      subtitle: t("stats.checkOutsSubtitle"),
+      subtitle: t("checkOutsSubtitle"),
     },
     {
-      label: t("stats.checkIns"),
+      label: t("checkIns"),
       value: stats?.checkInsCount ?? 0,
       color: "error",
       icon: <CarRepairIcon fontSize="small" />,
-      subtitle: t("stats.checkInsSubtitle"),
+      subtitle: t("checkInsSubtitle"),
     },
     {
-      label: t("stats.overdueTasks"),
+      label: t("overdue"),
       value: stats?.overdueCount ?? 0,
       color: "warning",
       icon: <WarningAmberIcon fontSize="small" />,
-      subtitle: t("stats.overdueTasksSubtitle"),
+      subtitle: t("overdueSubtitle"),
     },
     {
-      label: t("stats.completedToday"),
+      label: t("completedToday"),
       value: stats?.completedTodayCount ?? 0,
       color: "info",
       icon: <CheckCircleOutlinedIcon fontSize="small" />,
-      subtitle: t("stats.completedTodaySubtitle"),
+      subtitle: t("completedTodaySubtitle"),
     },
   ];
 
@@ -77,10 +77,10 @@ export default function InspectorDashboardPage() {
       {/* Page header */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" sx={{ fontWeight: 800 }}>
-          {t("page.title")}
+          {t("title")}
         </Typography>
         <Typography sx={{ color: "text.secondary" }} variant="body2">
-          {t("page.subtitle")}
+          {t("description")}
         </Typography>
       </Box>
 
@@ -101,10 +101,10 @@ export default function InspectorDashboardPage() {
       >
         <Box sx={{ mb: 2.5 }}>
           <Typography variant="h6" sx={{ fontWeight: 800 }}>
-            {t("page.todayTasksTitle")}
+            {t("sectionTitle")}
           </Typography>
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            {t("page.todayTasksSubtitle")}
+            {t("sectionSubtitle")}
           </Typography>
         </Box>
 

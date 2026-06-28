@@ -31,6 +31,7 @@ import {
   type SelectChangeEvent,
 } from "@mui/material";
 import { Link } from "@/shared/i18n/routing";
+import { useTranslations } from "next-intl";
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityOutlinedIcon from "@mui/icons-material/LaunchOutlined";
 import BlockIcon from "@mui/icons-material/Block";
@@ -45,6 +46,7 @@ import VehicleStats from "@/app/[locale]/(dashboard)/_components/VehicleStats";
 export default function InspectorsPage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const t = useTranslations("dashboardAdmin.inspectors");
 
   const [inspectors, setInspectors] = useState<Inspector[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,7 +66,7 @@ export default function InspectorsPage() {
       setInspectors(data);
     } catch (err) {
       logger.error("Failed to load inspectors", err);
-      setToast({ open: true, severity: "error", message: "Failed to load inspectors" });
+      setToast({ open: true, severity: "error", message: t("alerts.loadError") });
     } finally {
       setLoading(false);
     }
@@ -97,25 +99,25 @@ export default function InspectorsPage() {
   const inspectorStatsItems = useMemo(
     () => [
       {
-        label: "Total Inspectors",
+        label: t("stats.totalInspectors"),
         value: stats.total,
         color: "primary",
         icon: <PeopleIcon fontSize="small" />,
       },
       {
-        label: "Active",
+        label: t("stats.active"),
         value: stats.active,
         color: "success",
         icon: <CheckCircleIcon fontSize="small" />,
       },
       {
-        label: "Disabled",
+        label: t("stats.disabled"),
         value: stats.inactive,
         color: "error",
         icon: <BlockIcon fontSize="small" />,
       },
     ],
-    [stats]
+    [stats, t]
   );
 
   const handleToggleActive = (inspector: Inspector) => {
@@ -128,12 +130,12 @@ export default function InspectorsPage() {
         setToast({
           open: true,
           severity: "success",
-          message: `Inspector ${!inspector.isActive ? "enabled" : "disabled"} successfully`,
+          message: !inspector.isActive ? t("alerts.enabledSuccess") : t("alerts.disabledSuccess"),
         });
         await fetchInspectors();
       } catch (err) {
         logger.error("Toggle inspector failed", err);
-        setToast({ open: true, severity: "error", message: "Failed to update inspector status" });
+        setToast({ open: true, severity: "error", message: t("alerts.updateStatusError") });
       }
     })();
   };
@@ -147,10 +149,10 @@ export default function InspectorsPage() {
       >
         <Box>
           <Typography variant="h4" sx={{ fontWeight: 800, fontSize: { xs: "1.5rem", sm: "2rem", md: "2.125rem" } }}>
-            Inspectors Management
+            {t("title")}
           </Typography>
           <Typography color="text.secondary" variant="body2">
-            Provision and manage the pool of vehicle inspectors.
+            {t("subtitle")}
           </Typography>
         </Box>
         <Button
@@ -171,7 +173,7 @@ export default function InspectorsPage() {
             width: { xs: "100%", sm: "auto" },
           }}
         >
-          Add Inspector
+          {t("addInspectorBtn")}
         </Button>
       </Stack>
 
@@ -194,7 +196,7 @@ export default function InspectorsPage() {
         <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
           <TextField
             fullWidth
-            placeholder="Search by name, email or employee code..."
+            placeholder={t("searchPlaceholder")}
             value={search}
             onChange={e => {
               setSearch(e.target.value);
@@ -220,9 +222,9 @@ export default function InspectorsPage() {
               displayEmpty
               sx={{ borderRadius: 2, bgcolor: "background.default" }}
             >
-              <MenuItem value="all">All Status</MenuItem>
-              <MenuItem value="active">Active</MenuItem>
-              <MenuItem value="inactive">Disabled</MenuItem>
+              <MenuItem value="all">{t("statusAll")}</MenuItem>
+              <MenuItem value="active">{t("statusActive")}</MenuItem>
+              <MenuItem value="inactive">{t("statusDisabled")}</MenuItem>
             </Select>
           </FormControl>
         </Stack>
@@ -247,13 +249,13 @@ export default function InspectorsPage() {
           <Table>
             <TableHead sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700 }}>Inspector</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Contact</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Employee Code</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Availability</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{t("table.inspector")}</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{t("table.contact")}</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{t("table.employeeCode")}</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{t("table.availability")}</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{t("table.status")}</TableCell>
                 <TableCell align="right" sx={{ fontWeight: 700 }}>
-                  Actions
+                  {t("table.actions")}
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -294,7 +296,7 @@ export default function InspectorsPage() {
                     </TableCell>
                     <TableCell>
                       <Chip
-                        label={i.isAvailable ? "Available" : "Unavailable"}
+                        label={i.isAvailable ? t("table.available") : t("table.unavailable")}
                         size="small"
                         sx={{
                           bgcolor: i.isAvailable
@@ -307,7 +309,7 @@ export default function InspectorsPage() {
                     </TableCell>
                     <TableCell>
                       <Chip
-                        label={i.isActive ? "Active" : "Disabled"}
+                        label={i.isActive ? t("table.activeStatus") : t("table.disabledStatus")}
                         size="small"
                         sx={{
                           bgcolor: i.isActive
@@ -320,12 +322,12 @@ export default function InspectorsPage() {
                     </TableCell>
                     <TableCell align="right">
                       <Stack direction="row" spacing={0.5} sx={{ justifyContent: "flex-end" }}>
-                        <Tooltip title="View Details">
+                        <Tooltip title={t("table.viewDetails")}>
                           <IconButton component={Link} href={`/admin/inspectors/${i.inspectorId}`} size="small">
                             <VisibilityOutlinedIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title={i.isActive ? "Disable" : "Enable"}>
+                        <Tooltip title={i.isActive ? t("table.disable") : t("table.enable")}>
                           <IconButton
                             size="small"
                             onClick={() => {
@@ -352,7 +354,7 @@ export default function InspectorsPage() {
           setAddOpen(false);
         }}
         onCreated={() => {
-          setToast({ open: true, severity: "success", message: "Inspector created successfully" });
+          setToast({ open: true, severity: "success", message: t("alerts.createSuccess") });
           void fetchInspectors();
         }}
       />
@@ -374,14 +376,15 @@ export default function InspectorsPage() {
 }
 
 function EmptyState() {
+  const t = useTranslations("dashboardAdmin.inspectors");
   return (
     <Box sx={{ textAlign: "center", opacity: 0.6, py: 4 }}>
       <SearchIcon sx={{ fontSize: 60, mb: 2, color: "text.disabled" }} />
       <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 700 }}>
-        No inspectors found
+        {t("emptyTitle")}
       </Typography>
       <Typography variant="body2" color="text.disabled">
-        Try changing your filters or add a new inspector.
+        {t("emptySubtitle")}
       </Typography>
     </Box>
   );
@@ -395,6 +398,7 @@ function InspectorMobileCard({
   readonly onToggle: (i: Inspector) => void;
 }) {
   const theme = useTheme();
+  const t = useTranslations("dashboardAdmin.inspectors");
   return (
     <Paper
       elevation={0}
@@ -416,7 +420,7 @@ function InspectorMobileCard({
           </Box>
         </Stack>
         <Chip
-          label={inspector.isActive ? "Active" : "Disabled"}
+          label={inspector.isActive ? t("table.activeStatus") : t("table.disabledStatus")}
           size="small"
           sx={{
             bgcolor: inspector.isActive
@@ -428,10 +432,10 @@ function InspectorMobileCard({
         />
       </Stack>
       <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
-        Code: <strong>{inspector.employeeCode}</strong>
+        {t("mobile.codeLabel")}: <strong>{inspector.employeeCode}</strong>
       </Typography>
       <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
-        Phone: <strong>{inspector.phoneNumber || "—"}</strong>
+        {t("mobile.phoneLabel")}: <strong>{inspector.phoneNumber || "—"}</strong>
       </Typography>
       <Stack direction="row" spacing={1}>
         <IconButton component={Link} href={`/admin/inspectors/${inspector.inspectorId}`} size="small">

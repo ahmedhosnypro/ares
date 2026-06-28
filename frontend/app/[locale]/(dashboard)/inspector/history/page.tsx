@@ -169,9 +169,8 @@ async function mockFetchPaginatedData(
 
 export default function InspectionHistoryPage() {
   const theme = useTheme();
+  const t = useTranslations("dashboardInspector.history");
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const t = useTranslations("dashboard.inspectorHistory");
-  const tc = useTranslations("common");
   const [items, setItems] = useState<InspectionSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -235,7 +234,7 @@ export default function InspectionHistoryPage() {
             <Box sx={{ flexGrow: 1 }}>
               <TextField
                 fullWidth
-                placeholder={t("search.placeholder")}
+                placeholder={t("searchPlaceholder")}
                 value={search}
                 onChange={e => {
                   setSearch(e.target.value);
@@ -256,13 +255,13 @@ export default function InspectionHistoryPage() {
             <Box sx={{ minWidth: { xs: "100%", md: 240 } }}>
               <FormControl fullWidth>
                 <InputLabel id="status-filter-label" sx={{ color: "text.secondary" }}>
-                  {t("filter.statusLabel")}
+                  {t("filterStatusLabel")}
                 </InputLabel>
                 <Select
                   labelId="status-filter-label"
                   id="status-filter"
                   value={statusFilter}
-                  label={t("filter.statusLabel")}
+                  label={t("filterStatusLabel")}
                   onChange={(e: SelectChangeEvent) => {
                     setStatusFilter(e.target.value);
                     setPage(1);
@@ -274,10 +273,10 @@ export default function InspectionHistoryPage() {
                   }
                   sx={{ borderRadius: 2, bgcolor: "background.default" }}
                 >
-                  <MenuItem value="All">{t("filter.allStatuses")}</MenuItem>
-                  <MenuItem value="Approved">{t("filter.approved")}</MenuItem>
-                  <MenuItem value="Rejected">{t("filter.rejected")}</MenuItem>
-                  <MenuItem value="Pending">{t("filter.pending")}</MenuItem>
+                  <MenuItem value="All">{t("filterAllStatuses")}</MenuItem>
+                  <MenuItem value="Approved">{t("status.approved")}</MenuItem>
+                  <MenuItem value="Rejected">{t("status.rejected")}</MenuItem>
+                  <MenuItem value="Pending">{t("status.pending")}</MenuItem>
                 </Select>
               </FormControl>
             </Box>
@@ -305,10 +304,10 @@ export default function InspectionHistoryPage() {
             }}
           >
             <Typography variant="h6" sx={{ fontWeight: 700 }}>
-              {t("emptySearch.title")}
+              {t("noResults.title")}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {t("emptySearch.description")}
+              {t("noResults.description")}
             </Typography>
           </Paper>
         ) : (
@@ -325,10 +324,10 @@ export default function InspectionHistoryPage() {
           >
             <HistoryIcon sx={{ fontSize: 60, mb: 2, color: "text.disabled" }} />
             <Typography variant="h6" sx={{ fontWeight: 800 }}>
-              {t("emptyState.title")}
+              {t("emptyHistory.title")}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {t("emptyState.description")}
+              {t("emptyHistory.description")}
             </Typography>
           </Paper>
         )
@@ -357,11 +356,11 @@ export default function InspectionHistoryPage() {
               </Typography>
               <Stack spacing={0.5} sx={{ mb: 2 }}>
                 <Typography variant="caption" color="text.secondary">
-                  {t("mobileCard.photos", { count: i.imageCount })}
+                  {t("mobileCard.photosCount", { count: i.imageCount })}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   {i.submittedAt
-                    ? t("mobileCard.submittedDate", { date: new Date(i.submittedAt).toLocaleString() })
+                    ? t("mobileCard.submittedAt", { date: new Date(i.submittedAt).toLocaleString() })
                     : t("mobileCard.submittedFallback")}
                 </Typography>
               </Stack>
@@ -387,9 +386,9 @@ export default function InspectionHistoryPage() {
                 <TableCell sx={{ fontWeight: 700 }}>{t("table.vehicle")}</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>{t("table.submittedAt")}</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>{t("table.photos")}</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>{tc("status")}</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{t("table.status")}</TableCell>
                 <TableCell align="right" sx={{ fontWeight: 700 }}>
-                  {tc("actions")}
+                  {t("table.action")}
                 </TableCell>
               </TableRow>
             </TableHead>

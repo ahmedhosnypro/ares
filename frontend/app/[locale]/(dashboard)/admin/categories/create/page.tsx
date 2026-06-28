@@ -21,8 +21,7 @@ import {
 import Grid from "@mui/material/Grid";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import SaveIcon from "@mui/icons-material/Save";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Link, useRouter } from "@/shared/i18n/routing";
 import { createCategory } from "@/api-clients/categories/categories";
 
 export default function CreateCategoryPage() {

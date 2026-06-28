@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "@/shared/i18n/routing";
+import { useTranslations } from "next-intl";
 import {
   Box,
   Typography,
@@ -57,6 +58,8 @@ const PHONE_COUNTRY_CODES = [
 export default function CreateSupplierPage() {
   const router = useRouter();
   const theme = useTheme();
+  const t = useTranslations("dashboardAdmin.users");
+  const tc = useTranslations("common");
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -100,18 +103,14 @@ export default function CreateSupplierPage() {
   };
 
   const completenessItems = [
-    { label: "Status selected", done: Boolean(form.status) },
-    { label: "Email missing", done: Boolean(form.email), missingLabel: "Email missing" },
-    { label: "Password missing", done: Boolean(form.password), missingLabel: "Password missing" },
-    { label: "Company missing", done: Boolean(form.companyName), missingLabel: "Company name missing" },
-    { label: "CRN missing", done: Boolean(form.commercialRegistrationNumber), missingLabel: "CRN missing" },
-    { label: "Tax ID missing", done: Boolean(form.taxId), missingLabel: "Tax ID missing" },
-    {
-      label: "Rep name missing",
-      done: Boolean(form.firstName && form.lastName),
-      missingLabel: "Representative name missing",
-    },
-    { label: "Phone missing", done: Boolean(form.phoneNumber), missingLabel: "Phone number missing" },
+    { label: t("form.completenessItems.statusSelected"), done: Boolean(form.status) },
+    { label: t("form.completenessItems.emailMissing"), done: Boolean(form.email) },
+    { label: t("form.completenessItems.passwordMissing"), done: Boolean(form.password) },
+    { label: t("form.completenessItems.companyMissing"), done: Boolean(form.companyName) },
+    { label: t("form.completenessItems.crnMissing"), done: Boolean(form.commercialRegistrationNumber) },
+    { label: t("form.completenessItems.taxIdMissing"), done: Boolean(form.taxId) },
+    { label: t("form.completenessItems.repNameMissing"), done: Boolean(form.firstName && form.lastName) },
+    { label: t("form.completenessItems.phoneMissing"), done: Boolean(form.phoneNumber) },
   ];
   const completenessScore = Math.round((completenessItems.filter(i => i.done).length / completenessItems.length) * 100);
 
@@ -166,7 +165,7 @@ export default function CreateSupplierPage() {
       });
       router.push("/admin/suppliers");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Create supplier failed");
+      setError(err instanceof Error ? err.message : t("form.createError"));
     } finally {
       setSaving(false);
     }
@@ -211,11 +210,11 @@ export default function CreateSupplierPage() {
             router.push("/admin/suppliers");
           }}
         >
-          Suppliers
+          {t("tabs.suppliers")}
         </Typography>
         <NavigateNextIcon sx={{ fontSize: 16 }} />
         <Typography variant="caption" sx={{ color: "text.primary", fontWeight: 600 }}>
-          Create Supplier
+          {t("form.createSupplierTitle")}
         </Typography>
       </Stack>
 
@@ -234,10 +233,10 @@ export default function CreateSupplierPage() {
             variant="h5"
             sx={{ fontWeight: 800, mb: 0.5, fontSize: { xs: "1.15rem", sm: "1.35rem", md: "1.5rem" } }}
           >
-            Create New Supplier
+            {t("form.createSupplierTitle")}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Provision a new supplier account within the ARES Nexus environment.
+            {t("form.createSupplierSubtitle")}
           </Typography>
         </Box>
 
@@ -257,7 +256,7 @@ export default function CreateSupplierPage() {
               "&:hover": { borderColor: "text.secondary" },
             }}
           >
-            Cancel
+            {tc("cancel")}
           </Button>
           <Button
             variant="contained"
@@ -275,7 +274,7 @@ export default function CreateSupplierPage() {
               background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
             }}
           >
-            {saving ? <CircularProgress size={20} color="inherit" /> : "Create Supplier"}
+            {saving ? <CircularProgress size={20} color="inherit" /> : t("form.createSupplierTitle")}
           </Button>
         </Stack>
       </Stack>
@@ -307,9 +306,11 @@ export default function CreateSupplierPage() {
                 <LockOutlinedIcon />
               </Box>
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>Account Credentials</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>
+                  {t("form.accessControl")}
+                </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Primary authentication details.
+                  {t("form.accessControlDesc")}
                 </Typography>
               </Box>
             </Stack>
@@ -318,7 +319,7 @@ export default function CreateSupplierPage() {
               {/* Email */}
               <Box>
                 <Typography sx={fieldLabel}>
-                  Email Address{" "}
+                  {t("form.email")}{" "}
                   <Box component="span" sx={{ color: "error.main" }}>
                     *
                   </Box>
@@ -350,7 +351,7 @@ export default function CreateSupplierPage() {
               <Grid container spacing={{ xs: 2, sm: 2.5 }}>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography sx={fieldLabel}>
-                    Temporary Password{" "}
+                    {t("form.tempPassword")}{" "}
                     <Box component="span" sx={{ color: "error.main" }}>
                       *
                     </Box>
@@ -386,7 +387,7 @@ export default function CreateSupplierPage() {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography sx={fieldLabel}>
-                    Confirm Password{" "}
+                    {t("form.confirmPassword")}{" "}
                     <Box component="span" sx={{ color: "error.main" }}>
                       *
                     </Box>
@@ -423,7 +424,7 @@ export default function CreateSupplierPage() {
               </Grid>
 
               <Typography variant="caption" color="text.secondary" sx={{ mt: -1 }}>
-                Must be at least 12 characters.
+                {t("form.passwordLengthHint")}
               </Typography>
 
               <FormControlLabel
@@ -437,7 +438,7 @@ export default function CreateSupplierPage() {
                 }
                 label={
                   <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: 12, sm: 14 } }}>
-                    Require password change on first login
+                    {t("form.requirePasswordChange")}
                   </Typography>
                 }
                 sx={{ mt: -1 }}
@@ -464,9 +465,11 @@ export default function CreateSupplierPage() {
                 <BusinessCenterOutlinedIcon />
               </Box>
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>Company Profile</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>
+                  {t("form.companyProfile")}
+                </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Official business registration details.
+                  {t("form.companyProfileDesc")}
                 </Typography>
               </Box>
             </Stack>
@@ -474,7 +477,7 @@ export default function CreateSupplierPage() {
             <Stack spacing={{ xs: 2, sm: 3 }}>
               <Box>
                 <Typography sx={fieldLabel}>
-                  Company Name{" "}
+                  {t("form.companyName")}{" "}
                   <Box component="span" sx={{ color: "error.main" }}>
                     *
                   </Box>
@@ -496,7 +499,7 @@ export default function CreateSupplierPage() {
               <Grid container spacing={{ xs: 2, sm: 2.5 }}>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography sx={fieldLabel}>
-                    Commercial Registration Number{" "}
+                    {t("form.crNumber")}{" "}
                     <Box component="span" sx={{ color: "error.main" }}>
                       *
                     </Box>
@@ -518,7 +521,7 @@ export default function CreateSupplierPage() {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography sx={fieldLabel}>
-                    Tax Identification Number{" "}
+                    {t("form.taxId")}{" "}
                     <Box component="span" sx={{ color: "error.main" }}>
                       *
                     </Box>
@@ -556,9 +559,11 @@ export default function CreateSupplierPage() {
                 <PersonOutlineIcon />
               </Box>
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>Representative Info</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>
+                  {t("form.representativeInfo")}
+                </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Primary contact person details.
+                  {t("form.representativeInfoDesc")}
                 </Typography>
               </Box>
             </Stack>
@@ -567,7 +572,7 @@ export default function CreateSupplierPage() {
               <Grid container spacing={{ xs: 2, sm: 2.5 }}>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography sx={fieldLabel}>
-                    First Name{" "}
+                    {t("form.firstName")}{" "}
                     <Box component="span" sx={{ color: "error.main" }}>
                       *
                     </Box>
@@ -587,7 +592,7 @@ export default function CreateSupplierPage() {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography sx={fieldLabel}>
-                    Last Name{" "}
+                    {t("form.lastName")}{" "}
                     <Box component="span" sx={{ color: "error.main" }}>
                       *
                     </Box>
@@ -609,7 +614,7 @@ export default function CreateSupplierPage() {
 
               <Box>
                 <Typography sx={fieldLabel}>
-                  Phone Number{" "}
+                  {t("form.phone")}{" "}
                   <Box component="span" sx={{ color: "error.main" }}>
                     *
                   </Box>
@@ -664,7 +669,7 @@ export default function CreateSupplierPage() {
               mb: 2,
             }}
           >
-            <Typography sx={{ fontWeight: 700, fontSize: 14, mb: 1 }}>Company Logo</Typography>
+            <Typography sx={{ fontWeight: 700, fontSize: 14, mb: 1 }}>{t("form.companyLogo")}</Typography>
             <Box
               component="label"
               htmlFor="logo-photo-input"
@@ -696,7 +701,7 @@ export default function CreateSupplierPage() {
                 <>
                   <PhotoCameraOutlinedIcon sx={{ color: "text.disabled", fontSize: 30 }} />
                   <Typography variant="caption" sx={{ color: "text.disabled", fontWeight: 500 }}>
-                    Upload Logo
+                    {t("form.uploadLogo")}
                   </Typography>
                 </>
               )}
@@ -715,7 +720,7 @@ export default function CreateSupplierPage() {
               color="text.disabled"
               sx={{ mt: 1.5, display: "block", textAlign: "center", lineHeight: 1.6 }}
             >
-              Allowed *.jpeg, *.jpg, *.png, *.gif{"\n"}Max size of 3.1 MB
+              {t("form.logoHint")}
             </Typography>
           </Paper>
 
@@ -748,16 +753,16 @@ export default function CreateSupplierPage() {
                 <ShieldOutlinedIcon sx={{ fontSize: 18 }} />
               </Box>
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: 14 }}>Access Control</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: 14 }}>{t("form.accessControl")}</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Permissions and status.
+                  {t("form.accessControlDesc")}
                 </Typography>
               </Box>
             </Stack>
 
             <Box sx={{ mb: 2 }}>
               <Typography sx={{ ...fieldLabel, mb: 1 }}>
-                System Role{" "}
+                {t("form.systemRole")}{" "}
                 <Box component="span" sx={{ color: "error.main" }}>
                   *
                 </Box>
@@ -784,7 +789,7 @@ export default function CreateSupplierPage() {
             </Box>
 
             <Box>
-              <Typography sx={{ ...fieldLabel, mb: 1 }}>Account Status</Typography>
+              <Typography sx={{ ...fieldLabel, mb: 1 }}>{t("form.accountStatus")}</Typography>
               <ToggleButtonGroup
                 value={form.status}
                 exclusive
@@ -829,15 +834,15 @@ export default function CreateSupplierPage() {
               >
                 <ToggleButton value="active">
                   <CheckCircleOutlineIcon sx={{ fontSize: { xs: 13, sm: 14 } }} />
-                  Active
+                  {t("form.active")}
                 </ToggleButton>
                 <ToggleButton value="pending">
                   <AccessTimeIcon sx={{ fontSize: { xs: 13, sm: 14 } }} />
-                  Pending
+                  {t("form.pending")}
                 </ToggleButton>
                 <ToggleButton value="blocked">
                   <BlockIcon sx={{ fontSize: { xs: 13, sm: 14 } }} />
-                  Blocked
+                  {t("form.blocked")}
                 </ToggleButton>
               </ToggleButtonGroup>
             </Box>
@@ -872,16 +877,16 @@ export default function CreateSupplierPage() {
                 <LocationOnOutlinedIcon sx={{ fontSize: 18 }} />
               </Box>
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: 14 }}>Business Address</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: 14 }}>{t("form.businessAddress")}</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Headquarters location.
+                  {t("form.businessAddressDesc")}
                 </Typography>
               </Box>
             </Stack>
 
             <Stack spacing={2}>
               <Box>
-                <Typography sx={{ ...fieldLabel, mb: 1 }}>Country</Typography>
+                <Typography sx={{ ...fieldLabel, mb: 1 }}>{t("form.country")}</Typography>
                 <TextField
                   select
                   value={form.country}
@@ -896,7 +901,7 @@ export default function CreateSupplierPage() {
                   }}
                 >
                   <MenuItem value="" disabled>
-                    <em style={{ color: "var(--mui-palette-text-disabled)" }}>Select country...</em>
+                    <em style={{ color: "var(--mui-palette-text-disabled)" }}>{t("form.selectCountry")}</em>
                   </MenuItem>
                   {MOCK_COUNTRIES.map(c => (
                     <MenuItem key={c} value={c}>
@@ -907,7 +912,7 @@ export default function CreateSupplierPage() {
               </Box>
 
               <Box>
-                <Typography sx={{ ...fieldLabel, mb: 1 }}>City</Typography>
+                <Typography sx={{ ...fieldLabel, mb: 1 }}>{t("form.city")}</Typography>
                 <TextField
                   placeholder="e.g. Dubai"
                   value={form.city}
@@ -923,7 +928,7 @@ export default function CreateSupplierPage() {
               </Box>
 
               <Box>
-                <Typography sx={{ ...fieldLabel, mb: 1 }}>Street Address</Typography>
+                <Typography sx={{ ...fieldLabel, mb: 1 }}>{t("form.streetAddress")}</Typography>
                 <TextField
                   placeholder="Building, Floor, Street..."
                   value={form.streetAddress}
@@ -954,9 +959,9 @@ export default function CreateSupplierPage() {
             }}
           >
             <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-              <Typography sx={{ fontWeight: 700, fontSize: 14 }}>Profile Completeness</Typography>
+              <Typography sx={{ fontWeight: 700, fontSize: 14 }}>{t("form.completeness")}</Typography>
               <Chip
-                label="Draft"
+                label={t("form.draft")}
                 size="small"
                 sx={{ fontSize: 10, fontWeight: 600, height: 20, bgcolor: "action.hover", color: "text.secondary" }}
               />
@@ -974,8 +979,8 @@ export default function CreateSupplierPage() {
               }}
             />
             <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
-              {completenessScore}% complete.
-              {completenessScore < 100 ? " Required fields missing." : " Ready to onboard."}
+              {completenessScore}% {t("form.completenessDesc")}
+              {completenessScore < 100 ? t("form.requiredFieldsMissing") : t("form.readyToOnboard")}
             </Typography>
 
             <Stack spacing={0.75}>
@@ -987,9 +992,7 @@ export default function CreateSupplierPage() {
                     <RadioButtonUncheckedIcon sx={{ fontSize: 14, color: "divider", flexShrink: 0 }} />
                   )}
                   <Typography variant="caption" sx={{ color: item.done ? "success.main" : "text.disabled" }}>
-                    {item.done
-                      ? item.label.replace(" missing", " ✓").replace(" unassigned", " assigned")
-                      : (item.missingLabel ?? item.label)}
+                    {item.label}
                   </Typography>
                 </Stack>
               ))}

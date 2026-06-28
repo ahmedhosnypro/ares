@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useRouter } from "@/shared/i18n/routing";
+import { useTranslations } from "next-intl";
 import { Box, Typography, CircularProgress, Button } from "@mui/material";
 
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -13,6 +14,7 @@ import UserDetailsView from "../../_components/UserDetailsView";
 export default function SupplierDetailsPage() {
   const params = useParams();
   const router = useRouter();
+  const t = useTranslations("dashboardAdmin.users");
 
   const supplierId = Array.isArray(params.supplierId) ? params.supplierId[0] : params.supplierId;
 
@@ -48,7 +50,7 @@ export default function SupplierDetailsPage() {
         }}
       >
         <CircularProgress size={36} thickness={4} />
-        <Typography sx={{ color: "text.secondary", fontSize: "0.875rem" }}>Loading supplier…</Typography>
+        <Typography sx={{ color: "text.secondary", fontSize: "0.875rem" }}>{t("details.loadingSupplier")}</Typography>
       </Box>
     );
   }
@@ -57,7 +59,7 @@ export default function SupplierDetailsPage() {
     return (
       <Box sx={{ p: 4, textAlign: "center" }}>
         <Typography color="error" variant="h6" sx={{ mb: 2 }}>
-          Supplier not found
+          {t("details.supplierNotFound")}
         </Typography>
         <Button
           onClick={() => {
@@ -66,7 +68,7 @@ export default function SupplierDetailsPage() {
           startIcon={<ArrowBackIcon />}
           sx={{ textTransform: "none", fontWeight: 600 }}
         >
-          Go Back
+          {t("details.back")}
         </Button>
       </Box>
     );

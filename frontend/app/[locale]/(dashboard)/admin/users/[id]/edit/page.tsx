@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useRouter } from "@/shared/i18n/routing";
+import { useTranslations } from "next-intl";
 import {
   Box,
   Typography,
@@ -43,6 +44,7 @@ export default function EditUserPage() {
   const params = useParams();
   const router = useRouter();
   const theme = useTheme();
+  const t = useTranslations("dashboardAdmin.users");
 
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
 
@@ -88,7 +90,7 @@ export default function EditUserPage() {
         });
       } catch (err) {
         logger.error("Failed to load user from API, utilizing mock data", err);
-        setError("Failed to load user from API. Showing mock data for testing.");
+        setError(t("details.mockWarning"));
 
         // Mock data fallback matching create user
         setForm({
@@ -108,16 +110,32 @@ export default function EditUserPage() {
     };
 
     void fetchUser();
-  }, [id]);
+  }, [id, t]);
 
   // -------------------------
   // COMPLETENESS SCORE
   // -------------------------
   const completenessItems = [
-    { label: "Status selected", done: Boolean(form.status) },
-    { label: "Email valid", done: Boolean(form.email) },
-    { label: "Role assigned", done: Boolean(form.role), missingLabel: "Role unassigned" },
-    { label: "Personal details full", done: Boolean(form.firstName && form.lastName) },
+    {
+      done: Boolean(form.status),
+      label: t("form.completenessItems.statusSelected"),
+      doneLabel: t("form.completenessItems.statusSelected") + " ✓",
+    },
+    {
+      done: Boolean(form.email),
+      label: t("form.completenessItems.emailMissing"),
+      doneLabel: t("form.email") + " ✓",
+    },
+    {
+      done: Boolean(form.role),
+      label: t("form.completenessItems.roleUnassigned"),
+      doneLabel: t("form.role") + " ✓",
+    },
+    {
+      done: Boolean(form.firstName && form.lastName),
+      label: t("form.completenessItems.nameMissing"),
+      doneLabel: t("form.personalDetails") + " ✓",
+    },
   ];
   const completenessScore = Math.round((completenessItems.filter(i => i.done).length / completenessItems.length) * 100);
 
@@ -125,16 +143,16 @@ export default function EditUserPage() {
   // VALIDATION SCHEMA
   // -------------------------
   const editUserSchema = z.object({
-    firstName: z.string().min(1, "First name is required"),
-    lastName: z.string().min(1, "Last name is required"),
+    firstName: z.string().min(1, t("form.validation.firstNameRequired")),
+    lastName: z.string().min(1, t("form.validation.lastNameRequired")),
     phoneNumber: z
       .string()
       .optional()
       .refine(v => !v || /^[0-9+\s\-().]{8,15}$/.test(v), {
-        message: "Invalid phone number",
+        message: t("form.validation.invalidPhone"),
       }),
     status: z.string(),
-    role: z.string().min(1, "Role is required"),
+    role: z.string().min(1, t("form.validation.roleRequired")),
   });
 
   // -------------------------
@@ -178,7 +196,7 @@ export default function EditUserPage() {
 
       router.push("/admin/users");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Update user failed");
+      setError(err instanceof Error ? err.message : t("form.updateError"));
     } finally {
       setSaving(false);
     }
@@ -234,11 +252,11 @@ export default function EditUserPage() {
             router.push("/admin/users");
           }}
         >
-          Users
+          {t("breadcrumbs.users")}
         </Typography>
         <NavigateNextIcon sx={{ fontSize: 16 }} />
         <Typography variant="caption" sx={{ color: theme.palette.text.primary, fontWeight: 600 }}>
-          Edit User
+          {t("breadcrumbs.edit")}
         </Typography>
       </Stack>
 
@@ -265,10 +283,10 @@ export default function EditUserPage() {
                 variant="h5"
                 sx={{ fontWeight: 800, mb: 0.5, fontSize: { xs: "1.15rem", sm: "1.35rem", md: "1.5rem" } }}
               >
-                Edit: {form.firstName} {form.lastName}
+                {t("form.editTitle")}: {form.firstName} {form.lastName}
               </Typography>
               <Typography variant="body2" color="text.secondary" noWrap>
-                Update and manage settings for account ({form.email || "No Email"})
+                {t("form.editSubtitle")} ({form.email || ""})
               </Typography>
             </Box>
           </Stack>
@@ -289,7 +307,7 @@ export default function EditUserPage() {
               "&:hover": { borderColor: theme.palette.text.secondary },
             }}
           >
-            Cancel
+            {t("details.cancel")}
           </Button>
           <Button
             variant="contained"
@@ -304,7 +322,7 @@ export default function EditUserPage() {
               background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
             }}
           >
-            {saving ? <CircularProgress size={20} color="inherit" /> : "Save Changes"}
+            {saving ? <CircularProgress size={20} color="inherit" /> : t("form.saveChanges")}
           </Button>
         </Stack>
       </Stack>
@@ -342,9 +360,11 @@ export default function EditUserPage() {
                 <LockOutlinedIcon />
               </Box>
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>Account Settings</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>
+                  {t("form.accountCredentials")}
+                </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Primary system credentials.
+                  {t("form.accountCredentialsDesc")}
                 </Typography>
               </Box>
             </Stack>
@@ -352,7 +372,7 @@ export default function EditUserPage() {
             <Stack spacing={{ xs: 2, sm: 3 }}>
               {/* Email (Readonly in Edit) */}
               <Box>
-                <Typography sx={fieldLabel}>Email Address</Typography>
+                <Typography sx={fieldLabel}>{t("form.email")}</Typography>
                 <TextField
                   value={form.email}
                   disabled
@@ -390,9 +410,11 @@ export default function EditUserPage() {
                 <PersonOutlineIcon />
               </Box>
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>Personal Details</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>
+                  {t("form.personalDetails")}
+                </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Identity and contact information.
+                  {t("form.personalDetailsDesc")}
                 </Typography>
               </Box>
             </Stack>
@@ -401,7 +423,7 @@ export default function EditUserPage() {
               <Grid container spacing={{ xs: 2, sm: 2.5 }}>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography sx={fieldLabel}>
-                    First Name{" "}
+                    {t("form.firstName")}{" "}
                     <Box component="span" sx={{ color: theme.palette.error.main }}>
                       *
                     </Box>
@@ -421,7 +443,7 @@ export default function EditUserPage() {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography sx={fieldLabel}>
-                    Last Name{" "}
+                    {t("form.lastName")}{" "}
                     <Box component="span" sx={{ color: theme.palette.error.main }}>
                       *
                     </Box>
@@ -443,7 +465,7 @@ export default function EditUserPage() {
 
               <Grid container spacing={{ xs: 2, sm: 2.5 }}>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography sx={fieldLabel}>Phone Number</Typography>
+                  <Typography sx={fieldLabel}>{t("form.phone")}</Typography>
                   <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
                     <Box
                       sx={{
@@ -480,7 +502,7 @@ export default function EditUserPage() {
                   </Stack>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography sx={fieldLabel}>Date of Birth</Typography>
+                  <Typography sx={fieldLabel}>{t("form.dob")}</Typography>
                   <TextField
                     type="date"
                     value={form.dateOfBirth}
@@ -511,7 +533,7 @@ export default function EditUserPage() {
               mb: 2,
             }}
           >
-            <Typography sx={{ fontWeight: 700, fontSize: 14, mb: 1 }}>Profile Photo</Typography>
+            <Typography sx={{ fontWeight: 700, fontSize: 14, mb: 1 }}>{t("form.profilePhoto")}</Typography>
             <Box
               component="label"
               htmlFor="profile-photo-input"
@@ -533,7 +555,7 @@ export default function EditUserPage() {
             >
               <PhotoCameraOutlinedIcon sx={{ color: theme.palette.text.disabled, fontSize: 30 }} />
               <Typography variant="caption" sx={{ color: theme.palette.text.disabled, fontWeight: 500 }}>
-                {form.profilePhoto || form.avatarUrl ? "Change Photo" : "Upload"}
+                {form.profilePhoto || form.avatarUrl ? t("form.changePhoto") : t("form.uploadPhoto")}
               </Typography>
               <input
                 id="profile-photo-input"
@@ -550,7 +572,7 @@ export default function EditUserPage() {
               color="text.secondary"
               sx={{ mt: 1.5, display: "block", textAlign: "center", lineHeight: 1.6 }}
             >
-              Allowed *.jpeg, *.jpg, *.png, *.gif{"\n"}Max size of 3.1 MB
+              {t("form.photoHint")}
             </Typography>
           </Paper>
 
@@ -583,16 +605,16 @@ export default function EditUserPage() {
                 <ShieldOutlinedIcon sx={{ fontSize: 18 }} />
               </Box>
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: 14 }}>Access Control</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: 14 }}>{t("form.accessControl")}</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Permissions and status.
+                  {t("form.accessControlDesc")}
                 </Typography>
               </Box>
             </Stack>
 
             <Box sx={{ mb: 2 }}>
               <Typography sx={{ ...fieldLabel, mb: 1 }}>
-                System Role{" "}
+                {t("form.systemRole")}{" "}
                 <Box component="span" sx={{ color: theme.palette.error.main }}>
                   *
                 </Box>
@@ -613,16 +635,16 @@ export default function EditUserPage() {
                 }}
               >
                 <MenuItem value="" disabled>
-                  <em style={{ color: theme.palette.text.disabled }}>Select a role...</em>
+                  <em style={{ color: theme.palette.text.disabled }}>{t("form.selectRole")}</em>
                 </MenuItem>
-                <MenuItem value="Supplier">Supplier</MenuItem>
-                <MenuItem value="Admin">Admin</MenuItem>
-                <MenuItem value="User">User</MenuItem>
+                <MenuItem value="Supplier">{t("form.roles.supplier")}</MenuItem>
+                <MenuItem value="Admin">{t("form.roles.admin")}</MenuItem>
+                <MenuItem value="User">{t("form.roles.customer")}</MenuItem>
               </TextField>
             </Box>
 
             <Box>
-              <Typography sx={{ ...fieldLabel, mb: 1 }}>Account Status</Typography>
+              <Typography sx={{ ...fieldLabel, mb: 1 }}>{t("form.accountStatus")}</Typography>
               <ToggleButtonGroup
                 value={form.status}
                 exclusive
@@ -667,15 +689,15 @@ export default function EditUserPage() {
               >
                 <ToggleButton value="active">
                   <CheckCircleOutlineIcon sx={{ fontSize: { xs: 13, sm: 14 } }} />
-                  Active
+                  {t("form.active")}
                 </ToggleButton>
                 <ToggleButton value="pending">
                   <AccessTimeIcon sx={{ fontSize: { xs: 13, sm: 14 } }} />
-                  Pending
+                  {t("form.pending")}
                 </ToggleButton>
                 <ToggleButton value="blocked">
                   <BlockIcon sx={{ fontSize: { xs: 13, sm: 14 } }} />
-                  Blocked
+                  {t("form.blocked")}
                 </ToggleButton>
               </ToggleButtonGroup>
             </Box>
@@ -693,9 +715,9 @@ export default function EditUserPage() {
             }}
           >
             <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-              <Typography sx={{ fontWeight: 700, fontSize: 14 }}>Profile Progress</Typography>
+              <Typography sx={{ fontWeight: 700, fontSize: 14 }}>{t("form.completeness")}</Typography>
               <Chip
-                label="Update mode"
+                label={t("form.updateMode")}
                 size="small"
                 sx={{
                   fontSize: 10,
@@ -719,7 +741,7 @@ export default function EditUserPage() {
               }}
             />
             <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
-              {completenessScore}% valid data context.
+              {completenessScore}% {t("form.completenessDesc")}
             </Typography>
 
             <Stack spacing={0.75}>
@@ -734,7 +756,7 @@ export default function EditUserPage() {
                     variant="caption"
                     sx={{ color: item.done ? theme.palette.status.active.main : theme.palette.text.disabled }}
                   >
-                    {item.done ? item.label : (item.missingLabel ?? item.label)}
+                    {item.done ? item.doneLabel : item.label}
                   </Typography>
                 </Stack>
               ))}

@@ -27,6 +27,7 @@ import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import axios from "axios";
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
@@ -62,11 +63,6 @@ const SECTION_TYPES = ["hero", "story", "offer", "stats", "values", "cta"];
 const SUPPORTED_LOCALES = ["en", "ar"] as const;
 type LocaleCode = (typeof SUPPORTED_LOCALES)[number];
 
-const LOCALE_LABELS: Record<LocaleCode, string> = {
-  en: "English (Default)",
-  ar: "\u0627\u0644\u0639\u0631\u0628\u064A\u0629",
-};
-
 const emptyLocalization: SectionLocalization = { title: "", content: "" };
 const defaultLocalizations: LocalizationsMap = { ar: { ...emptyLocalization } };
 const emptyForm: FormState = {
@@ -79,12 +75,14 @@ const emptyForm: FormState = {
 
 export default function AboutSettingsTab() {
   const { data: session } = useSession();
+  const t = useTranslations("dashboardAdmin.settings");
+  const tc = useTranslations("common");
 
   const [sections, setSections] = useState<AboutSection[]>([]);
   const [fetching, setFetching] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
-  const [selectedLocale, setSelectedLocale] = useState<LocaleCode>("en");
+  const selectedLocale = "en" as LocaleCode;
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -145,20 +143,9 @@ export default function AboutSettingsTab() {
     setForm(prev => ({ ...prev, [name]: name === "order" ? Number(value) : value }));
   };
 
-  const handleLocaleFormChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setForm(prev => ({
-      ...prev,
-      localizations: {
-        ...prev.localizations,
-        ar: { ...prev.localizations.ar, [name]: value },
-      },
-    }));
-  };
-
   const handleSave = async () => {
     if (!session?.accessToken) {
-      setErrorMsg("You must be signed in to perform this action.");
+      setErrorMsg(t("about.unauthorized"));
       return;
     }
     setSaving(true);
@@ -181,11 +168,11 @@ export default function AboutSettingsTab() {
         });
         setSections(prev => [...prev, res.data]);
       }
-      setSuccessMsg(editingId ? "Section updated." : "Section created.");
+      setSuccessMsg(editingId ? t("about.sectionUpdated") : t("about.sectionCreated"));
       setDialogOpen(false);
     } catch (err) {
       logger.error("Failed to save about section", err);
-      setErrorMsg("Failed to save section.");
+      setErrorMsg(t("about.saveError"));
     } finally {
       setSaving(false);
     }
@@ -193,17 +180,17 @@ export default function AboutSettingsTab() {
 
   const handleDelete = async (id: string) => {
     if (!session?.accessToken) {
-      setErrorMsg("You must be signed in to perform this action.");
+      setErrorMsg(t("about.unauthorized"));
       return;
     }
     setDeleting(id);
     try {
       await axios.delete(toApiUrl(`/api/about/${id}`), { headers: authHeader });
       setSections(prev => prev.filter(s => s.id !== id));
-      setSuccessMsg("Section deleted.");
+      setSuccessMsg(t("about.sectionDeleted"));
     } catch (err) {
       logger.error("Failed to delete about section", err);
-      setErrorMsg("Failed to delete section.");
+      setErrorMsg(t("about.deleteError"));
     } finally {
       setDeleting(null);
       setDeleteConfirmId(null);
@@ -225,45 +212,26 @@ export default function AboutSettingsTab() {
       <Stack sx={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
         <Box>
           <Typography variant="h6" sx={{ fontWeight: 700 }}>
-            About Page Sections
+            {t("about.title")}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Manage the sections displayed on the public About page.
+            {t("about.subtitle")}
           </Typography>
         </Box>
-        <Stack sx={{ flexDirection: "row", gap: 2, alignItems: "center" }}>
-          <FormControl size="small" sx={{ minWidth: 180 }}>
-            <InputLabel>Configure Locale</InputLabel>
-            <Select
-              label="Configure Locale"
-              value={selectedLocale}
-              onChange={e => {
-                const val = e.target.value;
-                setSelectedLocale(val);
-              }}
-            >
-              {SUPPORTED_LOCALES.map(loc => (
-                <MenuItem key={loc} value={loc}>
-                  {LOCALE_LABELS[loc]}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <Button
-            variant="contained"
-            startIcon={<AddRoundedIcon />}
-            onClick={openCreate}
-            sx={{ borderRadius: 2, fontWeight: 700 }}
-          >
-            Add Section
-          </Button>
-        </Stack>
+        <Button
+          variant="contained"
+          startIcon={<AddRoundedIcon />}
+          onClick={openCreate}
+          sx={{ borderRadius: 2, fontWeight: 700 }}
+        >
+          {t("about.addSection")}
+        </Button>
       </Stack>
 
       <Stack sx={{ gap: 2 }}>
         {sortedSections.length === 0 && (
           <Typography color="text.secondary" sx={{ textAlign: "center", py: 6 }}>
-            No about sections yet. Click &quot;Add Section&quot; to create one.
+            {t("about.noSections")}
           </Typography>
         )}
         {sortedSections.map(section => (
@@ -291,7 +259,7 @@ export default function AboutSettingsTab() {
                 </Typography>
               </Box>
               <Stack sx={{ flexDirection: "row", gap: 0.5, flexShrink: 0 }}>
-                <Tooltip title="Edit">
+                <Tooltip title={tc("edit")}>
                   <IconButton
                     size="small"
                     onClick={() => {
@@ -301,7 +269,7 @@ export default function AboutSettingsTab() {
                     <EditRoundedIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
-                <Tooltip title="Delete">
+                <Tooltip title={tc("delete")}>
                   <IconButton
                     size="small"
                     color="error"
@@ -327,80 +295,55 @@ export default function AboutSettingsTab() {
         fullWidth
         maxWidth="sm"
       >
-        <DialogTitle sx={{ fontWeight: 700 }}>
-          {editingId ? "Edit Section" : "New Section"} &mdash; {LOCALE_LABELS[selectedLocale]}
-        </DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>{editingId ? t("about.editSection") : t("about.newSection")}</DialogTitle>
         <DialogContent>
           <Stack sx={{ gap: 2, pt: 1 }}>
-            {isDefaultLocale ? (
-              <>
-                <TextField
-                  label="Title"
-                  name="title"
-                  value={form.title}
-                  onChange={handleFormChange}
-                  fullWidth
-                  required
-                />
-                <TextField
-                  label="Content"
-                  name="content"
-                  value={form.content}
-                  onChange={handleFormChange}
-                  fullWidth
-                  required
-                  multiline
-                  minRows={4}
-                />
-                <Stack direction="row" spacing={2}>
-                  <FormControl fullWidth required>
-                    <InputLabel>Section Type</InputLabel>
-                    <Select
-                      label="Section Type"
-                      name="sectionType"
-                      value={form.sectionType}
-                      onChange={e => {
-                        setForm(prev => ({ ...prev, sectionType: e.target.value }));
-                      }}
-                    >
-                      {SECTION_TYPES.map(t => (
-                        <MenuItem key={t} value={t}>
-                          {t}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  <TextField
-                    label="Order"
-                    name="order"
-                    type="number"
-                    value={form.order}
-                    onChange={handleFormChange}
-                    fullWidth
-                    required
-                  />
-                </Stack>
-              </>
-            ) : (
-              <>
-                <TextField
-                  label="Title"
-                  name="title"
-                  value={form.localizations.ar.title}
-                  onChange={handleLocaleFormChange}
-                  fullWidth
-                />
-                <TextField
-                  label="Content"
-                  name="content"
-                  value={form.localizations.ar.content}
-                  onChange={handleLocaleFormChange}
-                  fullWidth
-                  multiline
-                  minRows={4}
-                />
-              </>
-            )}
+            <TextField
+              label={t("about.titleLabel")}
+              name="title"
+              value={form.title}
+              onChange={handleFormChange}
+              fullWidth
+              required
+            />
+            <TextField
+              label={t("about.contentLabel")}
+              name="content"
+              value={form.content}
+              onChange={handleFormChange}
+              fullWidth
+              required
+              multiline
+              minRows={4}
+            />
+            <Stack direction="row" spacing={2}>
+              <FormControl fullWidth required>
+                <InputLabel>{t("about.typeLabel")}</InputLabel>
+                <Select
+                  label={t("about.typeLabel")}
+                  name="sectionType"
+                  value={form.sectionType}
+                  onChange={e => {
+                    setForm(prev => ({ ...prev, sectionType: e.target.value }));
+                  }}
+                >
+                  {SECTION_TYPES.map(t => (
+                    <MenuItem key={t} value={t}>
+                      {t}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <TextField
+                label={t("about.orderLabel")}
+                name="order"
+                type="number"
+                value={form.order}
+                onChange={handleFormChange}
+                fullWidth
+                required
+              />
+            </Stack>
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
@@ -409,7 +352,7 @@ export default function AboutSettingsTab() {
               setDialogOpen(false);
             }}
           >
-            Cancel
+            {tc("cancel")}
           </Button>
           <Button
             variant="contained"
@@ -419,7 +362,7 @@ export default function AboutSettingsTab() {
             disabled={saving || (isDefaultLocale && (!form.title || !form.content))}
             sx={{ fontWeight: 700 }}
           >
-            {saving ? <CircularProgress size={20} color="inherit" /> : "Save"}
+            {saving ? <CircularProgress size={20} color="inherit" /> : tc("save")}
           </Button>
         </DialogActions>
       </Dialog>
@@ -431,9 +374,9 @@ export default function AboutSettingsTab() {
           setDeleteConfirmId(null);
         }}
       >
-        <DialogTitle sx={{ fontWeight: 700 }}>Delete Section?</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>{t("about.deleteTitle")}</DialogTitle>
         <DialogContent>
-          <Typography>This action cannot be undone.</Typography>
+          <Typography>{t("about.deleteConfirmDesc")}</Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button
@@ -441,7 +384,7 @@ export default function AboutSettingsTab() {
               setDeleteConfirmId(null);
             }}
           >
-            Cancel
+            {tc("cancel")}
           </Button>
           <Button
             variant="contained"
@@ -452,7 +395,7 @@ export default function AboutSettingsTab() {
             disabled={!!deleting}
             sx={{ fontWeight: 700 }}
           >
-            {deleting ? <CircularProgress size={20} color="inherit" /> : "Delete"}
+            {deleting ? <CircularProgress size={20} color="inherit" /> : tc("delete")}
           </Button>
         </DialogActions>
       </Dialog>

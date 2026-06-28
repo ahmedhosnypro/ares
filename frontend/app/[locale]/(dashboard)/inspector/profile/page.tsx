@@ -11,20 +11,19 @@ import { type ProfileData } from "@/app/[locale]/(customer)/account/profile/type
 
 export default function InspectorProfilePage() {
   const { data: session } = useSession();
+  const t = useTranslations("dashboardInspector.profile");
   const user = session?.user;
   const theme = useTheme();
-  const t = useTranslations("dashboard.inspectorProfile");
 
   if (!user) return null;
 
-  // Map user session to standard ProfileData
   const profileData: ProfileData = {
     userId: user.id || "",
     firstName: user.firstName || "",
     lastName: user.lastName || "",
     email: user.email || "",
     emailVerified: true,
-    phone: "", // standard inspector has no phone details in default session object
+    phone: "",
     phoneVerified: true,
     profileCompleteness: 100,
     profilePhotoUrl: user.image ?? undefined,
@@ -41,7 +40,7 @@ export default function InspectorProfilePage() {
       <ProfileCard>
         <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
           <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>
-            {t("employeeCredentials")}
+            {t("credentialsTitle")}
           </Typography>
           <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
             <Avatar sx={{ bgcolor: theme.palette.icon.business.bg, color: theme.palette.icon.business.color }}>
@@ -49,7 +48,7 @@ export default function InspectorProfilePage() {
             </Avatar>
             <Box>
               <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                {t("assignedEmployeeRoles")}
+                {t("rolesLabel")}
               </Typography>
               <Typography variant="body1" sx={{ fontWeight: 600, textTransform: "capitalize" }}>
                 {user.roles.join(", ")}

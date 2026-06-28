@@ -18,6 +18,7 @@ import {
 import { useParams } from "next/navigation";
 import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { getLocationById, updateLocation } from "@/api-clients/locations/locations";
 import { logger } from "@/utils/logger";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -28,6 +29,8 @@ export default function AdminEditLocationPage() {
   const params = useParams();
   const id = params.id as string;
   const { data: session } = useSession();
+  const t = useTranslations("dashboardAdmin.locationsEdit");
+  const tc = useTranslations("common");
 
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -66,7 +69,7 @@ export default function AdminEditLocationPage() {
           imageUrl: data.imageUrl || "",
         });
       } catch (err) {
-        setErrorMsg("Failed to load location details");
+        setErrorMsg(t("loadError"));
         logger.error("Failed to load location", err);
       } finally {
         setFetching(false);
@@ -74,7 +77,7 @@ export default function AdminEditLocationPage() {
     };
 
     void fetchLocation();
-  }, [id, session?.accessToken, session?.user.id]);
+  }, [id, session?.accessToken, session?.user.id, t]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -87,7 +90,7 @@ export default function AdminEditLocationPage() {
   const handleSubmit = async (e: SyntheticEvent) => {
     e.preventDefault();
     if (!session?.accessToken) {
-      setErrorMsg("Unauthorized. Please log in.");
+      setErrorMsg(t("unauthorizedError"));
       return;
     }
 
@@ -103,12 +106,12 @@ export default function AdminEditLocationPage() {
       };
 
       await updateLocation(session.accessToken, id, payload);
-      setSuccessMsg("Location updated successfully");
+      setSuccessMsg(t("successMessage"));
       setTimeout(() => {
         router.push("/admin/locations");
       }, 1500);
     } catch (err: unknown) {
-      let message = "Failed to update location";
+      let message = t("errorMessage");
       if (err && typeof err === "object" && "response" in err) {
         const resp = err.response as { data?: { message?: string } };
         message = resp.data?.message || message;
@@ -140,11 +143,11 @@ export default function AdminEditLocationPage() {
           color="inherit"
           sx={{ borderRadius: 2 }}
         >
-          Back
+          {tc("back")}
         </Button>
         <Typography variant="h4" sx={{ fontWeight: 800, display: "flex", alignItems: "center", gap: 1 }}>
           <LocationOnIcon fontSize="large" color="primary" />
-          Edit Location
+          {t("title")}
         </Typography>
       </Stack>
 
@@ -157,13 +160,13 @@ export default function AdminEditLocationPage() {
           <Grid container spacing={3}>
             <Grid size={{ xs: 12 }}>
               <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-                Location Details
+                {t("cardTitle")}
               </Typography>
             </Grid>
             <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
-                label="Location Name / Address Line"
+                label={t("nameLabel")}
                 name="addressLine"
                 value={formData.addressLine}
                 onChange={handleChange}
@@ -171,12 +174,19 @@ export default function AdminEditLocationPage() {
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField fullWidth label="City" name="city" value={formData.city} onChange={handleChange} required />
+              <TextField
+                fullWidth
+                label={t("cityLabel")}
+                name="city"
+                value={formData.city}
+                onChange={handleChange}
+                required
+              />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
-                label="Governorate / State"
+                label={t("governorateLabel")}
                 name="governorate"
                 value={formData.governorate}
                 onChange={handleChange}
@@ -185,7 +195,7 @@ export default function AdminEditLocationPage() {
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
-                label="Country"
+                label={t("countryLabel")}
                 name="country"
                 value={formData.country}
                 onChange={handleChange}
@@ -195,7 +205,7 @@ export default function AdminEditLocationPage() {
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
-                label="Postal Code"
+                label={t("postalCodeLabel")}
                 name="postalCode"
                 value={formData.postalCode}
                 onChange={handleChange}
@@ -204,13 +214,13 @@ export default function AdminEditLocationPage() {
 
             <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
               <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-                Coordinates & Media
+                {t("coordinatesTitle")}
               </Typography>
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
-                label="Latitude"
+                label={t("latitudeLabel")}
                 name="latitude"
                 type="number"
                 slotProps={{ htmlInput: { step: "any" } }}
@@ -221,7 +231,7 @@ export default function AdminEditLocationPage() {
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
-                label="Longitude"
+                label={t("longitudeLabel")}
                 name="longitude"
                 type="number"
                 slotProps={{ htmlInput: { step: "any" } }}
@@ -232,7 +242,7 @@ export default function AdminEditLocationPage() {
             <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
-                label="Image URL"
+                label={t("imageUrlLabel")}
                 name="imageUrl"
                 value={formData.imageUrl}
                 onChange={handleChange}
@@ -244,7 +254,7 @@ export default function AdminEditLocationPage() {
                 control={
                   <Switch checked={formData.isPrimary} onChange={handleChange} name="isPrimary" color="primary" />
                 }
-                label="Set as Primary Location"
+                label={t("primaryLocationSwitch")}
               />
             </Grid>
 
@@ -257,7 +267,7 @@ export default function AdminEditLocationPage() {
                   }}
                   sx={{ borderRadius: 2, px: 4 }}
                 >
-                  Cancel
+                  {tc("cancel")}
                 </Button>
                 <Button
                   type="submit"
@@ -265,7 +275,7 @@ export default function AdminEditLocationPage() {
                   disabled={loading}
                   sx={{ borderRadius: 2, px: 4, fontWeight: 700 }}
                 >
-                  {loading ? <CircularProgress size={24} color="inherit" /> : "Save Changes"}
+                  {loading ? <CircularProgress size={24} color="inherit" /> : t("saveChanges")}
                 </Button>
               </Stack>
             </Grid>

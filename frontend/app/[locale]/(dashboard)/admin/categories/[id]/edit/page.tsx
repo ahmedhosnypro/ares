@@ -22,8 +22,8 @@ import {
 import Grid from "@mui/material/Grid";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import SaveIcon from "@mui/icons-material/Save";
-import Link from "next/link";
-import { useRouter, useParams } from "next/navigation";
+import { Link, useRouter } from "@/shared/i18n/routing";
+import { useParams } from "next/navigation";
 import { getCategoryDetails, updateCategory } from "@/api-clients/categories/categories";
 import { logger } from "@/utils/logger";
 
