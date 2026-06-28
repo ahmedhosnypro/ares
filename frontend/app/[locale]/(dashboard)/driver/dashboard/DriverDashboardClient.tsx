@@ -29,6 +29,7 @@ import {
   type DriverKpiMetrics,
   type DriverAvailabilityStatus,
 } from "@/api-clients/driver-dashboard/driver-dashboard";
+import { getDriverEarningsStats } from "@/api-clients/driver-earnings/driver-earnings";
 
 export default function DriverDashboardClient() {
   const { data: session } = useSession();
@@ -81,7 +82,14 @@ export default function DriverDashboardClient() {
         });
       });
 
-      await Promise.allSettled([activeTask, upcomingTask, payoutsTask, summaryTask]);
+      const earningsStatsTask = getDriverEarningsStats(accessToken).then(stats => {
+        setKpiMetrics(prev => ({
+          ...prev,
+          availableBalance: formatCurrency(stats.availableBalance),
+        }));
+      });
+
+      await Promise.allSettled([activeTask, upcomingTask, payoutsTask, summaryTask, earningsStatsTask]);
     }
 
     void loadDashboardData(token);
@@ -108,6 +116,7 @@ export default function DriverDashboardClient() {
             tripsCompleted={kpiMetrics.tripsCompleted}
             activeUpcomingCount={kpiMetrics.activeUpcomingCount}
             rating={kpiMetrics.rating}
+            availableBalance={kpiMetrics.availableBalance}
           />
         </Box>
 

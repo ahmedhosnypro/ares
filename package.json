@@ -27,7 +27,8 @@
     "generate-docs:all": "bun run --cwd scripts/docs generate:all",
     "generate-docs:ch3": "bun run --cwd scripts/docs generate:ch3",
     "generate-docs:ch4": "bun run --cwd scripts/docs generate:ch4",
-    "generate-docs:dry-run": "bun run --cwd scripts/docs generate --dry-run"
+    "generate-docs:dry-run": "bun run --cwd scripts/docs generate --dry-run",
+    "validate-mermaid": "bun run --cwd scripts/docs validate-mermaid"
   },
   "keywords": [
     "car-rental",

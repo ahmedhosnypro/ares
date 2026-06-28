@@ -19,6 +19,7 @@ export const driverDashboard: DriverDashboardLabels = {
     scheduled: "المجدولة",
     rating: "التقييم",
     ratingFormat: "{value} / 5.0",
+    availableBalance: "الرصيد المتاح",
   },
   activeAssignment: {
     activeRentalAssignment: "مهمة الإيجار النشطة",

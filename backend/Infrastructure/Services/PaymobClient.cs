@@ -123,4 +123,33 @@ public class PaymobClient : IPaymobClient
 
         return new PaymobTransactionResult(id, success, reason);
     }
+
+    public async Task<PaymobDisbursementResult> CreateDisbursementAsync(string authToken, long amountCents, string recipientWalletPhoneNumber, CancellationToken ct = default)
+    {
+        var body = new
+        {
+            auth_token = authToken,
+            amount_cents = amountCents,
+            recipient_wallet_phone = recipientWalletPhoneNumber,
+            currency = "EGP"
+        };
+        var response = await _http.PostAsJsonAsync("/api/acceptance/delifracho/disbursements", body, ct);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync(ct);
+            return new PaymobDisbursementResult(0, false, $"HTTP {(int)response.StatusCode}: {errorContent}");
+        }
+
+        var result = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: ct);
+        var id = result.TryGetProperty("id", out var idProp) ? idProp.GetInt64() : 0;
+        var success = result.TryGetProperty("success", out var s) && s.GetBoolean();
+        string? reason = null;
+        if (result.TryGetProperty("data", out var data) && data.TryGetProperty("txn_response_code", out var rCode))
+        {
+            reason = rCode.GetString();
+        }
+
+        return new PaymobDisbursementResult(id, success, reason);
+    }
 }

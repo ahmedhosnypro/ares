@@ -22,7 +22,10 @@ public interface IPaymobClient
     Task<string> RequestPaymentKeyAsync(string authToken, string orderId, long amountCents, string currency, int integrationId, PaymobBillingData billing, CancellationToken ct = default);
     Task<bool> RefundAsync(string authToken, long paymobTransactionId, long amountCents, CancellationToken ct = default);
     Task<PaymobTransactionResult?> GetTransactionsByOrderIdAsync(string authToken, string orderId, CancellationToken ct = default);
+    Task<PaymobDisbursementResult> CreateDisbursementAsync(string authToken, long amountCents, string recipientWalletPhoneNumber, CancellationToken ct = default);
 }
 
 public record PaymobTransactionResult(long Id, bool Success, string? Reason);
+
+public record PaymobDisbursementResult(long Id, bool Success, string? Reason);
 
