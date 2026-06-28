@@ -4,11 +4,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import {
   Alert,
+  Avatar,
   Box,
   Button,
   Chip,
   CircularProgress,
   Container,
+  IconButton,
   MenuItem,
   Paper,
   Rating,
@@ -22,8 +24,13 @@ import {
   TableRow,
   Tabs,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import VerifiedUserOutlinedIcon from "@mui/icons-material/VerifiedUserOutlined";
+import BlockIcon from "@mui/icons-material/Block";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { useTheme } from "@mui/material/styles";
 import { useRouter } from "@/shared/i18n/routing";
 import { toApiUrl } from "@/utils/api-client";
@@ -102,6 +109,17 @@ export default function AdminDriversClient() {
     void fetchDrivers();
   }, [fetchDrivers]);
 
+  const handleToggleActive = async (driver: DriverListItem) => {
+    try {
+      // NOTE: Replace with actual toggle status API endpoint
+      logger.info("Toggling driver active status", driver);
+      // await fetch(toApiUrl(`/api/admin/drivers/${driver.driverProfileId}/toggle`), { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+      // void fetchDrivers();
+    } catch (err) {
+      logger.error("Failed to toggle driver status", err);
+    }
+  };
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return drivers;
@@ -114,14 +132,7 @@ export default function AdminDriversClient() {
     [d.firstName, d.lastName].filter(Boolean).join(" ") || "—";
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Typography variant="h4" component="h1" sx={{ fontWeight: 800, mb: 1 }}>
-        Driver Management
-      </Typography>
-      <Typography color="text.secondary" sx={{ mb: 3 }}>
-        Review driver documents, verify, approve or reject applications, and enable or disable accounts.
-      </Typography>
-
+    <Box>
       <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
         <Tabs
           value={tab}
@@ -133,37 +144,67 @@ export default function AdminDriversClient() {
           <Tab label="All Drivers" />
           <Tab label="Pending Verification" />
         </Tabs>
-      </Box>
-
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>
-        <TextField
-          size="small"
-          label="Search by name, email or phone"
-          value={search}
-          onChange={e => {
-            setSearch(e.target.value);
+      </Box>      <Paper
+        elevation={0}
+        sx={{
+          mb: 3,
+          borderRadius: 2,
+          border: "1px solid",
+          borderColor: "divider",
+          overflow: "hidden"
+        }}
+      >
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          spacing={2}
+          sx={{
+            p: 2,
+            bgcolor: "background.paper",
+            alignItems: { md: "center" },
           }}
-          sx={{ minWidth: 280 }}
-        />
-        {tab === 0 && (
+        >
           <TextField
-            size="small"
-            select
-            label="Status"
-            value={statusFilter}
+            placeholder="Search by name, email or phone..."
+            value={search}
             onChange={e => {
-              setStatusFilter(e.target.value);
+              setSearch(e.target.value);
             }}
-            sx={{ minWidth: 200 }}
-          >
-            {STATUS_FILTERS.map(s => (
-              <MenuItem key={s} value={s}>
-                {s}
-              </MenuItem>
-            ))}
-          </TextField>
-        )}
-      </Stack>
+            size="small"
+            sx={{ flexGrow: 1, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+          />
+          {tab === 0 && (
+            <TextField
+              select
+              value={statusFilter}
+              onChange={e => {
+                setStatusFilter(e.target.value);
+              }}
+              size="small"
+              sx={{ minWidth: 200, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+            >
+              {STATUS_FILTERS.map(s => (
+                <MenuItem key={s} value={s}>
+                  {s === "All" ? "All Statuses" : s}
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
+
+          <Stack direction="row" spacing={1} sx={{ ml: { md: "auto" } }}>
+            <Button
+              variant="outlined"
+              color="inherit"
+              onClick={() => {
+                setSearch("");
+                setStatusFilter("All");
+              }}
+              sx={{ borderRadius: 2 }}
+            >
+              Reset
+            </Button>
+          </Stack>
+        </Stack>
+      </Paper>
 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
@@ -185,34 +226,60 @@ export default function AdminDriversClient() {
           </Typography>
         </Paper>
       ) : (
-        <TableContainer
-          component={Paper}
-          elevation={0}
-          sx={{ borderRadius: 2, border: `1px solid ${theme.palette.divider}` }}
-        >
-          <Table sx={{ minWidth: 800 }}>
-            <TableHead sx={{ bgcolor: "background.default" }}>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 700 }}>Driver</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Email</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Availability</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Rating</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Active</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700 }}>
-                  Actions
-                </TableCell>
-              </TableRow>
-            </TableHead>
+        <Paper elevation={0} sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
+          <TableContainer sx={{ overflowX: "auto", maxHeight: 600 }}>
+            <Table stickyHeader sx={{ minWidth: 800 }}>
+              <TableHead>
+                <TableRow
+                  sx={{
+                    "& .MuiTableCell-head": {
+                      fontWeight: 700,
+                      fontSize: 12,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      color: "text.secondary",
+                      borderBottom: "1px solid",
+                      borderColor: "divider",
+                      py: 2,
+                      bgcolor: t => alpha(t.palette.primary.main, 0.03),
+                    },
+                  }}
+                >
+                  <TableCell sx={{ pl: 3 }}>Driver</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Availability</TableCell>
+                  <TableCell>Rating</TableCell>
+                  <TableCell>Active</TableCell>
+                  <TableCell align="right" sx={{ pr: 3 }}>Actions</TableCell>
+                </TableRow>
+              </TableHead>
             <TableBody>
               {filtered.map(d => (
-                <TableRow key={d.driverProfileId} hover>
-                  <TableCell sx={{ fontWeight: 600 }}>{fullName(d)}</TableCell>
-                  <TableCell>{d.email || "—"}</TableCell>
-                  <TableCell>
-                    <Chip label={d.status} color={statusColor(d.status)} size="small" sx={{ fontWeight: 700 }} />
+                <TableRow key={d.driverProfileId} hover sx={{ transition: "all 0.2s ease", "&:last-child td": { border: 0 }, "&:hover": { bgcolor: t => alpha(t.palette.primary.main, 0.03) } }}>
+                  <TableCell sx={{ pl: 3 }}>
+                    <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                      <Avatar sx={{ bgcolor: t => alpha(t.palette.primary.main, 0.08), color: "primary.main", fontWeight: 700, width: 40, height: 40, fontSize: 16 }}>
+                        {d.firstName?.[0] || ""}
+                        {d.lastName?.[0] || ""}
+                      </Avatar>
+                      <Box>
+                        <Typography sx={{ fontWeight: 700, fontSize: 14 }}>
+                          {fullName(d)}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {d.email || d.phoneNumber || "—"}
+                        </Typography>
+                      </Box>
+                    </Stack>
                   </TableCell>
-                  <TableCell>{d.availability}</TableCell>
+                  <TableCell>
+                    <Chip label={d.status} color={statusColor(d.status)} size="small" sx={{ fontWeight: 700, borderRadius: 1.5 }} />
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      {d.availability}
+                    </Typography>
+                  </TableCell>
                   <TableCell>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                       <Rating value={d.averageRating} readOnly size="small" precision={0.5} />
@@ -226,25 +293,53 @@ export default function AdminDriversClient() {
                       label={d.isActive ? "Active" : "Disabled"}
                       color={d.isActive ? "success" : "default"}
                       size="small"
+                      sx={{ fontWeight: 700, borderRadius: 1.5 }}
                     />
                   </TableCell>
-                  <TableCell align="right">
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      onClick={() => {
-                        router.push(`/admin/drivers/${d.driverProfileId}`);
-                      }}
-                    >
-                      View
-                    </Button>
+                  <TableCell align="right" sx={{ pr: 3 }}>
+                    <Stack direction="row" spacing={0.5} sx={{ justifyContent: "flex-end" }}>
+                      <Tooltip title="View License">
+                        <IconButton
+                          color="primary"
+                          size="small"
+                          onClick={() => {
+                            router.push(`/admin/driver-licenses/${d.driverProfileId}`);
+                          }}
+                        >
+                          <VisibilityOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Verify Status">
+                        <IconButton
+                          color="info"
+                          size="small"
+                          onClick={() => {
+                            router.push(`/admin/verifications?userId=${d.userId}`);
+                          }}
+                        >
+                          <VerifiedUserOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Toggle Status">
+                        <IconButton
+                          color={d.isActive ? "error" : "success"}
+                          size="small"
+                          onClick={() => {
+                            void handleToggleActive(d);
+                          }}
+                        >
+                          {d.isActive ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
+                        </IconButton>
+                      </Tooltip>
+                    </Stack>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </TableContainer>
+      </Paper>
       )}
-    </Container>
+    </Box>
   );
 }

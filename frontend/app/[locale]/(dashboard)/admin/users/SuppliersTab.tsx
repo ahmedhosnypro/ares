@@ -47,7 +47,6 @@ import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import { deleteSupplier } from "@/api-clients/suppliers/suppliers";
 import { getSuppliers, type Supplier } from "@/api-clients/suppliers/suppliers";
 import { logger } from "@/utils/logger";
-import VehicleStats from "@/app/[locale]/(dashboard)/_components/VehicleStats";
 
 interface SupplierMobileCardProps {
   readonly s: Supplier;
@@ -210,86 +209,78 @@ export default function SuppliersTab() {
 
   return (
     <Box>
-      {/* HEADER */}
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        sx={{ gap: 2, justifyContent: "space-between", alignItems: { xs: "flex-start", sm: "center" }, mb: 4 }}
+      {/* FILTER TOOLBAR */}
+      <Paper
+        elevation={0}
+        sx={{
+          mb: 3,
+          borderRadius: 2,
+          border: "1px solid",
+          borderColor: "divider",
+          overflow: "hidden"
+        }}
       >
-        <Box>
-          <Typography variant="h4" sx={{ fontWeight: 800, fontSize: { xs: "1.5rem", sm: "2rem", md: "2.125rem" } }}>
-            Suppliers Directory
-          </Typography>
-          <Typography color="text.secondary" variant="body2">
-            Manage your product providers and partners
-          </Typography>
-        </Box>
-
-        <Stack direction="row" spacing={2} sx={{ width: { xs: "100%", sm: "auto" } }}>
-          <Link href="/admin/suppliers/create" style={{ textDecoration: "none", width: isMobile ? "100%" : "auto" }}>
-            <Box
-              sx={{
-                px: 2.5,
-                py: 1.2,
-                borderRadius: 2,
-                fontWeight: 700,
-                color: "common.white",
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                boxShadow: 3,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 1,
-                transition: "0.2s",
-                width: { xs: "100%", sm: "auto" },
-                "&:hover": { transform: "translateY(-2px)", boxShadow: 6 },
-              }}
-            >
-              + Add New Supplier
-            </Box>
-          </Link>
-        </Stack>
-      </Stack>
-
-      {/* STATS */}
-      <VehicleStats items={supplierStatsItems} />
-
-      {/* FILTER */}
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>
-        <TextField
-          fullWidth
-          placeholder="Search by name, email or company..."
-          value={search}
-          onChange={e => {
-            setSearch(e.target.value);
-            setPage(1);
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          spacing={2}
+          sx={{
+            p: 2,
+            bgcolor: "background.paper",
+            alignItems: { md: "center" },
           }}
-          size={isMobile ? "small" : "medium"}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            },
-          }}
-        />
-
-        <FormControl sx={{ minWidth: { xs: "100%", sm: 200 } }} size={isMobile ? "small" : "medium"}>
-          <Select
-            value={statusFilter}
+        >
+          <TextField
+            placeholder="Search suppliers..."
+            value={search}
             onChange={e => {
-              setStatusFilter(e.target.value);
+              setSearch(e.target.value);
               setPage(1);
             }}
-            displayEmpty
-          >
-            <MenuItem value="all">All Status</MenuItem>
-            <MenuItem value="active">Active</MenuItem>
-            <MenuItem value="blocked">Blocked</MenuItem>
-          </Select>
-        </FormControl>
-      </Stack>
+            size="small"
+            sx={{ flexGrow: 1, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: "text.disabled" }} />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
+
+          <FormControl size="small" sx={{ minWidth: 160 }}>
+            <Select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(1);
+              }}
+              displayEmpty
+              sx={{ borderRadius: 2 }}
+            >
+              <MenuItem value="all">All Status</MenuItem>
+              <MenuItem value="active">Active</MenuItem>
+              <MenuItem value="blocked">Blocked</MenuItem>
+            </Select>
+          </FormControl>
+
+          <Stack direction="row" spacing={1} sx={{ ml: { md: "auto" } }}>
+            <Button
+              variant="outlined"
+              color="inherit"
+              onClick={() => {
+                setSearch("");
+                setStatusFilter("all");
+                setPage(1);
+              }}
+              sx={{ borderRadius: 2 }}
+            >
+              Reset
+            </Button>
+          </Stack>
+        </Stack>
+      </Paper>
 
       {/* TABLE / MOBILE CARDS */}
       {loading && (
@@ -336,16 +327,29 @@ export default function SuppliersTab() {
       )}
 
       {!loading && !isMobile && (
-        <Paper sx={{ borderRadius: 2 }}>
-          <TableContainer sx={{ overflowX: "auto" }}>
-            <Table sx={{ minWidth: 550 }}>
+        <Paper elevation={0} sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
+          <TableContainer sx={{ overflowX: "auto", maxHeight: 600 }}>
+            <Table stickyHeader sx={{ minWidth: 800 }}>
               <TableHead>
-                <TableRow>
-                  <TableCell>Supplier</TableCell>
+                <TableRow
+                  sx={{
+                    "& .MuiTableCell-head": {
+                      fontWeight: 700,
+                      fontSize: 12,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      color: "text.secondary",
+                      borderBottom: "1px solid",
+                      borderColor: "divider",
+                      py: 2,
+                      bgcolor: t => alpha(t.palette.primary.main, 0.03),
+                    },
+                  }}
+                >
+                  <TableCell sx={{ pl: 3 }}>Supplier</TableCell>
                   <TableCell>Company</TableCell>
-                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Contact</TableCell>
                   <TableCell>Status</TableCell>
-                  <TableCell align="right">Actions</TableCell>
+                  <TableCell align="right" sx={{ pr: 3 }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
 
@@ -354,16 +358,30 @@ export default function SuppliersTab() {
                   pageData.map(s => {
                     const isActive = s.status === "active";
                     return (
-                      <TableRow key={s.id} hover>
-                        <TableCell>
+                      <TableRow key={s.id} hover sx={{ transition: "all 0.2s ease", "&:last-child td": { border: 0 }, "&:hover": { bgcolor: t => alpha(t.palette.primary.main, 0.03) } }}>
+                        <TableCell sx={{ pl: 3 }}>
                           <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-                            <Avatar sx={{ bgcolor: theme.palette.secondary.light, fontWeight: 700 }}>
+                            <Avatar sx={{ bgcolor: t => alpha(t.palette.primary.main, 0.08), color: "primary.main", fontWeight: 700, width: 40, height: 40, fontSize: 16 }}>
                               {s.firstName[0]}
                               {s.lastName[0]}
                             </Avatar>
                             <Box>
-                              <Typography sx={{ fontWeight: 600 }}>
+                              <Typography sx={{ fontWeight: 700, fontSize: 14 }}>
                                 {s.firstName} {s.lastName}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {s.email}
+                              </Typography>
+                            </Box>
+                          </Stack>
+                        </TableCell>
+
+                        <TableCell>
+                          <Stack direction="row" sx={{ gap: 1, alignItems: "center" }}>
+                            <BusinessIcon fontSize="small" color="disabled" />
+                            <Box>
+                              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                {s.companyProfile?.companyName || "N/A"}
                               </Typography>
                               <Typography variant="caption" color="text.secondary">
                                 {s.phoneNumber || "No Phone"}
@@ -373,62 +391,45 @@ export default function SuppliersTab() {
                         </TableCell>
 
                         <TableCell>
-                          <Stack direction="row" sx={{ gap: 1, alignItems: "center" }}>
-                            <BusinessIcon fontSize="small" color="disabled" />
-                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                              {s.companyProfile?.companyName || "N/A"}
-                            </Typography>
-                          </Stack>
-                        </TableCell>
-
-                        <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{s.email}</TableCell>
-
-                        <TableCell>
                           <Chip
                             label={s.status}
                             size="small"
                             sx={{
                               textTransform: "capitalize",
+                              borderRadius: 1.5,
                               bgcolor: isActive
-                                ? alpha(theme.palette.success.main, 0.1)
-                                : alpha(theme.palette.error.main, 0.1),
-                              color: isActive ? theme.palette.success.main : theme.palette.error.main,
+                                ? t => alpha(t.palette.success.main, 0.15)
+                                : t => alpha(t.palette.error.main, 0.15),
+                              color: isActive ? "success.main" : "error.main",
                               fontWeight: 700,
+                              fontSize: 11,
                             }}
                           />
                         </TableCell>
 
-                        <TableCell align="right">
-                          <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end" }}>
-                            <Tooltip title="View Details">
-                              <IconButton component={Link} href={`/admin/suppliers/${s.id}`} size="small">
-                                <VisibilityOutlinedIcon fontSize="small" />
+                        <TableCell align="right" sx={{ pr: 3 }}>
+                          <Stack direction="row" spacing={0.5} sx={{ justifyContent: "flex-end" }}>
+                            <IconButton component={Link} href={`/admin/suppliers/${s.id}`} size="small" sx={{ color: "text.secondary" }}>
+                              <VisibilityOutlinedIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton component={Link} href={`/admin/suppliers/${s.id}/edit`} size="small" sx={{ color: "text.secondary" }}>
+                              <EditOutlinedIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton size="small" color={isActive ? "error" : "success"}>
+                              {isActive ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
+                            </IconButton>
+                            <span>
+                              <IconButton
+                                size="small"
+                                sx={{ color: "error.main" }}
+                                disabled={s.status === "deleted"}
+                                onClick={() => {
+                                  setDeleteTarget(s);
+                                }}
+                              >
+                                <DeleteOutlinedIcon fontSize="small" />
                               </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Edit">
-                              <IconButton component={Link} href={`/admin/suppliers/${s.id}/edit`} size="small">
-                                <EditOutlinedIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title={isActive ? "Block" : "Activate"}>
-                              <IconButton size="small" color={isActive ? "error" : "success"}>
-                                {isActive ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title={s.status === "deleted" ? "Already deleted" : "Delete"}>
-                              <span>
-                                <IconButton
-                                  size="small"
-                                  color="error"
-                                  disabled={s.status === "deleted"}
-                                  onClick={() => {
-                                    setDeleteTarget(s);
-                                  }}
-                                >
-                                  <DeleteOutlinedIcon fontSize="small" />
-                                </IconButton>
-                              </span>
-                            </Tooltip>
+                            </span>
                           </Stack>
                         </TableCell>
                       </TableRow>
@@ -436,7 +437,7 @@ export default function SuppliersTab() {
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} align="center" sx={{ py: 10 }}>
+                    <TableCell colSpan={4} align="center" sx={{ py: 10 }}>
                       <Typography color="text.secondary">No suppliers found</Typography>
                     </TableCell>
                   </TableRow>
@@ -445,21 +446,23 @@ export default function SuppliersTab() {
 
               <TableFooter>
                 <TableRow>
-                  <TableCell colSpan={3}>
-                    <Typography variant="caption">
-                      Showing {pageData.length} of {filtered.length} suppliers
+                  <TableCell colSpan={2} sx={{ pl: 3 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Showing page <strong>{page}</strong> of {totalPages || 1} ({filtered.length} total)
                     </Typography>
                   </TableCell>
-                  <TableCell colSpan={2} align="right">
-                    <Pagination
-                      count={totalPages}
-                      page={page}
-                      onChange={(_, v) => {
-                        setPage(v);
-                      }}
-                      size="small"
-                      color="primary"
-                    />
+                  <TableCell colSpan={2} align="right" sx={{ pr: 3 }}>
+                    {totalPages > 1 && (
+                      <Pagination
+                        count={totalPages}
+                        page={page}
+                        onChange={(_, v) => {
+                          setPage(v);
+                        }}
+                        size="small"
+                        sx={{ "& .MuiPaginationItem-root": { borderRadius: 2 } }}
+                      />
+                    )}
                   </TableCell>
                 </TableRow>
               </TableFooter>

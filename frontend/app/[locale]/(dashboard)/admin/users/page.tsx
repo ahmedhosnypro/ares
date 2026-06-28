@@ -1,25 +1,25 @@
 "use client";
 
-import { Suspense } from "react";
+import React, { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { useRouter } from "@/shared/i18n/routing";
-import { Box, Tabs, Tab, CircularProgress, Paper, useTheme, useMediaQuery } from "@mui/material";
+import { useRouter, Link } from "@/shared/i18n/routing";
+import { Box, Tabs, Tab, CircularProgress, Paper, useTheme, useMediaQuery, Card, CardContent } from "@mui/material";
 import PeopleIcon from "@mui/icons-material/People";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import AirlineSeatReclineNormalIcon from "@mui/icons-material/AirlineSeatReclineNormal";
 import ManageSearchIcon from "@mui/icons-material/ManageSearch";
-
 import UsersTab from "./UsersTab";
-import SuppliersTab from "./SuppliersTab";
-import DriversTab from "./DriversTab";
-import InspectorsTab from "./InspectorsTab";
+import { useSession } from "next-auth/react";
+import AddIcon from "@mui/icons-material/Add";
+import { Button, Stack, Typography } from "@mui/material";
+import StatCard from "@/app/[locale]/(dashboard)/_components/StatCard";
 
 type TabKey = "users" | "suppliers" | "drivers" | "inspectors";
 
 const TAB_ORDER: TabKey[] = ["users", "suppliers", "drivers", "inspectors"];
 
 const TAB_META: Record<TabKey, { label: string; icon: React.ReactElement }> = {
-  users: { label: "Users", icon: <PeopleIcon fontSize="small" /> },
+  users: { label: "Customers", icon: <PeopleIcon fontSize="small" /> },
   suppliers: { label: "Suppliers", icon: <StorefrontIcon fontSize="small" /> },
   drivers: { label: "Drivers", icon: <AirlineSeatReclineNormalIcon fontSize="small" /> },
   inspectors: { label: "Inspectors", icon: <ManageSearchIcon fontSize="small" /> },
@@ -40,13 +40,85 @@ function UsersHubInner() {
     router.push(`/admin/users?tab=${newTab}`, { scroll: false });
   };
 
+  const [counts, setCounts] = useState({ 
+    totalUsers: 0,
+    customers: 0, 
+    suppliers: 0, 
+    drivers: 0, 
+    inspectors: 0, 
+    blockedUsers: 0 
+  });
+
+  const totalUsers = counts.totalUsers;
+
+  const statCards = [
+    { title: "Total Users", value: totalUsers, icon: <PeopleIcon /> },
+    { title: "Customers", value: counts.customers, icon: <PeopleIcon /> },
+    { title: "Suppliers", value: counts.suppliers, icon: <StorefrontIcon /> },
+    { title: "Drivers", value: counts.drivers, icon: <AirlineSeatReclineNormalIcon /> },
+    { title: "Inspectors", value: counts.inspectors, icon: <ManageSearchIcon /> },
+    { title: "Blocked Users", value: counts.blockedUsers, icon: <PeopleIcon /> },
+  ];
+
   return (
-    <Box sx={{ p: { xs: 1.5, sm: 3, md: 4 }, maxWidth: 1300, mx: "auto" }}>
+    <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, maxWidth: 1400, mx: "auto" }}>
+      {/* GLOBAL HEADER */}
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        sx={{ gap: 3, justifyContent: "space-between", alignItems: { xs: "flex-start", sm: "center" }, mb: 4 }}
+      >
+        <Box>
+          <Typography variant="h3" sx={{ fontWeight: 800, fontSize: { xs: "2rem", sm: "2.25rem" } }}>
+            Users Management
+          </Typography>
+          <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 1 }}>
+            Manage customers, suppliers, drivers and inspectors across the platform.
+          </Typography>
+        </Box>
+        <Stack direction="row" spacing={2} sx={{ alignSelf: { xs: "stretch", sm: "auto" } }}>
+          <Button
+            component={Link}
+            href="/admin/users/create"
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            sx={{ flex: { xs: 1, sm: "none" }, borderRadius: 2, fontWeight: 700 }}
+          >
+            Add User
+          </Button>
+        </Stack>
+      </Stack>
+
+      {/* SUMMARY CARDS */}
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "nowrap",
+          overflowX: "auto",
+          gap: 3,
+          mb: 5,
+          pb: 1, // Add some padding for scrollbar
+          "& > *": {
+            flexShrink: 0,
+            flexBasis: { xs: "280px", sm: "240px", md: "calc((100% - 5 * 24px) / 6)" },
+            minWidth: { xs: "280px", sm: "240px", md: "auto" }
+          }
+        }}
+      >
+        {statCards.map((card, idx) => (
+          <StatCard
+            key={idx}
+            title={card.title}
+            value={card.value.toString()}
+            icon={card.icon}
+          />
+        ))}
+      </Box>
       {/* TAB BAR */}
       <Paper
         elevation={0}
         sx={{
-          mb: 3,
+          mb: 4,
           borderRadius: 2,
           border: "1px solid",
           borderColor: "divider",
@@ -81,7 +153,7 @@ function UsersHubInner() {
               key={key}
               id={`user-hub-tab-${key}`}
               aria-controls={`user-hub-panel-${key}`}
-              label={TAB_META[key].label}
+              label={`${TAB_META[key].label} ${counts[key === "users" ? "customers" : key] > 0 ? `(${counts[key === "users" ? "customers" : key]})` : ""}`}
               icon={TAB_META[key].icon}
               iconPosition="start"
             />
@@ -89,31 +161,18 @@ function UsersHubInner() {
         </Tabs>
       </Paper>
 
-      {/* TAB PANELS */}
-      {TAB_ORDER.map(key => (
-        <Box
-          key={key}
-          role="tabpanel"
-          id={`user-hub-panel-${key}`}
-          aria-labelledby={`user-hub-tab-${key}`}
-          hidden={activeTab !== key}
+      {/* TAB PANEL */}
+      <Box role="tabpanel">
+        <Suspense
+          fallback={
+            <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
+              <CircularProgress />
+            </Box>
+          }
         >
-          {activeTab === key && (
-            <Suspense
-              fallback={
-                <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
-                  <CircularProgress />
-                </Box>
-              }
-            >
-              {key === "users" && <UsersTab />}
-              {key === "suppliers" && <SuppliersTab />}
-              {key === "drivers" && <DriversTab />}
-              {key === "inspectors" && <InspectorsTab />}
-            </Suspense>
-          )}
-        </Box>
-      ))}
+          <UsersTab activeTab={activeTab} onStatsUpdated={setCounts} />
+        </Suspense>
+      </Box>
     </Box>
   );
 }

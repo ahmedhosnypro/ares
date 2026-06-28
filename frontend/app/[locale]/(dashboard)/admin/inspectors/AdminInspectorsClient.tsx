@@ -40,7 +40,6 @@ import PeopleIcon from "@mui/icons-material/People";
 import { listInspectors, updateInspectorStatus, type Inspector } from "@/api-clients/inspectors/inspectors";
 import { logger } from "@/utils/logger";
 import AddInspectorDialog from "./_components/AddInspectorDialog";
-import VehicleStats from "@/app/[locale]/(dashboard)/_components/VehicleStats";
 
 export default function InspectorsPage() {
   const theme = useTheme();
@@ -139,92 +138,64 @@ export default function InspectorsPage() {
   };
 
   return (
-    <Box sx={{ p: { xs: 1.5, sm: 3, md: 4 }, maxWidth: 1300, mx: "auto" }}>
-      {/* HEADER */}
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        sx={{ gap: 2, justifyContent: "space-between", alignItems: { xs: "flex-start", sm: "center" }, mb: 4 }}
-      >
-        <Box>
-          <Typography variant="h4" sx={{ fontWeight: 800, fontSize: { xs: "1.5rem", sm: "2rem", md: "2.125rem" } }}>
-            Inspectors Management
-          </Typography>
-          <Typography color="text.secondary" variant="body2">
-            Provision and manage the pool of vehicle inspectors.
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => {
-            setAddOpen(true);
-          }}
-          sx={{
-            px: 2.5,
-            py: 1.2,
-            borderRadius: 3,
-            fontWeight: 700,
-            background: (theme: Theme) =>
-              `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-            boxShadow: 3,
-            "&:hover": { transform: "translateY(-2px)", boxShadow: 6 },
-            width: { xs: "100%", sm: "auto" },
-          }}
-        >
-          Add Inspector
-        </Button>
-      </Stack>
-
-      {/* STATS */}
-      <VehicleStats items={inspectorStatsItems} />
-
+    <Box>
       {/* FILTERS */}
       <Paper
         elevation={0}
         sx={{
-          p: 2,
           mb: 3,
-          mt: 1,
-          borderRadius: 3,
+          borderRadius: 2,
           border: "1px solid",
           borderColor: "divider",
-          bgcolor: "background.paper",
+          overflow: "hidden"
         }}
       >
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          spacing={2}
+          sx={{
+            p: 2,
+            bgcolor: "background.paper",
+            alignItems: { md: "center" },
+          }}
+        >
           <TextField
-            fullWidth
             placeholder="Search by name, email or employee code..."
             value={search}
             onChange={e => {
               setSearch(e.target.value);
             }}
-            size={isMobile ? "small" : "medium"}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon color="action" />
-                  </InputAdornment>
-                ),
-                sx: { borderRadius: 2, bgcolor: "background.default" },
-              },
-            }}
+            size="small"
+            sx={{ flexGrow: 1, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
           />
-          <FormControl sx={{ minWidth: { xs: "100%", sm: 160 } }} size={isMobile ? "small" : "medium"}>
+          <FormControl size="small" sx={{ minWidth: 160 }}>
             <Select
               value={statusFilter}
               onChange={(e: SelectChangeEvent) => {
                 setStatusFilter(e.target.value);
               }}
               displayEmpty
-              sx={{ borderRadius: 2, bgcolor: "background.default" }}
+              sx={{ borderRadius: 2 }}
             >
-              <MenuItem value="all">All Status</MenuItem>
+              <MenuItem value="all">All Statuses</MenuItem>
               <MenuItem value="active">Active</MenuItem>
               <MenuItem value="inactive">Disabled</MenuItem>
             </Select>
           </FormControl>
+
+          <Stack direction="row" spacing={1} sx={{ ml: { md: "auto" } }}>
+            <Button
+              variant="outlined"
+              color="inherit"
+              onClick={() => {
+                setSearch("");
+                setStatusFilter("all");
+              }}
+              sx={{ borderRadius: 2 }}
+            >
+              Reset
+            </Button>
+          </Stack>
         </Stack>
       </Paper>
 
@@ -243,64 +214,71 @@ export default function InspectorsPage() {
           )}
         </Stack>
       ) : (
-        <Paper sx={{ borderRadius: 3, overflow: "hidden", border: "1px solid", borderColor: "divider", elevation: 0 }}>
-          <Table>
-            <TableHead sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 700 }}>Inspector</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Contact</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Employee Code</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Availability</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700 }}>
-                  Actions
-                </TableCell>
-              </TableRow>
-            </TableHead>
+        <Paper elevation={0} sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
+          <TableContainer sx={{ overflowX: "auto", maxHeight: 600 }}>
+            <Table stickyHeader sx={{ minWidth: 800 }}>
+              <TableHead>
+                <TableRow
+                  sx={{
+                    "& .MuiTableCell-head": {
+                      fontWeight: 700,
+                      fontSize: 12,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      color: "text.secondary",
+                      borderBottom: "1px solid",
+                      borderColor: "divider",
+                      py: 2,
+                      bgcolor: t => alpha(t.palette.primary.main, 0.03),
+                    },
+                  }}
+                >
+                  <TableCell sx={{ pl: 3 }}>Inspector</TableCell>
+                  <TableCell>Code</TableCell>
+                  <TableCell>Availability</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell align="right" sx={{ pr: 3 }}>Actions</TableCell>
+                </TableRow>
+              </TableHead>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 10 }}>
+                  <TableCell colSpan={5} align="center" sx={{ py: 10 }}>
                     <EmptyState />
                   </TableCell>
                 </TableRow>
               ) : (
                 filtered.map(i => (
-                  <TableRow key={i.inspectorId} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
-                    <TableCell>
+                  <TableRow key={i.inspectorId} hover sx={{ transition: "all 0.2s ease", "&:last-child td": { border: 0 }, "&:hover": { bgcolor: t => alpha(t.palette.primary.main, 0.03) } }}>
+                    <TableCell sx={{ pl: 3 }}>
                       <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-                        <Avatar sx={{ bgcolor: theme.palette.primary.light, fontWeight: 700 }}>
+                        <Avatar sx={{ bgcolor: t => alpha(t.palette.primary.main, 0.08), color: "primary.main", fontWeight: 700, width: 40, height: 40, fontSize: 16 }}>
                           {i.firstName[0] || "?"}
                           {i.lastName[0] || ""}
                         </Avatar>
                         <Box>
-                          <Typography sx={{ fontWeight: 600 }}>
+                          <Typography sx={{ fontWeight: 700, fontSize: 14 }}>
                             {i.firstName} {i.lastName}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            {new Date(i.createdAt).toLocaleDateString()}
+                            {i.email || i.phoneNumber || "—"}
                           </Typography>
                         </Box>
                       </Stack>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2">{i.email}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {i.phoneNumber || "—"}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip label={i.employeeCode} size="small" sx={{ fontWeight: 600 }} />
+                      <Chip label={i.employeeCode} size="small" sx={{ fontWeight: 700, borderRadius: 1.5 }} />
                     </TableCell>
                     <TableCell>
                       <Chip
                         label={i.isAvailable ? "Available" : "Unavailable"}
                         size="small"
                         sx={{
+                          borderRadius: 1.5,
                           bgcolor: i.isAvailable
-                            ? alpha(theme.palette.info.main, 0.15)
-                            : alpha(theme.palette.warning.main, 0.15),
-                          color: i.isAvailable ? theme.palette.info.main : theme.palette.warning.main,
+                            ? t => alpha(t.palette.info.main, 0.15)
+                            : t => alpha(t.palette.warning.main, 0.15),
+                          color: i.isAvailable ? "info.main" : "warning.main",
                           fontWeight: 700,
                         }}
                       />
@@ -310,18 +288,19 @@ export default function InspectorsPage() {
                         label={i.isActive ? "Active" : "Disabled"}
                         size="small"
                         sx={{
+                          borderRadius: 1.5,
                           bgcolor: i.isActive
-                            ? alpha(theme.palette.success.main, 0.15)
-                            : alpha(theme.palette.error.main, 0.15),
-                          color: i.isActive ? theme.palette.success.main : theme.palette.error.main,
+                            ? t => alpha(t.palette.success.main, 0.15)
+                            : t => alpha(t.palette.error.main, 0.15),
+                          color: i.isActive ? "success.main" : "error.main",
                           fontWeight: 700,
                         }}
                       />
                     </TableCell>
-                    <TableCell align="right">
+                    <TableCell align="right" sx={{ pr: 3 }}>
                       <Stack direction="row" spacing={0.5} sx={{ justifyContent: "flex-end" }}>
                         <Tooltip title="View Details">
-                          <IconButton component={Link} href={`/admin/inspectors/${i.inspectorId}`} size="small">
+                          <IconButton component={Link} href={`/admin/inspectors/${i.inspectorId}`} size="small" sx={{ color: "text.secondary" }}>
                             <VisibilityOutlinedIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
@@ -331,7 +310,7 @@ export default function InspectorsPage() {
                             onClick={() => {
                               handleToggleActive(i);
                             }}
-                            sx={{ color: i.isActive ? theme.palette.error.main : theme.palette.success.main }}
+                            sx={{ color: i.isActive ? "error.main" : "success.main" }}
                           >
                             {i.isActive ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
                           </IconButton>
@@ -343,6 +322,7 @@ export default function InspectorsPage() {
               )}
             </TableBody>
           </Table>
+        </TableContainer>
         </Paper>
       )}
 
