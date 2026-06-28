@@ -12,7 +12,7 @@ import UsersTab from "./UsersTab";
 import { useSession } from "next-auth/react";
 import AddIcon from "@mui/icons-material/Add";
 import { Button, Stack, Typography } from "@mui/material";
-import StatCard from "@/app/[locale]/(dashboard)/_components/StatCard";
+import { StatCard } from "@/app/[locale]/(dashboard)/_components/VehicleStats";
 
 type TabKey = "users" | "suppliers" | "drivers" | "inspectors";
 
@@ -52,12 +52,12 @@ function UsersHubInner() {
   const totalUsers = counts.totalUsers;
 
   const statCards = [
-    { title: "Total Users", value: totalUsers, icon: <PeopleIcon /> },
-    { title: "Customers", value: counts.customers, icon: <PeopleIcon /> },
-    { title: "Suppliers", value: counts.suppliers, icon: <StorefrontIcon /> },
-    { title: "Drivers", value: counts.drivers, icon: <AirlineSeatReclineNormalIcon /> },
-    { title: "Inspectors", value: counts.inspectors, icon: <ManageSearchIcon /> },
-    { title: "Blocked Users", value: counts.blockedUsers, icon: <PeopleIcon /> },
+    { title: "Total Users", value: totalUsers, icon: <PeopleIcon />, color: "primary" },
+    { title: "Customers", value: counts.customers, icon: <PeopleIcon />, color: "info" },
+    { title: "Suppliers", value: counts.suppliers, icon: <StorefrontIcon />, color: "warning" },
+    { title: "Drivers", value: counts.drivers, icon: <AirlineSeatReclineNormalIcon />, color: "success" },
+    { title: "Inspectors", value: counts.inspectors, icon: <ManageSearchIcon />, color: "secondary" },
+    { title: "Blocked Users", value: counts.blockedUsers, icon: <PeopleIcon />, color: "error" },
   ];
 
   return (
@@ -108,8 +108,9 @@ function UsersHubInner() {
         {statCards.map((card, idx) => (
           <StatCard
             key={idx}
-            title={card.title}
-            value={card.value.toString()}
+            label={card.title}
+            value={card.value}
+            color={card.color}
             icon={card.icon}
           />
         ))}

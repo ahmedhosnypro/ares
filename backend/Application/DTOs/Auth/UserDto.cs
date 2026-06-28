@@ -15,5 +15,6 @@ public record UserDto(
     List<string> Roles,
     bool EmailVerified,
     string? Status = null,
-    string? Phone = null
+    string? Phone = null,
+    string? ProfileImage = null
 );

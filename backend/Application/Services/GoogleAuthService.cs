@@ -175,7 +175,8 @@ public class GoogleAuthService : IGoogleAuthService
                 Roles: roles.ToList(),
                 EmailVerified: user.EmailConfirmed,
                 Status: user.Status,
-                Phone: user.PhoneNumber
+                Phone: user.PhoneNumber,
+                ProfileImage: user.ProfileImage
             )
         );
     }

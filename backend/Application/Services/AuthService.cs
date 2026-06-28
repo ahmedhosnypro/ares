@@ -281,7 +281,8 @@ public class AuthService : IAuthService
                 Roles: roles.ToList(),
                 EmailVerified: user.EmailConfirmed,
                 Status: user.Status,
-                Phone: user.PhoneNumber
+                Phone: user.PhoneNumber,
+                ProfileImage: user.ProfileImage
             )
         );
     }
@@ -468,7 +469,8 @@ public class AuthService : IAuthService
                 Roles: roles.ToList(),
                 EmailVerified: user.EmailConfirmed,
                 Status: user.Status,
-                Phone: user.PhoneNumber
+                Phone: user.PhoneNumber,
+                ProfileImage: user.ProfileImage
             )
         );
     }
@@ -592,7 +594,8 @@ public class AuthService : IAuthService
                 Roles: roles.ToList(),
                 EmailVerified: user.EmailConfirmed,
                 Status: user.Status,
-                Phone: user.PhoneNumber
+                Phone: user.PhoneNumber,
+                ProfileImage: user.ProfileImage
             )
         );
     }

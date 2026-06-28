@@ -124,20 +124,11 @@ export async function uploadUserPhoto(userId: string, photo: File): Promise<{ su
   const formData = new FormData();
   formData.append("photo", photo);
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/admin/users/${userId}/photo`, {
+  return apiFetchJson<{ success: boolean; avatarUrl: string }>(`/api/admin/users/${userId}/photo`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${session?.accessToken ?? ""}`,
-    },
+    accessToken: session?.accessToken ?? undefined,
     body: formData,
   });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Photo upload failed: ${text}`);
-  }
-
-  return res.json() as Promise<{ success: boolean; avatarUrl: string }>;
 }
 
 // toggle status

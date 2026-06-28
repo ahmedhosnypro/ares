@@ -41,6 +41,7 @@ import ThemeSwitcher from "@/components/ui/ThemeSwitcher";
 import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
 import NotificationsBell from "./NotificationsBell";
 import LogoutConfirmDialog from "./LogoutConfirmDialog";
+import { toImageUrl } from "@/utils/image-url";
 
 const APP_BAR_HEIGHT = 72;
 const EXPANDED_DRAWER_WIDTH = 260;
@@ -241,6 +242,7 @@ export default function DashboardShell({
           }}
         >
           <Avatar
+            src={user.image ? toImageUrl(user.image) : undefined}
             sx={{
               bgcolor: "primary.main",
               color: "primary.contrastText",
