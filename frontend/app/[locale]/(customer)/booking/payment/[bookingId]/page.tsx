@@ -48,7 +48,12 @@ export default async function CheckoutPage({ params }: PageProps) {
   }
 
   // If already paid/confirmed, redirect to confirmation
-  if (booking.status === "Confirmed" || booking.status === "Active" || booking.status === "Completed") {
+  if (
+    booking.status === "Confirmed" ||
+    booking.status === "Active" ||
+    booking.status === "Completed" ||
+    booking.status === "PendingApproval"
+  ) {
     redirect({ href: `/bookings/confirmation/${bookingId}`, locale });
   }
 

@@ -38,8 +38,7 @@ export default function CreateVehicleClient({ emptyVehicle, locations }: CreateV
       pricePerDay: values.pricePerDay,
       locationCity: values.locationCity,
       description: values.description || "",
-      status: values.status || "Sedan",
-      availabilityStatus: values.availabilityStatus || "Available",
+      categoryId: values.categoryId,
     };
 
     const resText = await createCar(session.accessToken, payload);

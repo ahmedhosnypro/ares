@@ -6,15 +6,49 @@ import { PieChart, Pie, Tooltip, ResponsiveContainer } from "recharts";
 import { apiFetchJson } from "@/utils/api-client";
 import { useSession } from "next-auth/react";
 import { logger } from "@/utils/logger";
+import { useTranslations } from "next-intl";
 
 interface RawBooking {
   status?: string;
 }
 
-const EXPECTED_STATUSES = ["Draft", "PaymentPending", "Confirmed", "Active", "Completed", "Cancelled"];
+const EXPECTED_STATUSES = [
+  "Draft",
+  "PaymentPending",
+  "PendingApproval",
+  "Confirmed",
+  "Active",
+  "Completed",
+  "Cancelled",
+  "Rejected",
+];
+
+function getStatusLabel(status: string, t: (key: string) => string): string {
+  switch (status.toLowerCase()) {
+    case "draft":
+      return t("analytics.statuses.draft");
+    case "paymentpending":
+      return t("analytics.statuses.paymentPending");
+    case "pendingapproval":
+      return t("analytics.statuses.pendingApproval");
+    case "confirmed":
+      return t("analytics.statuses.confirmed");
+    case "active":
+      return t("analytics.statuses.active");
+    case "completed":
+      return t("analytics.statuses.completed");
+    case "cancelled":
+      return t("analytics.statuses.cancelled");
+    case "rejected":
+      return t("analytics.statuses.rejected");
+    default:
+      return t("overview.fallbackStatus");
+  }
+}
 
 export default function BookingOverview() {
   const theme = useTheme();
+  const t = useTranslations("dashboardAdmin.bookings");
   const { data: session } = useSession();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -75,10 +109,12 @@ export default function BookingOverview() {
         const counts: Record<string, number> = {
           Draft: 0,
           PaymentPending: 0,
+          PendingApproval: 0,
           Confirmed: 0,
           Active: 0,
           Completed: 0,
           Cancelled: 0,
+          Rejected: 0,
         };
 
         let totalBookings = 0;
@@ -95,10 +131,12 @@ export default function BookingOverview() {
         const statusColorMap: Record<string, string> = {
           Draft: theme.palette.text.secondary,
           PaymentPending: theme.palette.status.pending.main,
+          PendingApproval: theme.palette.status.pendingApproval.main,
           Confirmed: theme.palette.status.confirmed.main,
           Active: theme.palette.status.active.main,
           Completed: theme.palette.status.completed.main,
           Cancelled: theme.palette.status.cancelled.main,
+          Rejected: theme.palette.status.rejected.main,
         };
 
         const formattedStats = EXPECTED_STATUSES.map(key => ({
@@ -155,7 +193,7 @@ export default function BookingOverview() {
     if (error) {
       return (
         <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 250 }}>
-          <Typography color="error">Failed to load booking statistics.</Typography>
+          <Typography color="error">{t("overview.loadFailed")}</Typography>
         </Box>
       );
     }
@@ -163,7 +201,7 @@ export default function BookingOverview() {
     if (total === 0) {
       return (
         <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 250 }}>
-          <Typography color="text.secondary">No bookings found.</Typography>
+          <Typography color="text.secondary">{t("overview.noBookings")}</Typography>
         </Box>
       );
     }
@@ -190,7 +228,7 @@ export default function BookingOverview() {
                 />
                 <Tooltip
                   formatter={(value?: unknown, name?: unknown) => [
-                    `${((value as number) || 0).toLocaleString()} ${typeof name === "string" ? name.toLowerCase() : ""}`,
+                    `${((value as number) || 0).toLocaleString()} ${typeof name === "string" ? getStatusLabel(name, t) : ""}`,
                     "",
                   ]}
                   separator=""
@@ -222,7 +260,7 @@ export default function BookingOverview() {
               color="text.secondary"
               sx={{ fontWeight: "700", textTransform: "uppercase", mt: 0.5 }}
             >
-              Total
+              {t("overview.total")}
             </Typography>
           </Box>
         </Box>
@@ -245,7 +283,7 @@ export default function BookingOverview() {
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                   <Box sx={{ width: 14, height: 14, borderRadius: "50%", bgcolor: stat.fill }} />
                   <Typography variant="body2" sx={{ fontWeight: "600", color: "text.primary" }}>
-                    {stat.name}
+                    {getStatusLabel(stat.name, t)}
                   </Typography>
                 </Box>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -281,7 +319,7 @@ export default function BookingOverview() {
     >
       <CardContent sx={{ p: { xs: 2, sm: 3 }, height: "100%" }}>
         <Typography variant="h6" sx={{ fontWeight: "700", mb: 3 }}>
-          Booking Overview
+          {t("overview.title")}
         </Typography>
 
         {renderContent()}

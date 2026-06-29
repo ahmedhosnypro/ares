@@ -25,8 +25,10 @@ namespace Backend.Infrastructure.Data
         public DbSet<Verification> Verifications { get; set; }
         public DbSet<CompanyProfile> CompanyProfiles { get; set; }
         public DbSet<Category> Categories { get; set; }
-        public DbSet<CategoryOffer> CategoryOffers { get; set; }
-        public DbSet<Promotion> Promotions { get; set; }
+        public DbSet<DiscountCode> DiscountCodes { get; set; }
+        public DbSet<DiscountUsage> DiscountUsages { get; set; }
+        public DbSet<DiscountVehicleCategory> DiscountVehicleCategories { get; set; }
+        public DbSet<DiscountValidationLog> DiscountValidationLogs { get; set; }
         public DbSet<Vehicle> Vehicles { get; set; }
         public DbSet<VehicleImage> VehicleImages { get; set; }
         public DbSet<Driver> Drivers { get; set; }
@@ -64,8 +66,10 @@ namespace Backend.Infrastructure.Data
         public DbSet<VehicleAvailability> VehicleAvailabilities { get; set; }
         // Explicit interface implementation for IApplicationDbContext
         IQueryable<Category> IApplicationDbContext.Categories => Categories;
-        IQueryable<CategoryOffer> IApplicationDbContext.CategoryOffers => CategoryOffers;
-        IQueryable<Promotion> IApplicationDbContext.Promotions => Promotions;
+        IQueryable<DiscountCode> IApplicationDbContext.DiscountCodes => DiscountCodes;
+        IQueryable<DiscountUsage> IApplicationDbContext.DiscountUsages => DiscountUsages;
+        IQueryable<DiscountVehicleCategory> IApplicationDbContext.DiscountVehicleCategories => DiscountVehicleCategories;
+        IQueryable<DiscountValidationLog> IApplicationDbContext.DiscountValidationLogs => DiscountValidationLogs;
         IQueryable<Vehicle> IApplicationDbContext.Vehicles => Vehicles;
         IQueryable<VehicleImage> IApplicationDbContext.VehicleImages => VehicleImages;
         IQueryable<Booking> IApplicationDbContext.Bookings => Bookings;
@@ -84,6 +88,7 @@ namespace Backend.Infrastructure.Data
         IQueryable<AboutSection> IApplicationDbContext.AboutSections => AboutSections;
         IQueryable<PrivacySection> IApplicationDbContext.PrivacySections => PrivacySections;
     IQueryable<Driver> IApplicationDbContext.Drivers => Drivers;
+    IQueryable<CompanyProfile> IApplicationDbContext.CompanyProfiles => CompanyProfiles;
     // Driver Module (Phase 1+) — additive, see DriverProfile entity.
         DbSet<DriverProfile> IApplicationDbContext.DriverProfiles => DriverProfiles;
         DbSet<DriverWorkArea> IApplicationDbContext.DriverWorkAreas => DriverWorkAreas;
@@ -181,24 +186,32 @@ namespace Backend.Infrastructure.Data
             Categories.Remove(category);
         }
 
-        public void AddPromotion(Promotion promotion)
+        public void AddDiscountCode(DiscountCode discountCode)
         {
-            Promotions.Add(promotion);
+            DiscountCodes.Add(discountCode);
         }
 
-        public void RemovePromotion(Promotion promotion)
+        public void RemoveDiscountCode(DiscountCode discountCode)
         {
-            Promotions.Remove(promotion);
+            DiscountCodes.Remove(discountCode);
         }
 
-        public void AddCategoryOffer(CategoryOffer offer)
+        public void AddDiscountUsage(DiscountUsage discountUsage)
         {
-            CategoryOffers.Add(offer);
+            DiscountUsages.Add(discountUsage);
         }
 
-        public void RemoveCategoryOffer(CategoryOffer offer)
+        public void AddDiscountValidationLog(DiscountValidationLog validationLog)
         {
-            CategoryOffers.Remove(offer);
+            DiscountValidationLogs.Add(validationLog);
+        }
+
+        public async Task<int> IncrementDiscountUsageCountAsync(Guid discountId, CancellationToken cancellationToken = default)
+        {
+            return await Database.ExecuteSqlRawAsync(
+                "UPDATE DiscountCodes SET CurrentUsageCount = CurrentUsageCount + 1 " +
+                "WHERE Id = {0} AND (UsageLimitTotal IS NULL OR CurrentUsageCount < UsageLimitTotal)",
+                discountId, cancellationToken);
         }
 
         public Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
@@ -212,6 +225,47 @@ namespace Backend.Infrastructure.Data
             builder.Entity<DriverPayoutTransaction>(entity =>
             {
                 entity.HasKey(e => new { e.DriverPayoutId, e.DriverEarningId });
+                entity.HasOne(e => e.DriverEarning)
+                    .WithMany()
+                    .HasForeignKey(e => e.DriverEarningId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+            builder.Entity<DiscountVehicleCategory>(entity =>
+            {
+                entity.HasKey(e => new { e.DiscountId, e.CategoryId });
+            });
+            builder.Entity<DiscountUsage>(entity =>
+            {
+                entity.HasIndex(e => new { e.BookingId, e.DiscountId }).IsUnique();
+                entity.HasOne(e => e.Customer)
+                    .WithMany()
+                    .HasForeignKey(e => e.CustomerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+            builder.Entity<DiscountCode>(entity =>
+            {
+                entity.HasIndex(e => e.Code).IsUnique();
+                entity.HasIndex(e => new { e.IsActive, e.IsAutomatic, e.ValidFrom, e.ValidTo });
+                entity.HasOne(e => e.Supplier)
+                    .WithMany()
+                    .HasForeignKey(e => e.SupplierId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(e => e.CreatedByUser)
+                    .WithMany()
+                    .HasForeignKey(e => e.CreatedById)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+            builder.Entity<DiscountValidationLog>(entity =>
+            {
+                entity.HasIndex(e => new { e.DiscountId, e.ValidatedAt });
+                entity.HasOne(e => e.Customer)
+                    .WithMany()
+                    .HasForeignKey(e => e.CustomerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(e => e.Vehicle)
+                    .WithMany()
+                    .HasForeignKey(e => e.VehicleId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
             builder.ApplyConfigurationsFromAssembly(System.Reflection.Assembly.GetExecutingAssembly());
         }

@@ -87,13 +87,43 @@ function getStatusColor(status?: string): "success" | "warning" | "error" | "def
     case "completed":
       return "success";
     case "pending":
-    case "paymentPending".toLowerCase():
+    case "paymentpending":
     case "confirmed":
+    case "pendingapproval":
       return "warning";
     case "cancelled":
+    case "rejected":
       return "error";
     default:
       return "default";
+  }
+}
+
+function getStatusLabel(status: string | undefined, t: (key: string) => string): string {
+  if (!status) return t("status.unknown");
+  switch (status.toLowerCase()) {
+    case "draft":
+      return t("status.draft");
+    case "paymentpending":
+      return t("status.paymentPending");
+    case "pendingapproval":
+      return t("status.pendingApproval");
+    case "confirmed":
+      return t("status.confirmed");
+    case "active":
+      return t("status.active");
+    case "completed":
+      return t("status.completed");
+    case "cancelled":
+      return t("status.cancelled");
+    case "expired":
+      return t("status.expired");
+    case "rejected":
+      return t("status.rejected");
+    case "cancelledbyadmin":
+      return t("status.cancelledByAdmin");
+    default:
+      return t("status.unknown");
   }
 }
 
@@ -191,6 +221,58 @@ export default function BookingDetailsView({
           </Paper>
         ) : null}
 
+        {booking.status?.toLowerCase() === "pendingapproval" && (
+          <Paper
+            variant="outlined"
+            sx={{
+              mb: 3,
+              borderColor: "status.pendingApproval.main",
+              bgcolor: "status.pendingApproval.light",
+              boxShadow: "shadow.card",
+            }}
+          >
+            <CardContent sx={{ py: 2 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 800, color: "status.pendingApproval.main", mb: 0.5 }}>
+                {t("approval.pendingApprovalTitle")}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {t("approval.pendingApprovalMessage")}
+              </Typography>
+            </CardContent>
+          </Paper>
+        )}
+
+        {booking.status?.toLowerCase() === "rejected" && (
+          <Paper
+            variant="outlined"
+            sx={{
+              mb: 3,
+              borderColor: "status.cancelled.main",
+              bgcolor: "status.cancelled.light",
+              boxShadow: "shadow.card",
+            }}
+          >
+            <CardContent sx={{ py: 2 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 800, color: "status.cancelled.main", mb: 0.5 }}>
+                {t("approval.rejectedTitle")}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {t("approval.rejectedMessage")}
+              </Typography>
+              {booking.rejectionReason && (
+                <Box sx={{ mt: 1 }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
+                    {t("approval.rejectionReason")}:
+                  </Typography>
+                  <Typography variant="body2" color="error.main">
+                    {booking.rejectionReason}
+                  </Typography>
+                </Box>
+              )}
+            </CardContent>
+          </Paper>
+        )}
+
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, lg: 8 }}>
             <Paper
@@ -234,7 +316,11 @@ export default function BookingDetailsView({
                   </Box>
 
                   <Stack direction="row" spacing={1} sx={{ alignSelf: { xs: "flex-start", sm: "center" } }}>
-                    <Chip label={booking.status ?? "Unknown"} color={getStatusColor(booking.status)} size="small" />
+                    <Chip
+                      label={getStatusLabel(booking.status, t)}
+                      color={getStatusColor(booking.status)}
+                      size="small"
+                    />
                     <Chip
                       label={booking.payLater ? t("car.payLater") : t("car.prepaid")}
                       variant="outlined"

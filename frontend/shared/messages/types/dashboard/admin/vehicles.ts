@@ -72,6 +72,9 @@ export type AdminVehiclesLabels = {
     readonly unavailable: string;
     readonly retired: string;
     readonly fullyBooked: string;
+    readonly pending: string;
+    readonly approved: string;
+    readonly rejected: string;
   };
   readonly transmissions: {
     readonly automatic: string;

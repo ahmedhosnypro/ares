@@ -65,9 +65,7 @@ function UsersHubInner() {
     async function fetchStats() {
       try {
         const data = await getUsers(1, 1);
-        if (data.stats) {
-          setStats(data.stats);
-        }
+        setStats(data.stats);
       } catch (err) {
         logger.error("Failed to fetch user stats", err);
       }

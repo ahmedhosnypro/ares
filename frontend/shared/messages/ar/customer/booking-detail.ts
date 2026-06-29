@@ -152,6 +152,26 @@ const bookingDetail: BookingDetailLabels = {
     invalidBooking: "حجز غير صالح",
     cancelFailed: "فشل إلغاء الحجز",
   },
+  approval: {
+    pendingApprovalTitle: "في انتظار الموافقة",
+    pendingApprovalMessage: "حجزك قيد انتظار موافقة المسؤول. سيتم إخطارك بمجرد اتخاذ القرار.",
+    rejectedTitle: "حجز مرفوض",
+    rejectedMessage: "تم رفض حجزك.",
+    rejectionReason: "سبب الرفض",
+  },
+  status: {
+    draft: "مسودة",
+    paymentPending: "في انتظار الدفع",
+    pendingApproval: "في انتظار الموافقة",
+    confirmed: "مؤكد",
+    active: "نشط",
+    completed: "مكتمل",
+    cancelled: "ملغى",
+    expired: "منتهي الصلاحية",
+    rejected: "مرفوض",
+    cancelledByAdmin: "ملغى بواسطة المسؤول",
+    unknown: "غير معروف",
+  },
   notAvailable: "غير متاح",
 };
 

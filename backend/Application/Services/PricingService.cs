@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Backend.Application.Exceptions;
 using Backend.Application.Interfaces;
+using Backend.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Application.Services
@@ -35,31 +37,48 @@ namespace Backend.Application.Services
             var pricePerDay = vehicle.PricePerDay ?? 0m;
             int totalDays = (returnDate - pickupDate).Days;
 
-            // If the booking is less than a day but has hours, we usually charge 1 day.
-            // But we will follow the existing totalDays logic.
             if (totalDays <= 0) totalDays = 1;
 
-            decimal originalPrice = 0m;
+            var originalPrice = pricePerDay * totalDays;
+
+            var applicableDiscounts = vehicle.CategoryId.HasValue
+                ? await _context.DiscountCodes
+                    .Include(d => d.VehicleCategories)
+                    .Where(d => d.IsActive && d.IsAutomatic && d.ValidFrom <= DateTime.UtcNow && d.ValidTo >= DateTime.UtcNow)
+                    .Where(d => !d.VehicleCategories.Any() || d.VehicleCategories.Any(vc => vc.CategoryId == vehicle.CategoryId.Value))
+                    .OrderByDescending(d => d.Priority)
+                    .ThenByDescending(d => d.DiscountValue)
+                    .ToListAsync(cancellationToken)
+                : new List<DiscountCode>();
+
             decimal discountAmount = 0m;
 
-            // Fetch active category offer if available
-            var offer = vehicle.CategoryId.HasValue
-                ? await _context.CategoryOffers
-                    .Where(o => o.CategoryId == vehicle.CategoryId.Value && o.IsActive)
-                    .OrderByDescending(o => o.CreatedAt)
-                    .FirstOrDefaultAsync(cancellationToken)
-                : null;
-
-            for (int i = 0; i < totalDays; i++)
+            if (applicableDiscounts.Count > 0)
             {
-                var currentDate = pickupDate.AddDays(i);
-                originalPrice += pricePerDay;
-
-                if (offer != null && currentDate >= offer.StartDate && currentDate <= offer.EndDate)
+                var canStack = applicableDiscounts.Any(d => d.AllowStacking);
+                if (canStack)
                 {
-                    var discountForDay = Math.Round(pricePerDay * (offer.DiscountPercentage / 100m), 2);
-                    discountAmount += discountForDay;
+                    var stackableDiscounts = applicableDiscounts.Where(d => d.AllowStacking).ToList();
+                    foreach (var discount in stackableDiscounts)
+                    {
+                        var amount = discount.DiscountType == "percentage"
+                            ? Math.Round(originalPrice * (discount.DiscountValue / 100m), 2)
+                            : Math.Min(discount.DiscountValue, originalPrice);
+                        discountAmount += amount;
+                    }
                 }
+                else
+                {
+                    var bestDiscount = applicableDiscounts.First();
+                    discountAmount = bestDiscount.DiscountType == "percentage"
+                        ? Math.Round(originalPrice * (bestDiscount.DiscountValue / 100m), 2)
+                        : Math.Min(bestDiscount.DiscountValue, originalPrice);
+                }
+            }
+
+            if (discountAmount > originalPrice)
+            {
+                discountAmount = originalPrice;
             }
 
             var finalPrice = originalPrice - discountAmount;

@@ -50,6 +50,7 @@ import type { BankDetailsLabels } from "./dashboard/admin/bank-details";
 import type { AboutLabels } from "./public/about";
 import type { PrivacyLabels } from "./public/privacy";
 import type { TermsLabels } from "./public/terms";
+import type { OffersLabels } from "./public/offers";
 import type { AdminBookingsLabels } from "./dashboard/admin/bookings";
 import type { CreateBookingLabels } from "./dashboard/admin/bookings/create";
 import type { BookingDetailsLabels } from "./dashboard/admin/bookings/_id/details";
@@ -67,6 +68,7 @@ import type { AdminDriversLabels } from "./dashboard/admin/drivers";
 import type { AdminInspectorsLabels } from "./dashboard/admin/inspectors";
 import type { AdminVehiclesLabels } from "./dashboard/admin/vehicles";
 import type { AdminVerificationsLabels } from "./dashboard/admin/verifications";
+import type { PromotionsLabels } from "./dashboard/admin/promotions";
 
 export type {
   AuthLabels,
@@ -121,6 +123,8 @@ export type {
   AboutLabels,
   PrivacyLabels,
   TermsLabels,
+  OffersLabels,
+  PromotionsLabels,
   AdminBookingsLabels,
   CreateBookingLabels,
   BookingDetailsLabels,
@@ -211,6 +215,7 @@ export type DashboardAdminSchema = {
   readonly inspectors: AdminInspectorsLabels;
   readonly vehicles: AdminVehiclesLabels;
   readonly verifications: AdminVerificationsLabels;
+  readonly promotions: PromotionsLabels;
 };
 
 export type DashboardInspectorSchema = {
@@ -224,6 +229,7 @@ export type PublicPagesSchema = {
   readonly about: AboutLabels;
   readonly privacy: PrivacyLabels;
   readonly terms: TermsLabels;
+  readonly offers: OffersLabels;
 };
 
 export type MessageSchema = {

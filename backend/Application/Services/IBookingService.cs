@@ -162,4 +162,15 @@ public interface IBookingService
         CancellationToken cancellationToken = default);
 
     Task<Backend.Application.Interfaces.RefundResult> GetRefundPreviewAsync(Guid bookingId, CancellationToken ct = default);
+
+    Task<BookingResponse> ApproveBookingAsync(
+        Guid bookingId,
+        Guid adminId,
+        CancellationToken cancellationToken = default);
+
+    Task<BookingResponse> RejectBookingAsync(
+        Guid bookingId,
+        Guid adminId,
+        string reason,
+        CancellationToken cancellationToken = default);
 }

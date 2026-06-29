@@ -52,6 +52,11 @@ declare module "@mui/material/styles" {
         light: string;
         contrastText: string;
       };
+      pendingApproval: {
+        main: string;
+        light: string;
+        contrastText: string;
+      };
       confirmed: {
         main: string;
         light: string;
@@ -68,6 +73,11 @@ declare module "@mui/material/styles" {
         contrastText: string;
       };
       cancelled: {
+        main: string;
+        light: string;
+        contrastText: string;
+      };
+      rejected: {
         main: string;
         light: string;
         contrastText: string;
@@ -142,6 +152,11 @@ declare module "@mui/material/styles" {
         light?: string;
         contrastText?: string;
       };
+      pendingApproval?: {
+        main?: string;
+        light?: string;
+        contrastText?: string;
+      };
       confirmed?: {
         main?: string;
         light?: string;
@@ -158,6 +173,11 @@ declare module "@mui/material/styles" {
         contrastText?: string;
       };
       cancelled?: {
+        main?: string;
+        light?: string;
+        contrastText?: string;
+      };
+      rejected?: {
         main?: string;
         light?: string;
         contrastText?: string;
@@ -254,6 +274,11 @@ const lightPalette: PaletteOptions = {
       light: "#fef3c7",
       contrastText: "#000000",
     },
+    pendingApproval: {
+      main: "#f59e0b",
+      light: "#fef3c7",
+      contrastText: "#000000",
+    },
     confirmed: {
       main: "#3b82f6",
       light: "#dbeafe",
@@ -272,6 +297,11 @@ const lightPalette: PaletteOptions = {
     cancelled: {
       main: "#ef4444",
       light: "#fee2e2",
+      contrastText: "#ffffff",
+    },
+    rejected: {
+      main: "#ea580c",
+      light: "#ffedd5",
       contrastText: "#ffffff",
     },
     blocked: {
@@ -365,6 +395,11 @@ const darkPalette: PaletteOptions = {
       light: "#fef3c7",
       contrastText: "#000000",
     },
+    pendingApproval: {
+      main: "#fbbf24",
+      light: "#fef3c7",
+      contrastText: "#000000",
+    },
     confirmed: {
       main: "#60a5fa",
       light: "#dbeafe",
@@ -383,6 +418,11 @@ const darkPalette: PaletteOptions = {
     cancelled: {
       main: "#f87171",
       light: "#fee2e2",
+      contrastText: "#000000",
+    },
+    rejected: {
+      main: "#fb923c",
+      light: "#ffedd5",
       contrastText: "#000000",
     },
     blocked: {

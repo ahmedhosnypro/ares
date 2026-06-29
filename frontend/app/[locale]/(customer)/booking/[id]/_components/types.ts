@@ -52,4 +52,5 @@ export interface BookingDetails {
   readonly withDriver?: boolean;
   readonly requiresDriver?: boolean;
   readonly assignedDriverProfile?: AssignedDriverProfile;
+  readonly rejectionReason?: string;
 }

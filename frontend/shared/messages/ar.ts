@@ -47,6 +47,7 @@ import bankDetails from "./ar/dashboard/admin/bank-details";
 import about from "./ar/public/about";
 import privacy from "./ar/public/privacy";
 import terms from "./ar/public/terms";
+import offers from "./ar/public/offers";
 import adminBookings from "./ar/dashboard/admin/bookings";
 import createBooking from "./ar/dashboard/admin/bookings/create";
 import bookingDetails from "./ar/dashboard/admin/bookings/_id/details";
@@ -64,6 +65,7 @@ import drivers from "./ar/dashboard/admin/drivers";
 import inspectors from "./ar/dashboard/admin/inspectors";
 import vehiclesAdmin from "./ar/dashboard/admin/vehicles";
 import verifications from "./ar/dashboard/admin/verifications";
+import promotions from "./ar/dashboard/admin/promotions";
 import inspectorHistory from "./ar/dashboard/inspector/history";
 import inspectorInspections from "./ar/dashboard/inspector/inspections";
 import inspectorInspectionDetail from "./ar/dashboard/inspector/inspection-detail";
@@ -140,6 +142,7 @@ const ar: MessageSchema = {
     inspectors,
     vehicles: vehiclesAdmin,
     verifications,
+    promotions,
   },
   dashboardInspector: {
     history: inspectorHistory,
@@ -152,6 +155,7 @@ const ar: MessageSchema = {
     about,
     privacy,
     terms,
+    offers,
   },
 };
 

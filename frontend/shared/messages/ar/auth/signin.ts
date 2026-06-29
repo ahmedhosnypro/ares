@@ -15,7 +15,7 @@ const signin: SignInLabels = {
   sessionExpired: "انتهت صلاحية جلستك. يرجى تسجيل الدخول مرة أخرى.",
   errorTitle: "خطأ",
   unexpectedError: "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.",
-  demoLogins: "تجريبي فقط: تسجيلات دخول تجريبية",
+  demoLogins: "تسجيلات دخول تجريبية",
   logoAlt: "شعار أريس",
   decorativeTitle: "قّود طموحك",
   decorativeSubtitle: "اختبر رحلة القيادة المثالية مع مجموعتنا من السيارات الفاخرة المصممة خصيصاً لك.",

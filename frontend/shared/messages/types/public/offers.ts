@@ -1,0 +1,26 @@
+export type OffersLabels = {
+  readonly title: string;
+  readonly description: string;
+  readonly emptyState: string;
+  readonly discountBadgePercent: string;
+  readonly discountBadgeFixed: string;
+  readonly validUntil: string;
+  readonly codeLabel: string;
+  readonly noCodeNeeded: string;
+  readonly termsApply: string;
+  readonly browseVehicles: string;
+  readonly categoryFilter: string;
+  readonly allCategories: string;
+  readonly activeOffers: string;
+  readonly expiredOffers: string;
+  readonly percentageOff: string;
+  readonly amountOff: string;
+  readonly minimumBooking: string;
+  readonly minimumDuration: string;
+  readonly noMinimum: string;
+  readonly automaticDiscount: string;
+  readonly useCode: string;
+  readonly expiresOn: string;
+  readonly validFromTo: string;
+  readonly loadError: string;
+};

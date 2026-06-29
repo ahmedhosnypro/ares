@@ -107,7 +107,7 @@ export default function InspectionDetailsClient({ inspectionId }: Props): JSX.El
     } finally {
       setLoading(false);
     }
-  }, [inspectionId]);
+  }, [inspectionId, t]);
 
   useEffect(() => {
     void fetchData();

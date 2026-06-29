@@ -24,6 +24,8 @@ import { logger } from "@/utils/logger";
 import PaymentForm from "./PaymentForm";
 import ExpressCheckout from "./ExpressCheckout";
 import OrderSummary from "./OrderSummary";
+import DiscountCodeInput from "./DiscountCodeInput";
+import type { DiscountValidationResponse } from "@/api-clients/offers/offers";
 
 function renderPaymentErrorState(
   errorStatus: number,
@@ -144,6 +146,7 @@ export default function PaymentClient({ booking, accessToken }: PaymentClientPro
   const [errorStatus, setErrorStatus] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [appliedDiscount, setAppliedDiscount] = useState<DiscountValidationResponse | null>(null);
 
   const paymentFailed = searchParams.get("payment_failed") === "1";
 
@@ -225,6 +228,19 @@ export default function PaymentClient({ booking, accessToken }: PaymentClientPro
 
   const enableApplePay = process.env.ENABLE_APPLE_PAY === "true";
   const enableGooglePay = process.env.ENABLE_GOOGLE_PAY === "true";
+
+  const handleDiscountApplied = (result: DiscountValidationResponse) => {
+    setAppliedDiscount(result);
+  };
+
+  const handleDiscountRemoved = () => {
+    setAppliedDiscount(null);
+  };
+
+  const effectiveDiscountAmount = appliedDiscount
+    ? (booking.discountAmount ?? 0) + appliedDiscount.discountAmount
+    : booking.discountAmount;
+  const effectivePrice = appliedDiscount ? booking.price - appliedDiscount.discountAmount : booking.price;
 
   return (
     <Box component="main" sx={{ minHeight: "100vh", bgcolor: "background.default", py: { xs: 4, md: 10 } }}>
@@ -371,9 +387,27 @@ export default function PaymentClient({ booking, accessToken }: PaymentClientPro
             </Stack>
           </Grid>
 
-          {/* Right Column: Order Summary */}
+          {/* Right Column: Discount Code & Order Summary */}
           <Grid size={{ xs: 12, lg: 4 }} sx={{ order: { xs: 1, lg: 2 } }}>
-            <OrderSummary booking={booking} />
+            <Stack spacing={2}>
+              <DiscountCodeInput
+                vehicleId={booking.car.vehicleId}
+                startDate={booking.from}
+                endDate={booking.to}
+                subtotal={booking.originalPrice ?? booking.price}
+                accessToken={accessToken}
+                onDiscountApplied={handleDiscountApplied}
+                onDiscountRemoved={handleDiscountRemoved}
+              />
+              <OrderSummary
+                booking={{
+                  ...booking,
+                  discountAmount: effectiveDiscountAmount,
+                  price: effectivePrice,
+                }}
+                discountCodeApplied={!!appliedDiscount}
+              />
+            </Stack>
           </Grid>
         </Grid>
       </Container>

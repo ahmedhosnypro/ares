@@ -68,9 +68,17 @@ const bookingPayment: BookingPaymentLabels = {
       day: "day",
       days: "days",
       discount: "Discount",
+      discountSavings: "You save {amount}",
       totalAmount: "Total Amount",
     },
   },
+  discountCodePlaceholder: "Enter discount code",
+  discountCodeApply: "Apply",
+  discountCodeApplied: "Discount applied!",
+  discountCodeInvalid: "Invalid discount code",
+  discountCodeRemove: "Remove",
+  discountSavings: "You save {amount}",
+  discountCodeLabel: "Discount Code",
 };
 
 export default bookingPayment;

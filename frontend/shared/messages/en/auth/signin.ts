@@ -15,7 +15,7 @@ const signin: SignInLabels = {
   sessionExpired: "Your session has expired. Please sign in again.",
   errorTitle: "Error",
   unexpectedError: "An unexpected error occurred. Please try again.",
-  demoLogins: "DEV ONLY: Demo Logins",
+  demoLogins: "Demo Logins",
   logoAlt: "Ares Logo",
   decorativeTitle: "Drive Your Ambition",
   decorativeSubtitle:

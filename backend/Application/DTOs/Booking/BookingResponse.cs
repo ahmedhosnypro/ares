@@ -8,4 +8,7 @@ public record BookingResponse(
     string BookingNumber,
     string Status,
     decimal TotalPrice,
-    string Message);
+    string Message,
+    Guid? ApprovedBy = null,
+    DateTime? ApprovedAt = null,
+    string? RejectionReason = null);

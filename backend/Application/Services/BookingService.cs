@@ -210,7 +210,8 @@ public class BookingService : IBookingService
 
         // Requirement 4.10: Create booking with status "Pending". Payment is
         // a separate flow — booking creation does NOT require payment.
-        var initialStatus = BookingStatus.Confirmed;
+        bool isAdminCreatingForCustomer = request.CustomerUserId.HasValue && request.CustomerUserId.Value != userId;
+        var initialStatus = isAdminCreatingForCustomer ? BookingStatus.Confirmed : BookingStatus.PendingApproval;
         DateTime? holdStartedAt = null;
         DateTime? holdExpiresAt = null;
 
@@ -407,7 +408,10 @@ public class BookingService : IBookingService
             bookingNumber,
             booking.Status.ToString(),
             totalPrice,
-            "Booking created successfully"
+            "Booking created successfully",
+            booking.ApprovedBy,
+            booking.ApprovedAt,
+            booking.RejectionReason
         );
     }
 
@@ -551,6 +555,7 @@ public class BookingService : IBookingService
         }
 
         // Requirement 5.13: Update booking status to "Cancelled"
+        var originalStatus = booking.Status;
         booking.Status = Backend.Domain.Entities.Enums.BookingStatus.Cancelled;
         booking.CancelledAt = DateTime.UtcNow;
 
@@ -597,7 +602,7 @@ public class BookingService : IBookingService
         }
         else
         {
-            var refundResult = calculator.Calculate(booking.Status, pickupDate, totalAmount);
+            var refundResult = calculator.Calculate(originalStatus, pickupDate, totalAmount);
             policy = refundResult.PolicyType;
             refundPct = refundResult.RefundPercentage;
             fee = refundResult.CancellationFee;
@@ -738,7 +743,7 @@ public class BookingService : IBookingService
         // - Pending  = bookings awaiting confirmation
         // - Completed = ALL completed bookings (lifetime), not today only
         var activeBookings = await query.CountAsync(b => b.Status == BookingStatus.Active, cancellationToken);
-        var pendingBookings = await query.CountAsync(b => b.Status == BookingStatus.Confirmed, cancellationToken);
+        var pendingBookings = await query.CountAsync(b => b.Status == BookingStatus.PendingApproval, cancellationToken);
         var totalCompletedBookings = await query.CountAsync(b => b.Status == BookingStatus.Completed, cancellationToken);
 
         return new AdminBookingStatsDto(activeBookings, pendingBookings, totalCompletedBookings);
@@ -761,6 +766,8 @@ public class BookingService : IBookingService
         {
             BookingStatus.Draft,
             BookingStatus.PaymentPending,
+            BookingStatus.PendingApproval,
+            BookingStatus.Rejected,
             BookingStatus.Confirmed,
             BookingStatus.Active,
             BookingStatus.Completed,
@@ -791,6 +798,8 @@ public class BookingService : IBookingService
         {
             new BookingStatusAnalyticsDto { Status = "Draft", Count = statusCounts.GetValueOrDefault(BookingStatus.Draft.ToString(), 0) },
             new BookingStatusAnalyticsDto { Status = "Payment Pending", Count = statusCounts.GetValueOrDefault(BookingStatus.PaymentPending.ToString(), 0) },
+            new BookingStatusAnalyticsDto { Status = "Pending Approval", Count = statusCounts.GetValueOrDefault(BookingStatus.PendingApproval.ToString(), 0) },
+            new BookingStatusAnalyticsDto { Status = "Rejected", Count = statusCounts.GetValueOrDefault(BookingStatus.Rejected.ToString(), 0) },
             new BookingStatusAnalyticsDto { Status = "Confirmed", Count = statusCounts.GetValueOrDefault(BookingStatus.Confirmed.ToString(), 0) },
             new BookingStatusAnalyticsDto { Status = "Active", Count = statusCounts.GetValueOrDefault(BookingStatus.Active.ToString(), 0) },
             new BookingStatusAnalyticsDto { Status = "Completed", Count = statusCounts.GetValueOrDefault(BookingStatus.Completed.ToString(), 0) },
@@ -1096,19 +1105,21 @@ public class BookingService : IBookingService
         var allowedNextStatuses = currentStatus switch
         {
             BookingStatus.Draft => new[] { BookingStatus.PaymentPending, BookingStatus.Cancelled },
-            BookingStatus.PaymentPending => new[] { BookingStatus.Confirmed, BookingStatus.Cancelled, BookingStatus.Expired },
+            BookingStatus.PaymentPending => new[] { BookingStatus.PendingApproval, BookingStatus.Cancelled, BookingStatus.Expired },
+            BookingStatus.PendingApproval => new[] { BookingStatus.Confirmed, BookingStatus.Rejected, BookingStatus.CancelledByAdmin },
             BookingStatus.Confirmed => new[] { BookingStatus.Active, BookingStatus.Cancelled },
             BookingStatus.Active => new[] { BookingStatus.Completed, BookingStatus.Cancelled },
             BookingStatus.Completed => Array.Empty<BookingStatus>(),
             BookingStatus.Cancelled => Array.Empty<BookingStatus>(),
             BookingStatus.CancelledByAdmin => Array.Empty<BookingStatus>(),
             BookingStatus.Expired => Array.Empty<BookingStatus>(),
+            BookingStatus.Rejected => Array.Empty<BookingStatus>(),
             _ => Array.Empty<BookingStatus>()
         };
 
         if (!allowedNextStatuses.Contains(newStatus))
         {
-            if (currentStatus == BookingStatus.Completed || currentStatus == BookingStatus.Cancelled || currentStatus == BookingStatus.CancelledByAdmin)
+            if (currentStatus == BookingStatus.Completed || currentStatus == BookingStatus.Cancelled || currentStatus == BookingStatus.CancelledByAdmin || currentStatus == BookingStatus.Rejected)
             {
                 throw new ValidationException("Status", $"Cannot change booking status from {currentStatus} to {newStatus}. {currentStatus} bookings are final.");
             }
@@ -1304,13 +1315,27 @@ public class BookingService : IBookingService
                 case Backend.Domain.Entities.Enums.BookingStatus.Cancelled:
                     await _notificationService.CreateNotificationAsync(
                         booking.UserId,
+                        "Booking Cancelled",
+                        $"Your booking {bookingLabel} has been cancelled. Please review your bookings for details.",
+                        $"BookingCancelled:{booking.Id}",
+                        cancellationToken);
+                    await _notificationService.NotifyAdminsAsync(
+                        "Booking cancelled",
+                        $"Booking {bookingLabel} has been cancelled.",
+                        $"BookingCancelled:{booking.Id}",
+                        cancellationToken);
+                    break;
+
+                case Backend.Domain.Entities.Enums.BookingStatus.Rejected:
+                    await _notificationService.CreateNotificationAsync(
+                        booking.UserId,
                         "Booking Rejected",
-                        $"Your booking {bookingLabel} has been rejected or cancelled. Please review your bookings for details.",
+                        $"Your booking {bookingLabel} has been rejected. Please review your bookings for details.",
                         $"BookingRejected:{booking.Id}",
                         cancellationToken);
                     await _notificationService.NotifyAdminsAsync(
                         "Booking rejected",
-                        $"Booking {bookingLabel} has been rejected or cancelled.",
+                        $"Booking {bookingLabel} has been rejected.",
                         $"BookingRejected:{booking.Id}",
                         cancellationToken);
                     break;
@@ -1525,7 +1550,10 @@ public class BookingService : IBookingService
             payment?.Status ?? "Unpaid",
             payment?.PaymentMethod ?? "None",
             b.CreatedAt,
-            b.UpdatedAt);
+            b.UpdatedAt,
+            b.ApprovedBy,
+            b.ApprovedAt,
+            b.RejectionReason);
     }
 
     /// <summary>
@@ -1682,7 +1710,10 @@ public class BookingService : IBookingService
             VehicleFee: booking.VehicleFee,
             DriverFee: booking.DriverFee,
             GrandTotal: booking.GrandTotal,
-            RequiresDriver: booking.RequiresDriver);
+            RequiresDriver: booking.RequiresDriver,
+            ApprovedBy: booking.ApprovedBy,
+            ApprovedAt: booking.ApprovedAt,
+            RejectionReason: booking.RejectionReason);
     }
 
     /// <summary>
@@ -1900,5 +1931,252 @@ public class BookingService : IBookingService
         }
 
         return new RefundCalculator().Calculate(booking.Status, booking.PickupDate ?? DateTime.UtcNow.AddDays(1), payment.Amount);
+    }
+
+    public async Task<BookingResponse> ApproveBookingAsync(
+        Guid bookingId,
+        Guid adminId,
+        CancellationToken cancellationToken = default)
+    {
+        var booking = await _context.Bookings
+            .Include(b => b.Vehicle)
+            .Include(b => b.User)
+            .FirstOrDefaultAsync(b => b.Id == bookingId, cancellationToken);
+
+        if (booking == null)
+        {
+            throw new NotFoundException($"Booking with ID {bookingId} not found");
+        }
+
+        if (booking.Status != BookingStatus.PendingApproval)
+        {
+            throw new ConflictException(
+                $"Only bookings pending approval can be approved. Current status: {booking.Status}");
+        }
+
+        booking.Status = BookingStatus.Confirmed;
+        booking.ApprovedBy = adminId;
+        booking.ApprovedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var bookingLabel = string.IsNullOrEmpty(booking.BookingNumber)
+            ? booking.Id.ToString()
+            : booking.BookingNumber;
+
+        if (_notificationService != null)
+        {
+            try
+            {
+                await _notificationService.CreateNotificationAsync(
+                    booking.UserId,
+                    "Booking Approved",
+                    $"Your booking #{bookingLabel} has been approved by an admin.",
+                    $"BookingApproved:{booking.Id}",
+                    cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogWarning(ex, "Failed to send approval notification for booking {BookingId}", booking.Id);
+            }
+        }
+
+        if (_mediator != null && _userManager != null)
+        {
+            try
+            {
+                var customerUser = await _userManager.FindByIdAsync(booking.UserId.ToString());
+                var customerEmail = customerUser?.Email ?? "";
+                var customerName = customerUser != null ? $"{customerUser.FirstName} {customerUser.LastName}".Trim() : "Customer";
+                var vehicleName = booking.Vehicle != null ? $"{booking.Vehicle.Make} {booking.Vehicle.Model}".Trim() : "Vehicle";
+                var supplierEmail = "";
+                if (booking.Vehicle?.UserId != null && booking.Vehicle.UserId != Guid.Empty)
+                {
+                    var supplierUser = await _userManager.FindByIdAsync(booking.Vehicle.UserId.ToString());
+                    supplierEmail = supplierUser?.Email ?? "";
+                }
+
+                var bookingApprovedEvent = new BookingApprovedEvent(
+                    booking.Id,
+                    customerEmail,
+                    customerName,
+                    supplierEmail,
+                    vehicleName,
+                    booking.PickupDate ?? DateTime.UtcNow,
+                    booking.ReturnDate ?? DateTime.UtcNow,
+                    booking.TotalPrice ?? 0m
+                );
+
+                await _mediator.Publish(bookingApprovedEvent, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogWarning(ex, "Failed to send approval email for booking {BookingId}", booking.Id);
+            }
+        }
+
+        return new BookingResponse(
+            booking.Id,
+            booking.BookingNumber ?? "",
+            booking.Status.ToString(),
+            booking.TotalPrice ?? 0m,
+            "Booking approved successfully",
+            booking.ApprovedBy,
+            booking.ApprovedAt,
+            booking.RejectionReason
+        );
+    }
+
+    public async Task<BookingResponse> RejectBookingAsync(
+        Guid bookingId,
+        Guid adminId,
+        string reason,
+        CancellationToken cancellationToken = default)
+    {
+        var booking = await _context.Bookings
+            .Include(b => b.Vehicle)
+            .Include(b => b.User)
+            .FirstOrDefaultAsync(b => b.Id == bookingId, cancellationToken);
+
+        if (booking == null)
+        {
+            throw new NotFoundException($"Booking with ID {bookingId} not found");
+        }
+
+        if (booking.Status != BookingStatus.PendingApproval)
+        {
+            throw new ConflictException(
+                $"Only bookings pending approval can be rejected. Current status: {booking.Status}");
+        }
+
+        booking.Status = BookingStatus.Rejected;
+        booking.RejectionReason = reason;
+
+        var capturedPayment = await _context.Payments
+            .FirstOrDefaultAsync(p => p.BookingId == bookingId && p.Status == "Captured", cancellationToken);
+
+        if (capturedPayment != null)
+        {
+            capturedPayment.Status = "Refunded";
+
+            var calculator = new RefundCalculator();
+            var totalAmount = booking.TotalPrice ?? 0m;
+            var pickupDate = booking.PickupDate ?? DateTime.UtcNow.AddDays(1);
+            var refundResult = calculator.Calculate(BookingStatus.PendingApproval, pickupDate, totalAmount);
+
+            var commissionPercentage = booking.CommissionPercentage ?? 0m;
+            var cancellationFee = refundResult.CancellationFee;
+            var refundCommissionAmount = Math.Round(cancellationFee * (commissionPercentage / 100m), 2);
+            var refundSupplierAmount = Math.Round(cancellationFee - refundCommissionAmount, 2);
+
+            var cancellation = new BookingCancellation
+            {
+                Id = Guid.NewGuid(),
+                BookingId = bookingId,
+                CancelledBy = adminId,
+                PolicyType = refundResult.PolicyType,
+                RefundPercentage = refundResult.RefundPercentage,
+                OriginalAmount = totalAmount,
+                CancellationFee = cancellationFee,
+                RefundCommissionAmount = refundCommissionAmount,
+                RefundSupplierAmount = refundSupplierAmount,
+                Currency = "EGP",
+                RefundStatus = refundResult.RefundPercentage > 0 ? Domain.Entities.Enums.RefundStatus.Processing : Domain.Entities.Enums.RefundStatus.Completed,
+                Reason = reason,
+                ReasonCategory = Domain.Entities.Enums.ReasonCategory.Other,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.AddBookingCancellation(cancellation);
+        }
+
+        if (booking.AssignedDriverProfileId.HasValue && _driverProfileRepository != null)
+        {
+            var driverProfile = await _driverProfileRepository.GetByIdAsync(booking.AssignedDriverProfileId.Value, cancellationToken);
+            if (driverProfile != null)
+            {
+                driverProfile.LockedUntil = null;
+                driverProfile.Availability = DriverAvailability.Available;
+                await _driverProfileRepository.UpdateAsync(driverProfile, cancellationToken);
+            }
+        }
+
+        if (_driverEarningsService != null)
+        {
+            try
+            {
+                await _driverEarningsService.ReverseEarningForBookingAsync(booking.Id, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Failed to reverse driver earning for booking {BookingId}", booking.Id);
+            }
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var bookingLabel = string.IsNullOrEmpty(booking.BookingNumber)
+            ? booking.Id.ToString()
+            : booking.BookingNumber;
+
+        if (_notificationService != null)
+        {
+            try
+            {
+                await _notificationService.CreateNotificationAsync(
+                    booking.UserId,
+                    "Booking Rejected",
+                    $"Your booking #{bookingLabel} was not approved. Reason: {reason}",
+                    $"BookingRejected:{booking.Id}",
+                    cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogWarning(ex, "Failed to send rejection notification for booking {BookingId}", booking.Id);
+            }
+        }
+
+        if (_mediator != null && _userManager != null)
+        {
+            try
+            {
+                var customerUser = await _userManager.FindByIdAsync(booking.UserId.ToString());
+                var customerEmail = customerUser?.Email ?? "";
+                var customerName = customerUser != null ? $"{customerUser.FirstName} {customerUser.LastName}".Trim() : "Customer";
+                var vehicleName = booking.Vehicle != null ? $"{booking.Vehicle.Make} {booking.Vehicle.Model}".Trim() : "Vehicle";
+                var supplierEmail = "";
+                if (booking.Vehicle?.UserId != null && booking.Vehicle.UserId != Guid.Empty)
+                {
+                    var supplierUser = await _userManager.FindByIdAsync(booking.Vehicle.UserId.ToString());
+                    supplierEmail = supplierUser?.Email ?? "";
+                }
+
+                var bookingCanceledEvent = new BookingCanceledEvent(
+                    booking.Id,
+                    customerEmail,
+                    customerName,
+                    supplierEmail,
+                    vehicleName,
+                    booking.TotalPrice ?? 0m
+                );
+
+                await _mediator.Publish(bookingCanceledEvent, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogWarning(ex, "Failed to send rejection email for booking {BookingId}", booking.Id);
+            }
+        }
+
+        return new BookingResponse(
+            booking.Id,
+            booking.BookingNumber ?? "",
+            booking.Status.ToString(),
+            booking.TotalPrice ?? 0m,
+            "Booking rejected",
+            booking.ApprovedBy,
+            booking.ApprovedAt,
+            booking.RejectionReason
+        );
     }
 }

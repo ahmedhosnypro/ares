@@ -74,6 +74,9 @@ const vehicles: AdminVehiclesLabels = {
     unavailable: "Unavailable",
     retired: "Retired",
     fullyBooked: "Fully Booked (On Rental)",
+    pending: "Pending Review",
+    approved: "Approved",
+    rejected: "Rejected",
   },
   transmissions: {
     automatic: "Automatic",

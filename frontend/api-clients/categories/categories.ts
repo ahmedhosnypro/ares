@@ -1,14 +1,6 @@
 import { getSession } from "next-auth/react";
 import { apiFetchJson } from "@/utils/api-client";
 
-export interface ActiveOffer {
-  offerName: string;
-  discountPercentage: number;
-  startDate: string;
-  endDate: string;
-  isActive: boolean;
-}
-
 export interface Category {
   id: string;
   name: string;
@@ -16,7 +8,6 @@ export interface Category {
   commissionPercentage: number;
   isActive: boolean;
   vehicleCount?: number;
-  activeOffer?: ActiveOffer | null;
 }
 
 export interface CategoryDetails extends Category {
@@ -28,17 +19,6 @@ export interface CategoryDetails extends Category {
     model: string;
     licensePlate: string;
   }>;
-}
-
-export interface Promotion {
-  id: string;
-  categoryId: string;
-  name: string;
-  discountPercentage: number;
-  startDate: string;
-  endDate: string;
-  status: string;
-  isActive: boolean;
 }
 
 export interface CategorySummary {
@@ -134,11 +114,6 @@ export async function createCategory(payload: {
   description?: string;
   commissionPercentage: number;
   isActive: boolean;
-  offerName?: string | null;
-  offerDiscountPercentage?: number | null;
-  offerStartDate?: string | null;
-  offerEndDate?: string | null;
-  offerIsActive?: boolean | null;
 }): Promise<Category> {
   const session = await getSession();
 
@@ -156,11 +131,6 @@ export async function updateCategory(
     description?: string;
     commissionPercentage: number;
     isActive: boolean;
-    offerName?: string | null;
-    offerDiscountPercentage?: number | null;
-    offerStartDate?: string | null;
-    offerEndDate?: string | null;
-    offerIsActive?: boolean | null;
   }
 ): Promise<Category> {
   const session = await getSession();
@@ -188,62 +158,5 @@ export async function bulkAssignVehicles(categoryId: string, vehicleIds: string[
     method: "POST",
     accessToken: session?.accessToken ?? undefined,
     body: JSON.stringify({ categoryId, vehicleIds }),
-  });
-}
-
-// Promotions
-
-export async function getPromotionsByCategory(categoryId: string): Promise<Promotion[]> {
-  const session = await getSession();
-
-  return apiFetchJson<Promotion[]>(`/api/admin/promotions/category/${categoryId}`, {
-    method: "GET",
-    accessToken: session?.accessToken ?? undefined,
-  });
-}
-
-export async function createPromotion(payload: {
-  categoryId: string;
-  name: string;
-  discountPercentage: number;
-  startDate: string;
-  endDate: string;
-  status: string;
-}): Promise<Promotion> {
-  const session = await getSession();
-
-  return apiFetchJson<Promotion>(`/api/admin/promotions`, {
-    method: "POST",
-    accessToken: session?.accessToken ?? undefined,
-    body: JSON.stringify(payload),
-  });
-}
-
-export async function updatePromotion(
-  id: string,
-  payload: {
-    categoryId: string;
-    name: string;
-    discountPercentage: number;
-    startDate: string;
-    endDate: string;
-    status: string;
-  }
-): Promise<Promotion> {
-  const session = await getSession();
-
-  return apiFetchJson<Promotion>(`/api/admin/promotions/${id}`, {
-    method: "PUT",
-    accessToken: session?.accessToken ?? undefined,
-    body: JSON.stringify(payload),
-  });
-}
-
-export async function deletePromotion(id: string): Promise<void> {
-  const session = await getSession();
-
-  return apiFetchJson(`/api/admin/promotions/${id}`, {
-    method: "DELETE",
-    accessToken: session?.accessToken ?? undefined,
   });
 }

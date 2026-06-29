@@ -72,7 +72,7 @@ export default function SignInForm() {
   }, [errorParam]);
 
   useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
+    if (process.env.NEXT_PUBLIC_DEMO_LOGIN === "true") {
       fetch(toApiUrl("/api/auth/demo-roles"))
         .then(res => res.json())
         .then(data => {
