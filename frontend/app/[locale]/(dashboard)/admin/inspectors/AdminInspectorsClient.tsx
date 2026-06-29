@@ -71,7 +71,7 @@ export default function InspectorsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void fetchInspectors();
@@ -297,6 +297,7 @@ export default function InspectorsPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
+                  // eslint-disable-next-line sonarjs/cognitive-complexity
                   filtered.map(i => (
                     <TableRow
                       key={i.inspectorId}

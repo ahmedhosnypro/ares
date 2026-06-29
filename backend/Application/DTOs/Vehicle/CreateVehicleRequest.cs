@@ -19,6 +19,6 @@ public record CreateVehicleRequest(
     [Required][MaxLength(100)] string LocationCity,
     [Required] Guid CategoryId,
     string? Description,
-    [MaxLength(50)] string Status = "Active",
-    [MaxLength(50)] string AvailabilityStatus = "Available"
+    [MaxLength(50)] string Status = "Pending",
+    [MaxLength(50)] string AvailabilityStatus = "Unavailable"
 );

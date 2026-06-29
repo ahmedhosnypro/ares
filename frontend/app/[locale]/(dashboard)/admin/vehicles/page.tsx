@@ -357,12 +357,15 @@ function FleetOverview({
   );
 }
 
-const STATUS_OPTIONS: readonly { value: VehicleStatusFilter; label: string }[] = [
-  { value: "", label: "All statuses" },
-  { value: VehicleStatus.Available, label: "Available" },
-  { value: VehicleStatus.FullyBooked, label: "Fully Booked (On Rental)" },
-  { value: VehicleStatus.Maintenance, label: "Maintenance" },
-  { value: VehicleStatus.Retired, label: "Retired" },
+const STATUS_OPTIONS: readonly { value: VehicleStatusFilter; labelKey: string }[] = [
+  { value: "", labelKey: "allStatusesOpt" },
+  { value: VehicleStatus.Pending, labelKey: "statusLabels.pending" },
+  { value: VehicleStatus.Approved, labelKey: "statusLabels.approved" },
+  { value: VehicleStatus.Rejected, labelKey: "statusLabels.rejected" },
+  { value: VehicleStatus.Available, labelKey: "statusLabels.available" },
+  { value: VehicleStatus.FullyBooked, labelKey: "statusLabels.fullyBooked" },
+  { value: VehicleStatus.Maintenance, labelKey: "statusLabels.maintenance" },
+  { value: VehicleStatus.Retired, labelKey: "statusLabels.retired" },
 ];
 
 const TRANSMISSION_OPTIONS: readonly { value: string; label: string }[] = [
@@ -402,6 +405,15 @@ const getStatusConfig = (v: Vehicle, t: (key: string) => string): { label: strin
   if (v.isOnRental) return { label: t("statusLabels.fullyBooked"), colorKey: "warning" };
   const rawStatus = (v.status ?? "").toLowerCase();
   const rawAvail = (v.availabilityStatus ?? "").toLowerCase();
+  if (rawStatus === "pending") {
+    return { label: t("statusLabels.pending"), colorKey: "warning" };
+  }
+  if (rawStatus === "approved" || rawStatus === "active") {
+    return { label: t("statusLabels.approved"), colorKey: "success" };
+  }
+  if (rawStatus === "rejected") {
+    return { label: t("statusLabels.rejected"), colorKey: "error" };
+  }
   if (rawStatus === "maintenance" || rawAvail === "maintenance") {
     return { label: t("statusLabels.maintenance"), colorKey: "info" };
   }
@@ -1447,15 +1459,7 @@ export default function AdminCarsPage() {
           >
             {STATUS_OPTIONS.map(opt => (
               <MenuItem key={opt.value} value={opt.value}>
-                {opt.value === ""
-                  ? t("allStatusesOpt")
-                  : opt.value === "Available"
-                    ? t("statusLabels.available")
-                    : opt.value === "FullyBooked"
-                      ? t("statusLabels.fullyBooked")
-                      : opt.value === "Maintenance"
-                        ? t("statusLabels.maintenance")
-                        : t("statusLabels.retired")}
+                {t(opt.labelKey)}
               </MenuItem>
             ))}
           </TextField>

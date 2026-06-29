@@ -25,6 +25,7 @@ namespace Backend.Domain.Entities.Enums
         public static readonly BookingStatus[] ReservingStatuses =
         {
             BookingStatus.PaymentPending,    // active hold (while not expired)
+            BookingStatus.PendingApproval,   // awaiting admin approval
             BookingStatus.Confirmed,         // paid & confirmed
             BookingStatus.Active             // rental in progress
         };

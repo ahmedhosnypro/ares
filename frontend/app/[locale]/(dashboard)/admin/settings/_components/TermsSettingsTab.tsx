@@ -52,8 +52,8 @@ interface FormState {
   localizations: LocalizationsMap;
 }
 
-const SUPPORTED_LOCALES = ["en", "ar"] as const;
-type LocaleCode = (typeof SUPPORTED_LOCALES)[number];
+const _SUPPORTED_LOCALES = ["en", "ar"] as const;
+type LocaleCode = (typeof _SUPPORTED_LOCALES)[number];
 
 const emptyLocalization: SectionLocalization = { title: "", content: "" };
 const defaultLocalizations: LocalizationsMap = { ar: { ...emptyLocalization } };

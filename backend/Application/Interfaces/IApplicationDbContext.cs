@@ -10,8 +10,11 @@ namespace Backend.Application.Interfaces;
 public interface IApplicationDbContext
 {
     IQueryable<Category> Categories { get; }
-    IQueryable<CategoryOffer> CategoryOffers { get; }
-    IQueryable<Promotion> Promotions { get; }
+
+    IQueryable<DiscountCode> DiscountCodes { get; }
+    IQueryable<DiscountUsage> DiscountUsages { get; }
+    IQueryable<DiscountVehicleCategory> DiscountVehicleCategories { get; }
+    IQueryable<DiscountValidationLog> DiscountValidationLogs { get; }
     IQueryable<Vehicle> Vehicles { get; }
     IQueryable<VehicleImage> VehicleImages { get; }
     IQueryable<Booking> Bookings { get; }
@@ -20,6 +23,7 @@ public interface IApplicationDbContext
     IQueryable<Favorite> Favorites { get; }
     IQueryable<VehicleFeature> VehicleFeatures { get; }
     IQueryable<ApplicationUser> Users { get; }
+    IQueryable<CompanyProfile> CompanyProfiles { get; }
     IQueryable<Microsoft.AspNetCore.Identity.IdentityUserRole<Guid>> UserRoles { get; }
     IQueryable<BookingCancellation> BookingCancellations { get; }
     IQueryable<UserAddress> UserAddresses { get; }
@@ -58,10 +62,13 @@ public interface IApplicationDbContext
     void AddVehicleInspection(VehicleInspection inspection);
     void AddCategory(Category category);
     void RemoveCategory(Category category);
-    void AddPromotion(Promotion promotion);
-    void RemovePromotion(Promotion promotion);
-    void AddCategoryOffer(CategoryOffer offer);
-    void RemoveCategoryOffer(CategoryOffer offer);
+    void AddDiscountCode(DiscountCode discountCode);
+    void RemoveDiscountCode(DiscountCode discountCode);
+    void AddDiscountUsage(DiscountUsage discountUsage);
+    void AddDiscountValidationLog(DiscountValidationLog validationLog);
+
+    Task<int> IncrementDiscountUsageCountAsync(Guid discountId, CancellationToken cancellationToken = default);
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
 }

@@ -14,6 +14,7 @@ export type BookingDetailsLabels = {
     readonly completed: string;
     readonly cancelled: string;
     readonly paymentpending: string;
+    readonly pendingapproval: string;
     readonly expired: string;
     readonly approved: string;
     readonly pending: string;
@@ -34,6 +35,9 @@ export type BookingDetailsLabels = {
     readonly edit: string;
     readonly changeStatus: string;
     readonly delete: string;
+    readonly approve: string;
+    readonly reject: string;
+    readonly refresh: string;
   };
   readonly bookingInfo: {
     readonly title: string;
@@ -99,6 +103,18 @@ export type BookingDetailsLabels = {
       readonly description: string;
     };
   };
+  readonly approvalInfo: {
+    readonly title: string;
+    readonly subtitle: string;
+    readonly pendingBanner: string;
+    readonly rejectedBanner: string;
+    readonly approvedBy: string;
+    readonly approvedByAdmin: string;
+    readonly approvedAt: string;
+    readonly rejectionReason: string;
+    readonly rejectButton: string;
+    readonly approveButton: string;
+  };
   readonly refundDialog: {
     readonly processRefundButton: string;
     readonly title: string;
@@ -118,6 +134,7 @@ export type BookingDetailsLabels = {
     readonly date: string;
     readonly submittedAt: string;
     readonly notSubmitted: string;
+    readonly pendingStatus: string;
     readonly condition: string;
     readonly mileage: string;
     readonly fuelLevel: string;

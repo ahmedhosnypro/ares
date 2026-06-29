@@ -26,9 +26,10 @@ interface OrderSummaryProps {
     readonly originalPrice?: number;
     readonly discountAmount?: number;
   };
+  readonly discountCodeApplied?: boolean;
 }
 
-export default function OrderSummary({ booking }: OrderSummaryProps) {
+export default function OrderSummary({ booking, discountCodeApplied }: OrderSummaryProps) {
   const t = useTranslations("customer.bookingPayment.orderSummary");
   const pickupDate = new Date(booking.from);
   const returnDate = new Date(booking.to);
@@ -153,7 +154,7 @@ export default function OrderSummary({ booking }: OrderSummaryProps) {
           {booking.discountAmount ? (
             <Box sx={{ display: "flex", justifyContent: "space-between" }}>
               <Typography variant="body2" color="error.main">
-                {t("price.discount")}
+                {discountCodeApplied ? t("price.discountSavings") : t("price.discount")}
               </Typography>
               <Typography variant="body2" color="error.main" sx={{ fontFamily: "monospace", fontWeight: 500 }}>
                 -{formatCurrency(booking.discountAmount)}

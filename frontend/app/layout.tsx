@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import "./theme-transition.css";
 import AuthProvider from "@/providers/AuthProvider";
@@ -13,14 +13,88 @@ import { cookies } from "next/headers";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 
-const geistSans = Geist({
+const geistSans = localFont({
   variable: "--font-geist-sans",
-  subsets: ["latin"],
+  src: [
+    { path: "../public/fonts/geist-latin-ext-100-normal.woff2", weight: "100", style: "normal" },
+    { path: "../public/fonts/geist-latin-ext-100-italic.woff2", weight: "100", style: "italic" },
+    { path: "../public/fonts/geist-latin-ext-200-normal.woff2", weight: "200", style: "normal" },
+    { path: "../public/fonts/geist-latin-ext-200-italic.woff2", weight: "200", style: "italic" },
+    { path: "../public/fonts/geist-latin-ext-300-normal.woff2", weight: "300", style: "normal" },
+    { path: "../public/fonts/geist-latin-ext-300-italic.woff2", weight: "300", style: "italic" },
+    { path: "../public/fonts/geist-latin-ext-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../public/fonts/geist-latin-ext-400-italic.woff2", weight: "400", style: "italic" },
+    { path: "../public/fonts/geist-latin-ext-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../public/fonts/geist-latin-ext-500-italic.woff2", weight: "500", style: "italic" },
+    { path: "../public/fonts/geist-latin-ext-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../public/fonts/geist-latin-ext-600-italic.woff2", weight: "600", style: "italic" },
+    { path: "../public/fonts/geist-latin-ext-700-normal.woff2", weight: "700", style: "normal" },
+    { path: "../public/fonts/geist-latin-ext-700-italic.woff2", weight: "700", style: "italic" },
+    { path: "../public/fonts/geist-latin-ext-800-normal.woff2", weight: "800", style: "normal" },
+    { path: "../public/fonts/geist-latin-ext-800-italic.woff2", weight: "800", style: "italic" },
+    { path: "../public/fonts/geist-latin-ext-900-normal.woff2", weight: "900", style: "normal" },
+    { path: "../public/fonts/geist-latin-ext-900-italic.woff2", weight: "900", style: "italic" },
+    { path: "../public/fonts/geist-latin-100-normal.woff2", weight: "100", style: "normal" },
+    { path: "../public/fonts/geist-latin-100-italic.woff2", weight: "100", style: "italic" },
+    { path: "../public/fonts/geist-latin-200-normal.woff2", weight: "200", style: "normal" },
+    { path: "../public/fonts/geist-latin-200-italic.woff2", weight: "200", style: "italic" },
+    { path: "../public/fonts/geist-latin-300-normal.woff2", weight: "300", style: "normal" },
+    { path: "../public/fonts/geist-latin-300-italic.woff2", weight: "300", style: "italic" },
+    { path: "../public/fonts/geist-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../public/fonts/geist-latin-400-italic.woff2", weight: "400", style: "italic" },
+    { path: "../public/fonts/geist-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../public/fonts/geist-latin-500-italic.woff2", weight: "500", style: "italic" },
+    { path: "../public/fonts/geist-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../public/fonts/geist-latin-600-italic.woff2", weight: "600", style: "italic" },
+    { path: "../public/fonts/geist-latin-700-normal.woff2", weight: "700", style: "normal" },
+    { path: "../public/fonts/geist-latin-700-italic.woff2", weight: "700", style: "italic" },
+    { path: "../public/fonts/geist-latin-800-normal.woff2", weight: "800", style: "normal" },
+    { path: "../public/fonts/geist-latin-800-italic.woff2", weight: "800", style: "italic" },
+    { path: "../public/fonts/geist-latin-900-normal.woff2", weight: "900", style: "normal" },
+    { path: "../public/fonts/geist-latin-900-italic.woff2", weight: "900", style: "italic" },
+  ],
 });
 
-const geistMono = Geist_Mono({
+const geistMono = localFont({
   variable: "--font-geist-mono",
-  subsets: ["latin"],
+  src: [
+    { path: "../public/fonts/geist-mono-latin-ext-100-normal.woff2", weight: "100", style: "normal" },
+    { path: "../public/fonts/geist-mono-latin-ext-100-italic.woff2", weight: "100", style: "italic" },
+    { path: "../public/fonts/geist-mono-latin-ext-200-normal.woff2", weight: "200", style: "normal" },
+    { path: "../public/fonts/geist-mono-latin-ext-200-italic.woff2", weight: "200", style: "italic" },
+    { path: "../public/fonts/geist-mono-latin-ext-300-normal.woff2", weight: "300", style: "normal" },
+    { path: "../public/fonts/geist-mono-latin-ext-300-italic.woff2", weight: "300", style: "italic" },
+    { path: "../public/fonts/geist-mono-latin-ext-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../public/fonts/geist-mono-latin-ext-400-italic.woff2", weight: "400", style: "italic" },
+    { path: "../public/fonts/geist-mono-latin-ext-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../public/fonts/geist-mono-latin-ext-500-italic.woff2", weight: "500", style: "italic" },
+    { path: "../public/fonts/geist-mono-latin-ext-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../public/fonts/geist-mono-latin-ext-600-italic.woff2", weight: "600", style: "italic" },
+    { path: "../public/fonts/geist-mono-latin-ext-700-normal.woff2", weight: "700", style: "normal" },
+    { path: "../public/fonts/geist-mono-latin-ext-700-italic.woff2", weight: "700", style: "italic" },
+    { path: "../public/fonts/geist-mono-latin-ext-800-normal.woff2", weight: "800", style: "normal" },
+    { path: "../public/fonts/geist-mono-latin-ext-800-italic.woff2", weight: "800", style: "italic" },
+    { path: "../public/fonts/geist-mono-latin-ext-900-normal.woff2", weight: "900", style: "normal" },
+    { path: "../public/fonts/geist-mono-latin-ext-900-italic.woff2", weight: "900", style: "italic" },
+    { path: "../public/fonts/geist-mono-latin-100-normal.woff2", weight: "100", style: "normal" },
+    { path: "../public/fonts/geist-mono-latin-100-italic.woff2", weight: "100", style: "italic" },
+    { path: "../public/fonts/geist-mono-latin-200-normal.woff2", weight: "200", style: "normal" },
+    { path: "../public/fonts/geist-mono-latin-200-italic.woff2", weight: "200", style: "italic" },
+    { path: "../public/fonts/geist-mono-latin-300-normal.woff2", weight: "300", style: "normal" },
+    { path: "../public/fonts/geist-mono-latin-300-italic.woff2", weight: "300", style: "italic" },
+    { path: "../public/fonts/geist-mono-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../public/fonts/geist-mono-latin-400-italic.woff2", weight: "400", style: "italic" },
+    { path: "../public/fonts/geist-mono-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../public/fonts/geist-mono-latin-500-italic.woff2", weight: "500", style: "italic" },
+    { path: "../public/fonts/geist-mono-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../public/fonts/geist-mono-latin-600-italic.woff2", weight: "600", style: "italic" },
+    { path: "../public/fonts/geist-mono-latin-700-normal.woff2", weight: "700", style: "normal" },
+    { path: "../public/fonts/geist-mono-latin-700-italic.woff2", weight: "700", style: "italic" },
+    { path: "../public/fonts/geist-mono-latin-800-normal.woff2", weight: "800", style: "normal" },
+    { path: "../public/fonts/geist-mono-latin-800-italic.woff2", weight: "800", style: "italic" },
+    { path: "../public/fonts/geist-mono-latin-900-normal.woff2", weight: "900", style: "normal" },
+    { path: "../public/fonts/geist-mono-latin-900-italic.woff2", weight: "900", style: "italic" },
+  ],
 });
 
 async function getLocale() {

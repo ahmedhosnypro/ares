@@ -8,6 +8,7 @@ export type OrderSummaryLabels = {
     readonly day: string;
     readonly days: string;
     readonly discount: string;
+    readonly discountSavings: string;
     readonly totalAmount: string;
   };
 };
@@ -71,4 +72,11 @@ export type BookingPaymentLabels = {
     readonly or: string;
   };
   readonly orderSummary: OrderSummaryLabels;
+  readonly discountCodePlaceholder: string;
+  readonly discountCodeApply: string;
+  readonly discountCodeApplied: string;
+  readonly discountCodeInvalid: string;
+  readonly discountCodeRemove: string;
+  readonly discountSavings: string;
+  readonly discountCodeLabel: string;
 };

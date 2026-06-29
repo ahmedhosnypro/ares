@@ -16,6 +16,7 @@ public class RefundCalculator : IRefundCalculator
         decimal percentage = status switch
         {
             BookingStatus.Draft or BookingStatus.PaymentPending => 100m,
+            BookingStatus.PendingApproval => 100m,
             BookingStatus.Confirmed => isBeforeThreshold ? 100m : 75m,
             BookingStatus.Active or BookingStatus.Completed =>
                 throw new InvalidOperationException("Cannot cancel an active or completed booking"),

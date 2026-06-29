@@ -145,8 +145,8 @@ public class BookingServiceTests
         Assert.NotNull(result);
         Assert.NotEqual(Guid.Empty, result.BookingId);
         Assert.StartsWith("BK-", result.BookingNumber);
-        Assert.Equal(BookingStatus.Confirmed.ToString(), result.Status);
-        Assert.Equal(100.00m, result.TotalPrice); // 2 days * $50
+        Assert.Equal(BookingStatus.PendingApproval.ToString(), result.Status);
+        Assert.Equal(100.00m, result.TotalPrice);
         Assert.Equal("Booking created successfully", result.Message);
 
         _vehicleRepositoryMock.Verify(x => x.IsAvailableAsync(vehicleId, pickupDate, returnDate, It.IsAny<CancellationToken>(), It.IsAny<Guid?>(), It.IsAny<Guid?>()), Times.Once);
@@ -365,8 +365,8 @@ public class BookingServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(400.00m, result.TotalPrice); // 4 days * $100
-        Assert.Equal(BookingStatus.Confirmed.ToString(), result.Status);
+        Assert.Equal(400.00m, result.TotalPrice);
+        Assert.Equal(BookingStatus.PendingApproval.ToString(), result.Status);
 
         _bookingRepositoryMock.Verify(x => x.AddAsync(It.Is<Booking>(b =>
             b.DriverId == driverId &&
@@ -901,6 +901,236 @@ public class BookingServiceTests
 
         _bookingRepositoryMock.Verify(x => x.GetUserBookingsAsync(
             userId, suppliers, statuses, carId, fromDate, toDate, keyword, pickupLocation, dropOffLocation, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region ApproveBookingAsync Tests
+
+    [Fact]
+    public async Task ApproveBookingAsync_Valid_SetsConfirmedAndApprovedBy()
+    {
+        var adminId = Guid.NewGuid();
+        var bookingId = Guid.NewGuid();
+        var booking = new Booking
+        {
+            Id = bookingId,
+            Status = BookingStatus.PendingApproval,
+            UserId = Guid.NewGuid(),
+            VehicleId = Guid.NewGuid(),
+            TotalPrice = 200.00m,
+            Vehicle = new Vehicle { Id = Guid.NewGuid(), Make = "Toyota", Model = "Camry" }
+        };
+
+        var bookings = new List<Booking> { booking }.AsQueryable();
+        var mockDbSet = CreateMockDbSet(bookings);
+        _contextMock.Setup(x => x.Bookings).Returns(mockDbSet.Object);
+        _contextMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+
+        var result = await _bookingService.ApproveBookingAsync(bookingId, adminId);
+
+        Assert.Equal(BookingStatus.Confirmed.ToString(), result.Status);
+        Assert.Equal(adminId, booking.ApprovedBy);
+        Assert.NotNull(booking.ApprovedAt);
+        _contextMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ApproveBookingAsync_NotPendingApproval_ThrowsConflict()
+    {
+        var adminId = Guid.NewGuid();
+        var bookingId = Guid.NewGuid();
+        var booking = new Booking
+        {
+            Id = bookingId,
+            Status = BookingStatus.Confirmed,
+            UserId = Guid.NewGuid(),
+            VehicleId = Guid.NewGuid()
+        };
+
+        var bookings = new List<Booking> { booking }.AsQueryable();
+        var mockDbSet = CreateMockDbSet(bookings);
+        _contextMock.Setup(x => x.Bookings).Returns(mockDbSet.Object);
+
+        var exception = await Assert.ThrowsAsync<ConflictException>(
+            () => _bookingService.ApproveBookingAsync(bookingId, adminId));
+
+        Assert.Contains("Only bookings pending approval can be approved", exception.Message);
+    }
+
+    [Fact]
+    public async Task ApproveBookingAsync_NotFound_ThrowsNotFound()
+    {
+        var adminId = Guid.NewGuid();
+        var bookingId = Guid.NewGuid();
+
+        var bookings = new List<Booking>().AsQueryable();
+        var mockDbSet = CreateMockDbSet(bookings);
+        _contextMock.Setup(x => x.Bookings).Returns(mockDbSet.Object);
+
+        var exception = await Assert.ThrowsAsync<NotFoundException>(
+            () => _bookingService.ApproveBookingAsync(bookingId, adminId));
+
+        Assert.Equal($"Booking with ID {bookingId} not found", exception.Message);
+    }
+
+    #endregion
+
+    #region RejectBookingAsync Tests
+
+    [Fact]
+    public async Task RejectBookingAsync_Valid_SetsRejectedAndReason()
+    {
+        var adminId = Guid.NewGuid();
+        var bookingId = Guid.NewGuid();
+        var reason = "Vehicle unavailable for selected dates";
+        var booking = new Booking
+        {
+            Id = bookingId,
+            Status = BookingStatus.PendingApproval,
+            UserId = Guid.NewGuid(),
+            VehicleId = Guid.NewGuid(),
+            TotalPrice = 200.00m,
+            Vehicle = new Vehicle { Id = Guid.NewGuid(), Make = "Toyota", Model = "Camry" }
+        };
+
+        var bookings = new List<Booking> { booking }.AsQueryable();
+        var mockDbSet = CreateMockDbSet(bookings);
+        _contextMock.Setup(x => x.Bookings).Returns(mockDbSet.Object);
+
+        var emptyPayments = new List<BookingPayment>().AsQueryable();
+        var paymentsDbSet = CreateMockDbSet(emptyPayments);
+        _contextMock.Setup(x => x.Payments).Returns(paymentsDbSet.Object);
+
+        _contextMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+
+        var result = await _bookingService.RejectBookingAsync(bookingId, adminId, reason);
+
+        Assert.Equal(BookingStatus.Rejected.ToString(), result.Status);
+        Assert.Equal(reason, booking.RejectionReason);
+        _contextMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task RejectBookingAsync_NotPendingApproval_ThrowsConflict()
+    {
+        var adminId = Guid.NewGuid();
+        var bookingId = Guid.NewGuid();
+        var booking = new Booking
+        {
+            Id = bookingId,
+            Status = BookingStatus.Confirmed,
+            UserId = Guid.NewGuid(),
+            VehicleId = Guid.NewGuid()
+        };
+
+        var bookings = new List<Booking> { booking }.AsQueryable();
+        var mockDbSet = CreateMockDbSet(bookings);
+        _contextMock.Setup(x => x.Bookings).Returns(mockDbSet.Object);
+
+        var exception = await Assert.ThrowsAsync<ConflictException>(
+            () => _bookingService.RejectBookingAsync(bookingId, adminId, "reason"));
+
+        Assert.Contains("Only bookings pending approval can be rejected", exception.Message);
+    }
+
+    [Fact]
+    public async Task RejectBookingAsync_WithPayment_InitiatesRefund()
+    {
+        var adminId = Guid.NewGuid();
+        var bookingId = Guid.NewGuid();
+        var reason = "Booking rejected by admin";
+        var booking = new Booking
+        {
+            Id = bookingId,
+            Status = BookingStatus.PendingApproval,
+            UserId = Guid.NewGuid(),
+            VehicleId = Guid.NewGuid(),
+            TotalPrice = 200.00m,
+            CommissionPercentage = 10m,
+            Vehicle = new Vehicle { Id = Guid.NewGuid(), Make = "Toyota", Model = "Camry" }
+        };
+
+        var payment = new BookingPayment
+        {
+            PaymentId = Guid.NewGuid(),
+            BookingId = bookingId,
+            Status = "Captured",
+            Amount = 200.00m
+        };
+
+        var bookings = new List<Booking> { booking }.AsQueryable();
+        var mockDbSet = CreateMockDbSet(bookings);
+        _contextMock.Setup(x => x.Bookings).Returns(mockDbSet.Object);
+
+        var payments = new List<BookingPayment> { payment }.AsQueryable();
+        var paymentsDbSet = CreateMockDbSet(payments);
+        _contextMock.Setup(x => x.Payments).Returns(paymentsDbSet.Object);
+
+        var emptyCancellations = new List<BookingCancellation>().AsQueryable();
+        var cancellationsDbSet = CreateMockDbSet(emptyCancellations);
+        _contextMock.Setup(x => x.BookingCancellations).Returns(cancellationsDbSet.Object);
+        _contextMock.Setup(x => x.AddBookingCancellation(It.IsAny<BookingCancellation>()));
+
+        _contextMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+
+        var result = await _bookingService.RejectBookingAsync(bookingId, adminId, reason);
+
+        Assert.Equal(BookingStatus.Rejected.ToString(), result.Status);
+        Assert.Equal("Refunded", payment.Status);
+        Assert.Equal(reason, booking.RejectionReason);
+        _contextMock.Verify(x => x.AddBookingCancellation(It.IsAny<BookingCancellation>()), Times.Once);
+    }
+
+    #endregion
+
+    #region CreateBookingAsync Admin Skip Approval Tests
+
+    [Fact]
+    public async Task CreateBookingAsync_AdminCreate_SkipsApproval()
+    {
+        var adminInitiatorId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var vehicleId = Guid.NewGuid();
+        var pickupDate = DateTime.UtcNow.AddDays(1);
+        var returnDate = DateTime.UtcNow.AddDays(3);
+
+        var request = new CreateBookingRequest(
+            VehicleId: vehicleId,
+            PickupLocationId: Guid.NewGuid(),
+            DropOffLocationId: Guid.NewGuid(),
+            PickupDate: pickupDate,
+            ReturnDate: returnDate,
+            DriverId: null,
+            PayLater: false,
+            CustomerUserId: customerId
+        );
+
+        var vehicle = new Vehicle
+        {
+            Id = vehicleId,
+            Make = "Toyota",
+            Model = "Camry",
+            PricePerDay = 50.00m,
+            UserId = Guid.NewGuid()
+        };
+
+        _vehicleRepositoryMock.Setup(x => x.IsAvailableAsync(vehicleId, pickupDate, returnDate, It.IsAny<CancellationToken>(), It.IsAny<Guid?>(), It.IsAny<Guid?>()))
+            .ReturnsAsync(true);
+
+        _vehicleRepositoryMock.Setup(x => x.GetByIdAsync(vehicleId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(vehicle);
+
+        _bookingRepositoryMock.Setup(x => x.AddAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(It.IsAny<Booking>());
+
+        _bookingRepositoryMock.Setup(x => x.ReserveVehicleAtomicAsync(It.IsAny<Booking>(), It.IsAny<BookingStatus>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var result = await _bookingService.CreateBookingAsync(request, adminInitiatorId);
+
+        Assert.NotNull(result);
+        Assert.Equal(BookingStatus.Confirmed.ToString(), result.Status);
     }
 
     #endregion

@@ -57,10 +57,34 @@ public class RateLimitingMiddleware
             return (5, 15);
         }
 
+        // Demo login: 10 attempts per 15 minutes
+        if (endpoint.Contains("/api/auth/demo-login"))
+        {
+            return (10, 15);
+        }
+
+        // Demo roles: 20 attempts per 15 minutes
+        if (endpoint.Contains("/api/auth/demo-roles"))
+        {
+            return (20, 15);
+        }
+
         // Registration: 5 attempts per 60 minutes (1 hour)
         if (endpoint.Contains("/api/auth/register"))
         {
             return (5, 60);
+        }
+
+        // Discount validation: 10 attempts per 1 minute per IP
+        if (endpoint.Contains("/api/public/promotions/validate"))
+        {
+            return (10, 1);
+        }
+
+        // Discount apply: 5 attempts per 1 minute per IP
+        if (endpoint.Contains("/api/v1/promotions/apply"))
+        {
+            return (5, 1);
         }
 
         // No rate limit for other endpoints

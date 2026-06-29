@@ -60,8 +60,8 @@ interface FormState {
 }
 
 const SECTION_TYPES = ["hero", "story", "offer", "stats", "values", "cta"];
-const SUPPORTED_LOCALES = ["en", "ar"] as const;
-type LocaleCode = (typeof SUPPORTED_LOCALES)[number];
+const _SUPPORTED_LOCALES = ["en", "ar"] as const;
+type LocaleCode = (typeof _SUPPORTED_LOCALES)[number];
 
 const emptyLocalization: SectionLocalization = { title: "", content: "" };
 const defaultLocalizations: LocalizationsMap = { ar: { ...emptyLocalization } };

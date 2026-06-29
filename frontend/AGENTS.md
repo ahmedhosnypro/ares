@@ -24,7 +24,7 @@
   - `primary`, `secondary`, `error`, `warning`, `info`, `success`
   - `background.default`, `background.paper`
   - `text.primary`, `text.secondary`
-  - `status.pending`, `status.confirmed`, `status.active`, `status.completed`, `status.cancelled`, `status.blocked`
+  - `status.pending`, `status.pendingApproval`, `status.confirmed`, `status.active`, `status.completed`, `status.cancelled`, `status.rejected`, `status.blocked`
   - `sidebar.background`, `sidebar.text`, `sidebar.textMuted`, `sidebar.activeBg`, `sidebar.hoverBg`, `sidebar.divider`
   - `icon.business`, `icon.email`, `icon.phone`
   - `border.light`, `border.main`
@@ -129,7 +129,7 @@ Code Changes → CodeScene Diagnostics → TypeScript Check → Linting → Code
   - `primary`, `secondary`, `error`, `warning`, `info`, `success`
   - `background.default`, `background.paper`
   - `text.primary`, `text.secondary`
-  - `status.pending`, `status.confirmed`, `status.active`, `status.completed`, `status.cancelled`, `status.blocked`
+  - `status.pending`, `status.pendingApproval`, `status.confirmed`, `status.active`, `status.completed`, `status.cancelled`, `status.rejected`, `status.blocked`
   - `sidebar.background`, `sidebar.text`, `sidebar.textMuted`, `sidebar.activeBg`, `sidebar.hoverBg`, `sidebar.divider`
   - `icon.business`, `icon.email`, `icon.phone`
   - `border.light`, `border.main`

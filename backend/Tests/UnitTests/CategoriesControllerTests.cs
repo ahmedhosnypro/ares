@@ -29,7 +29,7 @@ namespace Backend.Tests.UnitTests
         }
 
         [Fact]
-        public async Task UpdateCategory_WithOfferFields_ShouldSucceed()
+        public async Task UpdateCategory_ShouldSucceed()
         {
             // Arrange
             var categoryId = Guid.NewGuid();
@@ -49,12 +49,7 @@ namespace Backend.Tests.UnitTests
                 Name = "Updated Category",
                 Description = "Updated Description",
                 CommissionPercentage = 10.0m,
-                IsActive = true,
-                OfferName = "Day offer",
-                OfferDiscountPercentage = 10m,
-                OfferStartDate = DateTime.UtcNow,
-                OfferEndDate = DateTime.UtcNow.AddDays(3),
-                OfferIsActive = true
+                IsActive = true
             };
 
             // Act
@@ -64,9 +59,6 @@ namespace Backend.Tests.UnitTests
             var okResult = Assert.IsType<OkObjectResult>(result);
             var updatedCategory = Assert.IsType<CategoryResponseDto>(okResult.Value);
             Assert.Equal("Updated Category", updatedCategory.Name);
-            Assert.NotNull(updatedCategory.ActiveOffer);
-            Assert.Equal("Day offer", updatedCategory.ActiveOffer.OfferName);
-            Assert.Equal(10m, updatedCategory.ActiveOffer.DiscountPercentage);
         }
 
         public void Dispose()

@@ -76,10 +76,12 @@ export default function BookingsList({ userId, accessToken }: Readonly<{ userId:
   const [activeStatuses, setActiveStatuses] = useState<readonly string[]>([
     "Draft",
     "PaymentPending",
+    "PendingApproval",
     "Confirmed",
     "Active",
     "Completed",
     "Cancelled",
+    "Rejected",
   ]);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [sortBy, setSortBy] = useState("date");

@@ -26,7 +26,7 @@ public class VehicleMappingProfile : Profile
             .ForMember(dest => dest.Rating, opt => opt.Ignore()) // Calculated in service
             .ForMember(dest => dest.ReviewCount, opt => opt.Ignore()) // Calculated in service
             .ForMember(dest => dest.Distance, opt => opt.Ignore()) // Calculated in service
-            .ForMember(dest => dest.Available, opt => opt.MapFrom(src => src.Status == "Available"));
+            .ForMember(dest => dest.Available, opt => opt.MapFrom(src => src.AvailabilityStatus == "Available"));
 
         // Vehicle -> VehicleDetailsDto
         CreateMap<Vehicle, VehicleDetailsDto>()
@@ -81,6 +81,6 @@ public class VehicleMappingProfile : Profile
             .ForMember(dest => dest.User, opt => opt.Ignore()) // Navigation property
             .ForMember(dest => dest.Images, opt => opt.Ignore()) // Set separately
             .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true))
-            .ForMember(dest => dest.ApprovedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
+            .ForMember(dest => dest.ApprovedAt, opt => opt.Ignore());
     }
 }

@@ -217,6 +217,16 @@ namespace Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AppliedDiscountCodes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ApprovedBy")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid?>("AssignedDriverProfileId")
                         .HasColumnType("uniqueidentifier");
 
@@ -296,6 +306,9 @@ namespace Infrastructure.Migrations
                     b.Property<string>("PickupLocation")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("RequiresDriver")
                         .HasColumnType("bit");
@@ -554,58 +567,6 @@ namespace Infrastructure.Migrations
                     b.ToTable("Categories");
                 });
 
-            modelBuilder.Entity("Backend.Domain.Entities.CategoryOffer", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("CategoryId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("category_id");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal>("DiscountPercentage")
-                        .HasColumnType("decimal(5,2)")
-                        .HasColumnName("discount_percentage");
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("end_date");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit")
-                        .HasColumnName("is_active");
-
-                    b.Property<string>("OfferName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("offer_name");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("start_date");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CategoryId");
-
-                    b.ToTable("category_offers");
-                });
-
             modelBuilder.Entity("Backend.Domain.Entities.CompanyProfile", b =>
                 {
                     b.Property<Guid>("Id")
@@ -646,6 +607,201 @@ namespace Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("CompanyProfiles");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.DiscountCode", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("AllowStacking")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CreatedById")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("CurrentUsageCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CustomerSegments")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("DiscountType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal>("DiscountValue")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsAutomatic")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("MinimumDuration")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("MinimumValue")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("UsageLimitPerCustomer")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("UsageLimitTotal")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ValidFrom")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ValidTo")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("SupplierId");
+
+                    b.HasIndex("IsActive", "IsAutomatic", "ValidFrom", "ValidTo");
+
+                    b.ToTable("DiscountCodes");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.DiscountUsage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BookingId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("DiscountAmount")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<Guid>("DiscountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("FinalPrice")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("OriginalPrice")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<DateTime>("UsedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("DiscountId");
+
+                    b.HasIndex("BookingId", "DiscountId")
+                        .IsUnique();
+
+                    b.ToTable("DiscountUsages");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.DiscountValidationLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<Guid?>("CustomerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("DiscountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("nvarchar(45)");
+
+                    b.Property<bool>("IsValid")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("ValidatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ValidationErrors")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("VehicleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("VehicleId");
+
+                    b.HasIndex("DiscountId", "ValidatedAt");
+
+                    b.ToTable("DiscountValidationLogs");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.DiscountVehicleCategory", b =>
+                {
+                    b.Property<Guid>("DiscountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("DiscountId", "CategoryId");
+
+                    b.HasIndex("CategoryId");
+
+                    b.ToTable("DiscountVehicleCategories");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.Driver", b =>
@@ -709,6 +865,195 @@ namespace Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Drivers");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.DriverEarning", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BookingId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("DriverProfileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("EarnedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("GrossEarning")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("NetEarning")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid?>("PayoutId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("PlatformDeduction")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("ReversedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookingId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_driver_earnings_BookingId");
+
+                    b.HasIndex("DriverProfileId")
+                        .HasDatabaseName("IX_driver_earnings_DriverProfileId");
+
+                    b.HasIndex("PayoutId");
+
+                    b.ToTable("driver_earnings", (string)null);
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.DriverPaymentInfo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("DriverProfileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsVerified")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PayoutMethod")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("WalletPhoneNumber")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DriverProfileId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_driver_payment_info_DriverProfileId");
+
+                    b.ToTable("driver_payment_info", (string)null);
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.DriverPayout", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("DriverProfileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("FailureReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<long?>("PaymobPayoutId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("PaymobTransactionId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ReviewedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DriverProfileId")
+                        .HasDatabaseName("IX_driver_payouts_DriverProfileId");
+
+                    b.ToTable("driver_payouts", (string)null);
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.DriverPayoutTransaction", b =>
+                {
+                    b.Property<Guid>("DriverPayoutId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("DriverEarningId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("DriverPayoutId", "DriverEarningId");
+
+                    b.HasIndex("DriverEarningId");
+
+                    b.ToTable("driver_payout_transactions");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.DriverProfile", b =>
@@ -1191,53 +1536,6 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("PrivacySections", (string)null);
-                });
-
-            modelBuilder.Entity("Backend.Domain.Entities.Promotion", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("CategoryId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal>("DiscountPercentage")
-                        .HasColumnType("decimal(5,2)");
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CategoryId");
-
-                    b.ToTable("Promotions");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.RefreshToken", b =>
@@ -2060,17 +2358,6 @@ namespace Infrastructure.Migrations
                     b.Navigation("Booking");
                 });
 
-            modelBuilder.Entity("Backend.Domain.Entities.CategoryOffer", b =>
-                {
-                    b.HasOne("Backend.Domain.Entities.Category", "Category")
-                        .WithMany("Offers")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Category");
-                });
-
             modelBuilder.Entity("Backend.Domain.Entities.CompanyProfile", b =>
                 {
                     b.HasOne("Backend.Domain.Entities.ApplicationUser", "User")
@@ -2082,6 +2369,94 @@ namespace Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Backend.Domain.Entities.DiscountCode", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.ApplicationUser", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Domain.Entities.CompanyProfile", "Supplier")
+                        .WithMany()
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("Supplier");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.DiscountUsage", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.Booking", "Booking")
+                        .WithMany()
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Domain.Entities.ApplicationUser", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Domain.Entities.DiscountCode", "Discount")
+                        .WithMany("Usages")
+                        .HasForeignKey("DiscountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Booking");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Discount");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.DiscountValidationLog", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.ApplicationUser", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Backend.Domain.Entities.DiscountCode", "Discount")
+                        .WithMany()
+                        .HasForeignKey("DiscountId");
+
+                    b.HasOne("Backend.Domain.Entities.Vehicle", "Vehicle")
+                        .WithMany()
+                        .HasForeignKey("VehicleId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Discount");
+
+                    b.Navigation("Vehicle");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.DiscountVehicleCategory", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.Category", "Category")
+                        .WithMany("DiscountVehicleCategories")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Domain.Entities.DiscountCode", "Discount")
+                        .WithMany("VehicleCategories")
+                        .HasForeignKey("DiscountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Discount");
+                });
+
             modelBuilder.Entity("Backend.Domain.Entities.Driver", b =>
                 {
                     b.HasOne("Backend.Domain.Entities.ApplicationUser", "User")
@@ -2091,6 +2466,73 @@ namespace Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.DriverEarning", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.Booking", "Booking")
+                        .WithOne("DriverEarning")
+                        .HasForeignKey("Backend.Domain.Entities.DriverEarning", "BookingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Domain.Entities.DriverProfile", "DriverProfile")
+                        .WithMany("Earnings")
+                        .HasForeignKey("DriverProfileId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Domain.Entities.DriverPayout", "Payout")
+                        .WithMany()
+                        .HasForeignKey("PayoutId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Booking");
+
+                    b.Navigation("DriverProfile");
+
+                    b.Navigation("Payout");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.DriverPaymentInfo", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.DriverProfile", "DriverProfile")
+                        .WithOne("PaymentInfo")
+                        .HasForeignKey("Backend.Domain.Entities.DriverPaymentInfo", "DriverProfileId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("DriverProfile");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.DriverPayout", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.DriverProfile", "DriverProfile")
+                        .WithMany("Payouts")
+                        .HasForeignKey("DriverProfileId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("DriverProfile");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.DriverPayoutTransaction", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.DriverEarning", "DriverEarning")
+                        .WithMany()
+                        .HasForeignKey("DriverEarningId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Domain.Entities.DriverPayout", "DriverPayout")
+                        .WithMany()
+                        .HasForeignKey("DriverPayoutId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DriverEarning");
+
+                    b.Navigation("DriverPayout");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.DriverProfile", b =>
@@ -2229,17 +2671,6 @@ namespace Infrastructure.Migrations
                     b.Navigation("BillingAddress");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Backend.Domain.Entities.Promotion", b =>
-                {
-                    b.HasOne("Backend.Domain.Entities.Category", "Category")
-                        .WithMany("Promotions")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Category");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.RefreshToken", b =>
@@ -2447,20 +2878,33 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Backend.Domain.Entities.Booking", b =>
                 {
+                    b.Navigation("DriverEarning");
+
                     b.Navigation("Review");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.Category", b =>
                 {
-                    b.Navigation("Offers");
-
-                    b.Navigation("Promotions");
+                    b.Navigation("DiscountVehicleCategories");
 
                     b.Navigation("Vehicles");
                 });
 
+            modelBuilder.Entity("Backend.Domain.Entities.DiscountCode", b =>
+                {
+                    b.Navigation("Usages");
+
+                    b.Navigation("VehicleCategories");
+                });
+
             modelBuilder.Entity("Backend.Domain.Entities.DriverProfile", b =>
                 {
+                    b.Navigation("Earnings");
+
+                    b.Navigation("PaymentInfo");
+
+                    b.Navigation("Payouts");
+
                     b.Navigation("WorkAreas");
                 });
 

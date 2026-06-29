@@ -36,5 +36,7 @@ public record SupplierBookingListItemDto(
     string BookingStatus,
     /// <summary>Latest payment status for this booking, or "None" if no payment row exists.</summary>
     string PaymentStatus,
-    /// <summary>UTC timestamp when the booking was created.</summary>
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    Guid? ApprovedBy = null,
+    DateTime? ApprovedAt = null,
+    string? RejectionReason = null);

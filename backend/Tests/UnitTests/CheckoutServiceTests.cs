@@ -181,12 +181,12 @@ public class CheckoutServiceTests
         var result = await _service.CheckoutAsync(request, userId);
 
         // 3 days * (50 vehicle + 25 driver) = 225
-        Assert.Equal("Confirmed", result.Status);
+        Assert.Equal("PendingApproval", result.Status);
         Assert.Equal(225.00m, result.TotalPrice);
 
         _bookingRepositoryMock.Verify(x => x.AddAsync(
             It.Is<Booking>(b =>
-                b.Status == BookingStatus.Confirmed &&
+                b.Status == BookingStatus.PendingApproval &&
                 b.RequiresDriver &&
                 b.AssignedDriverProfileId == driverProfileId &&
                 b.GrandTotal == 225.00m),
@@ -196,14 +196,33 @@ public class CheckoutServiceTests
             It.Is<BookingPayment>(p => p.Status == "Captured" && p.Amount == 225.00m),
             It.IsAny<CancellationToken>()), Times.Once);
 
-        // The booking + payment are committed atomically via the race-safe
-        // reservation (SERIALIZABLE / UPDLOCK+HOLDLOCK) rather than a bare SaveChanges.
         _bookingRepositoryMock.Verify(x => x.ReserveVehicleAtomicAsync(
-            It.Is<Booking>(b => b.Status == BookingStatus.Confirmed),
-            BookingStatus.Confirmed,
+            It.Is<Booking>(b => b.Status == BookingStatus.PendingApproval),
+            BookingStatus.PendingApproval,
             It.IsAny<DateTime?>(),
             It.IsAny<DateTime?>(),
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CheckoutAsync_Express_SetsPendingApproval()
+    {
+        var userId = Guid.NewGuid();
+        var vehicleId = Guid.NewGuid();
+        SetupHappyVehicle(vehicleId, userId);
+        SetupLicenses(new Driver
+        {
+            UserId = userId,
+            IsVerified = true,
+            LicenseNumber = "L-456",
+            LicenseExpiryDate = DateTime.UtcNow.AddYears(1)
+        });
+
+        var request = BuildRequest(vehicleId, needDriver: false, driverProfileId: null);
+
+        var result = await _service.CheckoutAsync(request, userId);
+
+        Assert.Equal("PendingApproval", result.Status);
     }
 
     [Fact]
@@ -225,12 +244,12 @@ public class CheckoutServiceTests
         var result = await _service.CheckoutAsync(request, userId);
 
         // 3 days * 50 vehicle = 150, no driver fee
-        Assert.Equal("Confirmed", result.Status);
+        Assert.Equal("PendingApproval", result.Status);
         Assert.Equal(150.00m, result.TotalPrice);
 
         _bookingRepositoryMock.Verify(x => x.AddAsync(
             It.Is<Booking>(b =>
-                b.Status == BookingStatus.Confirmed &&
+                b.Status == BookingStatus.PendingApproval &&
                 !b.RequiresDriver &&
                 b.AssignedDriverProfileId == null &&
                 b.GrandTotal == 150.00m),
@@ -239,5 +258,69 @@ public class CheckoutServiceTests
         _paymentRepositoryMock.Verify(x => x.AddAsync(
             It.Is<BookingPayment>(p => p.Status == "Captured" && p.Amount == 150.00m),
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ConfirmAsync_SetsPendingApproval()
+    {
+        var userId = Guid.NewGuid();
+        var vehicleId = Guid.NewGuid();
+        var bookingId = Guid.NewGuid();
+
+        var vehicle = new Vehicle
+        {
+            Id = vehicleId,
+            Make = "Toyota",
+            Model = "Camry",
+            IsActive = true,
+            UserId = Guid.NewGuid(),
+            PricePerDay = 50.00m
+        };
+
+        var booking = new Booking
+        {
+            Id = bookingId,
+            UserId = userId,
+            VehicleId = vehicleId,
+            Vehicle = vehicle,
+            Status = BookingStatus.PaymentPending,
+            HoldStartedAt = DateTime.UtcNow.AddMinutes(-1),
+            HoldExpiresAt = DateTime.UtcNow.AddMinutes(10),
+            GrandTotal = 150.00m,
+            TotalPrice = 150.00m,
+            RequiresDriver = false
+        };
+
+        _bookingRepositoryMock
+            .Setup(x => x.GetBookingWithDetailsAsync(bookingId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(booking);
+
+        _bookingRepositoryMock
+            .Setup(x => x.ReserveVehicleAtomicAsync(
+                It.IsAny<Booking>(),
+                It.IsAny<BookingStatus>(),
+                It.IsAny<DateTime?>(),
+                It.IsAny<DateTime?>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _paymentRepositoryMock
+            .Setup(x => x.AddAsync(It.IsAny<BookingPayment>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BookingPayment p, CancellationToken _) => p);
+
+        _commissionServiceMock
+            .Setup(x => x.GetEffectiveCommissionAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(10m);
+        _commissionServiceMock
+            .Setup(x => x.CalculateCommission(It.IsAny<decimal>(), It.IsAny<decimal>()))
+            .Returns((decimal total, decimal pct) => (total * pct / 100m, total - (total * pct / 100m)));
+
+        SetupUserAddresses();
+
+        var request = new ConfirmCheckoutRequest(PaymentMethod: "credit_card");
+
+        var result = await _service.ConfirmAsync(bookingId, request, userId);
+
+        Assert.Equal("PendingApproval", result.Status);
     }
 }

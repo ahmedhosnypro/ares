@@ -269,7 +269,7 @@ namespace Backend.Application.Services
             var commissionPercentage = await _commissionService.GetEffectiveCommissionAsync(vehicle.Id, cancellationToken);
             var (commissionAmount, supplierAmount) = _commissionService.CalculateCommission(grandTotal, commissionPercentage);
 
-            // ── Create booking (Confirmed — payment captured) ────────────────
+            // ── Create booking (PendingApproval — payment captured, awaiting admin) ──
             var booking = new Booking
             {
                 Id = Guid.NewGuid(),
@@ -289,7 +289,7 @@ namespace Backend.Application.Services
                 AssignedDriverProfileId = effectiveNeedDriver ? driverProfile!.Id : (Guid?)null,
                 DriverLockedUntil = effectiveNeedDriver ? request.ReturnDate : (DateTime?)null,
                 // Legacy customer-license Driver FK is never set here.
-                Status = BookingStatus.Confirmed,
+                Status = BookingStatus.PendingApproval,
                 CommissionPercentage = commissionPercentage,
                 CommissionAmount = commissionAmount,
                 SupplierAmount = supplierAmount
@@ -328,16 +328,19 @@ namespace Backend.Application.Services
             // simultaneous checkouts can never both confirm the same vehicle —
             // the loser receives a 409 ("just been reserved by another customer").
             await _bookingRepository.ReserveVehicleAtomicAsync(
-                booking, BookingStatus.Confirmed, null, null, cancellationToken);
+                booking, BookingStatus.PendingApproval, null, null, cancellationToken);
 
             await SendBestEffortNotificationsAsync(booking, vehicle, driverProfile, cancellationToken);
 
             return new BookingResponse(
                 booking.Id,
                 booking.BookingNumber!,
-                BookingStatus.Confirmed.ToString(),
+                BookingStatus.PendingApproval.ToString(),
                 grandTotal,
-                "Booking confirmed and payment captured successfully.");
+                "Booking submitted and payment captured successfully. Your booking is pending admin approval.",
+                booking.ApprovedBy,
+                booking.ApprovedAt,
+                booking.RejectionReason);
         }
 
         // ── Staged checkout lifecycle ─────────────────────────────────────────
@@ -563,12 +566,13 @@ namespace Backend.Application.Services
             {
                 var booking = await LoadOwnedAsync(bookingId, userId, cancellationToken);
 
-                // Idempotent: already confirmed.
-                if (booking.Status == BookingStatus.Confirmed)
+                // Idempotent: already pending approval.
+                if (booking.Status == BookingStatus.PendingApproval)
                 {
                     return new BookingResponse(
-                        booking.Id, booking.BookingNumber!, BookingStatus.Confirmed.ToString(),
-                        booking.GrandTotal ?? booking.TotalPrice ?? 0m, "Booking already confirmed.");
+                        booking.Id, booking.BookingNumber!, BookingStatus.PendingApproval.ToString(),
+                        booking.GrandTotal ?? booking.TotalPrice ?? 0m, "Booking is already pending admin approval.",
+                        booking.ApprovedBy, booking.ApprovedAt, booking.RejectionReason);
                 }
 
                 if (booking.Status != BookingStatus.PaymentPending)
@@ -629,13 +633,14 @@ namespace Backend.Application.Services
                 // Finalise under the lock (re-checks overlap as defence-in-depth) and
                 // commit booking + payment + driver lock atomically. Clears the hold.
                 await _bookingRepository.ReserveVehicleAtomicAsync(
-                    booking, BookingStatus.Confirmed, booking.HoldStartedAt, null, cancellationToken);
+                    booking, BookingStatus.PendingApproval, booking.HoldStartedAt, null, cancellationToken);
 
                 await SendBestEffortNotificationsAsync(booking, booking.Vehicle!, driverProfile, cancellationToken);
 
                 return new BookingResponse(
-                    booking.Id, booking.BookingNumber!, BookingStatus.Confirmed.ToString(),
-                    grandTotal, "Booking confirmed and payment captured successfully.");
+                    booking.Id, booking.BookingNumber!, BookingStatus.PendingApproval.ToString(),
+                    grandTotal, "Booking submitted and payment captured successfully. Your booking is pending admin approval.",
+                    booking.ApprovedBy, booking.ApprovedAt, booking.RejectionReason);
             }
             finally
             {
@@ -785,6 +790,7 @@ namespace Backend.Application.Services
             {
                 BookingStatus.Draft => (booking.RequiresDriver && !booking.AssignedDriverProfileId.HasValue) ? "driver" : "payment",
                 BookingStatus.PaymentPending => "payment",
+                BookingStatus.PendingApproval => "pending_approval",
                 BookingStatus.Confirmed => "confirmed",
                 _ => "vehicle"
             };
@@ -894,9 +900,9 @@ namespace Backend.Application.Services
             {
                 await _notificationService.CreateNotificationAsync(
                     booking.UserId,
-                    "Booking Confirmed",
-                    $"Your booking {bookingLabel} is confirmed and payment was received.",
-                    $"BookingConfirmed:{booking.Id}",
+                    "Booking Submitted",
+                    $"Your booking {bookingLabel} has been submitted and is pending admin approval.",
+                    $"BookingPendingApproval:{booking.Id}",
                     cancellationToken);
             }
             catch { /* best-effort */ }
@@ -908,7 +914,7 @@ namespace Backend.Application.Services
                     await _notificationService.CreateNotificationAsync(
                         vehicle.UserId,
                         "New booking received",
-                        $"You received a new booking ({bookingLabel}).",
+                        $"You received a new booking ({bookingLabel}), pending admin approval.",
                         SupplierNotificationTypes.Format(SupplierNotificationTypes.BookingReceived, booking.Id),
                         cancellationToken);
                 }
@@ -932,9 +938,9 @@ namespace Backend.Application.Services
             try
             {
                 await _notificationService.NotifyAdminsAsync(
-                    "New booking confirmed",
-                    $"Booking {bookingLabel} was created and paid.",
-                    $"BookingConfirmed:{booking.Id}",
+                    "New booking pending approval",
+                    $"Booking {bookingLabel} was created and paid. Admin approval required.",
+                    $"BookingPendingApproval:{booking.Id}",
                     cancellationToken);
             }
             catch { /* best-effort */ }

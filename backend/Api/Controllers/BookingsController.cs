@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace Backend.Api.Controllers;
 
@@ -729,5 +730,92 @@ public class AdminBookingsController : ControllerBase
                 cancellationToken);
 
         return Ok(items);
+    }
+}
+
+[ApiController]
+[Route("api/admin/booking-approvals")]
+[Authorize(Roles = "Admin")]
+public class AdminBookingApprovalsController : ControllerBase
+{
+    private readonly IBookingService _bookingService;
+    private readonly ILogger<AdminBookingApprovalsController> _logger;
+
+    public AdminBookingApprovalsController(
+        IBookingService bookingService,
+        ILogger<AdminBookingApprovalsController> logger)
+    {
+        _bookingService = bookingService;
+        _logger = logger;
+    }
+
+    [HttpPatch("{id}/approve")]
+    [ProducesResponseType(typeof(BookingResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<BookingResponse>> ApproveBooking(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var adminId = TryGetAdminId();
+        if (adminId == null)
+        {
+            return Unauthorized();
+        }
+
+        _logger.LogInformation(
+            "Admin {AdminId} approving booking {BookingId}", adminId, id);
+
+        var result = await _bookingService.ApproveBookingAsync(
+            id, adminId.Value, cancellationToken);
+
+        return Ok(result);
+    }
+
+    [HttpPatch("{id}/reject")]
+    [ProducesResponseType(typeof(BookingResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<BookingResponse>> RejectBooking(
+        Guid id,
+        [FromBody] RejectBookingRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var adminId = TryGetAdminId();
+        if (adminId == null)
+        {
+            return Unauthorized();
+        }
+
+        var validator = new RejectBookingRequestValidator();
+        var validationResult = await validator.ValidateAsync(request, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message = validationResult.Errors.First().ErrorMessage
+            });
+        }
+
+        _logger.LogInformation(
+            "Admin {AdminId} rejecting booking {BookingId}", adminId, id);
+
+        var result = await _bookingService.RejectBookingAsync(
+            id, adminId.Value, request.Reason, cancellationToken);
+
+        return Ok(result);
+    }
+
+    private Guid? TryGetAdminId()
+    {
+        var idClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (idClaim == null) return null;
+        return Guid.TryParse(idClaim.Value, out var id) ? id : null;
     }
 }

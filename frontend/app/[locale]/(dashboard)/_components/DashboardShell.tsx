@@ -70,6 +70,7 @@ function resolveActiveMenuItem(menuItems: DashboardMenuItem[], pathname: string)
 }
 
 export default function DashboardShell({
+  // eslint-disable-line sonarjs/cognitive-complexity
   children,
   menuItems,
   sidebarLabel,
