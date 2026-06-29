@@ -35,16 +35,20 @@ namespace Backend.Application.Features.VehicleInspections.Commands.AssignInspect
 
         public async Task<Guid> Handle(AssignInspectorCommand request, CancellationToken cancellationToken)
         {
-            var booking = await _context.Bookings
-                .Include(b => b.Vehicle)
-                .FirstOrDefaultAsync(b => b.Id == request.BookingId, cancellationToken)
-                ?? throw new NotFoundException("Booking", request.BookingId);
+            using var tx = await _context.BeginTransactionAsync(cancellationToken);
 
-            // Verify booking status - cancelled or completed bookings cannot be assigned inspectors
-            if (booking.Status == BookingStatus.Cancelled || booking.Status == BookingStatus.Completed)
+            try
             {
-                throw new ConflictException($"Cannot assign an inspector to a booking in status '{booking.Status}'.");
-            }
+                var booking = await _context.Bookings
+                    .Include(b => b.Vehicle)
+                    .FirstOrDefaultAsync(b => b.Id == request.BookingId, cancellationToken)
+                    ?? throw new NotFoundException("Booking", request.BookingId);
+
+                // Verify booking status - cancelled or completed bookings cannot be assigned inspectors
+                if (booking.Status == BookingStatus.Cancelled || booking.Status == BookingStatus.Completed)
+                {
+                    throw new ConflictException($"Cannot assign an inspector to a booking in status '{booking.Status}'.");
+                }
 
             var existingInspections = await _context.VehicleInspections
                 .Where(vi => vi.BookingId == booking.Id)
@@ -64,19 +68,16 @@ namespace Backend.Application.Features.VehicleInspections.Commands.AssignInspect
                 ? booking.DropoffLocation
                 : booking.PickupLocation;
 
-            var availableInspectors = await _context.Inspectors
-                .Where(i => i.IsActive && i.IsAvailable)
-                .ToListAsync(cancellationToken);
+                var query = _context.Inspectors.Where(i => i.IsActive && i.IsAvailable);
 
-            // Filter inspectors by region matching (e.g., matching "Cairo" in "Cairo, Cairo Governorate, Egypt")
-            if (!string.IsNullOrEmpty(region))
-            {
-                availableInspectors = availableInspectors
-                    .Where(i => string.IsNullOrEmpty(i.Region) || 
-                                region.Contains(i.Region, StringComparison.OrdinalIgnoreCase) || 
-                                i.Region.Contains(region, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-            }
+                if (!string.IsNullOrEmpty(region))
+                {
+                    query = query.Where(i => string.IsNullOrEmpty(i.Region) || 
+                                             i.Region.Contains(region) || 
+                                             region.Contains(i.Region));
+                }
+
+                var availableInspectors = await query.ToListAsync(cancellationToken);
 
             Guid? selectedInspectorUserId = null;
 
@@ -182,42 +183,49 @@ namespace Backend.Application.Features.VehicleInspections.Commands.AssignInspect
                 booking.UpdatedAt = DateTime.UtcNow;
             }
 
-            await _context.SaveChangesAsync(cancellationToken);
+                await _context.SaveChangesAsync(cancellationToken);
+                await tx.CommitAsync(cancellationToken);
 
-            // Handle notifications/events (failsafe)
-            if (selectedInspectorUserId != null)
-            {
-                try
+                // Handle notifications/events (failsafe)
+                if (selectedInspectorUserId != null)
                 {
-                    // Notify new inspector
-                    if (previousInspectorId != selectedInspectorUserId)
+                    try
                     {
-                        await _notificationService.CreateNotificationAsync(
-                            selectedInspectorUserId.Value,
-                            "New inspection assigned",
-                            $"You have been assigned to inspect booking {booking.BookingNumber ?? booking.Id.ToString()} ({request.InspectionType}).",
-                            "InspectionAssigned",
-                            cancellationToken);
-                    }
+                        // Notify new inspector
+                        if (previousInspectorId != selectedInspectorUserId)
+                        {
+                            await _notificationService.CreateNotificationAsync(
+                                selectedInspectorUserId.Value,
+                                "New inspection assigned",
+                                $"You have been assigned to inspect booking {booking.BookingNumber ?? booking.Id.ToString()} ({request.InspectionType}).",
+                                "InspectionAssigned",
+                                cancellationToken);
+                        }
 
-                    // Notify previous inspector of reassignment
-                    if (previousInspectorId != null && previousInspectorId != selectedInspectorUserId)
+                        // Notify previous inspector of reassignment
+                        if (previousInspectorId != null && previousInspectorId != selectedInspectorUserId)
+                        {
+                            await _notificationService.CreateNotificationAsync(
+                                previousInspectorId.Value,
+                                "Inspection Reassigned",
+                                $"Your assignment for booking {booking.BookingNumber ?? booking.Id.ToString()} ({request.InspectionType}) has been reassigned to another inspector.",
+                                "InspectionReassigned",
+                                cancellationToken);
+                        }
+                    }
+                    catch (Exception ex)
                     {
-                        await _notificationService.CreateNotificationAsync(
-                            previousInspectorId.Value,
-                            "Inspection Reassigned",
-                            $"Your assignment for booking {booking.BookingNumber ?? booking.Id.ToString()} ({request.InspectionType}) has been reassigned to another inspector.",
-                            "InspectionReassigned",
-                            cancellationToken);
+                        _logger.LogWarning(ex, "Failed to send assignment notification to inspector(s) for booking {BookingId}", booking.Id);
                     }
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to send assignment notification to inspector(s) for booking {BookingId}", booking.Id);
-                }
+
+                return inspectionId;
             }
-
-            return inspectionId;
+            catch
+            {
+                await tx.RollbackAsync(cancellationToken);
+                throw;
+            }
         }
     }
 }
