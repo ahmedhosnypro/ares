@@ -280,7 +280,7 @@ public class BookingCreationPropertyTests : IDisposable
 
             var booking = _bookingRepository.GetByIdAsync(response.BookingId).GetAwaiter().GetResult();
 
-            return response != null && response.Status == BookingStatus.Confirmed.ToString() && booking != null && booking.Status == BookingStatus.Confirmed;
+            return response != null && response.Status == BookingStatus.PendingApproval.ToString() && booking != null && booking.Status == BookingStatus.PendingApproval;
         }
         catch { return false; }
     }
@@ -304,6 +304,56 @@ public class BookingCreationPropertyTests : IDisposable
             var parts = bookingNumber.Split('-');
 
             return parts.Length == 3 && parts[0] == "BK" && parts[1].Length == 8 && parts[2].Length == 5;
+        }
+        catch { return false; }
+    }
+
+    [Property(MaxTest = 100)]
+    public bool CustomerBookingAlwaysPendingApprovalAfterPayment(PositiveInt daysGen, PositiveInt priceGen)
+    {
+        var days = Math.Max(1, daysGen.Get % 7 + 1);
+        var pricePerDay = Math.Max(10, priceGen.Get % 200 + 10);
+
+        try
+        {
+            ClearTestData();
+            var (userId, vehicleId) = CreateTestUserAndVehicle(pricePerDay);
+            var pickupDate = DateTime.UtcNow.AddDays(1);
+            var returnDate = pickupDate.AddDays(days);
+
+            var request = new CreateBookingRequest(vehicleId, Guid.NewGuid(), Guid.NewGuid(), pickupDate, returnDate, null, false);
+            var response = _bookingService.CreateBookingAsync(request, userId).GetAwaiter().GetResult();
+
+            var booking = _bookingRepository.GetByIdAsync(response.BookingId).GetAwaiter().GetResult();
+
+            return response != null && booking != null && booking.Status == BookingStatus.PendingApproval;
+        }
+        catch { return false; }
+    }
+
+    [Property(MaxTest = 100)]
+    public bool AdminBookingAlwaysConfirmed(PositiveInt daysGen, PositiveInt priceGen)
+    {
+        var days = Math.Max(1, daysGen.Get % 7 + 1);
+        var pricePerDay = Math.Max(10, priceGen.Get % 200 + 10);
+
+        try
+        {
+            ClearTestData();
+            var (customerId, vehicleId) = CreateTestUserAndVehicle(pricePerDay);
+            var adminInitiatorId = Guid.NewGuid();
+            _context.Users.Add(new ApplicationUser { Id = adminInitiatorId, UserName = adminInitiatorId.ToString(), Email = adminInitiatorId + "@test.com" });
+            _context.SaveChanges();
+
+            var pickupDate = DateTime.UtcNow.AddDays(1);
+            var returnDate = pickupDate.AddDays(days);
+
+            var request = new CreateBookingRequest(vehicleId, Guid.NewGuid(), Guid.NewGuid(), pickupDate, returnDate, null, false, CustomerUserId: customerId);
+            var response = _bookingService.CreateBookingAsync(request, adminInitiatorId).GetAwaiter().GetResult();
+
+            var booking = _bookingRepository.GetByIdAsync(response.BookingId).GetAwaiter().GetResult();
+
+            return response != null && booking != null && booking.Status == BookingStatus.Confirmed;
         }
         catch { return false; }
     }

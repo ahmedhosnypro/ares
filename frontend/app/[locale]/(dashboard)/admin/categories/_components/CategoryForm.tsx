@@ -14,7 +14,6 @@ import {
   CircularProgress,
   InputAdornment,
   Typography,
-  Divider,
 } from "@mui/material";
 import { createCategory, updateCategory, Category } from "@/api-clients/categories/categories";
 import { useTranslations } from "next-intl";
@@ -36,11 +35,6 @@ export default function CategoryForm({ open, category, onClose, onSuccess }: Cat
     description: "",
     commissionPercentage: 0,
     isActive: true,
-    offerName: "",
-    offerDiscountPercentage: 0,
-    offerStartDate: "",
-    offerEndDate: "",
-    offerIsActive: true,
   });
 
   const [error, setError] = useState<string | null>(null);
@@ -52,15 +46,6 @@ export default function CategoryForm({ open, category, onClose, onSuccess }: Cat
         description: category.description || "",
         commissionPercentage: category.commissionPercentage,
         isActive: category.isActive,
-        offerName: category.activeOffer?.offerName || "",
-        offerDiscountPercentage: category.activeOffer?.discountPercentage || 0,
-        offerStartDate: category.activeOffer?.startDate
-          ? new Date(category.activeOffer.startDate).toISOString().split("T")[0]
-          : "",
-        offerEndDate: category.activeOffer?.endDate
-          ? new Date(category.activeOffer.endDate).toISOString().split("T")[0]
-          : "",
-        offerIsActive: category.activeOffer?.isActive ?? true,
       });
     } else {
       setFormData({
@@ -68,11 +53,6 @@ export default function CategoryForm({ open, category, onClose, onSuccess }: Cat
         description: "",
         commissionPercentage: 0,
         isActive: true,
-        offerName: "",
-        offerDiscountPercentage: 0,
-        offerStartDate: "",
-        offerEndDate: "",
-        offerIsActive: true,
       });
     }
     setError(null);
@@ -99,11 +79,6 @@ export default function CategoryForm({ open, category, onClose, onSuccess }: Cat
 
       const payload = {
         ...formData,
-        offerName: formData.offerName || null,
-        offerDiscountPercentage: formData.offerDiscountPercentage || null,
-        offerStartDate: formData.offerStartDate ? new Date(formData.offerStartDate).toISOString() : null,
-        offerEndDate: formData.offerEndDate ? new Date(formData.offerEndDate).toISOString() : null,
-        offerIsActive: formData.offerIsActive,
       };
 
       if (category) {
@@ -177,75 +152,6 @@ export default function CategoryForm({ open, category, onClose, onSuccess }: Cat
                 />
               }
               label={formData.isActive ? t("table.statusActive") : t("table.statusInactive")}
-            />
-
-            <Divider />
-            <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-              {t("form.fields.offerTitle")}
-            </Typography>
-
-            <TextField
-              label={t("form.fields.offerName")}
-              name="offerName"
-              value={formData.offerName}
-              onChange={handleChange}
-              fullWidth
-              disabled={loading}
-            />
-
-            <TextField
-              label={t("form.fields.discount")}
-              name="offerDiscountPercentage"
-              type="number"
-              value={formData.offerDiscountPercentage}
-              onChange={handleChange}
-              fullWidth
-              disabled={loading}
-              slotProps={{
-                input: {
-                  endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                },
-                htmlInput: { min: 0, max: 100, step: "0.01" },
-              }}
-            />
-
-            <TextField
-              label={t("form.fields.startDate")}
-              name="offerStartDate"
-              type="date"
-              value={formData.offerStartDate}
-              onChange={handleChange}
-              fullWidth
-              disabled={loading}
-              slotProps={{
-                inputLabel: { shrink: true },
-              }}
-            />
-
-            <TextField
-              label={t("form.fields.endDate")}
-              name="offerEndDate"
-              type="date"
-              value={formData.offerEndDate}
-              onChange={handleChange}
-              fullWidth
-              disabled={loading}
-              slotProps={{
-                inputLabel: { shrink: true },
-              }}
-            />
-
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={formData.offerIsActive}
-                  onChange={handleChange}
-                  name="offerIsActive"
-                  disabled={loading}
-                  color="primary"
-                />
-              }
-              label={formData.offerIsActive ? t("form.fields.offerActive") : t("form.fields.offerInactive")}
             />
 
             {error && (

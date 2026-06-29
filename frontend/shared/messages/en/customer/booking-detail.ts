@@ -152,6 +152,26 @@ const bookingDetail: BookingDetailLabels = {
     invalidBooking: "Invalid booking",
     cancelFailed: "Failed to cancel booking",
   },
+  approval: {
+    pendingApprovalTitle: "Awaiting Approval",
+    pendingApprovalMessage: "Your booking is pending admin approval. You will be notified once a decision is made.",
+    rejectedTitle: "Booking Rejected",
+    rejectedMessage: "Your booking has been rejected.",
+    rejectionReason: "Rejection Reason",
+  },
+  status: {
+    draft: "Draft",
+    paymentPending: "Payment Pending",
+    pendingApproval: "Pending Approval",
+    confirmed: "Confirmed",
+    active: "Active",
+    completed: "Completed",
+    cancelled: "Cancelled",
+    expired: "Expired",
+    rejected: "Rejected",
+    cancelledByAdmin: "Cancelled by Admin",
+    unknown: "Unknown",
+  },
   notAvailable: "N/A",
 };
 

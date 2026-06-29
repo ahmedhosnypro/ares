@@ -24,6 +24,30 @@ export interface BookingItem {
   readonly status?: string;
 }
 
+function getStatusLabel(status: string | undefined, t: (key: string) => string): string {
+  if (!status) return t("card.notAvailable");
+  switch (status.toLowerCase()) {
+    case "draft":
+      return t("list.status.draft");
+    case "pending":
+      return t("list.status.pending");
+    case "pendingapproval":
+      return t("list.status.pendingApproval");
+    case "confirmed":
+      return t("list.status.confirmed");
+    case "active":
+      return t("list.status.active");
+    case "completed":
+      return t("list.status.completed");
+    case "cancelled":
+      return t("list.status.cancelled");
+    case "rejected":
+      return t("list.status.rejected");
+    default:
+      return status;
+  }
+}
+
 function getStatusColor(status?: string): "success" | "warning" | "error" | "default" {
   switch (status?.toLowerCase()) {
     case "active":
@@ -31,8 +55,10 @@ function getStatusColor(status?: string): "success" | "warning" | "error" | "def
       return "success";
     case "pending":
     case "confirmed":
+    case "pendingapproval":
       return "warning";
     case "cancelled":
+    case "rejected":
       return "error";
     default:
       return "default";
@@ -91,7 +117,7 @@ export default function BookingCard({ booking }: Readonly<{ booking: BookingItem
           </Box>
           <Box sx={{ textAlign: "right", ml: 2 }}>
             <Chip
-              label={booking.status ?? t("card.notAvailable")}
+              label={getStatusLabel(booking.status, t)}
               color={getStatusColor(booking.status)}
               size="small"
               sx={{
@@ -258,7 +284,7 @@ export default function BookingCard({ booking }: Readonly<{ booking: BookingItem
           />
           <Box sx={{ position: "absolute", top: 10, left: 10 }}>
             <Chip
-              label={booking.status ?? t("card.notAvailable")}
+              label={getStatusLabel(booking.status, t)}
               color={getStatusColor(booking.status)}
               size="small"
               sx={{ fontWeight: 700, fontSize: "0.65rem", textTransform: "uppercase" }}

@@ -52,6 +52,9 @@ export enum VehicleStatus {
   ComingSoon = "ComingSoon",
   Maintenance = "Maintenance",
   Retired = "Retired",
+  Pending = "Pending",
+  Approved = "Approved",
+  Rejected = "Rejected",
 }
 
 export type VehicleStatusFilter = "" | VehicleStatus;
@@ -77,6 +80,16 @@ function mapStatusToBackend(status: VehicleStatusFilter | undefined): string | u
       return "Maintenance";
     case VehicleStatus.Available:
       return "Available";
+    case VehicleStatus.Unavailable:
+      return "Unavailable";
+    case VehicleStatus.ComingSoon:
+      return "ComingSoon";
+    case VehicleStatus.Pending:
+      return "Pending";
+    case VehicleStatus.Approved:
+      return "Approved";
+    case VehicleStatus.Rejected:
+      return "Rejected";
     default:
       return undefined;
   }
@@ -199,8 +212,9 @@ export interface CarPayload {
   pricePerDay: number;
   locationCity: string;
   description: string;
-  status: string;
-  availabilityStatus: string;
+  categoryId: string;
+  status?: string;
+  availabilityStatus?: string;
   imageUrl?: string;
 }
 

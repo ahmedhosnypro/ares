@@ -315,8 +315,12 @@ export default function UsersTab() {
   const [stats, setStats] = useState<UserStats | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 300);
-    return () => clearTimeout(timer);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => {
+      clearTimeout(timer);
+    };
   }, [search]);
 
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
@@ -338,7 +342,7 @@ export default function UsersTab() {
         status: statusFilter,
       });
 
-      const normalized: User[] = (data.items || []).map(u => ({
+      const normalized: User[] = data.items.map(u => ({
         ...u,
         status: (u.status || "").toLowerCase(),
         roles: Array.isArray(u.roles)
@@ -350,9 +354,7 @@ export default function UsersTab() {
       setTotalCount(data.totalCount || 0);
       setTotalPages(data.totalPages || 1);
 
-      if (data.stats) {
-        setStats(data.stats);
-      }
+      setStats(data.stats);
     } catch (err) {
       logger.error("Failed to fetch users", err);
     } finally {

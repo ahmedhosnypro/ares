@@ -88,6 +88,20 @@ namespace Backend.Infrastructure.Data.Configurations
                 .HasDatabaseName("IX_Bookings_User_Status");
 
             builder
+                .Property(b => b.ApprovedBy)
+                .IsRequired(false);
+
+            builder
+                .Property(b => b.ApprovedAt)
+                .HasColumnType("datetime2")
+                .IsRequired(false);
+
+            builder
+                .Property(b => b.RejectionReason)
+                .HasColumnType("nvarchar(max)")
+                .IsRequired(false);
+
+            builder
                 .Property(b => b.RowVersion)
                 .IsRowVersion();
 

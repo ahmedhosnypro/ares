@@ -187,11 +187,152 @@ public class BookingManagementPropertyTests : IDisposable
 
     #endregion
 
+    #region Property: PendingApproval only allows Confirmed, Rejected, CancelledByAdmin
+
+    [Property(MaxTest = 100)]
+    public bool PendingApprovalOnlyAllowsConfirmedRejectedCancelledByAdmin()
+    {
+        var allowedFromPendingApproval = new HashSet<BookingStatus>
+        {
+            BookingStatus.Confirmed,
+            BookingStatus.Rejected,
+            BookingStatus.CancelledByAdmin
+        };
+
+        var allStatuses = Enum.GetValues<BookingStatus>();
+        var violatingStatuses = allStatuses
+            .Where(s => s != BookingStatus.PendingApproval && !allowedFromPendingApproval.Contains(s))
+            .ToList();
+
+        try
+        {
+            ClearTestData();
+            var supplierId = Guid.NewGuid();
+            _context.Users.Add(new ApplicationUser { Id = supplierId, UserName = supplierId.ToString(), Email = supplierId + "@test.com" });
+            var vehicleId = Guid.NewGuid();
+            _context.Vehicles.Add(new Vehicle
+            {
+                Id = vehicleId,
+                UserId = supplierId,
+                Make = "Test",
+                Model = "Vehicle",
+                Year = 2023,
+                LicensePlate = "TEST-PROP",
+                PricePerDay = 100,
+                Status = "Available",
+                AvailabilityStatus = "Available",
+                IsActive = true
+            });
+            _context.VehicleImages.Add(new VehicleImage { Id = Guid.NewGuid(), VehicleId = vehicleId, ImageUrl = "test.jpg", IsPrimary = true });
+            _context.SaveChanges();
+
+            var adminId = Guid.NewGuid();
+            _context.Users.Add(new ApplicationUser { Id = adminId, UserName = adminId.ToString(), Email = adminId + "@test.com" });
+            _context.SaveChanges();
+
+            var booking = CreateTestBooking(vehicleId, adminId, DateTime.UtcNow.AddDays(1), DateTime.UtcNow.AddDays(3), BookingStatus.PendingApproval);
+
+            var approveResult = _bookingService.ApproveBookingAsync(booking.Id, adminId).GetAwaiter().GetResult();
+            if (approveResult.Status != BookingStatus.Confirmed.ToString())
+                return false;
+
+            _context.Bookings.Remove(_context.Bookings.First(b => b.Id == booking.Id));
+            _context.SaveChanges();
+
+            booking = CreateTestBooking(vehicleId, adminId, DateTime.UtcNow.AddDays(1), DateTime.UtcNow.AddDays(3), BookingStatus.PendingApproval);
+            var rejectResult = _bookingService.RejectBookingAsync(booking.Id, adminId, "test rejection").GetAwaiter().GetResult();
+            if (rejectResult.Status != BookingStatus.Rejected.ToString())
+                return false;
+
+            _context.Bookings.Remove(_context.Bookings.First(b => b.Id == booking.Id));
+            _context.SaveChanges();
+
+            booking = CreateTestBooking(vehicleId, adminId, DateTime.UtcNow.AddDays(1), DateTime.UtcNow.AddDays(3), BookingStatus.Confirmed);
+            try
+            {
+                _bookingService.ApproveBookingAsync(booking.Id, adminId).GetAwaiter().GetResult();
+                return false;
+            }
+            catch (Exception ex) when (ex is ConflictException || (ex is AggregateException ae && ae.InnerException is ConflictException))
+            {
+            }
+
+            return true;
+        }
+        catch { return false; }
+    }
+
+    #endregion
+
+    #region Property: Rejected is a terminal status
+
+    [Property(MaxTest = 100)]
+    public bool RejectedIsTerminalStatus()
+    {
+        try
+        {
+            ClearTestData();
+            var supplierId = Guid.NewGuid();
+            _context.Users.Add(new ApplicationUser { Id = supplierId, UserName = supplierId.ToString(), Email = supplierId + "@test.com" });
+            var vehicleId = Guid.NewGuid();
+            _context.Vehicles.Add(new Vehicle
+            {
+                Id = vehicleId,
+                UserId = supplierId,
+                Make = "Test",
+                Model = "Vehicle",
+                Year = 2023,
+                LicensePlate = "TEST-PROP",
+                PricePerDay = 100,
+                Status = "Available",
+                AvailabilityStatus = "Available",
+                IsActive = true
+            });
+            _context.VehicleImages.Add(new VehicleImage { Id = Guid.NewGuid(), VehicleId = vehicleId, ImageUrl = "test.jpg", IsPrimary = true });
+            _context.SaveChanges();
+
+            var adminId = Guid.NewGuid();
+            _context.Users.Add(new ApplicationUser { Id = adminId, UserName = adminId.ToString(), Email = adminId + "@test.com" });
+            _context.SaveChanges();
+
+            var booking = CreateTestBooking(vehicleId, adminId, DateTime.UtcNow.AddDays(1), DateTime.UtcNow.AddDays(3), BookingStatus.PendingApproval);
+            _bookingService.RejectBookingAsync(booking.Id, adminId, "rejected for test").GetAwaiter().GetResult();
+
+            var rejectedBooking = _context.Bookings.First(b => b.Id == booking.Id);
+            if (rejectedBooking.Status != BookingStatus.Rejected)
+                return false;
+
+            try
+            {
+                _bookingService.ApproveBookingAsync(booking.Id, adminId).GetAwaiter().GetResult();
+                return false;
+            }
+            catch (Exception ex) when (ex is ConflictException || (ex is AggregateException ae && ae.InnerException is ConflictException))
+            {
+            }
+
+            try
+            {
+                _bookingService.RejectBookingAsync(booking.Id, adminId, "already rejected").GetAwaiter().GetResult();
+                return false;
+            }
+            catch (Exception ex) when (ex is ConflictException || (ex is AggregateException ae && ae.InnerException is ConflictException))
+            {
+            }
+
+            return true;
+        }
+        catch { return false; }
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private void ClearTestData()
     {
         _context.BookingCancellations.RemoveRange(_context.BookingCancellations);
+        _context.Payments.RemoveRange(_context.Payments);
         _context.Bookings.RemoveRange(_context.Bookings);
         _context.VehicleImages.RemoveRange(_context.VehicleImages);
         _context.Vehicles.RemoveRange(_context.Vehicles);

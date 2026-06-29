@@ -150,5 +150,25 @@ export type BookingDetailLabels = {
     readonly invalidBooking: string;
     readonly cancelFailed: string;
   };
+  readonly approval: {
+    readonly pendingApprovalTitle: string;
+    readonly pendingApprovalMessage: string;
+    readonly rejectedTitle: string;
+    readonly rejectedMessage: string;
+    readonly rejectionReason: string;
+  };
+  readonly status: {
+    readonly draft: string;
+    readonly paymentPending: string;
+    readonly pendingApproval: string;
+    readonly confirmed: string;
+    readonly active: string;
+    readonly completed: string;
+    readonly cancelled: string;
+    readonly expired: string;
+    readonly rejected: string;
+    readonly cancelledByAdmin: string;
+    readonly unknown: string;
+  };
   readonly notAvailable: string;
 };

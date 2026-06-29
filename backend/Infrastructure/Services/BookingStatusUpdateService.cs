@@ -162,6 +162,78 @@ public class BookingStatusUpdateService : BackgroundService
             _logger.LogInformation($"Booking {booking.Id} (Num: {booking.BookingNumber}) hold expired (PaymentPending -> Expired); vehicle released.");
         }
 
+        // 4b. PendingApproval -> Expired (hold elapsed without admin approval).
+        //     Payment was captured, so a refund must be initiated and the vehicle
+        //     released so other customers can book it.
+        var pendingApprovalExpired = await context.Bookings
+            .Where(b => b.Status == BookingStatus.PendingApproval &&
+                        b.HoldExpiresAt.HasValue &&
+                        b.HoldExpiresAt.Value <= nowUtc)
+            .ToListAsync(cancellationToken);
+
+        var pendingApprovalPaymentIds = pendingApprovalExpired.Select(b => b.Id).ToHashSet();
+        var pendingApprovalPayments = pendingApprovalPaymentIds.Any()
+            ? await context.Payments
+                .Where(p => pendingApprovalPaymentIds.Contains(p.BookingId) && p.Status == "Captured")
+                .ToDictionaryAsync(p => p.BookingId, p => p, cancellationToken)
+            : new Dictionary<Guid, Backend.Domain.Entities.BookingPayment>();
+
+        foreach (var booking in pendingApprovalExpired)
+        {
+            booking.Status = BookingStatus.Expired;
+            booking.UpdatedAt = nowUtc;
+
+            if (pendingApprovalPayments.TryGetValue(booking.Id, out var payment) && payment.PaymobTransactionId.HasValue)
+            {
+                try
+                {
+                    var paymobClient = scope.ServiceProvider.GetRequiredService<Backend.Application.Interfaces.IPaymobClient>();
+                    var refundCalculator = scope.ServiceProvider.GetRequiredService<Backend.Application.Interfaces.IRefundCalculator>();
+                    var refundResult = refundCalculator.Calculate(booking.Status, booking.PickupDate ?? DateTime.UtcNow.AddDays(1), payment.Amount);
+
+                    if (refundResult.RefundAmount > 0)
+                    {
+                        var authToken = await paymobClient.GetAuthTokenAsync(cancellationToken);
+                        await paymobClient.RefundAsync(authToken, payment.PaymobTransactionId.Value, (long)(refundResult.RefundAmount * 100), cancellationToken);
+                    }
+
+                    var cancellationFee = payment.Amount - refundResult.RefundAmount;
+                    var commissionPercentage = booking.CommissionPercentage ?? 0m;
+                    var refundCommissionAmount = Math.Round(cancellationFee * (commissionPercentage / 100m), 2);
+                    var refundSupplierAmount = Math.Round(cancellationFee - refundCommissionAmount, 2);
+
+                    context.AddBookingCancellation(new Backend.Domain.Entities.BookingCancellation
+                    {
+                        BookingId = booking.Id,
+                        CancelledBy = Guid.Empty,
+                        PolicyType = refundResult.PolicyType,
+                        RefundPercentage = refundResult.RefundPercentage,
+                        OriginalAmount = payment.Amount,
+                        CancellationFee = cancellationFee,
+                        RefundCommissionAmount = refundCommissionAmount,
+                        RefundSupplierAmount = refundSupplierAmount,
+                        Currency = payment.Currency,
+                        RefundStatus = refundResult.RefundAmount > 0 ? RefundStatus.Processing : RefundStatus.Completed,
+                        RefundTransactionId = refundResult.RefundAmount > 0 ? Guid.NewGuid() : null,
+                        RefundProcessedAt = refundResult.RefundAmount > 0 ? DateTime.UtcNow : null,
+                        RefundMethod = refundResult.RefundAmount > 0 ? payment.PaymentMethod : null
+                    });
+
+                    payment.Status = "Refunded";
+                    _logger.LogInformation($"Booking {booking.Id} (Num: {booking.BookingNumber}) refund initiated (PendingApproval auto-expiry).");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to initiate refund for expired PendingApproval booking {BookingId}.", booking.Id);
+                }
+            }
+
+            if (booking.DriverAssignmentStatus == DriverAssignmentStatus.Assigned)
+                booking.DriverAssignmentStatus = DriverAssignmentStatus.NotRequired;
+
+            _logger.LogInformation($"Booking {booking.Id} (Num: {booking.BookingNumber}) expired (PendingApproval -> Expired); vehicle released.");
+        }
+
         // 5. Abandoned Draft -> Cancelled (no progress for 24h).
         //    Keeps the funnel tidy and prevents stale drafts from being resumed
         //    indefinitely. These never reserved the vehicle, so nothing to release.
@@ -181,11 +253,11 @@ public class BookingStatusUpdateService : BackgroundService
         }
 
         if (bookingsToActivate.Any() || bookingsToComplete.Any() || pendingToCancel.Any()
-            || holdsToExpire.Any() || abandonedDrafts.Any() || workflowFailedToCancel.Any() || driversToExpire.Any())
+            || holdsToExpire.Any() || pendingApprovalExpired.Any() || abandonedDrafts.Any() || workflowFailedToCancel.Any() || driversToExpire.Any())
         {
             await context.SaveChangesAsync(cancellationToken);
             _logger.LogInformation(
-                $"Saved {bookingsToActivate.Count + bookingsToComplete.Count + pendingToCancel.Count + holdsToExpire.Count + abandonedDrafts.Count + workflowFailedToCancel.Count + driversToExpire.Count} status transitions.");
+                $"Saved {bookingsToActivate.Count + bookingsToComplete.Count + pendingToCancel.Count + holdsToExpire.Count + pendingApprovalExpired.Count + abandonedDrafts.Count + workflowFailedToCancel.Count + driversToExpire.Count} status transitions.");
 
             if (suppliersToCheck != null && suppliersToCheck.Any())
             {

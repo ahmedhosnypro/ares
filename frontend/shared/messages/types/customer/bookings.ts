@@ -48,10 +48,16 @@ export type CustomerBookingsLabels = {
     readonly status: {
       readonly draft: string;
       readonly pending: string;
+      readonly paymentPending: string;
+      readonly pendingApproval: string;
       readonly confirmed: string;
       readonly active: string;
       readonly completed: string;
       readonly cancelled: string;
+      readonly expired: string;
+      readonly rejected: string;
+      readonly cancelledByAdmin: string;
+      readonly unknown: string;
     };
     readonly actions: {
       readonly view: string;

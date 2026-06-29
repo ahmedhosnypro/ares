@@ -13,6 +13,13 @@ const bookings: AdminBookingsLabels = {
   },
   table: {
     daysCount: "{count} {count, plural, one {Day} other {Days}}",
+    fallbacks: {
+      unknownCustomer: "Unknown Customer",
+      unknownVehicle: "Unknown Vehicle",
+      noPlate: "No Plate",
+      noPaymentMethod: "None",
+      currencySymbol: "SAR ",
+    },
     headers: {
       booking: "Booking",
       vehicle: "Vehicle",
@@ -39,10 +46,12 @@ const bookings: AdminBookingsLabels = {
       all: "All Statuses",
       draft: "Draft",
       paymentPending: "Payment Pending",
+      pendingApproval: "Pending Approval",
       confirmed: "Confirmed",
       active: "Active",
       completed: "Completed",
       cancelled: "Cancelled",
+      rejected: "Rejected",
     },
   },
   paymentStatuses: {
@@ -62,6 +71,8 @@ const bookings: AdminBookingsLabels = {
     editBooking: "Edit Booking",
     changeStatus: "Change Status",
     deleteBooking: "Delete Booking",
+    approveBooking: "Approve",
+    rejectBooking: "Reject",
   },
   changeStatusModal: {
     title: "Change Booking Status",
@@ -69,11 +80,38 @@ const bookings: AdminBookingsLabels = {
     newStatusLabel: "New status",
     statuses: {
       paymentPending: "Payment Pending",
+      pendingApproval: "Pending Approval",
       confirmed: "Confirmed",
       active: "Active",
       completed: "Completed",
       cancelled: "Cancelled",
+      rejected: "Rejected",
     },
+  },
+  approvals: {
+    approveDialog: {
+      title: "Approve Booking",
+      content:
+        "Are you sure you want to approve this booking? The customer will be notified and the booking will become confirmed.",
+    },
+    rejectDialog: {
+      title: "Reject Booking",
+      content:
+        "Are you sure you want to reject this booking? The payment will be refunded and the customer will be notified.",
+      reasonLabel: "Rejection Reason",
+      reasonPlaceholder: "Provide a reason for rejecting this booking…",
+    },
+    approvedSuccess: "Booking approved successfully.",
+    rejectedSuccess: "Booking rejected successfully.",
+    approveError: "Failed to approve booking. Please try again.",
+    rejectError: "Failed to reject booking. Please try again.",
+  },
+  overview: {
+    title: "Booking Overview",
+    total: "Total",
+    noBookings: "No bookings found.",
+    loadFailed: "Failed to load booking statistics.",
+    fallbackStatus: "Other",
   },
   analytics: {
     title: "Booking Status Distribution",
@@ -88,11 +126,13 @@ const bookings: AdminBookingsLabels = {
     statuses: {
       draft: "Draft",
       paymentPending: "Payment Pending",
+      pendingApproval: "Pending Approval",
       confirmed: "Confirmed",
       active: "Active",
       completed: "Completed",
       cancelled: "Cancelled",
       cancelledByAdmin: "Cancelled By Admin",
+      rejected: "Rejected",
     },
   },
 };

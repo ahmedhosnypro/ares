@@ -2,7 +2,7 @@ import type { AdminBookingsLabels } from "../../../types/dashboard/admin/booking
 
 const bookings: AdminBookingsLabels = {
   title: "إدارة الحجوزات",
-  subtitle: "مراققة وإدارة جميع حجوزات أريس",
+  subtitle: "مراقبة وإدارة جميع حجوزات أريس",
   newBooking: "حجز جديد",
   alerts: {
     createdSuccess: "تم إنشاء الحجز {bookingNumber} وهو قيد انتظار دفع العميل.",
@@ -13,6 +13,13 @@ const bookings: AdminBookingsLabels = {
   },
   table: {
     daysCount: "{count} {count, plural, one {يوم} other {أيام}}",
+    fallbacks: {
+      unknownCustomer: "عميل غير معروف",
+      unknownVehicle: "مركبة غير معروفة",
+      noPlate: "بدون لوحة",
+      noPaymentMethod: "لا يوجد",
+      currencySymbol: "ر.س ",
+    },
     headers: {
       booking: "الحجز",
       vehicle: "المركبة",
@@ -39,10 +46,12 @@ const bookings: AdminBookingsLabels = {
       all: "جميع الحالات",
       draft: "مسودة",
       paymentPending: "في انتظار الدفع",
+      pendingApproval: "في انتظار الموافقة",
       confirmed: "مؤكد",
       active: "نشط",
       completed: "مكتمل",
       cancelled: "ملغي",
+      rejected: "مرفوض",
     },
   },
   paymentStatuses: {
@@ -62,6 +71,8 @@ const bookings: AdminBookingsLabels = {
     editBooking: "تعديل الحجز",
     changeStatus: "تغيير الحالة",
     deleteBooking: "حذف الحجز",
+    approveBooking: "موافقة",
+    rejectBooking: "رفض",
   },
   changeStatusModal: {
     title: "تغيير حالة الحجز",
@@ -69,11 +80,36 @@ const bookings: AdminBookingsLabels = {
     newStatusLabel: "الحالة الجديدة",
     statuses: {
       paymentPending: "في انتظار الدفع",
+      pendingApproval: "في انتظار الموافقة",
       confirmed: "مؤكد",
       active: "نشط",
       completed: "مكتمل",
       cancelled: "ملغي",
+      rejected: "مرفوض",
     },
+  },
+  approvals: {
+    approveDialog: {
+      title: "موافقة على الحجز",
+      content: "هل أنت متأكد من الموافقة على هذا الحجز؟ سيتم إبلاغ العميل وسيصبح الحجز مؤكداً.",
+    },
+    rejectDialog: {
+      title: "رفض الحجز",
+      content: "هل أنت متأكد من رفض هذا الحجز؟ سيتم استرداد المبلغ المدفوع وسيتم إبلاغ العميل.",
+      reasonLabel: "سبب الرفض",
+      reasonPlaceholder: "قدم سبباً لرفض هذا الحجز...",
+    },
+    approvedSuccess: "تمت الموافقة على الحجز بنجاح.",
+    rejectedSuccess: "تم رفض الحجز بنجاح.",
+    approveError: "فشل الموافقة على الحجز. يرجى المحاولة مرة أخرى.",
+    rejectError: "فشل رفض الحجز. يرجى المحاولة مرة أخرى.",
+  },
+  overview: {
+    title: "نظرة عامة على الحجوزات",
+    total: "الإجمالي",
+    noBookings: "لم يتم العثور على حجوزات.",
+    loadFailed: "فشل تحميل إحصائيات الحجوزات.",
+    fallbackStatus: "أخرى",
   },
   analytics: {
     title: "توزيع حالة الحجوزات",
@@ -88,11 +124,13 @@ const bookings: AdminBookingsLabels = {
     statuses: {
       draft: "مسودة",
       paymentPending: "في انتظار الدفع",
+      pendingApproval: "في انتظار الموافقة",
       confirmed: "مؤكد",
       active: "نشط",
       completed: "مكتمل",
       cancelled: "ملغي",
       cancelledByAdmin: "ملغي بواسطة المسؤول",
+      rejected: "مرفوض",
     },
   },
 };

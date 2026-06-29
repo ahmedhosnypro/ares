@@ -26,11 +26,13 @@ export default function BookingsAnalytics({ analytics, loading }: BookingsAnalyt
   const statusOrder = [
     "Draft",
     "Payment Pending",
+    "Pending Approval",
     "Confirmed",
     "Active",
     "Completed",
     "Cancelled",
     "Cancelled By Admin",
+    "Rejected",
   ];
 
   const getColorForStatus = (status: string) => {
@@ -39,6 +41,8 @@ export default function BookingsAnalytics({ analytics, loading }: BookingsAnalyt
         return theme.palette.text.disabled;
       case "Payment Pending":
         return theme.palette.status.pending.main;
+      case "Pending Approval":
+        return theme.palette.status.pendingApproval.main;
       case "Confirmed":
         return theme.palette.status.confirmed.main;
       case "Active":
@@ -49,6 +53,8 @@ export default function BookingsAnalytics({ analytics, loading }: BookingsAnalyt
         return theme.palette.status.cancelled.main;
       case "Cancelled By Admin":
         return theme.palette.status.blocked.main;
+      case "Rejected":
+        return theme.palette.status.rejected.main;
       default:
         return theme.palette.grey[500];
     }
@@ -60,6 +66,8 @@ export default function BookingsAnalytics({ analytics, loading }: BookingsAnalyt
         return t("analytics.statuses.draft");
       case "Payment Pending":
         return t("analytics.statuses.paymentPending");
+      case "Pending Approval":
+        return t("analytics.statuses.pendingApproval");
       case "Confirmed":
         return t("analytics.statuses.confirmed");
       case "Active":
@@ -70,6 +78,8 @@ export default function BookingsAnalytics({ analytics, loading }: BookingsAnalyt
         return t("analytics.statuses.cancelled");
       case "Cancelled By Admin":
         return t("analytics.statuses.cancelledByAdmin");
+      case "Rejected":
+        return t("analytics.statuses.rejected");
       default:
         return status;
     }

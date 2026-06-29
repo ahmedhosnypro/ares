@@ -35,11 +35,6 @@ export default function CreateCategoryPage() {
     description: "",
     commissionPercentage: 0,
     isActive: true,
-    offerName: "",
-    offerDiscountPercentage: 0,
-    offerStartDate: "",
-    offerEndDate: "",
-    offerIsActive: true,
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,13 +61,6 @@ export default function CreateCategoryPage() {
         description: formData.description.trim() || undefined,
         commissionPercentage: formData.commissionPercentage,
         isActive: formData.isActive,
-        offerName: formData.offerName.trim() || null,
-        offerDiscountPercentage: formData.offerName.trim() ? formData.offerDiscountPercentage : null,
-        offerStartDate:
-          formData.offerName.trim() && formData.offerStartDate ? new Date(formData.offerStartDate).toISOString() : null,
-        offerEndDate:
-          formData.offerName.trim() && formData.offerEndDate ? new Date(formData.offerEndDate).toISOString() : null,
-        offerIsActive: formData.offerName.trim() ? formData.offerIsActive : null,
       };
 
       await createCategory(payload);
@@ -88,7 +76,6 @@ export default function CreateCategoryPage() {
   return (
     <Box sx={{ pb: 6, minHeight: "100vh" }}>
       <Container maxWidth="md">
-        {/* Header section with back button */}
         <Stack direction="row" sx={{ alignItems: "center", mb: 4, mt: 3 }}>
           <Link href="/admin/categories" style={{ textDecoration: "none" }}>
             <IconButton
@@ -125,7 +112,6 @@ export default function CreateCategoryPage() {
               overflow: "hidden",
             }}
           >
-            {/* Elegant Header Accent */}
             <Box
               sx={{
                 height: 6,
@@ -213,107 +199,6 @@ export default function CreateCategoryPage() {
                         {formData.isActive ? "Category Active" : "Category Inactive"}
                       </Typography>
                     }
-                  />
-                </Grid>
-
-                <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1, color: "text.primary" }}>
-                    Promotional Offer (Optional)
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    Apply an active discount to all vehicles in this category.
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-                </Grid>
-
-                <Grid size={{ xs: 12 }}>
-                  <TextField
-                    label="Offer Name"
-                    name="offerName"
-                    value={formData.offerName}
-                    onChange={handleChange}
-                    fullWidth
-                    disabled={loading}
-                    placeholder="e.g., Summer Special, Weekend Discount"
-                    slotProps={{
-                      input: {
-                        sx: { borderRadius: 2 },
-                      },
-                    }}
-                  />
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    label="Discount Percentage"
-                    name="offerDiscountPercentage"
-                    type="number"
-                    value={formData.offerDiscountPercentage}
-                    onChange={handleChange}
-                    fullWidth
-                    disabled={loading || !formData.offerName.trim()}
-                    slotProps={{
-                      input: {
-                        endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                        sx: { borderRadius: 2 },
-                      },
-                      htmlInput: { min: 0, max: 100, step: "0.01" },
-                    }}
-                  />
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 6 }} sx={{ display: "flex", alignItems: "center" }}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={formData.offerIsActive}
-                        onChange={handleChange}
-                        name="offerIsActive"
-                        disabled={loading || !formData.offerName.trim()}
-                        color="primary"
-                      />
-                    }
-                    label={
-                      <Typography sx={{ fontWeight: 600, color: "text.primary" }}>
-                        {formData.offerIsActive ? "Offer Active" : "Offer Inactive"}
-                      </Typography>
-                    }
-                  />
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    label="Start Date"
-                    name="offerStartDate"
-                    type="date"
-                    value={formData.offerStartDate}
-                    onChange={handleChange}
-                    fullWidth
-                    disabled={loading || !formData.offerName.trim()}
-                    slotProps={{
-                      inputLabel: { shrink: true },
-                      input: {
-                        sx: { borderRadius: 2 },
-                      },
-                    }}
-                  />
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    label="End Date"
-                    name="offerEndDate"
-                    type="date"
-                    value={formData.offerEndDate}
-                    onChange={handleChange}
-                    fullWidth
-                    disabled={loading || !formData.offerName.trim()}
-                    slotProps={{
-                      inputLabel: { shrink: true },
-                      input: {
-                        sx: { borderRadius: 2 },
-                      },
-                    }}
                   />
                 </Grid>
 

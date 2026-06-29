@@ -74,6 +74,9 @@ const vehicles: AdminVehiclesLabels = {
     unavailable: "غير متاح",
     retired: "خارج الخدمة",
     fullyBooked: "محجوز بالكامل (قيد الإيجار)",
+    pending: "قيد المراجعة",
+    approved: "موافق عليه",
+    rejected: "مرفوض",
   },
   transmissions: {
     automatic: "أوتوماتيك",

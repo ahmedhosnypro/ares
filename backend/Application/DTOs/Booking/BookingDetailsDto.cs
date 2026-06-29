@@ -112,4 +112,7 @@ public record BookingDetailsDto(
     decimal? DiscountAmount = null,
     decimal? DriverFee = null,
     decimal? GrandTotal = null,
-    bool RequiresDriver = false);
+    bool RequiresDriver = false,
+    Guid? ApprovedBy = null,
+    DateTime? ApprovedAt = null,
+    string? RejectionReason = null);

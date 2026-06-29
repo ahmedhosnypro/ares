@@ -24,5 +24,7 @@ public record BookingListDto(
     string? PaymentMethod = null,
     /// <summary>UTC timestamp when this booking record was created in the database.</summary>
     DateTime? CreatedAt = null,
-    /// <summary>UTC timestamp of the last status change (e.g. when payment was confirmed).</summary>
-    DateTime? UpdatedAt = null);
+    DateTime? UpdatedAt = null,
+    Guid? ApprovedBy = null,
+    DateTime? ApprovedAt = null,
+    string? RejectionReason = null);

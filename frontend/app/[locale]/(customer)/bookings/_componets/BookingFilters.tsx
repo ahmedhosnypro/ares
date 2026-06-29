@@ -19,15 +19,25 @@ interface BookingFiltersProps {
   readonly onFilterChange: (statuses: readonly string[], keyword: string, sortBy: string, sortOrder: string) => void;
 }
 
-type StatusFilterKey = "draft" | "pending" | "confirmed" | "active" | "completed" | "cancelled";
+type StatusFilterKey =
+  | "draft"
+  | "pending"
+  | "pendingApproval"
+  | "confirmed"
+  | "active"
+  | "completed"
+  | "cancelled"
+  | "rejected";
 
 const STATUS_FILTERS: readonly { readonly key: StatusFilterKey; readonly apiValue: string }[] = [
   { key: "draft", apiValue: "Draft" },
   { key: "pending", apiValue: "PaymentPending" },
+  { key: "pendingApproval", apiValue: "PendingApproval" },
   { key: "confirmed", apiValue: "Confirmed" },
   { key: "active", apiValue: "Active" },
   { key: "completed", apiValue: "Completed" },
   { key: "cancelled", apiValue: "Cancelled" },
+  { key: "rejected", apiValue: "Rejected" },
 ] as const;
 
 const SORT_OPTIONS = [

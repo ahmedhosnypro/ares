@@ -148,6 +148,9 @@ public class SupplierBookingService : ISupplierBookingService
                 TotalPrice = b.TotalPrice ?? 0m,
                 BookingStatus = b.Status,
                 CreatedAt = b.CreatedAt,
+                ApprovedBy = b.ApprovedBy,
+                ApprovedAt = b.ApprovedAt,
+                RejectionReason = b.RejectionReason,
             })
             .ToListAsync(cancellationToken);
 
@@ -194,7 +197,10 @@ public class SupplierBookingService : ISupplierBookingService
                 TotalPrice: r.TotalPrice,
                 BookingStatus: r.BookingStatus.ToString(),
                 PaymentStatus: string.IsNullOrEmpty(paymentStatus) ? PaymentStatusNone : paymentStatus,
-                CreatedAt: r.CreatedAt);
+                CreatedAt: r.CreatedAt,
+                ApprovedBy: r.ApprovedBy,
+                ApprovedAt: r.ApprovedAt,
+                RejectionReason: r.RejectionReason);
         }).ToList();
 
         _logger.LogInformation(
@@ -246,6 +252,10 @@ public class SupplierBookingService : ISupplierBookingService
                         ?? b.Vehicle.Images.Select(i => i.ImageUrl).FirstOrDefault()
                         ?? string.Empty)
                     : string.Empty,
+
+                ApprovedBy = b.ApprovedBy,
+                ApprovedAt = b.ApprovedAt,
+                RejectionReason = b.RejectionReason,
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -304,7 +314,10 @@ public class SupplierBookingService : ISupplierBookingService
             PaymentMethod: latestPayment?.PaymentMethod,
             PaymentAmount: latestPayment?.Amount,
             PaymentCurrency: latestPayment?.Currency,
-            PaymentProcessedAt: latestPayment?.ProcessedAt);
+            PaymentProcessedAt: latestPayment?.ProcessedAt,
+            ApprovedBy: row.ApprovedBy,
+            ApprovedAt: row.ApprovedAt,
+            RejectionReason: row.RejectionReason);
     }
 
     private async Task<string> ResolveDisplayLocationAsync(string? locationStr, CancellationToken cancellationToken)

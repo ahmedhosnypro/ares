@@ -305,6 +305,7 @@ export default function VehicleDetailsClient({
       pricePerDay: values.pricePerDay,
       locationCity: values.locationCity,
       description: values.description || "",
+      categoryId: values.categoryId,
       status: values.status || "Sedan",
       availabilityStatus: values.availabilityStatus || "Available",
     };

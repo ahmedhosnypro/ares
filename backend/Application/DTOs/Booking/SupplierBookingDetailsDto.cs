@@ -40,4 +40,7 @@ public record SupplierBookingDetailsDto(
     string? PaymentMethod,
     decimal? PaymentAmount,
     string? PaymentCurrency,
-    DateTime? PaymentProcessedAt);
+    DateTime? PaymentProcessedAt,
+    Guid? ApprovedBy = null,
+    DateTime? ApprovedAt = null,
+    string? RejectionReason = null);
