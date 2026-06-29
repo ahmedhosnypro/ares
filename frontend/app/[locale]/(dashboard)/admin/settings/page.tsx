@@ -6,18 +6,17 @@ import { useTranslations } from "next-intl";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import GavelRoundedIcon from "@mui/icons-material/GavelRounded";
 import InfoRoundedIcon from "@mui/icons-material/InfoRounded";
-import GeneralSettingsTab from "./_components/GeneralSettingsTab";
 import TermsSettingsTab from "./_components/TermsSettingsTab";
 import AboutSettingsTab from "./_components/AboutSettingsTab";
 import CommissionSettingsTab from "./_components/CommissionSettingsTab";
 import PrivacySettingsTab from "./_components/PrivacySettingsTab";
 import AccountBalanceRoundedIcon from "@mui/icons-material/AccountBalanceRounded";
 
-type SettingsTabKey = "general" | "terms" | "privacy" | "about" | "commission";
+type SettingsTabKey = "terms" | "privacy" | "about" | "commission";
 
 export default function AdminSettingsPage() {
   const t = useTranslations("dashboardAdmin.settings");
-  const [tab, setTab] = useState<SettingsTabKey>("general");
+  const [tab, setTab] = useState<SettingsTabKey>("commission");
 
   const handleTabChange = (_: SyntheticEvent, value: SettingsTabKey) => {
     setTab(value);
@@ -40,12 +39,6 @@ export default function AdminSettingsPage() {
       <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
         <Tabs value={tab} onChange={handleTabChange}>
           <Tab
-            icon={<SettingsRoundedIcon fontSize="small" />}
-            iconPosition="start"
-            label={t("tabs.general")}
-            value="general"
-          />
-          <Tab
             icon={<AccountBalanceRoundedIcon fontSize="small" />}
             iconPosition="start"
             label={t("tabs.commission")}
@@ -61,7 +54,6 @@ export default function AdminSettingsPage() {
         </Tabs>
       </Box>
 
-      {tab === "general" && <GeneralSettingsTab />}
       {tab === "commission" && <CommissionSettingsTab />}
       {tab === "terms" && <TermsSettingsTab />}
       {tab === "privacy" && <PrivacySettingsTab />}

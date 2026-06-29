@@ -30,8 +30,7 @@ import {
   ListItemIcon,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
-import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+
 import CloseIcon from "@mui/icons-material/Close";
 import PersonIcon from "@mui/icons-material/Person";
 import BookmarksIcon from "@mui/icons-material/Bookmarks";
@@ -54,9 +53,7 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
   const tc = useTranslations("common");
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [currencyAnchor, setCurrencyAnchor] = useState<null | HTMLElement>(null);
   const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
-  const [selectedCurrency, setSelectedCurrency] = useState("USD");
 
   const navigationLinks = [
     { label: t("search"), href: "/search" },
@@ -66,24 +63,8 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
     { label: t("aboutUs"), href: "/about" },
   ];
 
-  const currencies = [
-    { code: "USD", label: t("usDollar"), symbol: "$" },
-    { code: "EGP", label: t("egpPound"), symbol: "E£" },
-    { code: "EUR", label: t("euro"), symbol: "€" },
-    { code: "GBP", label: t("britishPound"), symbol: "£" },
-  ];
-
-  const handleCurrencyClick = (event: React.MouseEvent<HTMLElement>) => {
-    setCurrencyAnchor(event.currentTarget);
-  };
-
   const handleUserMenuClick = (event: React.MouseEvent<HTMLElement>) => {
     setUserMenuAnchor(event.currentTarget);
-  };
-
-  const handleCurrencySelect = (code: string) => {
-    setSelectedCurrency(code);
-    setCurrencyAnchor(null);
   };
 
   const handleSignOut = async () => {
@@ -249,53 +230,6 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
                   <NotificationsPanel iconColor="inherit" />
                 </Box>
               )}
-
-              {/* Currency Selector */}
-              <Button
-                onClick={handleCurrencyClick}
-                startIcon={<AttachMoneyIcon />}
-                endIcon={<KeyboardArrowDownIcon />}
-                sx={{
-                  color: "common.white",
-                  fontWeight: 600,
-                  textTransform: "none",
-                  display: { xs: "none", sm: "flex" },
-                  borderRadius: 1.5,
-                  px: 2,
-                  "&:hover": {
-                    bgcolor: "header.buttonHover",
-                  },
-                }}
-              >
-                {selectedCurrency}
-              </Button>
-              <Menu
-                anchorEl={currencyAnchor}
-                open={Boolean(currencyAnchor)}
-                onClose={() => {
-                  setCurrencyAnchor(null);
-                }}
-                slotProps={{
-                  paper: { sx: { borderRadius: 1.5, minWidth: 200 } },
-                }}
-              >
-                {currencies.map(curr => (
-                  <MenuItem
-                    key={curr.code}
-                    onClick={() => {
-                      handleCurrencySelect(curr.code);
-                    }}
-                    selected={selectedCurrency === curr.code}
-                  >
-                    <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                      <Typography sx={{ fontWeight: selectedCurrency === curr.code ? "bold" : "normal" }}>
-                        {curr.symbol}
-                      </Typography>
-                      <Typography variant="body2">{curr.label}</Typography>
-                    </Stack>
-                  </MenuItem>
-                ))}
-              </Menu>
 
               {/* Authentication: Conditional Rendering */}
               {session ? (
@@ -646,27 +580,6 @@ export default function HeaderClient({ session: initialSession }: HeaderClientPr
                   {t("switchLanguage")}
                 </Typography>
               </Box>
-            </Box>
-
-            <Box>
-              <Typography variant="caption" color="text.secondary" gutterBottom>
-                {tc("currency")}
-              </Typography>
-              <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
-                {currencies.map(curr => (
-                  <Button
-                    key={curr.code}
-                    size="small"
-                    variant={selectedCurrency === curr.code ? "contained" : "outlined"}
-                    onClick={() => {
-                      handleCurrencySelect(curr.code);
-                    }}
-                    sx={{ borderRadius: 1.5 }}
-                  >
-                    {curr.code}
-                  </Button>
-                ))}
-              </Stack>
             </Box>
           </Stack>
 
