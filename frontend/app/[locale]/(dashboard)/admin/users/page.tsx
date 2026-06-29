@@ -15,6 +15,7 @@ import {
   Stack,
   Typography,
   Button,
+  Grid,
 } from "@mui/material";
 import PeopleIcon from "@mui/icons-material/People";
 import StorefrontIcon from "@mui/icons-material/Storefront";
@@ -115,25 +116,13 @@ function UsersHubInner() {
         </Stack>
       </Stack>
 
-      <Box
-        sx={{
-          display: "flex",
-          flexWrap: "nowrap",
-          overflowX: "auto",
-          gap: 3,
-          mb: 5,
-          pb: 1,
-          "& > *": {
-            flexShrink: 0,
-            flexBasis: { xs: "280px", sm: "240px", md: "calc((100% - 5 * 24px) / 6)" },
-            minWidth: { xs: "280px", sm: "240px", md: "auto" },
-          },
-        }}
-      >
+      <Grid container spacing={3} sx={{ mb: 5 }}>
         {statCards.map((card, idx) => (
-          <StatCard key={idx} label={card.title} value={card.value} color={card.color} icon={card.icon} />
+          <Grid key={idx} size={{ xs: 6, sm: 4, lg: 2 }}>
+            <StatCard label={card.title} value={card.value} color={card.color} icon={card.icon} />
+          </Grid>
         ))}
-      </Box>
+      </Grid>
 
       <Paper
         elevation={0}

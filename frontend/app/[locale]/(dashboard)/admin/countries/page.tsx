@@ -35,6 +35,7 @@ import {
   PublicTwoTone as CountryIcon,
   MapTwoTone as MapIcon,
   Add as AddIcon,
+  VisibilityTwoTone as ViewIcon,
 } from "@mui/icons-material";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -286,11 +287,43 @@ export default function AdminCountriesPage() {
                               <CountryIcon fontSize="small" color="primary" />
                             )}
                           </Box>
-                          <Typography sx={{ fontWeight: 700, fontSize: { xs: 13, sm: 15 } }}>{c.name}</Typography>
+                          <Link
+                            href={`/admin/countries/${c._id}`}
+                            passHref
+                            style={{ textDecoration: "none", color: "inherit" }}
+                          >
+                            <Typography
+                              sx={{
+                                fontWeight: 700,
+                                fontSize: { xs: 13, sm: 15 },
+                                "&:hover": { color: "primary.main" },
+                                transition: "color 0.15s",
+                              }}
+                            >
+                              {c.name}
+                            </Typography>
+                          </Link>
                         </Stack>
                       </TableCell>
 
                       <TableCell align="right">
+                        <Tooltip title={t("actions.viewDetails")}>
+                          <Link href={`/admin/countries/${c._id}`} passHref style={{ textDecoration: "none" }}>
+                            <IconButton
+                              size="small"
+                              sx={{
+                                borderRadius: 2,
+                                color: "primary.main",
+                                mr: 1,
+                                "&:hover": {
+                                  bgcolor: theme => alpha(theme.palette.primary.main, 0.1),
+                                },
+                              }}
+                            >
+                              <ViewIcon fontSize="small" />
+                            </IconButton>
+                          </Link>
+                        </Tooltip>
                         <Tooltip title={t("actions.delete")}>
                           <IconButton
                             onClick={() => {

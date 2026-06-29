@@ -37,6 +37,11 @@ const drivers: AdminDriversLabels = {
     rejected: "Rejected",
     suspended: "Suspended",
   },
+  availabilities: {
+    available: "Available",
+    unavailable: "Unavailable",
+    reserved: "Reserved",
+  },
 };
 
 export default drivers;

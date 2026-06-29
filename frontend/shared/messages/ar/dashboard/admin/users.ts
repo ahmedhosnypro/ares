@@ -289,6 +289,11 @@ const users: AdminUsersLabels = {
     assignedRole: "الدور المعين",
     rejectReasonPlaceholder: "مثال: وثائق الترخيص غير واضحة أو منتهية الصلاحية.",
     employeeCodeLabel: "كود الموظف",
+    availabilities: {
+      available: "متوفر",
+      unavailable: "غير متوفر",
+      reserved: "محجوز",
+    },
   },
 };
 

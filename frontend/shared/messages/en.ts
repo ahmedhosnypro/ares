@@ -65,6 +65,8 @@ import categories from "./en/dashboard/admin/categories";
 import categoryDetails from "./en/dashboard/admin/categories/detail";
 import countries from "./en/dashboard/admin/countries";
 import createCountry from "./en/dashboard/admin/countries/create";
+import countryDetails from "./en/dashboard/admin/countries/_id/details";
+import editCountry from "./en/dashboard/admin/countries/_id/edit";
 import locationsEdit from "./en/dashboard/admin/locations/edit";
 import adminNotifications from "./en/dashboard/admin/notifications";
 import scheduler from "./en/dashboard/admin/scheduler";
@@ -149,6 +151,8 @@ const en: MessageSchema = {
     categoryDetails,
     countries,
     createCountry,
+    countryDetails,
+    editCountry,
     locationsEdit,
     notifications: adminNotifications,
     scheduler,

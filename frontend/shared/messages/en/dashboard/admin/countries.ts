@@ -20,6 +20,7 @@ const countries: CountriesLabels = {
   },
   actions: {
     delete: "Delete Country",
+    viewDetails: "View Details",
   },
   deleteDialog: {
     title: "Delete Country",

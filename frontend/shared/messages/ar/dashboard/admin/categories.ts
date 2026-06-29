@@ -35,8 +35,18 @@ const categories: CategoriesLabels = {
     loadError: "فشل تحميل الفئات. يرجى المحاولة مرة أخرى لاحقاً.",
   },
   form: {
-    addTitle: "إضافة فئة",
+    addTitle: "إنشاء فئة جديدة",
     editTitle: "تعديل الفئة",
+    infoTitle: "معلومات الفئة",
+    cancelBtn: "إلغاء",
+    createBtn: "إنشاء الفئة",
+    creatingBtn: "جاري الإنشاء...",
+    statusActiveLabel: "الفئة نشطة",
+    statusInactiveLabel: "الفئة غير نشطة",
+    placeholders: {
+      name: "مثال: فاخرة، سيارة دفع رباعي، اقتصادية",
+      description: "قدم وصفاً موجزاً للمركبات في هذه الفئة...",
+    },
     fields: {
       name: "الاسم",
       description: "الوصف",

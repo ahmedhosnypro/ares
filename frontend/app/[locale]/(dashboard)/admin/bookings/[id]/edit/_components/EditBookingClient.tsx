@@ -59,6 +59,7 @@ interface FormState {
 
 export default function EditBookingClient({ bookingId }: { readonly bookingId: string }) {
   const t = useTranslations("dashboardAdmin.editBooking");
+  const tDetails = useTranslations("dashboardAdmin.bookingDetails");
   const locale = useLocale();
   const router = useRouter();
   const theme = useTheme();
@@ -270,7 +271,7 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
 
       {isTerminal && (
         <Alert severity="info" sx={{ mb: 3 }}>
-          {t("notices.terminal", { status: booking.status.toLowerCase() })}
+          {t("notices.terminal", { status: tDetails(`badges.${booking.status.toLowerCase()}`) })}
         </Alert>
       )}
 
@@ -339,7 +340,7 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
                 <Box>
                   <Chip
                     size="small"
-                    label={booking.paymentStatus ?? t("bookingSummary.unpaid")}
+                    label={tDetails(`badges.${(booking.paymentStatus ?? "unpaid").toLowerCase()}`)}
                     color={booking.paymentStatus === "Paid" ? "success" : "default"}
                     sx={{ fontWeight: 600, mt: 0.5 }}
                   />
@@ -407,7 +408,7 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
                   setForm(prev => ({ ...prev, pickupLocation: e.target.value }));
                 }}
                 disabled={editableFieldsDisabled}
-                placeholder={locale === "ar" ? "مثال: مطار القاهرة الدولي" : "e.g. Cairo International Airport"}
+                placeholder={t("editableInfo.pickupLocationPlaceholder")}
                 fullWidth
               />
               <TextField
@@ -417,7 +418,7 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
                   setForm(prev => ({ ...prev, dropOffLocation: e.target.value }));
                 }}
                 disabled={editableFieldsDisabled}
-                placeholder={locale === "ar" ? "مثال: مكتب وسط المدينة" : "e.g. Downtown Office"}
+                placeholder={t("editableInfo.dropoffLocationPlaceholder")}
                 fullWidth
               />
               <TextField
@@ -432,7 +433,7 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
               >
                 {OPERATIONAL_STATUSES.map(s => (
                   <MenuItem key={s} value={s}>
-                    {s}
+                    {tDetails(`badges.${s.toLowerCase()}`)}
                   </MenuItem>
                 ))}
               </TextField>

@@ -121,7 +121,15 @@ export interface UserDetailsViewProps {
 }
 
 // ─── Stat Card Component (MUI Theme Compliant) ───────────────────────────────
-function StatCard({ label, value, color }: { readonly label: string; readonly value: number; readonly color: string }) {
+function StatCard({
+  label,
+  value,
+  color,
+}: {
+  readonly label: string;
+  readonly value: string | number;
+  readonly color: string;
+}) {
   return (
     <Paper
       elevation={0}
@@ -448,6 +456,61 @@ function FieldRow({ icon, label, value, accentColor }: FieldRowProps) {
   );
 }
 
+function getAvailabilityLabel(availability: string, t: (key: string) => string) {
+  const availMap: Record<string, string> = {
+    Available: t("details.availabilities.available"),
+    Unavailable: t("details.availabilities.unavailable"),
+    Reserved: t("details.availabilities.reserved"),
+  };
+  return availMap[availability] || availability;
+}
+
+function getRoleLabel(roleVal: string, t: (key: string) => string) {
+  const r = (roleVal || "").toLowerCase();
+  const roleMap: Record<string, string> = {
+    admin: t("form.roles.admin"),
+    customer: t("form.roles.customer"),
+    supplier: t("form.roles.supplier"),
+    driver: t("form.roles.driver"),
+    inspector: t("form.roles.inspector"),
+  };
+  return roleMap[r] || roleVal;
+}
+
+interface DriverStatsGridProps {
+  readonly data: UserDetailsViewProps["data"];
+  readonly t: (key: string) => string;
+  readonly theme: Theme;
+}
+
+function DriverStatsGrid({ data, t, theme }: DriverStatsGridProps) {
+  return (
+    <Grid container spacing={2} sx={{ mb: 2.5 }}>
+      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <StatCard
+          label={t("details.rating")}
+          value={data.averageRating ? data.averageRating.toFixed(1) : "—"}
+          color={theme.palette.status.pending.main || theme.palette.warning.main}
+        />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <StatCard label={t("details.trips")} value={data.totalTrips ?? 0} color={theme.palette.primary.main} />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 12, md: 4 }}>
+        <StatCard
+          label={t("details.availability")}
+          value={data.availability ? getAvailabilityLabel(data.availability, t) : "—"}
+          color={
+            data.availability === "Available"
+              ? theme.palette.status.active.main || theme.palette.success.main
+              : theme.palette.text.secondary
+          }
+        />
+      </Grid>
+    </Grid>
+  );
+}
+
 export default function UserDetailsView({
   userType,
   data,
@@ -463,6 +526,8 @@ export default function UserDetailsView({
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
 
+  const t = useTranslations("dashboardAdmin.users");
+
   const fieldLabel = {
     fontWeight: 600,
     fontSize: "10px",
@@ -472,9 +537,7 @@ export default function UserDetailsView({
     mb: 0.5,
   };
 
-  const name = [data.firstName, data.lastName].filter(Boolean).join(" ") || "User";
-
-  const t = useTranslations("dashboardAdmin.users");
+  const name = [data.firstName, data.lastName].filter(Boolean).join(" ") || t("table.user");
 
   // Breadcrumbs title
   const breadcrumbCategory = t(BREADCRUMB_KEYS[userType]);
@@ -657,7 +720,7 @@ export default function UserDetailsView({
                 <Chip
                   key={i}
                   size="small"
-                  label={r}
+                  label={getRoleLabel(r, t)}
                   sx={{
                     height: 20,
                     fontWeight: 600,
@@ -844,6 +907,9 @@ export default function UserDetailsView({
       <Grid container spacing={{ xs: 2, md: 2.5 }} sx={{ alignItems: "flex-start" }}>
         {/* LEFT COLUMN */}
         <Grid size={{ xs: 12, lg: 8.5 }}>
+          {/* Driver specific stats grid */}
+          {userType === "driver" && <DriverStatsGrid data={data} t={t} theme={theme} />}
+
           {/* Account Profile Card */}
           <Paper
             elevation={0}
@@ -898,6 +964,14 @@ export default function UserDetailsView({
                 value={data.email || t("details.noEmail")}
                 accentColor={theme.palette.primary.main}
               />
+              {userType === "driver" && data.availability && (
+                <FieldRow
+                  icon={<AccessTimeIcon sx={{ fontSize: 17 }} />}
+                  label={t("details.availability")}
+                  value={getAvailabilityLabel(data.availability, t)}
+                  accentColor={theme.palette.primary.main}
+                />
+              )}
             </Box>
           </Paper>
 
@@ -1399,7 +1473,7 @@ export default function UserDetailsView({
                     data.roles.map((role: string, index: number) => (
                       <Chip
                         key={index}
-                        label={role}
+                        label={getRoleLabel(role, t)}
                         size="small"
                         sx={{
                           fontWeight: 600,
@@ -1414,7 +1488,7 @@ export default function UserDetailsView({
                     ))
                   ) : (
                     <Chip
-                      label={userType.toUpperCase()}
+                      label={getRoleLabel(userType, t)}
                       size="small"
                       sx={{
                         fontWeight: 600,

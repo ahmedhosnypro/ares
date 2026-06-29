@@ -288,5 +288,10 @@ export type AdminUsersLabels = {
     readonly assignedRole: string;
     readonly rejectReasonPlaceholder: string;
     readonly employeeCodeLabel: string;
+    readonly availabilities: {
+      readonly available: string;
+      readonly unavailable: string;
+      readonly reserved: string;
+    };
   };
 };

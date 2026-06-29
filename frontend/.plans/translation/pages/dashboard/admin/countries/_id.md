@@ -9,16 +9,21 @@
 
 - [ ] Not started
 - [ ] In progress
-- [ ] Completed
+- [x] Completed
 
 ## Shared Components
 
-(To be filled during execution)
+- `CountryDetailsClient.tsx` (under `_components/`)
 
 ## Component Discovery
 
-(To be filled during execution)
+- `AdminCountryDetailPage` (in `[id]/page.tsx`): Wrapper page component resolving country ID route parameter.
+- `CountryDetailsClient` (in `_components/CountryDetailsClient.tsx`): Client component displaying country Details, looking up country flag from FlagCDN, and providing Edit/Delete action buttons.
 
 ## Translation Tasks
 
-(To be filled during execution)
+- [x] Create message types schema in `shared/messages/types/dashboard/admin/countries/_id/details.ts`
+- [x] Implement English translations in `shared/messages/en/dashboard/admin/countries/_id/details.ts`
+- [x] Implement Arabic translations in `shared/messages/ar/dashboard/admin/countries/_id/details.ts`
+- [x] Register country details translations in `types/message.ts`, `en.ts`, and `ar.ts`
+- [x] Update `page.tsx` and create `CountryDetailsClient.tsx` using next-intl

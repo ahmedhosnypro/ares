@@ -65,6 +65,8 @@ import categories from "./ar/dashboard/admin/categories";
 import categoryDetails from "./ar/dashboard/admin/categories/detail";
 import countries from "./ar/dashboard/admin/countries";
 import createCountry from "./ar/dashboard/admin/countries/create";
+import countryDetails from "./ar/dashboard/admin/countries/_id/details";
+import editCountry from "./ar/dashboard/admin/countries/_id/edit";
 import locationsEdit from "./ar/dashboard/admin/locations/edit";
 import adminNotifications from "./ar/dashboard/admin/notifications";
 import scheduler from "./ar/dashboard/admin/scheduler";
@@ -149,6 +151,8 @@ const ar: MessageSchema = {
     categoryDetails,
     countries,
     createCountry,
+    countryDetails,
+    editCountry,
     locationsEdit,
     notifications: adminNotifications,
     scheduler,
