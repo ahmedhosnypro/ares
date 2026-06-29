@@ -33,7 +33,9 @@ const edit: EditBookingLabels = {
     pickupDate: "Pickup Date",
     returnDate: "Return Date",
     pickupLocation: "Pickup Location",
+    pickupLocationPlaceholder: "e.g. Cairo International Airport",
     dropoffLocation: "Dropoff Location",
+    dropoffLocationPlaceholder: "e.g. Downtown Office",
     bookingStatus: "Booking Status",
   },
   pricingSummary: {

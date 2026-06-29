@@ -37,6 +37,11 @@ const drivers: AdminDriversLabels = {
     rejected: "مرفوض",
     suspended: "موقوف",
   },
+  availabilities: {
+    available: "متوفر",
+    unavailable: "غير متوفر",
+    reserved: "محجوز",
+  },
 };
 
 export default drivers;

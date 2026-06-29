@@ -3,14 +3,14 @@
 ## Overall Progress
 
 - Total Pages: 94
-- Completed Pages: 61
-- Progress: 65%
+- Completed Pages: 69
+- Progress: 73%
 
 ## Messages Structure Progress
 
-- **Types**: 61/94 split (common, auth, errors + 6 auth + 10 customer + 6 admin + 7 driver + 4 inspector + 9 supplier + 16 public/root page types done; 33 remaining)
-- **English**: 61/94 split (common, auth, errors + 6 auth + 10 customer + 6 admin + 7 driver + 4 inspector + 9 supplier + 16 public/root page translations done; 33 remaining)
-- **Arabic**: 61/94 split (common, auth, errors + 6 auth + 10 customer + 6 admin + 7 driver + 4 inspector + 9 supplier + 16 public/root page translations done; 33 remaining)
+- **Types**: 69/94 split (common, auth, errors + 6 auth + 10 customer + 14 admin + 7 driver + 4 inspector + 9 supplier + 16 public/root page types done; 25 remaining)
+- **English**: 69/94 split (common, auth, errors + 6 auth + 10 customer + 14 admin + 7 driver + 4 inspector + 9 supplier + 16 public/root page translations done; 25 remaining)
+- **Arabic**: 69/94 split (common, auth, errors + 6 auth + 10 customer + 14 admin + 7 driver + 4 inspector + 9 supplier + 16 public/root page translations done; 25 remaining)
 
 > See `shared/Messages_README.md` for messages directory conventions.
 
@@ -46,16 +46,16 @@
 - [x] [Bank Details](pages/dashboard/admin/bank-details.md) — `/(dashboard)/admin/bank-details`
 - [x] [Admin Bookings](pages/dashboard/admin/bookings.md) — `/(dashboard)/admin/bookings`
 - [x] [Create Booking](pages/dashboard/admin/bookings/create.md) — `/(dashboard)/admin/bookings/create`
-- [ ] [Booking Detail](pages/dashboard/admin/bookings/_id.md) — `/(dashboard)/admin/bookings/[id]`
-- [ ] [Edit Booking](pages/dashboard/admin/bookings/_id/edit.md) — `/(dashboard)/admin/bookings/[id]/edit`
-- [ ] [Categories](pages/dashboard/admin/categories.md) — `/(dashboard)/admin/categories`
-- [ ] [Category Detail](pages/dashboard/admin/categories/_id.md) — `/(dashboard)/admin/categories/[id]`
-- [ ] [Countries](pages/dashboard/admin/countries.md) — `/(dashboard)/admin/countries`
-- [ ] [Create Country](pages/dashboard/admin/countries/create.md) — `/(dashboard)/admin/countries/create`
-- [ ] [Country Detail](pages/dashboard/admin/countries/_id.md) — `/(dashboard)/admin/countries/[id]`
-- [ ] [Edit Country](pages/dashboard/admin/countries/_id/edit.md) — `/(dashboard)/admin/countries/[id]/edit`
-- [ ] [Admin Drivers](pages/dashboard/admin/drivers.md) — `/(dashboard)/admin/drivers`
-- [ ] [Driver Detail](pages/dashboard/admin/drivers/_id.md) — `/(dashboard)/admin/drivers/[id]`
+- [x] [Booking Detail](pages/dashboard/admin/bookings/_id.md) — `/(dashboard)/admin/bookings/[id]`
+- [x] [Edit Booking](pages/dashboard/admin/bookings/_id/edit.md) — `/(dashboard)/admin/bookings/[id]/edit`
+- [x] [Categories](pages/dashboard/admin/categories.md) — `/(dashboard)/admin/categories`
+- [x] [Category Detail](pages/dashboard/admin/categories/_id.md) — `/(dashboard)/admin/categories/[id]`
+- [x] [Countries](pages/dashboard/admin/countries.md) — `/(dashboard)/admin/countries`
+- [x] [Create Country](pages/dashboard/admin/countries/create.md) — `/(dashboard)/admin/countries/create`
+- [x] [Country Detail](pages/dashboard/admin/countries/_id.md) — `/(dashboard)/admin/countries/[id]`
+- [x] [Edit Country](pages/dashboard/admin/countries/_id/edit.md) — `/(dashboard)/admin/countries/[id]/edit`
+- [x] [Admin Drivers](pages/dashboard/admin/drivers.md) — `/(dashboard)/admin/drivers`
+- [x] [Driver Detail](pages/dashboard/admin/drivers/_id.md) — `/(dashboard)/admin/drivers/[id]`
 - [ ] [Admin Inspectors](pages/dashboard/admin/inspectors.md) — `/(dashboard)/admin/inspectors`
 - [ ] [Inspector Detail](pages/dashboard/admin/inspectors/_id.md) — `/(dashboard)/admin/inspectors/[id]`
 - [ ] [Admin Locations](pages/dashboard/admin/locations.md) — `/(dashboard)/admin/locations`

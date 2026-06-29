@@ -35,6 +35,16 @@ export type CategoriesLabels = {
   readonly form: {
     readonly addTitle: string;
     readonly editTitle: string;
+    readonly infoTitle: string;
+    readonly cancelBtn: string;
+    readonly createBtn: string;
+    readonly creatingBtn: string;
+    readonly statusActiveLabel: string;
+    readonly statusInactiveLabel: string;
+    readonly placeholders: {
+      readonly name: string;
+      readonly description: string;
+    };
     readonly fields: {
       readonly name: string;
       readonly description: string;

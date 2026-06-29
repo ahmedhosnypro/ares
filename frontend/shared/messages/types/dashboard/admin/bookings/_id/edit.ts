@@ -30,7 +30,9 @@ export type EditBookingLabels = {
     readonly pickupDate: string;
     readonly returnDate: string;
     readonly pickupLocation: string;
+    readonly pickupLocationPlaceholder: string;
     readonly dropoffLocation: string;
+    readonly dropoffLocationPlaceholder: string;
     readonly bookingStatus: string;
   };
   readonly pricingSummary: {

@@ -290,6 +290,11 @@ const users: AdminUsersLabels = {
     assignedRole: "Assigned Role",
     rejectReasonPlaceholder: "e.g. License documents are illegible or expired.",
     employeeCodeLabel: "Code",
+    availabilities: {
+      available: "Available",
+      unavailable: "Unavailable",
+      reserved: "Reserved",
+    },
   },
 };
 

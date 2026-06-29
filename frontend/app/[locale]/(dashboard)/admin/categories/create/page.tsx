@@ -22,9 +22,11 @@ import Grid from "@mui/material/Grid";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import SaveIcon from "@mui/icons-material/Save";
 import { Link, useRouter } from "@/shared/i18n/routing";
+import { useTranslations } from "next-intl";
 import { createCategory } from "@/api-clients/categories/categories";
 
 export default function CreateCategoryPage() {
+  const t = useTranslations("dashboardAdmin.categories");
   const theme = useTheme();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -48,7 +50,7 @@ export default function CreateCategoryPage() {
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) {
-      setError("Category Name is required.");
+      setError(t("form.validation.nameRequired"));
       return;
     }
 
@@ -67,7 +69,7 @@ export default function CreateCategoryPage() {
       router.push("/admin/categories");
     } catch (err: unknown) {
       const errorResponse = err as { response?: { data?: { message?: string } } };
-      setError(errorResponse.response?.data?.message || "Failed to create category. Please try again.");
+      setError(errorResponse.response?.data?.message || t("form.errors.saveFailed"));
     } finally {
       setLoading(false);
     }
@@ -82,19 +84,25 @@ export default function CreateCategoryPage() {
               sx={{
                 bgcolor: "background.paper",
                 boxShadow: 1,
-                mr: 2,
+                mr: theme.direction === "rtl" ? 0 : 2,
+                ml: theme.direction === "rtl" ? 2 : 0,
                 color: "text.primary",
                 "&:hover": {
                   bgcolor: "background.paper",
-                  transform: "translateX(-3px)",
+                  transform: theme.direction === "rtl" ? "translateX(3px)" : "translateX(-3px)",
                 },
               }}
             >
-              <ArrowBackIosNewIcon fontSize="small" />
+              <ArrowBackIosNewIcon
+                fontSize="small"
+                sx={{
+                  transform: theme.direction === "rtl" ? "rotate(180deg)" : "none",
+                }}
+              />
             </IconButton>
           </Link>
           <Typography variant="h5" sx={{ fontWeight: 700, color: "text.primary" }}>
-            Create New Category
+            {t("form.addTitle")}
           </Typography>
         </Stack>
 
@@ -122,21 +130,21 @@ export default function CreateCategoryPage() {
               <Grid container spacing={3}>
                 <Grid size={{ xs: 12 }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1, color: "text.primary" }}>
-                    Category Information
+                    {t("form.infoTitle")}
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
                 </Grid>
 
                 <Grid size={{ xs: 12 }}>
                   <TextField
-                    label="Category Name"
+                    label={t("form.fields.name")}
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
                     fullWidth
                     required
                     disabled={loading}
-                    placeholder="e.g., Luxury, SUV, Economy"
+                    placeholder={t("form.placeholders.name")}
                     slotProps={{
                       input: {
                         sx: { borderRadius: 2 },
@@ -147,7 +155,7 @@ export default function CreateCategoryPage() {
 
                 <Grid size={{ xs: 12 }}>
                   <TextField
-                    label="Description"
+                    label={t("form.fields.description")}
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
@@ -155,7 +163,7 @@ export default function CreateCategoryPage() {
                     multiline
                     rows={3}
                     disabled={loading}
-                    placeholder="Provide a brief description of the vehicles in this category..."
+                    placeholder={t("form.placeholders.description")}
                     slotProps={{
                       input: {
                         sx: { borderRadius: 2 },
@@ -166,7 +174,7 @@ export default function CreateCategoryPage() {
 
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
-                    label="Commission Percentage"
+                    label={t("form.fields.commission")}
                     name="commissionPercentage"
                     type="number"
                     value={formData.commissionPercentage}
@@ -196,7 +204,7 @@ export default function CreateCategoryPage() {
                     }
                     label={
                       <Typography sx={{ fontWeight: 600, color: "text.primary" }}>
-                        {formData.isActive ? "Category Active" : "Category Inactive"}
+                        {formData.isActive ? t("form.statusActiveLabel") : t("form.statusInactiveLabel")}
                       </Typography>
                     }
                   />
@@ -224,7 +232,7 @@ export default function CreateCategoryPage() {
                           fontWeight: 600,
                         }}
                       >
-                        Cancel
+                        {t("form.cancelBtn")}
                       </Button>
                     </Link>
                     <Button
@@ -244,7 +252,7 @@ export default function CreateCategoryPage() {
                         },
                       }}
                     >
-                      {loading ? "Creating..." : "Create Category"}
+                      {loading ? t("form.creatingBtn") : t("form.createBtn")}
                     </Button>
                   </Stack>
                 </Grid>

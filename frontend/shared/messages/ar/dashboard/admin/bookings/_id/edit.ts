@@ -32,7 +32,9 @@ const edit: EditBookingLabels = {
     pickupDate: "تاريخ الاستلام",
     returnDate: "تاريخ التسليم",
     pickupLocation: "موقع الاستلام",
+    pickupLocationPlaceholder: "مثال: مطار القاهرة الدولي",
     dropoffLocation: "موقع التسليم",
+    dropoffLocationPlaceholder: "مثال: مكتب وسط المدينة",
     bookingStatus: "حالة الحجز",
   },
   pricingSummary: {

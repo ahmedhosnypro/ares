@@ -20,6 +20,7 @@ const countries: CountriesLabels = {
   },
   actions: {
     delete: "حذف الدولة",
+    viewDetails: "عرض التفاصيل",
   },
   deleteDialog: {
     title: "حذف الدولة",

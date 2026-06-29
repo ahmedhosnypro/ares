@@ -9,16 +9,17 @@
 
 - [ ] Not started
 - [ ] In progress
-- [ ] Completed
+- [x] Completed
 
 ## Shared Components
 
-(To be filled during execution)
+- `app/[locale]/(dashboard)/admin/_components/UserDetailsView.tsx`
 
 ## Component Discovery
 
-(To be filled during execution)
+- `app/[locale]/(dashboard)/admin/drivers/[id]/page.tsx` (Driver details container page)
 
 ## Translation Tasks
 
-(To be filled during execution)
+- [x] Verify Driver details page `app/[locale]/(dashboard)/admin/drivers/[id]/page.tsx` uses next-intl translations
+- [x] Ensure `UserDetailsView` utilizes the correct `dashboardAdmin.users` namespace keys

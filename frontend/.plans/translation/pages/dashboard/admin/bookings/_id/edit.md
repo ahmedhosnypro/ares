@@ -9,16 +9,21 @@
 
 - [ ] Not started
 - [ ] In progress
-- [ ] Completed
+- [x] Completed
 
 ## Shared Components
 
-(To be filled during execution)
+- `EditBookingClient.tsx` (under `_components/`)
 
 ## Component Discovery
 
-(To be filled during execution)
+- `EditBookingPage` (in `page.tsx`): Wrapper page component resolving dynamic route parameter.
+- `EditBookingClient` (in `_components/EditBookingClient.tsx`): Form for editing operational details (dates, locations, status) of a booking, recalculating rates/costs, and saving them.
 
 ## Translation Tasks
 
-(To be filled during execution)
+- [x] Create message types schema in `shared/messages/types/dashboard/admin/bookings/_id/edit.ts`
+- [x] Implement English translations in `shared/messages/en/dashboard/admin/bookings/_id/edit.ts`
+- [x] Implement Arabic translations in `shared/messages/ar/dashboard/admin/bookings/_id/edit.ts`
+- [x] Register edit booking translations in `types/message.ts`, `en.ts`, and `ar.ts`
+- [x] Update `EditBookingClient.tsx` to use next-intl translations and support placeholder/status localization

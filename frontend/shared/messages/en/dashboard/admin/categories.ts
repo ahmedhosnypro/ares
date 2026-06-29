@@ -35,8 +35,18 @@ const categories: CategoriesLabels = {
     loadError: "Failed to load categories. Please try again later.",
   },
   form: {
-    addTitle: "Add Category",
+    addTitle: "Create New Category",
     editTitle: "Edit Category",
+    infoTitle: "Category Information",
+    cancelBtn: "Cancel",
+    createBtn: "Create Category",
+    creatingBtn: "Creating...",
+    statusActiveLabel: "Category Active",
+    statusInactiveLabel: "Category Inactive",
+    placeholders: {
+      name: "e.g., Luxury, SUV, Economy",
+      description: "Provide a brief description of the vehicles in this category...",
+    },
     fields: {
       name: "Name",
       description: "Description",

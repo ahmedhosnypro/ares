@@ -146,3 +146,27 @@ export const validateCountry = async (accessToken: string, language: string, nam
   }
   throw new Error("Failed to validate country name");
 };
+
+export interface CountryDetail {
+  _id: string;
+  name: string;
+}
+
+export const getCountryDetails = async (accessToken: string, id: string, language: string): Promise<CountryDetail> => {
+  return apiFetchJson<CountryDetail>(`/api/country/${encodeURIComponent(id)}/${encodeURIComponent(language)}`, {
+    method: "GET",
+    accessToken,
+  });
+};
+
+export const updateCountry = async (
+  accessToken: string,
+  id: string,
+  payload: { values: { language: string; name: string }[] }
+): Promise<unknown> => {
+  return apiFetchJson(`/api/update-country/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    accessToken,
+    body: JSON.stringify(payload),
+  });
+};

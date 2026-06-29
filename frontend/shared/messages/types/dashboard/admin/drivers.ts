@@ -35,4 +35,9 @@ export type AdminDriversLabels = {
     readonly rejected: string;
     readonly suspended: string;
   };
+  readonly availabilities: {
+    readonly available: string;
+    readonly unavailable: string;
+    readonly reserved: string;
+  };
 };

@@ -71,6 +71,8 @@ import type { CategoriesLabels } from "./dashboard/admin/categories";
 import type { CategoryDetailsLabels } from "./dashboard/admin/categories/detail";
 import type { CountriesLabels } from "./dashboard/admin/countries";
 import type { CreateCountryLabels } from "./dashboard/admin/countries/create";
+import type { CountryDetailsLabels } from "./dashboard/admin/countries/_id/details";
+import type { EditCountryLabels } from "./dashboard/admin/countries/_id/edit";
 import type { AdminLocationsEditLabels } from "./dashboard/admin/locations/edit";
 import type { AdminNotificationsLabels } from "./dashboard/admin/notifications";
 import type { AdminSchedulerLabels } from "./dashboard/admin/scheduler";
@@ -221,6 +223,8 @@ export type DashboardAdminSchema = {
   readonly categoryDetails: CategoryDetailsLabels;
   readonly countries: CountriesLabels;
   readonly createCountry: CreateCountryLabels;
+  readonly countryDetails: CountryDetailsLabels;
+  readonly editCountry: EditCountryLabels;
   readonly locationsEdit: AdminLocationsEditLabels;
   readonly notifications: AdminNotificationsLabels;
   readonly scheduler: AdminSchedulerLabels;

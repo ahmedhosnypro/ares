@@ -18,6 +18,7 @@ export type CountriesLabels = {
   };
   readonly actions: {
     readonly delete: string;
+    readonly viewDetails: string;
   };
   readonly deleteDialog: {
     readonly title: string;

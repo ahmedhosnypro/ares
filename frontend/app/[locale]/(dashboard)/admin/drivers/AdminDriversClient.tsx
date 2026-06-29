@@ -96,6 +96,19 @@ export default function AdminDriversClient() {
     }
   };
 
+  const getAvailabilityLabel = (availability: string) => {
+    switch (availability) {
+      case "Available":
+        return t("availabilities.available");
+      case "Unavailable":
+        return t("availabilities.unavailable");
+      case "Reserved":
+        return t("availabilities.reserved");
+      default:
+        return availability;
+    }
+  };
+
   const [tab, setTab] = useState(0);
   const [statusFilter, setStatusFilter] = useState("All");
   const [search, setSearch] = useState("");
@@ -326,7 +339,7 @@ export default function AdminDriversClient() {
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {d.availability}
+                        {getAvailabilityLabel(d.availability)}
                       </Typography>
                     </TableCell>
                     <TableCell>
