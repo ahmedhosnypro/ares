@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useRouter } from "@/shared/i18n/routing";
+import { useTranslations } from "next-intl";
 import {
   Box,
   Typography,
@@ -55,6 +56,7 @@ export default function EditSupplierPage() {
   const params = useParams();
   const router = useRouter();
   const theme = useTheme();
+  const t = useTranslations("dashboardAdmin.users");
 
   const id = Array.isArray(params.supplierId) ? params.supplierId[0] : params.supplierId;
 
@@ -169,18 +171,25 @@ export default function EditSupplierPage() {
   // -------------------------
   // COMPLETENESS SCORE
   // -------------------------
-  const completenessItems: { label: string; done: boolean; missingLabel?: string }[] = [
-    { label: "Status selected", done: Boolean(form.status) },
-    { label: "Email valid", done: Boolean(form.email) },
+  const completenessItems = [
     {
-      label: "Company profile full",
-      done: Boolean(form.companyName && form.commercialRegistrationNumber && form.taxId),
-      missingLabel: "Company profile incomplete",
+      label: t("form.completenessItems.statusSelected"),
+      done: Boolean(form.status),
     },
     {
-      label: "Representative details full",
+      label: t("form.email"),
+      done: Boolean(form.email),
+      missingLabel: t("form.completenessItems.emailMissing"),
+    },
+    {
+      label: t("form.companyProfile"),
+      done: Boolean(form.companyName && form.commercialRegistrationNumber && form.taxId),
+      missingLabel: t("form.completenessItems.companyMissing"),
+    },
+    {
+      label: t("form.representativeInfo"),
       done: Boolean(form.firstName && form.lastName && form.phoneNumber),
-      missingLabel: "Representative details incomplete",
+      missingLabel: t("form.completenessItems.repNameMissing"),
     },
   ];
   const completenessScore = Math.round((completenessItems.filter(i => i.done).length / completenessItems.length) * 100);
@@ -294,11 +303,11 @@ export default function EditSupplierPage() {
             router.push("/admin/suppliers");
           }}
         >
-          Suppliers
+          {t("tabs.suppliers")}
         </Typography>
         <NavigateNextIcon sx={{ fontSize: 16 }} />
         <Typography variant="caption" sx={{ color: theme.palette.text.primary, fontWeight: 600 }}>
-          Edit Supplier
+          {t("form.editSupplierTitle")}
         </Typography>
       </Stack>
 
@@ -325,10 +334,10 @@ export default function EditSupplierPage() {
                 variant="h5"
                 sx={{ fontWeight: 800, mb: 0.5, fontSize: { xs: "1.15rem", sm: "1.35rem", md: "1.5rem" } }}
               >
-                Edit: {form.companyName}
+                {t("form.editSupplierTitle")}: {form.companyName}
               </Typography>
               <Typography variant="body2" color="text.secondary" noWrap>
-                Update and manage settings for supplier ({form.email || "No Email"})
+                {t("form.editSupplierSubtitle")} ({form.email || "No Email"})
               </Typography>
             </Box>
           </Stack>
@@ -349,7 +358,7 @@ export default function EditSupplierPage() {
               "&:hover": { borderColor: theme.palette.text.secondary },
             }}
           >
-            Cancel
+            {t("details.cancel")}
           </Button>
           <Button
             variant="contained"
@@ -364,7 +373,7 @@ export default function EditSupplierPage() {
               background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
             }}
           >
-            {saving ? <CircularProgress size={20} color="inherit" /> : "Save Changes"}
+            {saving ? <CircularProgress size={20} color="inherit" /> : t("form.saveChanges")}
           </Button>
         </Stack>
       </Stack>
@@ -402,9 +411,11 @@ export default function EditSupplierPage() {
                 <LockOutlinedIcon />
               </Box>
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>Account Settings</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>
+                  {t("form.accessControl")}
+                </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Primary system credentials.
+                  {t("form.accessControlDesc")}
                 </Typography>
               </Box>
             </Stack>
@@ -412,7 +423,7 @@ export default function EditSupplierPage() {
             <Stack spacing={{ xs: 2, sm: 3 }}>
               {/* Email (Readonly in Edit) */}
               <Box>
-                <Typography sx={fieldLabel}>Email Address</Typography>
+                <Typography sx={fieldLabel}>{t("form.email")}</Typography>
                 <TextField
                   value={form.email}
                   disabled
@@ -455,9 +466,11 @@ export default function EditSupplierPage() {
                 <BusinessCenterOutlinedIcon />
               </Box>
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>Company Profile</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>
+                  {t("form.companyProfile")}
+                </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Official business registration details.
+                  {t("form.companyProfileDesc")}
                 </Typography>
               </Box>
             </Stack>
@@ -465,7 +478,7 @@ export default function EditSupplierPage() {
             <Stack spacing={{ xs: 2, sm: 3 }}>
               <Box>
                 <Typography sx={fieldLabel}>
-                  Company Name{" "}
+                  {t("form.companyName")}{" "}
                   <Box component="span" sx={{ color: theme.palette.error.main }}>
                     *
                   </Box>
@@ -487,7 +500,7 @@ export default function EditSupplierPage() {
               <Grid container spacing={{ xs: 2, sm: 2.5 }}>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography sx={fieldLabel}>
-                    Commercial Registration Number{" "}
+                    {t("form.crNumber")}{" "}
                     <Box component="span" sx={{ color: theme.palette.error.main }}>
                       *
                     </Box>
@@ -509,7 +522,7 @@ export default function EditSupplierPage() {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography sx={fieldLabel}>
-                    Tax Identification Number{" "}
+                    {t("form.taxId")}{" "}
                     <Box component="span" sx={{ color: theme.palette.error.main }}>
                       *
                     </Box>
@@ -549,9 +562,11 @@ export default function EditSupplierPage() {
                 <PersonOutlineIcon />
               </Box>
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>Representative Info</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>
+                  {t("form.representativeInfo")}
+                </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Primary contact person details.
+                  {t("form.representativeInfoDesc")}
                 </Typography>
               </Box>
             </Stack>
@@ -560,7 +575,7 @@ export default function EditSupplierPage() {
               <Grid container spacing={{ xs: 2, sm: 2.5 }}>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography sx={fieldLabel}>
-                    First Name{" "}
+                    {t("form.firstName")}{" "}
                     <Box component="span" sx={{ color: theme.palette.error.main }}>
                       *
                     </Box>
@@ -580,7 +595,7 @@ export default function EditSupplierPage() {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography sx={fieldLabel}>
-                    Last Name{" "}
+                    {t("form.lastName")}{" "}
                     <Box component="span" sx={{ color: theme.palette.error.main }}>
                       *
                     </Box>
@@ -602,7 +617,7 @@ export default function EditSupplierPage() {
 
               <Box>
                 <Typography sx={fieldLabel}>
-                  Phone Number{" "}
+                  {t("form.phone")}{" "}
                   <Box component="span" sx={{ color: theme.palette.error.main }}>
                     *
                   </Box>
@@ -657,7 +672,7 @@ export default function EditSupplierPage() {
               mb: 2,
             }}
           >
-            <Typography sx={{ fontWeight: 700, fontSize: 14, mb: 1 }}>Company Logo</Typography>
+            <Typography sx={{ fontWeight: 700, fontSize: 14, mb: 1 }}>{t("form.companyLogo")}</Typography>
             <Box
               component="label"
               htmlFor="logo-photo-input"
@@ -687,7 +702,7 @@ export default function EditSupplierPage() {
                 <>
                   <PhotoCameraOutlinedIcon sx={{ color: theme.palette.text.disabled, fontSize: 30 }} />
                   <Typography variant="caption" sx={{ color: theme.palette.text.disabled, fontWeight: 500 }}>
-                    Upload Logo
+                    {t("form.uploadLogo")}
                   </Typography>
                 </>
               )}
@@ -706,7 +721,7 @@ export default function EditSupplierPage() {
               color="text.secondary"
               sx={{ mt: 1.5, display: "block", textAlign: "center", lineHeight: 1.6 }}
             >
-              Allowed *.jpeg, *.jpg, *.png, *.gif{"\n"}Max size of 3.1 MB
+              {t("form.logoHint")}
             </Typography>
           </Paper>
 
@@ -739,16 +754,16 @@ export default function EditSupplierPage() {
                 <ShieldOutlinedIcon sx={{ fontSize: 18 }} />
               </Box>
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: 14 }}>Access Control</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: 14 }}>{t("form.accessControl")}</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Permissions and status.
+                  {t("form.accessControlDesc")}
                 </Typography>
               </Box>
             </Stack>
 
             <Box sx={{ mb: 2 }}>
               <Typography sx={{ ...fieldLabel, mb: 1 }}>
-                System Role{" "}
+                {t("form.systemRole")}{" "}
                 <Box component="span" sx={{ color: theme.palette.error.main }}>
                   *
                 </Box>
@@ -775,7 +790,7 @@ export default function EditSupplierPage() {
             </Box>
 
             <Box>
-              <Typography sx={{ ...fieldLabel, mb: 1 }}>Account Status</Typography>
+              <Typography sx={{ ...fieldLabel, mb: 1 }}>{t("form.accountStatus")}</Typography>
               <ToggleButtonGroup
                 value={form.status}
                 exclusive
@@ -820,15 +835,15 @@ export default function EditSupplierPage() {
               >
                 <ToggleButton value="active">
                   <CheckCircleOutlineIcon sx={{ fontSize: { xs: 13, sm: 14 } }} />
-                  Active
+                  {t("form.active")}
                 </ToggleButton>
                 <ToggleButton value="pending">
                   <AccessTimeIcon sx={{ fontSize: { xs: 13, sm: 14 } }} />
-                  Pending
+                  {t("form.pending")}
                 </ToggleButton>
                 <ToggleButton value="blocked">
                   <BlockIcon sx={{ fontSize: { xs: 13, sm: 14 } }} />
-                  Blocked
+                  {t("form.blocked")}
                 </ToggleButton>
               </ToggleButtonGroup>
             </Box>
@@ -863,16 +878,16 @@ export default function EditSupplierPage() {
                 <LocationOnOutlinedIcon sx={{ fontSize: 18 }} />
               </Box>
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: 14 }}>Business Address</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: 14 }}>{t("form.businessAddress")}</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Headquarters location.
+                  {t("form.businessAddressDesc")}
                 </Typography>
               </Box>
             </Stack>
 
             <Stack spacing={2}>
               <Box>
-                <Typography sx={{ ...fieldLabel, mb: 1 }}>Country</Typography>
+                <Typography sx={{ ...fieldLabel, mb: 1 }}>{t("form.country")}</Typography>
                 <TextField
                   select
                   value={form.country}
@@ -887,7 +902,7 @@ export default function EditSupplierPage() {
                   }}
                 >
                   <MenuItem value="" disabled>
-                    <em style={{ color: theme.palette.text.disabled }}>Select country...</em>
+                    <em style={{ color: theme.palette.text.disabled }}>{t("form.selectCountry")}</em>
                   </MenuItem>
                   {MOCK_COUNTRIES.map(c => (
                     <MenuItem key={c} value={c}>
@@ -898,7 +913,7 @@ export default function EditSupplierPage() {
               </Box>
 
               <Box>
-                <Typography sx={{ ...fieldLabel, mb: 1 }}>City</Typography>
+                <Typography sx={{ ...fieldLabel, mb: 1 }}>{t("form.city")}</Typography>
                 <TextField
                   placeholder="e.g. Dubai"
                   value={form.city}
@@ -914,7 +929,7 @@ export default function EditSupplierPage() {
               </Box>
 
               <Box>
-                <Typography sx={{ ...fieldLabel, mb: 1 }}>Street Address</Typography>
+                <Typography sx={{ ...fieldLabel, mb: 1 }}>{t("form.streetAddress")}</Typography>
                 <TextField
                   placeholder="Building, Floor, Street..."
                   value={form.streetAddress}
@@ -945,9 +960,9 @@ export default function EditSupplierPage() {
             }}
           >
             <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-              <Typography sx={{ fontWeight: 700, fontSize: 14 }}>Profile Progress</Typography>
+              <Typography sx={{ fontWeight: 700, fontSize: 14 }}>{t("form.completeness")}</Typography>
               <Chip
-                label="Update mode"
+                label={t("form.draft")}
                 size="small"
                 sx={{
                   fontSize: 10,
@@ -971,7 +986,7 @@ export default function EditSupplierPage() {
               }}
             />
             <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
-              {completenessScore}% valid data context.
+              {completenessScore}% {t("form.completenessDesc")}
             </Typography>
 
             <Stack spacing={0.75}>

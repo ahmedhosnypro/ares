@@ -44,6 +44,9 @@ export const driverDashboard: DriverDashboardLabels = {
     day: "يوم",
     days: "أيام",
     daysRemaining: "{count} أيام متبقية",
+    noAssignment: "لا توجد مهمة",
+    noActiveAssignment: "لا توجد مهمة نشطة",
+    noAssignmentDescription: "ليس لديك رحلة جارية حاليًا. تحقق من جدولك القادم للمهام المستقبلية.",
   },
   upcomingSchedule: {
     calendarAndShiftSchedule: "التقويم وجدول الورديات",

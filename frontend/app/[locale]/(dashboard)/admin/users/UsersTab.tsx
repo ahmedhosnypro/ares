@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -36,12 +36,15 @@ import {
   Snackbar,
   Alert,
   Divider,
+  SvgIcon,
   type Theme,
   type SelectChangeEvent,
   type AlertColor,
+  type SvgIconProps,
 } from "@mui/material";
 
 import { Link } from "@/shared/i18n/routing";
+import { useTranslations } from "next-intl";
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityOutlinedIcon from "@mui/icons-material/LaunchOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
@@ -50,7 +53,11 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import PeopleIcon from "@mui/icons-material/People";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import { toggleUserStatus, deleteUser, getUsers, type User } from "@/api-clients/users/users";
+import PersonIcon from "@mui/icons-material/PersonOutlined";
+import StorefrontIcon from "@mui/icons-material/StorefrontOutlined";
+import ShieldIcon from "@mui/icons-material/ShieldOutlined";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
+import { toggleUserStatus, deleteUser, getUsers, type User, type UserStats } from "@/api-clients/users/users";
 import { ApiError } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
 
@@ -62,6 +69,7 @@ interface UserMobileCardProps {
 }
 
 function UserMobileCard({ u, theme, fetchUsers, onRequestDelete }: UserMobileCardProps) {
+  const t = useTranslations("dashboardAdmin.users");
   const status = (u.status || "").toLowerCase();
   const isActive = status === "active";
 
@@ -112,7 +120,7 @@ function UserMobileCard({ u, theme, fetchUsers, onRequestDelete }: UserMobileCar
         </Stack>
 
         <Chip
-          label={status}
+          label={isActive ? t("form.active") : t("form.blocked")}
           size="small"
           sx={{
             ml: 1,
@@ -131,23 +139,23 @@ function UserMobileCard({ u, theme, fetchUsers, onRequestDelete }: UserMobileCar
         color="text.secondary"
         sx={{ textTransform: "capitalize", display: "block", mb: 1.5 }}
       >
-        Role: <strong>{u.roles.join(", ") || "—"}</strong>
+        {t("details.role")}: <strong>{u.roles.map(r => t(`form.roles.${r.toLowerCase()}`)).join(", ") || "—"}</strong>
       </Typography>
 
       <Stack direction="row" spacing={1}>
-        <Tooltip title="View">
+        <Tooltip title={t("table.viewDetails")}>
           <IconButton component={Link} href={`/admin/users/${u.id}`} size="small">
             <VisibilityOutlinedIcon fontSize="small" />
           </IconButton>
         </Tooltip>
 
-        <Tooltip title="Edit">
+        <Tooltip title={t("table.editAccount")}>
           <IconButton component={Link} href={`/admin/users/${u.id}/edit`} size="small">
             <EditOutlinedIcon fontSize="small" />
           </IconButton>
         </Tooltip>
 
-        <Tooltip title={isActive ? "Block User" : "Activate User"}>
+        <Tooltip title={isActive ? t("form.blocked") : t("form.active")}>
           <IconButton
             size="small"
             onClick={() => {
@@ -159,7 +167,7 @@ function UserMobileCard({ u, theme, fetchUsers, onRequestDelete }: UserMobileCar
           </IconButton>
         </Tooltip>
 
-        <Tooltip title="Delete User">
+        <Tooltip title={t("table.delete")}>
           <IconButton
             size="small"
             onClick={() => {
@@ -175,41 +183,136 @@ function UserMobileCard({ u, theme, fetchUsers, onRequestDelete }: UserMobileCar
   );
 }
 
-import type { UserStats } from "@/api-clients/users/users";
-
-interface UsersTabProps {
-  activeTab: string;
-  onStatsUpdated: (stats: UserStats) => void;
+function SteeringWheelIcon(props: SvgIconProps) {
+  return (
+    <SvgIcon {...props}>
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8 0-1.84.62-3.53 1.68-4.88l3.96 2.29c-.4.78-.64 1.66-.64 2.59 0 2.21 1.79 4 4 4s4-1.79 4-4c0-.93-.24-1.81-.64-2.59l3.96-2.29C19.38 8.47 20 10.16 20 12c0 4.41-3.59 8-8 8zm0-10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6.2-4.12C7.3 4.7 9.53 4 12 4s4.7.7 5.8 1.88l-3.96 2.29C13.25 7.82 12.65 7.7 12 7.7c-.65 0-1.25.12-1.84.47L5.8 5.88z" />
+    </SvgIcon>
+  );
 }
 
-export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
+interface CompactStatCardProps {
+  readonly label: string;
+  readonly value: number;
+  readonly color: string;
+  readonly icon: React.ReactNode;
+  readonly trendText?: string;
+  readonly isUp?: boolean;
+}
+
+function CompactStatCard({ label, value, color, icon, trendText, isUp = true }: CompactStatCardProps) {
+  const theme = useTheme();
+  const t = useTranslations("dashboardAdmin.users");
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        p: { xs: 2, md: 1.25 },
+        borderRadius: 2.5,
+        border: "1px solid",
+        borderColor: "divider",
+        bgcolor: "background.paper",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        height: "100%",
+        transition: "all 0.2s ease-in-out",
+        "&:hover": {
+          transform: "translateY(-4px)",
+          boxShadow: `0 12px 24px ${alpha(color, 0.15)}`,
+          borderColor: alpha(color, 0.4),
+        },
+      }}
+    >
+      <Stack
+        direction="row"
+        spacing={{ xs: 1.5, md: 1 }}
+        sx={{ alignItems: "center", mb: { xs: 1, md: 0.5 }, minWidth: 0 }}
+      >
+        <Avatar
+          sx={{
+            bgcolor: alpha(color, 0.12),
+            color: color,
+            width: { xs: 40, md: 32 },
+            height: { xs: 40, md: 32 },
+            flexShrink: 0,
+            "& .MuiSvgIcon-root": {
+              fontSize: { xs: 22, md: 18 },
+            },
+          }}
+        >
+          {icon}
+        </Avatar>
+        <Box sx={{ minWidth: 0, flex: 1 }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            noWrap
+            sx={{ fontWeight: 700, display: "block", fontSize: { xs: 11, md: 9.5 }, lineHeight: 1.2 }}
+          >
+            {label}
+          </Typography>
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 800, color: "text.primary", mt: 0.1, fontSize: { xs: 18, md: 14 }, lineHeight: 1.1 }}
+            noWrap
+          >
+            {value.toLocaleString()}
+          </Typography>
+        </Box>
+      </Stack>
+
+      {trendText && (
+        <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", mt: 0.5, flexWrap: "wrap" }}>
+          <Typography
+            variant="caption"
+            sx={{
+              fontWeight: 700,
+              color: isUp ? theme.palette.status.active.main : theme.palette.status.blocked.main,
+              fontSize: { xs: 10, md: 8.5 },
+              display: "flex",
+              alignItems: "center",
+              gap: 0.2,
+              lineHeight: 1,
+            }}
+          >
+            {isUp ? "↑" : "↓"} {trendText}
+          </Typography>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{
+              fontSize: { xs: 9, md: 8 },
+              lineHeight: 1,
+              display: { xs: "inline", md: "none", lg: "inline" },
+            }}
+          >
+            {t("stats.thisMonth")}
+          </Typography>
+        </Stack>
+      )}
+    </Paper>
+  );
+}
+
+export default function UsersTab() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const t = useTranslations("dashboardAdmin.users");
 
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-
-  const roleMap: Record<string, string> = {
-    users: "customer",
-    suppliers: "supplier",
-    drivers: "driver",
-    inspectors: "inspector",
-  };
-
-  const [roleFilter, setRoleFilter] = useState(roleMap[activeTab] || "all");
-
-  useEffect(() => {
-    setRoleFilter(roleMap[activeTab] || "all");
-    setPage(1);
-  }, [activeTab]);
+  const [roleFilter, setRoleFilter] = useState("all");
 
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [stats, setStats] = useState<UserStats | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 300);
@@ -229,7 +332,11 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await getUsers(page, PAGE_SIZE, { searchTerm: debouncedSearch, role: roleFilter, status: statusFilter });
+      const data = await getUsers(page, PAGE_SIZE, {
+        searchTerm: debouncedSearch,
+        role: roleFilter,
+        status: statusFilter,
+      });
 
       const normalized: User[] = (data.items || []).map(u => ({
         ...u,
@@ -243,15 +350,15 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
       setTotalCount(data.totalCount || 0);
       setTotalPages(data.totalPages || 1);
 
-      if (data.stats && onStatsUpdated) {
-        onStatsUpdated(data.stats);
+      if (data.stats) {
+        setStats(data.stats);
       }
     } catch (err) {
       logger.error("Failed to fetch users", err);
     } finally {
       setLoading(false);
     }
-  }, [page, debouncedSearch, roleFilter, statusFilter, onStatsUpdated]);
+  }, [page, debouncedSearch, roleFilter, statusFilter]);
 
   useEffect(() => {
     void fetchUsers();
@@ -280,7 +387,7 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
       await deleteUser(deleteTarget.id);
       setToast({
         open: true,
-        message: deleteTarget.firstName + " " + deleteTarget.lastName + " was permanently deleted.",
+        message: t("alerts.deleteSuccess"),
         severity: "success",
       });
       setDeleteTarget(null);
@@ -288,7 +395,7 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
     } catch (err) {
       logger.error("Failed to delete user", err);
 
-      let message = "Failed to delete user. Please try again.";
+      let message = t("alerts.deleteError");
       if (err instanceof ApiError) {
         try {
           const parsed = JSON.parse(err.body) as { message?: string };
@@ -301,247 +408,117 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
     } finally {
       setDeleting(false);
     }
-  }, [deleteTarget, fetchUsers]);
+  }, [deleteTarget, fetchUsers, t]);
 
-  const pageData = users;
-
-  const renderContent = () => {
-    if (loading) {
-      return (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
-          <CircularProgress />
-        </Box>
-      );
-    }
-
-    if (isMobile) {
-      return (
-        <Box>
-          {pageData.length > 0 ? (
-            pageData.map(u => (
-              <UserMobileCard
-                key={u.id}
-                u={u}
-                theme={theme}
-                fetchUsers={() => {
-                  void fetchUsers();
-                }}
-                onRequestDelete={requestDelete}
-              />
-            ))
-          ) : (
-            <Box sx={{ py: 8, textAlign: "center", opacity: 0.6 }}>
-              <SearchIcon sx={{ fontSize: 60, mb: 2, color: "text.disabled" }} />
-              <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 700 }}>
-                No users found
-              </Typography>
-              <Typography variant="body2" color="text.disabled">
-                Try adjusting your search or filters to find what you&apos;re looking for.
-              </Typography>
-            </Box>
-          )}
-          <Stack direction="column" spacing={1} sx={{ alignItems: "center", mt: 2, mb: 1 }}>
-            <Typography variant="caption">
-              Showing {pageData.length} of {totalCount}
-            </Typography>
-            <Pagination
-              count={totalPages}
-              page={page}
-              onChange={(_, v) => {
-                setPage(v);
-              }}
-              size="small"
-              siblingCount={0}
-              boundaryCount={1}
-              sx={{ "& .MuiPaginationItem-root": { borderRadius: 2 } }}
-            />
-          </Stack>
-        </Box>
-      );
-    }
-
-    return (
-      <Paper sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden", elevation: 0 }}>
-        <TableContainer sx={{ overflowX: "auto", maxHeight: 600 }}>
-          <Table stickyHeader sx={{ minWidth: 800 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600, bgcolor: "background.paper", py: 2 }}>User</TableCell>
-                <TableCell sx={{ fontWeight: 600, bgcolor: "background.paper", py: 2 }}>Email</TableCell>
-                <TableCell sx={{ fontWeight: 600, bgcolor: "background.paper", py: 2 }}>Phone</TableCell>
-                <TableCell sx={{ fontWeight: 600, bgcolor: "background.paper", py: 2 }}>Role</TableCell>
-                <TableCell sx={{ fontWeight: 600, bgcolor: "background.paper", py: 2 }}>Status</TableCell>
-                <TableCell sx={{ fontWeight: 600, bgcolor: "background.paper", py: 2 }}>Created</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 600, bgcolor: "background.paper", py: 2 }}>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-
-            <TableBody>
-              {pageData.length > 0 ? (
-                pageData.map(u => {
-                  const status = (u.status || "").toLowerCase();
-                  const isActive = status === "active";
-
-                  const handleStatusClick = async () => {
-                    try {
-                      await toggleUserStatus(u.id);
-                      await fetchUsers();
-                    } catch (err) {
-                      logger.error("Failed to toggle status", err);
-                    }
-                  };
-
-                  return (
-                    <TableRow key={u.id} hover sx={{ transition: "all 0.2s ease", "&:hover": { bgcolor: "action.hover" } }}>
-                      <TableCell>
-                        <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-                          <Avatar
-                            src={(u.avatarUrl as string) || undefined}
-                            sx={{
-                              bgcolor: theme.palette.primary.light,
-                              fontWeight: 700,
-                              width: 40,
-                              height: 40,
-                              fontSize: 16,
-                            }}
-                          >
-                            {u.firstName[0]}
-                            {u.lastName[0]}
-                          </Avatar>
-                          <Typography sx={{ fontWeight: 600, fontSize: 14 }}>
-                            {u.firstName} {u.lastName}
-                          </Typography>
-                        </Stack>
-                      </TableCell>
-
-                      <TableCell>
-                        <Typography variant="body2" color="text.secondary">{u.email}</Typography>
-                      </TableCell>
-
-                      <TableCell>
-                        <Typography variant="body2" color="text.secondary">{u.phoneNumber || "—"}</Typography>
-                      </TableCell>
-
-                      <TableCell>
-                        <Typography variant="body2" sx={{ textTransform: "capitalize", fontWeight: 500 }}>
-                          {u.roles.join(", ") || "—"}
-                        </Typography>
-                      </TableCell>
-
-                      <TableCell>
-                        <Chip
-                          label={status}
-                          size="small"
-                          sx={{
-                            textTransform: "capitalize",
-                            bgcolor: isActive
-                              ? alpha(theme.palette.success.main, 0.15)
-                              : alpha(theme.palette.error.main, 0.15),
-                            color: isActive ? theme.palette.success.main : theme.palette.error.main,
-                            fontWeight: 700,
-                            fontSize: 12,
-                          }}
-                        />
-                      </TableCell>
-
-                      <TableCell>
-                        <Typography variant="body2" color="text.secondary">
-                          {u.createdAt ? new Date(u.createdAt as string).toLocaleDateString() : "—"}
-                        </Typography>
-                      </TableCell>
-
-                      <TableCell align="right">
-                        <Stack direction="row" spacing={0.5} sx={{ justifyContent: "flex-end" }}>
-                          <Tooltip title="View">
-                            <IconButton component={Link} href={`/admin/users/${u.id}`} size="small">
-                              <VisibilityOutlinedIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-
-                          <Tooltip title="Edit">
-                            <IconButton
-                              component={Link}
-                              href={`/admin/users/${u.id}/edit`}
-                              size="small"
-                              sx={{ display: { xs: "none", sm: "inline-flex" } }}
-                            >
-                              <EditOutlinedIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-
-                          <Tooltip title={isActive ? "Block User" : "Activate User"}>
-                            <IconButton
-                              size="small"
-                              onClick={() => {
-                                void handleStatusClick();
-                              }}
-                              sx={{ color: isActive ? "error.main" : "success.main" }}
-                            >
-                              {isActive ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
-                            </IconButton>
-                          </Tooltip>
-
-                          <Tooltip title="Delete User">
-                            <IconButton
-                              size="small"
-                              onClick={() => {
-                                requestDelete(u);
-                              }}
-                              sx={{ color: "error.main" }}
-                            >
-                              <DeleteOutlinedIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 10 }}>
-                    <Box sx={{ textAlign: "center", opacity: 0.6 }}>
-                      <SearchIcon sx={{ fontSize: 60, mb: 2, color: "text.disabled" }} />
-                      <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 700 }}>
-                        No users found
-                      </Typography>
-                      <Typography variant="body2" color="text.disabled">
-                        Try adjusting your search or filters to find what you&apos;re looking for.
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-            <TableFooter>
-              <TableRow>
-                <TableCell colSpan={3}>
-                  <Typography variant="caption">
-                    Showing {pageData.length} of {totalCount}
-                  </Typography>
-                </TableCell>
-                <TableCell colSpan={2} align="right">
-                  <Pagination
-                    count={totalPages}
-                    page={page}
-                    onChange={(_, v) => {
-                      setPage(v);
-                    }}
-                    size="small"
-                    siblingCount={0}
-                  />
-                </TableCell>
-              </TableRow>
-            </TableFooter>
-          </Table>
-        </TableContainer>
-      </Paper>
-    );
-  };
+  const adminsCount = stats
+    ? stats.totalUsers - stats.customers - stats.suppliers - stats.drivers - stats.inspectors
+    : 0;
 
   return (
     <Box>
-      {/* FILTER TOOLBAR */}
+      <Box sx={{ mb: 3 }}>
+        <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
+          <Box>
+            <Typography variant="h4" sx={{ fontWeight: 800, fontSize: { xs: "1.5rem", sm: "2rem", md: "2.125rem" } }}>
+              {t("title")}
+            </Typography>
+            <Typography color="text.secondary" variant="body2">
+              {t("subtitle")}
+            </Typography>
+          </Box>
+
+          <Link
+            href="/admin/users/create"
+            style={{
+              textDecoration: "none",
+              width: isMobile ? "100%" : "auto",
+            }}
+          >
+            <Button variant="contained" startIcon={<PersonIcon />} fullWidth={isMobile}>
+              {t("createBtn")}
+            </Button>
+          </Link>
+        </Stack>
+      </Box>
+
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "repeat(2, 1fr)",
+            sm: "repeat(4, 1fr)",
+            md: "repeat(8, 1fr)",
+          },
+          gap: { xs: 2, md: 1 },
+          mb: 4,
+        }}
+      >
+        <CompactStatCard
+          label={t("stats.totalUsers")}
+          value={stats?.totalUsers ?? 0}
+          color={theme.palette.status.confirmed.main}
+          icon={<PeopleIcon />}
+          trendText="12.5%"
+          isUp={true}
+        />
+        <CompactStatCard
+          label={t("stats.admins")}
+          value={adminsCount}
+          color={theme.palette.primary.main}
+          icon={<AdminPanelSettingsIcon />}
+          trendText="3.5%"
+          isUp={true}
+        />
+        <CompactStatCard
+          label={t("stats.customers")}
+          value={stats?.customers ?? 0}
+          color={theme.palette.status.active.main}
+          icon={<PersonIcon />}
+          trendText="10.3%"
+          isUp={true}
+        />
+        <CompactStatCard
+          label={t("stats.suppliers")}
+          value={stats?.suppliers ?? 0}
+          color={theme.palette.status.completed.main}
+          icon={<StorefrontIcon />}
+          trendText="8.1%"
+          isUp={true}
+        />
+        <CompactStatCard
+          label={t("stats.drivers")}
+          value={stats?.drivers ?? 0}
+          color={theme.palette.status.pending.main}
+          icon={<SteeringWheelIcon />}
+          trendText="14.7%"
+          isUp={true}
+        />
+        <CompactStatCard
+          label={t("stats.inspectors")}
+          value={stats?.inspectors ?? 0}
+          color={theme.palette.status.blocked.main}
+          icon={<ShieldIcon />}
+          trendText="6.2%"
+          isUp={true}
+        />
+        <CompactStatCard
+          label={t("stats.active")}
+          value={stats ? stats.totalUsers - stats.blockedUsers : 0}
+          color={theme.palette.status.active.main}
+          icon={<CheckCircleIcon />}
+          trendText="9.4%"
+          isUp={true}
+        />
+        <CompactStatCard
+          label={t("stats.blocked")}
+          value={stats?.blockedUsers ?? 0}
+          color={theme.palette.status.blocked.main}
+          icon={<BlockIcon />}
+          trendText="1.2%"
+          isUp={false}
+        />
+      </Box>
+
       <Card
         elevation={0}
         sx={{
@@ -549,7 +526,7 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
           borderRadius: 2,
           border: "1px solid",
           borderColor: "divider",
-          overflow: "hidden"
+          overflow: "hidden",
         }}
       >
         <Stack
@@ -562,7 +539,7 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
           }}
         >
           <TextField
-            placeholder="Search users..."
+            placeholder={t("searchPlaceholder")}
             value={search}
             onChange={e => {
               setSearch(e.target.value);
@@ -591,12 +568,12 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
               displayEmpty
               sx={{ borderRadius: 2 }}
             >
-              <MenuItem value="all">All Roles</MenuItem>
-              <MenuItem value="admin">Admin</MenuItem>
-              <MenuItem value="customer">Customer</MenuItem>
-              <MenuItem value="supplier">Supplier</MenuItem>
-              <MenuItem value="driver">Driver</MenuItem>
-              <MenuItem value="inspector">Inspector</MenuItem>
+              <MenuItem value="all">{t("filters.allRoles")}</MenuItem>
+              <MenuItem value="admin">{t("form.roles.admin")}</MenuItem>
+              <MenuItem value="customer">{t("form.roles.customer")}</MenuItem>
+              <MenuItem value="supplier">{t("form.roles.supplier")}</MenuItem>
+              <MenuItem value="driver">{t("form.roles.driver")}</MenuItem>
+              <MenuItem value="inspector">{t("form.roles.inspector")}</MenuItem>
             </Select>
           </FormControl>
 
@@ -610,17 +587,14 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
               displayEmpty
               sx={{ borderRadius: 2 }}
             >
-              <MenuItem value="all">All Statuses</MenuItem>
-              <MenuItem value="active">Active</MenuItem>
-              <MenuItem value="blocked">Blocked</MenuItem>
+              <MenuItem value="all">{t("filters.allStatuses")}</MenuItem>
+              <MenuItem value="active">{t("form.active")}</MenuItem>
+              <MenuItem value="blocked">{t("form.blocked")}</MenuItem>
             </Select>
           </FormControl>
-
-          {/* Empty Space for alignment if needed, or just let Select flex */}
         </Stack>
       </Card>
 
-      {/* TABLE / MOBILE CARDS */}
       {(() => {
         if (loading) {
           return (
@@ -633,8 +607,8 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
         if (isMobile) {
           return (
             <Box>
-              {pageData.length > 0 ? (
-                pageData.map(u => (
+              {users.length > 0 ? (
+                users.map(u => (
                   <UserMobileCard
                     key={u.id}
                     u={u}
@@ -649,16 +623,16 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
                 <Box sx={{ py: 8, textAlign: "center", opacity: 0.6 }}>
                   <SearchIcon sx={{ fontSize: 60, mb: 2, color: "text.disabled" }} />
                   <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 700 }}>
-                    No users found
+                    {t("table.noUsers")}
                   </Typography>
                   <Typography variant="body2" color="text.disabled">
-                    Try adjusting your search or filters.
+                    {t("table.noUsersDesc")}
                   </Typography>
                 </Box>
               )}
               <Stack direction="column" spacing={1} sx={{ alignItems: "center", mt: 2, mb: 1 }}>
                 <Typography variant="caption">
-                  Showing {pageData.length} of {totalCount}
+                  {t("table.showingCount", { count: users.length, total: totalCount })}
                 </Typography>
                 <Pagination
                   count={totalPages}
@@ -678,7 +652,7 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
 
         return (
           <Card elevation={0} sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
-            <TableContainer sx={{ maxHeight: 700 }}>
+            <TableContainer sx={{ maxHeight: 600 }}>
               <Table stickyHeader sx={{ minWidth: 800 }}>
                 <TableHead>
                   <TableRow
@@ -692,22 +666,23 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
                         borderBottom: "1px solid",
                         borderColor: "divider",
                         py: 2.5,
-                        bgcolor: t => alpha(t.palette.primary.main, 0.03),
+                        bgcolor: (rowTheme: Theme) => alpha(rowTheme.palette.primary.main, 0.03),
                       },
                     }}
                   >
-                    <TableCell sx={{ pl: 3 }}>User</TableCell>
-                    <TableCell>Phone</TableCell>
-                    <TableCell>Role</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Created</TableCell>
-                    <TableCell align="right" sx={{ pr: 3 }}>Actions</TableCell>
+                    <TableCell sx={{ pl: 3 }}>{t("table.user")}</TableCell>
+                    <TableCell>{t("table.contact")}</TableCell>
+                    <TableCell>{t("table.roles")}</TableCell>
+                    <TableCell>{t("table.status")}</TableCell>
+                    <TableCell align="right" sx={{ pr: 3 }}>
+                      {t("table.actions")}
+                    </TableCell>
                   </TableRow>
                 </TableHead>
 
                 <TableBody>
-                  {pageData.length > 0 ? (
-                    pageData.map(u => {
+                  {users.length > 0 ? (
+                    users.map(u => {
                       const status = (u.status || "").toLowerCase();
                       const isActive = status === "active";
 
@@ -735,11 +710,10 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
                               <Avatar
                                 src={(u.avatarUrl as string) || undefined}
                                 sx={{
-                                  bgcolor: t => alpha(t.palette.primary.main, 0.08),
-                                  color: "primary.main",
+                                  bgcolor: theme.palette.primary.light,
                                   fontWeight: 700,
-                                  width: 44,
-                                  height: 44,
+                                  width: 40,
+                                  height: 40,
                                   fontSize: 16,
                                 }}
                               >
@@ -758,62 +732,42 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
                           </TableCell>
 
                           <TableCell sx={{ py: 2 }}>
-                            <Typography variant="body2" color="text.secondary">{u.phoneNumber || "—"}</Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {u.phoneNumber || "—"}
+                            </Typography>
                           </TableCell>
 
                           <TableCell sx={{ py: 2 }}>
-                            <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }} useFlexGap>
-                              {u.roles.map(r => (
-                                <Chip
-                                  key={r}
-                                  label={r}
-                                  size="small"
-                                  sx={{
-                                    textTransform: "capitalize",
-                                    bgcolor: t => alpha(t.palette.info.main, 0.1),
-                                    color: "info.main",
-                                    fontWeight: 600,
-                                    fontSize: 12,
-                                    borderRadius: 1.5,
-                                  }}
-                                />
-                              ))}
-                              {u.roles.length === 0 && "—"}
-                            </Stack>
+                            <Typography variant="body2" sx={{ textTransform: "capitalize", fontWeight: 500 }}>
+                              {u.roles.map(r => t(`form.roles.${r.toLowerCase()}`)).join(", ") || "—"}
+                            </Typography>
                           </TableCell>
 
                           <TableCell sx={{ py: 2 }}>
                             <Chip
-                              label={status}
+                              label={isActive ? t("form.active") : t("form.blocked")}
                               size="small"
                               sx={{
                                 textTransform: "capitalize",
-                                borderRadius: 1.5,
                                 bgcolor: isActive
-                                  ? t => alpha(t.palette.success.main, 0.15)
-                                  : t => alpha(t.palette.error.main, 0.15),
-                                color: isActive ? "success.main" : "error.main",
-                                fontWeight: 600,
+                                  ? alpha(theme.palette.success.main, 0.15)
+                                  : alpha(theme.palette.error.main, 0.15),
+                                color: isActive ? theme.palette.success.main : theme.palette.error.main,
+                                fontWeight: 700,
                                 fontSize: 12,
                               }}
                             />
                           </TableCell>
 
-                          <TableCell sx={{ py: 2 }}>
-                            <Typography variant="body2" color="text.secondary">
-                              {u.createdAt ? new Date(u.createdAt as string).toLocaleDateString() : "—"}
-                            </Typography>
-                          </TableCell>
-
                           <TableCell align="right" sx={{ pr: 3, py: 2 }}>
                             <Stack direction="row" spacing={0.5} sx={{ justifyContent: "flex-end" }}>
-                              <Tooltip title="View">
+                              <Tooltip title={t("table.viewDetails")}>
                                 <IconButton component={Link} href={`/admin/users/${u.id}`} size="small">
                                   <VisibilityOutlinedIcon fontSize="small" />
                                 </IconButton>
                               </Tooltip>
 
-                              <Tooltip title="Edit">
+                              <Tooltip title={t("table.editAccount")}>
                                 <IconButton
                                   component={Link}
                                   href={`/admin/users/${u.id}/edit`}
@@ -824,7 +778,7 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
                                 </IconButton>
                               </Tooltip>
 
-                              <Tooltip title={isActive ? "Block User" : "Activate User"}>
+                              <Tooltip title={isActive ? t("form.blocked") : t("form.active")}>
                                 <IconButton
                                   size="small"
                                   onClick={() => {
@@ -836,7 +790,7 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
                                 </IconButton>
                               </Tooltip>
 
-                              <Tooltip title="Delete User">
+                              <Tooltip title={t("table.delete")}>
                                 <IconButton
                                   size="small"
                                   onClick={() => {
@@ -854,14 +808,14 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
                     })
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} align="center" sx={{ py: 10 }}>
+                      <TableCell colSpan={5} align="center" sx={{ py: 10 }}>
                         <Box sx={{ textAlign: "center", opacity: 0.6 }}>
                           <SearchIcon sx={{ fontSize: 60, mb: 2, color: "text.disabled" }} />
                           <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 700 }}>
-                            No users found
+                            {t("table.noUsers")}
                           </Typography>
                           <Typography variant="body2" color="text.disabled">
-                            Try adjusting your search or filters to find what you&apos;re looking for.
+                            {t("table.noUsersDesc")}
                           </Typography>
                         </Box>
                       </TableCell>
@@ -872,10 +826,10 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
                   <TableRow>
                     <TableCell colSpan={3} sx={{ pl: 3 }}>
                       <Typography variant="caption" color="text.secondary">
-                        Showing page <strong>{page}</strong> of {totalPages || 1} ({totalCount} total)
+                        {t("table.showingCount", { count: users.length, total: totalCount })}
                       </Typography>
                     </TableCell>
-                    <TableCell colSpan={3} align="right" sx={{ pr: 3 }}>
+                    <TableCell colSpan={2} align="right" sx={{ pr: 3 }}>
                       {totalPages > 1 && (
                         <Pagination
                           count={totalPages}
@@ -884,6 +838,7 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
                             setPage(v);
                           }}
                           size="small"
+                          siblingCount={0}
                           sx={{ "& .MuiPaginationItem-root": { borderRadius: 2 } }}
                         />
                       )}
@@ -896,7 +851,6 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
         );
       })()}
 
-      {/* Delete confirmation modal */}
       <Dialog
         open={deleteTarget !== null}
         onClose={closeDeleteDialog}
@@ -909,12 +863,12 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
           sx={{ display: "flex", alignItems: "center", gap: 1, fontWeight: 700 }}
         >
           <WarningAmberIcon color="error" />
-          Delete User
+          {t("dialogs.deleteTitle")}
         </DialogTitle>
 
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            You are about to permanently delete the following account:
+            {t("dialogs.deleteConfirmText")}
           </Typography>
 
           {deleteTarget && (
@@ -924,13 +878,13 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
                 borderRadius: 2,
                 border: "1px solid",
                 borderColor: "divider",
-                bgcolor: t => alpha(t.palette.text.primary, 0.02),
+                bgcolor: (rowTheme: Theme) => alpha(rowTheme.palette.text.primary, 0.02),
               }}
             >
               <Stack spacing={1}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
                   <Typography variant="caption" color="text.secondary">
-                    Name
+                    {t("dialogs.name")}
                   </Typography>
                   <Typography variant="body2" sx={{ fontWeight: 600, textAlign: "right" }}>
                     {deleteTarget.firstName} {deleteTarget.lastName}
@@ -939,7 +893,7 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
                 <Divider flexItem />
                 <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
                   <Typography variant="caption" color="text.secondary">
-                    Email
+                    {t("dialogs.email")}
                   </Typography>
                   <Typography variant="body2" sx={{ fontWeight: 600, textAlign: "right", wordBreak: "break-all" }}>
                     {deleteTarget.email}
@@ -948,7 +902,7 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
                 <Divider flexItem />
                 <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
                   <Typography variant="caption" color="text.secondary">
-                    Role
+                    {t("details.role")}
                   </Typography>
                   <Typography variant="body2" sx={{ fontWeight: 600, textAlign: "right", textTransform: "capitalize" }}>
                     {deleteTarget.roles.join(", ") || "—"}
@@ -959,13 +913,13 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
           )}
 
           <Alert severity="warning" icon={<WarningAmberIcon />} sx={{ mt: 2 }}>
-            This action permanently deletes the user and cannot be undone.
+            {t("dialogs.deleteWarningText")}
           </Alert>
         </DialogContent>
 
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={closeDeleteDialog} disabled={deleting} color="inherit">
-            Cancel
+            {t("details.cancel")}
           </Button>
           <Button
             onClick={() => {
@@ -976,12 +930,11 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
             color="error"
             startIcon={deleting ? <CircularProgress size={16} color="inherit" /> : <DeleteOutlinedIcon />}
           >
-            {deleting ? "Deleting..." : "Delete Permanently"}
+            {deleting ? t("dialogs.deleting") : t("dialogs.deleteConfirmBtn")}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Toast */}
       <Snackbar
         open={toast.open}
         autoHideDuration={6000}

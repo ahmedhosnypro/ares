@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Box, CircularProgress, Alert, Button } from "@mui/material";
+import { useTranslations } from "next-intl";
 import { useRouter } from "@/shared/i18n/routing";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { getInspectorDetails, updateInspectorStatus, type InspectorDetails } from "@/api-clients/inspectors/inspectors";
@@ -14,6 +15,7 @@ interface Props {
 
 export default function InspectorDetailsClient({ inspectorId }: Props) {
   const router = useRouter();
+  const t = useTranslations("dashboardAdmin.users");
   const [details, setDetails] = useState<InspectorDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,11 +28,11 @@ export default function InspectorDetailsClient({ inspectorId }: Props) {
       setDetails(data);
     } catch (err) {
       logger.error("Failed to load inspector details", err);
-      setError("Failed to load inspector details.");
+      setError(t("details.loadingUser"));
     } finally {
       setLoading(false);
     }
-  }, [inspectorId]);
+  }, [inspectorId, t]);
 
   useEffect(() => {
     void fetchData();
@@ -65,7 +67,7 @@ export default function InspectorDetailsClient({ inspectorId }: Props) {
   if (error || !details) {
     return (
       <Box sx={{ maxWidth: 900, mx: "auto", p: 4 }}>
-        <Alert severity="error">{error || "Inspector not found"}</Alert>
+        <Alert severity="error">{error || t("details.userNotFound")}</Alert>
         <Button
           startIcon={<ArrowBackIcon />}
           sx={{ mt: 2 }}
@@ -73,7 +75,7 @@ export default function InspectorDetailsClient({ inspectorId }: Props) {
             router.push("/admin/users?tab=inspectors");
           }}
         >
-          Back to Inspectors
+          {t("details.back")}
         </Button>
       </Box>
     );

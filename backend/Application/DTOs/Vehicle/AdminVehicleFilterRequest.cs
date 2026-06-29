@@ -10,5 +10,6 @@ public record AdminVehicleFilterRequest(
     string? Keyword,
     string? Status = null,
     string? Transmission = null,
-    string? SortBy = null
+    string? SortBy = null,
+    Guid? CategoryId = null
 );

@@ -1,6 +1,7 @@
 import { Box, Typography, Container, IconButton, Stack } from "@mui/material";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { Link } from "@/shared/i18n/routing";
 import CreateVehicleClient from "./CreateVehicleClient";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
@@ -42,7 +43,11 @@ async function fetchLocations(): Promise<readonly BookingLocationOption[]> {
 }
 
 export default async function CreateVehiclePage() {
-  const [session, locations] = await Promise.all([getServerSession(authOptions), fetchLocations()]);
+  const [session, locations, t] = await Promise.all([
+    getServerSession(authOptions),
+    fetchLocations(),
+    getTranslations("dashboardAdmin.vehicles"),
+  ]);
 
   const emptyVehicle: VehicleDetailsViewModel = {
     vehicleId: "",
@@ -84,7 +89,7 @@ export default async function CreateVehiclePage() {
             </IconButton>
           </Link>
           <Typography variant="h5" sx={{ fontWeight: 700 }}>
-            Create New Vehicle
+            {t("createTitle")}
           </Typography>
         </Stack>
       </Container>

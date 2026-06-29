@@ -1,0 +1,71 @@
+export type AdminSettingsLabels = {
+  readonly title: string;
+  readonly subtitle: string;
+  readonly tabs: {
+    readonly general: string;
+    readonly commission: string;
+    readonly terms: string;
+    readonly about: string;
+  };
+  readonly general: {
+    readonly title: string;
+    readonly subtitle: string;
+    readonly languageLabel: string;
+    readonly currencyLabel: string;
+    readonly saveSettings: string;
+    readonly success: string;
+    readonly error: string;
+    readonly unauthorized: string;
+  };
+  readonly commission: {
+    readonly title: string;
+    readonly subtitle: string;
+    readonly rateLabel: string;
+    readonly taxLabel: string;
+    readonly rateDesc: string;
+    readonly updating: string;
+    readonly updateRates: string;
+    readonly success: string;
+    readonly error: string;
+    readonly unauthorized: string;
+  };
+  readonly terms: {
+    readonly title: string;
+    readonly subtitle: string;
+    readonly addSection: string;
+    readonly noSections: string;
+    readonly editSection: string;
+    readonly newSection: string;
+    readonly titleLabel: string;
+    readonly contentLabel: string;
+    readonly orderLabel: string;
+    readonly deleteTitle: string;
+    readonly deleteConfirmDesc: string;
+    readonly sectionUpdated: string;
+    readonly sectionCreated: string;
+    readonly sectionDeleted: string;
+    readonly saveError: string;
+    readonly deleteError: string;
+    readonly unauthorized: string;
+  };
+  readonly about: {
+    readonly title: string;
+    readonly subtitle: string;
+    readonly addSection: string;
+    readonly noSections: string;
+    readonly editSection: string;
+    readonly newSection: string;
+    readonly titleLabel: string;
+    readonly contentLabel: string;
+    readonly orderLabel: string;
+    readonly typeLabel: string;
+    readonly deleteTitle: string;
+    readonly deleteConfirmDesc: string;
+    readonly sectionUpdated: string;
+    readonly sectionCreated: string;
+    readonly sectionDeleted: string;
+    readonly saveError: string;
+    readonly deleteError: string;
+    readonly unauthorized: string;
+  };
+};

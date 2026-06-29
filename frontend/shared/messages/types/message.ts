@@ -20,11 +20,11 @@ import type { HeaderLabels } from "./header";
 import type { AdminSidebarLabels } from "./dashboard/admin-sidebar";
 import type { DriverSidebarLabels } from "./dashboard/driver-sidebar";
 import type { SupplierSidebarLabels } from "./dashboard/supplier-sidebar";
-import type { InspectorInspectionsLabels } from "./dashboard/inspector/inspections";
-import type { InspectionDetailLabels } from "./dashboard/inspector/inspections/_id";
 import type { InspectorSidebarLabels } from "./dashboard/inspector-sidebar";
-import type { InspectorProfileLabels } from "./dashboard/inspector/profile";
 import type { InspectorHistoryLabels } from "./dashboard/inspector/history";
+import type { InspectorInspectionsLabels } from "./dashboard/inspector/inspections";
+import type { InspectorInspectionDetailLabels } from "./dashboard/inspector/inspection-detail";
+import type { InspectorProfileLabels } from "./dashboard/inspector/profile";
 import type { DashboardLabels } from "./dashboard/shell";
 import type { DriverCompleteProfileLabels } from "./dashboard/driver-complete-profile";
 import type { DriverDashboardLabels } from "./dashboard/driver-dashboard";
@@ -58,6 +58,15 @@ import type { CategoriesLabels } from "./dashboard/admin/categories";
 import type { CategoryDetailsLabels } from "./dashboard/admin/categories/detail";
 import type { CountriesLabels } from "./dashboard/admin/countries";
 import type { CreateCountryLabels } from "./dashboard/admin/countries/create";
+import type { AdminLocationsEditLabels } from "./dashboard/admin/locations/edit";
+import type { AdminNotificationsLabels } from "./dashboard/admin/notifications";
+import type { AdminSchedulerLabels } from "./dashboard/admin/scheduler";
+import type { AdminSettingsLabels } from "./dashboard/admin/settings";
+import type { AdminUsersLabels } from "./dashboard/admin/users";
+import type { AdminDriversLabels } from "./dashboard/admin/drivers";
+import type { AdminInspectorsLabels } from "./dashboard/admin/inspectors";
+import type { AdminVehiclesLabels } from "./dashboard/admin/vehicles";
+import type { AdminVerificationsLabels } from "./dashboard/admin/verifications";
 
 export type {
   AuthLabels,
@@ -82,11 +91,11 @@ export type {
   AdminSidebarLabels,
   DriverSidebarLabels,
   SupplierSidebarLabels,
-  InspectorHistoryLabels,
-  InspectorProfileLabels,
   InspectorSidebarLabels,
+  InspectorHistoryLabels,
   InspectorInspectionsLabels,
-  InspectionDetailLabels,
+  InspectorInspectionDetailLabels,
+  InspectorProfileLabels,
   DashboardLabels,
   LogoutDialogLabels,
   DeleteNotificationDialogLabels,
@@ -94,12 +103,12 @@ export type {
   AdminSecurityLabels,
   AdminVehiclesMgmtLabels,
   BankDetailsLabels,
-  DriverTripsLabels,
   DriverCompleteProfileLabels,
   DriverDashboardLabels,
   DriverEarningsLabels,
   DriverNotificationsLabels,
   DriverProfileLabels,
+  DriverTripsLabels,
   SupplierNotificationsLabels,
   SupplierDashboardLabels,
   SupplierEarningsLabels,
@@ -109,17 +118,26 @@ export type {
   SupplierVehiclesLabels,
   CreateSupplierVehicleLabels,
   SupplierVehicleDetailLabels,
+  AboutLabels,
+  PrivacyLabels,
+  TermsLabels,
+  AdminBookingsLabels,
+  CreateBookingLabels,
   BookingDetailsLabels,
   EditBookingLabels,
   CategoriesLabels,
   CategoryDetailsLabels,
   CountriesLabels,
   CreateCountryLabels,
-  AboutLabels,
-  PrivacyLabels,
-  TermsLabels,
-  AdminBookingsLabels,
-  CreateBookingLabels,
+  AdminLocationsEditLabels,
+  AdminNotificationsLabels,
+  AdminSchedulerLabels,
+  AdminSettingsLabels,
+  AdminUsersLabels,
+  AdminDriversLabels,
+  AdminInspectorsLabels,
+  AdminVehiclesLabels,
+  AdminVerificationsLabels,
 };
 
 export type AuthPagesSchema = {
@@ -149,10 +167,6 @@ export type DashboardSchema = {
   readonly driverSidebar: DriverSidebarLabels;
   readonly supplierSidebar: SupplierSidebarLabels;
   readonly inspectorSidebar: InspectorSidebarLabels;
-  readonly inspectorInspections: InspectorInspectionsLabels;
-  readonly inspectionDetail: InspectionDetailLabels;
-  readonly inspectorProfile: InspectorProfileLabels;
-  readonly inspectorHistory: InspectorHistoryLabels;
   readonly driverCompleteProfile: DriverCompleteProfileLabels;
   readonly driverDashboard: DriverDashboardLabels;
   readonly driverEarnings: DriverEarningsLabels;
@@ -188,6 +202,22 @@ export type DashboardAdminSchema = {
   readonly categoryDetails: CategoryDetailsLabels;
   readonly countries: CountriesLabels;
   readonly createCountry: CreateCountryLabels;
+  readonly locationsEdit: AdminLocationsEditLabels;
+  readonly notifications: AdminNotificationsLabels;
+  readonly scheduler: AdminSchedulerLabels;
+  readonly settings: AdminSettingsLabels;
+  readonly users: AdminUsersLabels;
+  readonly drivers: AdminDriversLabels;
+  readonly inspectors: AdminInspectorsLabels;
+  readonly vehicles: AdminVehiclesLabels;
+  readonly verifications: AdminVerificationsLabels;
+};
+
+export type DashboardInspectorSchema = {
+  readonly history: InspectorHistoryLabels;
+  readonly inspections: InspectorInspectionsLabels;
+  readonly inspectionDetail: InspectorInspectionDetailLabels;
+  readonly profile: InspectorProfileLabels;
 };
 
 export type PublicPagesSchema = {
@@ -205,6 +235,7 @@ export type MessageSchema = {
   readonly header: HeaderLabels;
   readonly dashboard: DashboardSchema;
   readonly dashboardAdmin: DashboardAdminSchema;
+  readonly dashboardInspector: DashboardInspectorSchema;
   readonly deleteNotificationDialog: DeleteNotificationDialogLabels;
   readonly publicPages: PublicPagesSchema;
 };

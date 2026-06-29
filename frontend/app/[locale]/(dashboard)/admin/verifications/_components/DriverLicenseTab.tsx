@@ -60,6 +60,7 @@ import {
   rejectDriverLicense,
 } from "@/api-clients/admin-driver-licenses/admin-driver-licenses";
 import { logger } from "@/utils/logger";
+import { useTranslations } from "next-intl";
 
 const PAGE_SIZE = 10;
 
@@ -89,9 +90,18 @@ function resolveImageSrc(serverRelativeUrl: string | null): string | null {
   return `${base}${serverRelativeUrl}`;
 }
 
+const getStatusLabel = (status: string, t: (key: string) => string) => {
+  const s = status.toLowerCase();
+  if (s === "pending") return t("filters.pending");
+  if (s === "approved" || s === "verified") return t("filters.approved");
+  if (s === "rejected") return t("filters.rejected");
+  return status;
+};
+
 export default function DriverLicenseTab() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const t = useTranslations("dashboardAdmin.verifications");
 
   const [licenses, setLicenses] = useState<AdminDriverLicenseDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -123,11 +133,11 @@ export default function DriverLicenseTab() {
       setTotalCount(data.totalCount || 0);
     } catch (err) {
       logger.error("Failed to fetch driver licenses", err);
-      setToast({ open: true, message: "Failed to fetch driver licenses", severity: "error" });
+      setToast({ open: true, message: t("alerts.fetchLicenseError"), severity: "error" });
     } finally {
       setLoading(false);
     }
-  }, [page, statusFilter]);
+  }, [page, statusFilter, t]);
 
   useEffect(() => {
     void fetchLicenses();
@@ -136,11 +146,11 @@ export default function DriverLicenseTab() {
   const handleApprove = async (id: string) => {
     try {
       await approveDriverLicense(id);
-      setToast({ open: true, message: "Driver license approved successfully", severity: "success" });
+      setToast({ open: true, message: t("alerts.approveLicenseSuccess"), severity: "success" });
       void fetchLicenses();
     } catch (err) {
       logger.error("Failed to approve driver license", err);
-      setToast({ open: true, message: "Failed to approve driver license", severity: "error" });
+      setToast({ open: true, message: t("alerts.approveLicenseError"), severity: "error" });
     }
   };
 
@@ -150,13 +160,13 @@ export default function DriverLicenseTab() {
     setRejectLoading(true);
     try {
       await rejectDriverLicense(selectedLicense.id, rejectReason.trim());
-      setToast({ open: true, message: "Driver license rejected successfully", severity: "success" });
+      setToast({ open: true, message: t("alerts.rejectLicenseSuccess"), severity: "success" });
       setRejectModalOpen(false);
       setRejectReason("");
       void fetchLicenses();
     } catch (err) {
       logger.error("Failed to reject driver license", err);
-      setToast({ open: true, message: "Failed to reject driver license", severity: "error" });
+      setToast({ open: true, message: t("alerts.rejectLicenseError"), severity: "error" });
     } finally {
       setRejectLoading(false);
     }
@@ -188,7 +198,7 @@ export default function DriverLicenseTab() {
       return (
         <Paper sx={{ borderRadius: 2, p: 4, textAlign: "center", opacity: 0.6 }}>
           <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 700 }}>
-            No driver license requests found
+            {t("table.emptyLicense")}
           </Typography>
         </Paper>
       );
@@ -244,7 +254,7 @@ export default function DriverLicenseTab() {
                   </Stack>
 
                   <Chip
-                    label={status}
+                    label={getStatusLabel(status, t)}
                     size="small"
                     sx={{
                       ml: 1,
@@ -259,13 +269,13 @@ export default function DriverLicenseTab() {
                 </Stack>
 
                 <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
-                  License #: <strong>{l.licenseNumber}</strong>
+                  {t("table.licenseNumber")}: <strong>{l.licenseNumber}</strong>
                 </Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
-                  Expiry: <strong>{formatDate(l.licenseExpiryDate)}</strong>
+                  {t("table.expiryDate")}: <strong>{formatDate(l.licenseExpiryDate)}</strong>
                 </Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
-                  Submitted: {formatDate(l.submittedAt)}
+                  {t("table.submittedDate")}: {formatDate(l.submittedAt)}
                 </Typography>
 
                 <Stack direction="row" spacing={1}>
@@ -276,7 +286,7 @@ export default function DriverLicenseTab() {
                       openViewModal(l);
                     }}
                   >
-                    View
+                    {t("table.viewTooltip").split(" ")[0]}
                   </Button>
                   {pending && (
                     <>
@@ -287,7 +297,7 @@ export default function DriverLicenseTab() {
                         onClick={() => void handleApprove(l.id)}
                         sx={{ color: "common.white" }}
                       >
-                        Approve
+                        {t("viewModal.approve")}
                       </Button>
                       <Button
                         size="small"
@@ -297,7 +307,7 @@ export default function DriverLicenseTab() {
                           openRejectModal(l);
                         }}
                       >
-                        Reject
+                        {t("viewModal.reject")}
                       </Button>
                     </>
                   )}
@@ -325,13 +335,13 @@ export default function DriverLicenseTab() {
           <Table sx={{ minWidth: 900 }}>
             <TableHead>
               <TableRow>
-                <TableCell>User Name</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>License Number</TableCell>
-                <TableCell>Expiry Date</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Submitted Date</TableCell>
-                <TableCell align="right">Actions</TableCell>
+                <TableCell>{t("table.userName")}</TableCell>
+                <TableCell>{t("table.email")}</TableCell>
+                <TableCell>{t("table.licenseNumber")}</TableCell>
+                <TableCell>{t("table.expiryDate")}</TableCell>
+                <TableCell>{t("table.status")}</TableCell>
+                <TableCell>{t("table.submittedDate")}</TableCell>
+                <TableCell align="right">{t("table.actions")}</TableCell>
               </TableRow>
             </TableHead>
 
@@ -385,7 +395,7 @@ export default function DriverLicenseTab() {
 
                     <TableCell>
                       <Chip
-                        label={status}
+                        label={getStatusLabel(status, t)}
                         size="small"
                         sx={{
                           textTransform: "capitalize",
@@ -403,7 +413,7 @@ export default function DriverLicenseTab() {
 
                     <TableCell align="right">
                       <Stack direction="row" spacing={0.5} sx={{ justifyContent: "flex-end" }}>
-                        <Tooltip title="View Details">
+                        <Tooltip title={t("table.viewTooltip")}>
                           <IconButton
                             onClick={() => {
                               openViewModal(l);
@@ -416,12 +426,12 @@ export default function DriverLicenseTab() {
 
                         {pending && (
                           <>
-                            <Tooltip title="Approve">
+                            <Tooltip title={t("table.approveTooltip")}>
                               <IconButton onClick={() => void handleApprove(l.id)} size="small" color="success">
                                 <CheckCircleIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
-                            <Tooltip title="Reject">
+                            <Tooltip title={t("table.rejectTooltip")}>
                               <IconButton
                                 onClick={() => {
                                   openRejectModal(l);
@@ -447,7 +457,9 @@ export default function DriverLicenseTab() {
           direction={{ xs: "column", sm: "row" }}
           sx={{ gap: 1, justifyContent: "space-between", alignItems: "center", p: 2 }}
         >
-          <Typography variant="caption">Total Records: {totalCount}</Typography>
+          <Typography variant="caption">
+            {t("table.totalRecords")}: {totalCount}
+          </Typography>
           <Pagination
             count={totalPages}
             page={page}
@@ -476,10 +488,10 @@ export default function DriverLicenseTab() {
             }}
             displayEmpty
           >
-            <MenuItem value="all">All</MenuItem>
-            <MenuItem value="Pending">Pending</MenuItem>
-            <MenuItem value="Verified">Verified</MenuItem>
-            <MenuItem value="Rejected">Rejected</MenuItem>
+            <MenuItem value="all">{t("filters.all")}</MenuItem>
+            <MenuItem value="Pending">{t("filters.pending")}</MenuItem>
+            <MenuItem value="Verified">{t("filters.verified")}</MenuItem>
+            <MenuItem value="Rejected">{t("filters.rejected")}</MenuItem>
           </Select>
         </FormControl>
       </Stack>
@@ -496,13 +508,13 @@ export default function DriverLicenseTab() {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle sx={{ fontWeight: 700 }}>Driver License Details</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>{t("viewModal.licenseTitle")}</DialogTitle>
         <DialogContent dividers>
           {selectedLicense && (
             <Stack spacing={3}>
               <Box>
                 <Typography variant="subtitle2" color="text.secondary">
-                  User
+                  {t("viewModal.userLabel")}
                 </Typography>
                 <Typography variant="body1" sx={{ fontWeight: 600 }}>
                   {selectedLicense.userFirstName} {selectedLicense.userLastName}
@@ -512,7 +524,7 @@ export default function DriverLicenseTab() {
 
               <Box>
                 <Typography variant="subtitle2" color="text.secondary">
-                  License Number
+                  {t("viewModal.licenseNumLabel")}
                 </Typography>
                 <Typography variant="body1" sx={{ fontWeight: 600 }}>
                   {selectedLicense.licenseNumber}
@@ -521,7 +533,7 @@ export default function DriverLicenseTab() {
 
               <Box>
                 <Typography variant="subtitle2" color="text.secondary">
-                  Expiry Date
+                  {t("viewModal.expiryDateLabel")}
                 </Typography>
                 <Typography variant="body1" sx={{ fontWeight: 600 }}>
                   {formatDate(selectedLicense.licenseExpiryDate)}
@@ -530,10 +542,10 @@ export default function DriverLicenseTab() {
 
               <Box>
                 <Typography variant="subtitle2" color="text.secondary">
-                  Status
+                  {t("viewModal.statusLabel")}
                 </Typography>
                 <Chip
-                  label={selectedLicense.status}
+                  label={getStatusLabel(selectedLicense.status, t)}
                   size="small"
                   sx={{
                     textTransform: "capitalize",
@@ -548,7 +560,7 @@ export default function DriverLicenseTab() {
               {selectedLicense.status.toLowerCase() === "rejected" && selectedLicense.rejectionReason && (
                 <Box>
                   <Typography variant="subtitle2" color="error.main">
-                    Rejection Reason
+                    {t("viewModal.rejectReasonLabel")}
                   </Typography>
                   <Typography variant="body1">{selectedLicense.rejectionReason}</Typography>
                 </Box>
@@ -556,7 +568,7 @@ export default function DriverLicenseTab() {
 
               <Box>
                 <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                  License Image
+                  {t("viewModal.licenseImage")}
                 </Typography>
                 {selectedImageSrc ? (
                   <Box
@@ -567,7 +579,7 @@ export default function DriverLicenseTab() {
                   />
                 ) : (
                   <Typography variant="body2" color="text.disabled">
-                    No image provided
+                    {t("viewModal.noImage")}
                   </Typography>
                 )}
               </Box>
@@ -580,7 +592,7 @@ export default function DriverLicenseTab() {
               setViewModalOpen(false);
             }}
           >
-            Close
+            {t("viewModal.close")}
           </Button>
           {selectedLicense?.status.toLowerCase() === "pending" && (
             <>
@@ -592,7 +604,7 @@ export default function DriverLicenseTab() {
                   openRejectModal(selectedLicense);
                 }}
               >
-                Reject
+                {t("viewModal.reject")}
               </Button>
               <Button
                 variant="contained"
@@ -603,7 +615,7 @@ export default function DriverLicenseTab() {
                   void handleApprove(selectedLicense.id);
                 }}
               >
-                Approve
+                {t("viewModal.approve")}
               </Button>
             </>
           )}
@@ -619,23 +631,23 @@ export default function DriverLicenseTab() {
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle sx={{ fontWeight: 700 }}>Reject Driver License</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>{t("rejectModal.licenseTitle")}</DialogTitle>
         <DialogContent dividers>
           <Typography variant="body2" sx={{ mb: 2 }}>
-            Please provide a reason for rejecting this driver license. This will be visible to the user.
+            {t("rejectModal.description")}
           </Typography>
           <TextField
             fullWidth
             multiline
             rows={3}
-            label="Rejection Reason"
+            label={t("rejectModal.reasonLabel")}
             value={rejectReason}
             onChange={e => {
               setRejectReason(e.target.value);
             }}
             required
             error={rejectReason.trim() === ""}
-            helperText={rejectReason.trim() === "" ? "Reason is required" : ""}
+            helperText={rejectReason.trim() === "" ? t("rejectModal.reasonRequired") : ""}
           />
         </DialogContent>
         <DialogActions>
@@ -645,7 +657,7 @@ export default function DriverLicenseTab() {
             }}
             disabled={rejectLoading}
           >
-            Cancel
+            {t("rejectModal.cancel")}
           </Button>
           <Button
             variant="contained"
@@ -653,7 +665,7 @@ export default function DriverLicenseTab() {
             onClick={() => void handleReject()}
             disabled={rejectLoading || rejectReason.trim() === ""}
           >
-            {rejectLoading ? "Rejecting..." : "Confirm Reject"}
+            {rejectLoading ? t("rejectModal.rejecting") : t("rejectModal.confirm")}
           </Button>
         </DialogActions>
       </Dialog>

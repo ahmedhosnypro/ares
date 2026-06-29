@@ -44,10 +44,14 @@ import {
   SearchRounded as SearchIcon,
   CheckCircleOutlineRounded as AvailableIcon,
   BuildOutlined as MaintenanceIcon,
+  TrendingUp as TrendingUpIcon,
+  TrendingDown as TrendingDownIcon,
 } from "@mui/icons-material";
 import { useRouter } from "@/shared/i18n/routing";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import {
   useVehicles,
   useAdminVehicleStats,
@@ -63,29 +67,12 @@ import { getCategories, bulkAssignVehicles, type Category } from "@/api-clients/
 import VisibilityOutlinedIcon from "@mui/icons-material/LaunchOutlined";
 import { toImageUrl } from "@/utils/image-url";
 import { logger } from "@/utils/logger";
-// eslint-disable-next-line sonarjs/deprecation
-import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
-import { StatCard } from "@/app/[locale]/(dashboard)/_components/VehicleStats";
-
-// ── Types ──
-interface VehicleStatusChartDataItem {
-  readonly name: string;
-  readonly value: number;
-  readonly percentage: number;
-  readonly color: string;
-  readonly isEmpty: boolean;
-}
 
 interface FleetOverviewProps {
-  /** Total vehicles in the fleet */
   readonly total: number;
-  /** Currently available vehicles */
   readonly availableCount: number;
-  /** Vehicles currently on rental / fully booked */
   readonly rentalCount: number;
-  /** Vehicles in maintenance */
   readonly maintenanceCount: number;
-  /** Optional trend percentages (positive = up, negative = down) */
   readonly trends?: {
     totalAssets?: number;
     available?: number;
@@ -93,90 +80,179 @@ interface FleetOverviewProps {
   };
 }
 
-// ── Helper for dynamic colors and labels ──
-const getStatusThemeColor = (status: VehicleStatus, theme: Theme) => {
-  switch (status) {
-    case VehicleStatus.Available:
-      return theme.palette.success.main;
-    case VehicleStatus.FullyBooked:
-      return theme.palette.primary.main;
-    case VehicleStatus.Maintenance:
-      return theme.palette.warning.main;
-    case VehicleStatus.Retired:
-      return theme.palette.text.disabled;
-    case VehicleStatus.ComingSoon:
-      return theme.palette.secondary.main;
-    case VehicleStatus.Unavailable:
-      return theme.palette.error.main;
-    default:
-      return theme.palette.grey[500];
-  }
-};
-
-const getStatusLabel = (status: VehicleStatus) => {
-  switch (status) {
-    case VehicleStatus.FullyBooked:
-      return "Booked";
-    case VehicleStatus.ComingSoon:
-      return "Pending";
-    default:
-      return status;
-  }
-};
-
-// ── Recharts Donut Chart ──
-function VehicleStatusDonut({
-  data,
-  total,
-}: {
-  readonly data: readonly VehicleStatusChartDataItem[];
-  readonly total: number;
-}) {
+function TrendBadge({ value }: Readonly<{ value?: number }>): JSX.Element | null {
+  if (value === undefined) return null;
+  const isUp = value >= 0;
   return (
-    <Box sx={{ position: "relative", width: 150, height: 150, flexShrink: 0 }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie
-            data={data}
-            cx="50%"
-            cy="50%"
-            innerRadius={55}
-            outerRadius={70}
-            paddingAngle={2}
-            dataKey="value"
-            stroke="none"
-          >
-            {data.map((entry, index) => (
-              // eslint-disable-next-line @typescript-eslint/no-deprecated, sonarjs/deprecation
-              <Cell key={`cell-${index}`} fill={entry.color} opacity={entry.isEmpty ? 0.3 : 1} />
-            ))}
-          </Pie>
-          <RechartsTooltip
-            content={({ active, payload }) => {
-              if (active && payload.length > 0) {
-                const itemData = payload[0].payload as VehicleStatusChartDataItem;
-                return (
-                  <Paper
-                    elevation={3}
-                    sx={{ p: 1.5, borderRadius: 2, display: "flex", flexDirection: "column", gap: 0.5 }}
-                  >
-                    <Typography variant="caption" sx={{ fontWeight: 700, color: itemData.color }}>
-                      {itemData.name}
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      Count: {itemData.value}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {itemData.percentage}%
-                    </Typography>
-                  </Paper>
-                );
-              }
-              return null;
-            }}
-          />
-        </PieChart>
-      </ResponsiveContainer>
+    <Stack direction="row" spacing={0.3} sx={{ alignItems: "center" }}>
+      {isUp ? (
+        <TrendingUpIcon sx={{ fontSize: 13, color: "success.main" }} />
+      ) : (
+        <TrendingDownIcon sx={{ fontSize: 13, color: "error.main" }} />
+      )}
+      <Typography
+        variant="caption"
+        sx={{
+          fontWeight: 700,
+          fontSize: 11,
+          color: isUp ? "success.main" : "error.main",
+        }}
+      >
+        {isUp ? "+" : ""}
+        {value}%
+      </Typography>
+    </Stack>
+  );
+}
+
+function StatCard({
+  icon,
+  label,
+  value,
+  trend,
+  iconColor,
+}: Readonly<{
+  icon: JSX.Element;
+  label: string;
+  value: number;
+  trend?: number;
+  iconColor: string;
+}>): JSX.Element {
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        p: { xs: 2, sm: 2.5 },
+        borderRadius: 2,
+        border: "1px solid",
+        borderColor: "divider",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        gap: 0.5,
+      }}
+    >
+      <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "flex-start" }}>
+        <Box
+          sx={{
+            width: 34,
+            height: 34,
+            borderRadius: 2,
+            bgcolor: alpha(iconColor, 0.12),
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {icon}
+        </Box>
+        <TrendBadge value={trend} />
+      </Stack>
+
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ fontWeight: 600, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", mt: 1 }}
+      >
+        {label}
+      </Typography>
+      <Typography sx={{ fontWeight: 800, fontSize: { xs: 26, sm: 32 }, lineHeight: 1.1 }}>
+        {value.toLocaleString()}
+      </Typography>
+    </Paper>
+  );
+}
+
+function LegendItem({ color, label, pct }: Readonly<{ color: string; label: string; pct: number }>): JSX.Element {
+  return (
+    <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}>
+      <Stack direction="row" spacing={0.8} sx={{ alignItems: "center" }}>
+        <Box
+          sx={{
+            width: 9,
+            height: 9,
+            borderRadius: "50%",
+            bgcolor: color,
+            flexShrink: 0,
+          }}
+        />
+        <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
+          {label}
+        </Typography>
+      </Stack>
+      <Typography variant="caption" sx={{ fontWeight: 700, fontSize: 12, minWidth: 32, textAlign: "right" }}>
+        {pct}%
+      </Typography>
+    </Stack>
+  );
+}
+
+function DonutChart({
+  available,
+  booked,
+  maintenance,
+  unavailable,
+  total,
+}: Readonly<{
+  available: number;
+  booked: number;
+  maintenance: number;
+  unavailable: number;
+  total: number;
+}>): JSX.Element {
+  const theme = useTheme();
+
+  const safeTotal = total || 1;
+  const availPct = (available / safeTotal) * 100;
+  const bookedPct = (booked / safeTotal) * 100;
+  const maintenancePct = (maintenance / safeTotal) * 100;
+  const unavailablePct = (unavailable / safeTotal) * 100;
+
+  const radius = 42;
+  const circumference = 2 * Math.PI * radius;
+
+  interface Segment {
+    pct: number;
+    color: string;
+    offset: number;
+  }
+
+  const segments: Segment[] = useMemo(() => {
+    const segmentsData: { pct: number; color: string }[] = [
+      { pct: availPct, color: theme.palette.success.main },
+      { pct: bookedPct, color: theme.palette.primary.main },
+      { pct: maintenancePct, color: theme.palette.warning.main },
+      { pct: unavailablePct, color: theme.palette.info.main },
+    ];
+    let cumulative = 0;
+    return segmentsData.map(s => {
+      const offset = (cumulative / 100) * circumference;
+      cumulative += s.pct;
+      return { ...s, offset };
+    });
+  }, [availPct, bookedPct, maintenancePct, unavailablePct, circumference, theme]);
+
+  return (
+    <Box sx={{ position: "relative", width: 110, height: 110, flexShrink: 0 }}>
+      <svg viewBox="0 0 110 110" width={110} height={110}>
+        <circle cx="55" cy="55" r={radius} fill="none" stroke={theme.palette.divider} strokeWidth="10" />
+        <g transform="rotate(-90 55 55)">
+          {segments.map((seg, i) => (
+            <circle
+              key={i}
+              cx="55"
+              cy="55"
+              r={radius}
+              fill="none"
+              stroke={seg.color}
+              strokeWidth="10"
+              strokeDasharray={`${(seg.pct / 100) * circumference} ${circumference}`}
+              strokeDashoffset={-seg.offset}
+              strokeLinecap="butt"
+            />
+          ))}
+        </g>
+      </svg>
       <Box
         sx={{
           position: "absolute",
@@ -185,50 +261,14 @@ function VehicleStatusDonut({
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          pointerEvents: "none",
         }}
       >
-        <Typography sx={{ fontWeight: 800, fontSize: 24, lineHeight: 1 }}>{total}</Typography>
-        <Typography variant="caption" color="text.secondary" sx={{ fontSize: 10, mt: 0.5, fontWeight: 700 }}>
-          TOTAL
-        </Typography>
+        <Typography sx={{ fontWeight: 800, fontSize: 22, lineHeight: 1 }}>{total}</Typography>
       </Box>
     </Box>
   );
 }
 
-// ── Legend item ──
-function LegendItem({
-  color,
-  label,
-  count,
-  isEmpty,
-}: Readonly<{ color: string; label: string; count: number; isEmpty: boolean }>): JSX.Element {
-  return (
-    <Stack
-      direction="row"
-      spacing={1}
-      sx={{ alignItems: "center", justifyContent: "space-between", opacity: isEmpty ? 0.6 : 1 }}
-    >
-      <Stack direction="row" spacing={0.8} sx={{ alignItems: "center" }}>
-        <Box
-          sx={{
-            width: 10,
-            height: 10,
-            borderRadius: "50%",
-            bgcolor: color,
-            flexShrink: 0,
-          }}
-        />
-        <Typography variant="caption" color="text.secondary" sx={{ fontSize: 13, fontWeight: isEmpty ? 500 : 600 }}>
-          {label} ({count})
-        </Typography>
-      </Stack>
-    </Stack>
-  );
-}
-
-// ── FLEET OVERVIEW COMPONENT ──
 function FleetOverview({
   total,
   availableCount,
@@ -237,34 +277,18 @@ function FleetOverview({
   trends,
 }: FleetOverviewProps): JSX.Element {
   const theme = useTheme();
+  const t = useTranslations("dashboardAdmin.vehicles");
+
+  const unavailableCount = Math.max(0, total - (availableCount + rentalCount + maintenanceCount));
   const safeTotal = total || 1;
-
-  // Map known counts from the API. For others, default to 0 as required.
-  const countMap: Record<VehicleStatus, number> = {
-    [VehicleStatus.Available]: availableCount,
-    [VehicleStatus.FullyBooked]: rentalCount,
-    [VehicleStatus.Maintenance]: maintenanceCount,
-    [VehicleStatus.Unavailable]: 0,
-    [VehicleStatus.ComingSoon]: 0,
-    [VehicleStatus.Retired]: 0,
-  };
-
-  const chartData = Object.values(VehicleStatus).map(status => {
-    const count = countMap[status] || 0;
-    const pct = Math.round((count / safeTotal) * 100);
-    return {
-      name: getStatusLabel(status),
-      value: count,
-      percentage: pct,
-      color: getStatusThemeColor(status, theme),
-      isEmpty: count === 0,
-    };
-  });
+  const availPct = Math.round((availableCount / safeTotal) * 100);
+  const bookedPct = Math.round((rentalCount / safeTotal) * 100);
+  const maintenancePct = Math.round((maintenanceCount / safeTotal) * 100);
+  const unavailablePct = Math.round((unavailableCount / safeTotal) * 100);
 
   return (
     <Grid container spacing={2} sx={{ mb: 3 }}>
-      {/* Donut chart card */}
-      <Grid size={{ xs: 12, lg: 5 }}>
+      <Grid size={{ xs: 12, sm: 12, md: 4.5 }}>
         <Paper
           elevation={0}
           sx={{
@@ -278,88 +302,60 @@ function FleetOverview({
             justifyContent: "center",
           }}
         >
-          <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700 }}>
-            Vehicle Status Overview
-          </Typography>
-          <Stack
-            direction="row"
-            spacing={{ xs: 2, sm: 4 }}
-            sx={{ alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}
-          >
-            <VehicleStatusDonut data={chartData} total={total} />
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: x => x.spacing(1, 2) }}>
-              {chartData.map(item => (
-                <LegendItem
-                  key={item.name}
-                  color={item.color}
-                  label={item.name}
-                  count={item.value}
-                  isEmpty={item.isEmpty}
-                />
-              ))}
-            </Box>
+          <Stack direction="row" spacing={2.5} sx={{ alignItems: "center" }}>
+            <DonutChart
+              available={availableCount}
+              booked={rentalCount}
+              maintenance={maintenanceCount}
+              unavailable={unavailableCount}
+              total={total}
+            />
+            <Stack spacing={0.5} sx={{ flex: 1 }}>
+              <LegendItem color={theme.palette.success.main} label={t("statusLabels.available")} pct={availPct} />
+              <LegendItem color={theme.palette.primary.main} label={t("statusLabels.booked")} pct={bookedPct} />
+              <LegendItem
+                color={theme.palette.warning.main}
+                label={t("statusLabels.maintenance")}
+                pct={maintenancePct}
+              />
+              <LegendItem color={theme.palette.info.main} label={t("statusLabels.unavailable")} pct={unavailablePct} />
+            </Stack>
           </Stack>
         </Paper>
       </Grid>
 
-      {/* Stat Cards */}
-      <Grid size={{ xs: 12, lg: 7 }}>
-        <Grid container spacing={2} sx={{ height: "100%" }}>
-          {/* Total Assets */}
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <StatCard
-              icon={<CarIcon fontSize="small" />}
-              label="Total Assets"
-              value={total}
-              change={
-                trends?.totalAssets !== undefined
-                  ? `${trends.totalAssets > 0 ? "+" : ""}${trends.totalAssets}%`
-                  : undefined
-              }
-              isUp={trends?.totalAssets !== undefined ? trends.totalAssets >= 0 : undefined}
-              color="primary"
-            />
-          </Grid>
+      <Grid size={{ xs: 6, sm: 4, md: 2.5 }}>
+        <StatCard
+          icon={<CarIcon sx={{ fontSize: 18, color: theme.palette.primary.main }} />}
+          label={t("stats.totalAssets")}
+          value={total}
+          trend={trends?.totalAssets}
+          iconColor={theme.palette.primary.main}
+        />
+      </Grid>
 
-          {/* Available Now */}
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <StatCard
-              icon={<AvailableIcon fontSize="small" />}
-              label="Available Now"
-              value={availableCount}
-              change={
-                trends?.available !== undefined ? `${trends.available > 0 ? "+" : ""}${trends.available}%` : undefined
-              }
-              isUp={trends?.available !== undefined ? trends.available >= 0 : undefined}
-              color="success"
-            />
-          </Grid>
+      <Grid size={{ xs: 6, sm: 4, md: 2.5 }}>
+        <StatCard
+          icon={<AvailableIcon sx={{ fontSize: 18, color: theme.palette.success.main }} />}
+          label={t("stats.availableNow")}
+          value={availableCount}
+          trend={trends?.available}
+          iconColor={theme.palette.success.main}
+        />
+      </Grid>
 
-          {/* In Maintenance */}
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <StatCard
-              icon={<MaintenanceIcon fontSize="small" />}
-              label="In Maintenance"
-              value={maintenanceCount}
-              change={
-                trends?.maintenance !== undefined
-                  ? `${trends.maintenance > 0 ? "+" : ""}${trends.maintenance}%`
-                  : undefined
-              }
-              isUp={trends?.maintenance !== undefined ? trends.maintenance >= 0 : undefined}
-              color="warning"
-            />
-          </Grid>
-        </Grid>
+      <Grid size={{ xs: 6, sm: 4, md: 2.5 }}>
+        <StatCard
+          icon={<MaintenanceIcon sx={{ fontSize: 18, color: theme.palette.warning.main }} />}
+          label={t("stats.inMaintenance")}
+          value={maintenanceCount}
+          trend={trends?.maintenance}
+          iconColor={theme.palette.warning.main}
+        />
       </Grid>
     </Grid>
   );
 }
-
-// ── Static filter option lists. Defined as module-level constants so the
-//    dropdowns don't re-create their option arrays on every render and so
-//    the labels stay one source of truth between the filter UI and any
-//    future status-badge consumers.
 
 const STATUS_OPTIONS: readonly { value: VehicleStatusFilter; label: string }[] = [
   { value: "", label: "All statuses" },
@@ -382,13 +378,7 @@ const SORT_OPTIONS: readonly { value: VehicleSortBy; label: string }[] = [
   { value: "priceLow", label: "Price: Low → High" },
 ];
 
-// ── CONSTANTS ──
-const ERROR_MESSAGES: Record<string, string> = {
-  "active bookings": "This vehicle cannot be deleted because it has active bookings.",
-  "Cannot delete": "You cannot delete this vehicle right now.",
-};
-
-const getErrorMessage = (err: unknown): string => {
+const getErrorMessage = (err: unknown, t: (key: string) => string): string => {
   let msg = "";
   if (err instanceof Error) {
     msg = err.message;
@@ -397,40 +387,31 @@ const getErrorMessage = (err: unknown): string => {
     msg = response.data?.message || "";
   }
 
-  for (const [key, value] of Object.entries(ERROR_MESSAGES)) {
-    if (msg.includes(key)) return value;
+  if (msg.includes("active bookings")) {
+    return t("errors.activeBookings");
   }
-  return "Something went wrong. Please try again later.";
+  if (msg.includes("Cannot delete")) {
+    return t("errors.cannotDeleteRented");
+  }
+  return t("errors.generic");
 };
 
 type StatusColor = "success" | "warning" | "info" | "error";
 
-/**
- * Maps a Vehicle row to one of the four canonical VehicleStatus enum buckets
- * the backend exposes:
- *   - Available     → green
- *   - FullyBooked   → amber (vehicle currently on rental)
- *   - Maintenance   → blue
- *   - Retired       → red (soft-deleted / inactive)
- *
- * Falls back to the raw `category` string for any other backend value so we
- * never silently swallow a state we don't recognize.
- */
-const getStatusConfig = (v: Vehicle): { label: string; colorKey: StatusColor } => {
-  if (v.isOnRental) return { label: "Fully Booked", colorKey: "warning" };
+const getStatusConfig = (v: Vehicle, t: (key: string) => string): { label: string; colorKey: StatusColor } => {
+  if (v.isOnRental) return { label: t("statusLabels.fullyBooked"), colorKey: "warning" };
   const rawStatus = (v.status ?? "").toLowerCase();
   const rawAvail = (v.availabilityStatus ?? "").toLowerCase();
   if (rawStatus === "maintenance" || rawAvail === "maintenance") {
-    return { label: "Maintenance", colorKey: "info" };
+    return { label: t("statusLabels.maintenance"), colorKey: "info" };
   }
   if (rawStatus === "retired" || v.category === "Deleted") {
-    return { label: "Retired", colorKey: "error" };
+    return { label: t("statusLabels.retired"), colorKey: "error" };
   }
-  if (v.available) return { label: "Available", colorKey: "success" };
-  return { label: "Unavailable", colorKey: "info" };
+  if (v.available) return { label: t("statusLabels.available"), colorKey: "success" };
+  return { label: t("statusLabels.unavailable"), colorKey: "info" };
 };
 
-// ── ACTION BUTTONS ──
 const ActionButtons = memo(function ActionButtons({
   vehicleId,
   available,
@@ -444,9 +425,11 @@ const ActionButtons = memo(function ActionButtons({
   readonly onDelete: (id: string, available: boolean, hasBookings?: boolean) => void;
   readonly onNavigate: (path: string) => void;
 }) {
+  const t = useTranslations("dashboardAdmin.vehicles");
+
   return (
     <Stack direction="row" spacing={0.5} sx={{ justifyContent: "flex-end" }}>
-      <Tooltip title="View">
+      <Tooltip title={t("tooltips.view")}>
         <IconButton
           size="small"
           onClick={() => {
@@ -458,7 +441,7 @@ const ActionButtons = memo(function ActionButtons({
         </IconButton>
       </Tooltip>
 
-      <Tooltip title="Edit">
+      <Tooltip title={t("tooltips.edit")}>
         <IconButton
           size="small"
           onClick={() => {
@@ -470,7 +453,7 @@ const ActionButtons = memo(function ActionButtons({
         </IconButton>
       </Tooltip>
 
-      <Tooltip title={available && !hasActiveBookings ? "Delete" : "Cannot delete rented car"}>
+      <Tooltip title={available && !hasActiveBookings ? t("tooltips.delete") : t("tooltips.cannotDeleteRented")}>
         <span>
           <IconButton
             onClick={() => {
@@ -495,7 +478,6 @@ const ActionButtons = memo(function ActionButtons({
   );
 });
 
-// ── MOBILE VEHICLE CARD ──
 const VehicleMobileCard = memo(function VehicleMobileCard({
   v,
   theme,
@@ -507,7 +489,8 @@ const VehicleMobileCard = memo(function VehicleMobileCard({
   readonly onDelete: (id: string, available: boolean, hasBookings?: boolean) => void;
   readonly onNavigate: (path: string) => void;
 }) {
-  const status = getStatusConfig(v);
+  const t = useTranslations("dashboardAdmin.vehicles");
+  const status = getStatusConfig(v, t);
 
   return (
     <Paper
@@ -572,7 +555,7 @@ const VehicleMobileCard = memo(function VehicleMobileCard({
         <Box sx={{ textAlign: "right" }}>
           <Typography sx={{ fontWeight: 800, color: "primary.main" }}>${v.dailyRate}</Typography>
           <Typography variant="caption" color="text.secondary">
-            /day
+            /{t("tableHeaders.dailyRate").split(" ").pop() || "day"}
           </Typography>
         </Box>
       </Stack>
@@ -731,6 +714,8 @@ function MobileVehicleList({
   page,
   handlePageChange,
 }: MobileVehicleListProps) {
+  const t = useTranslations("dashboardAdmin.vehicles");
+
   return (
     <Box>
       {vehicles.length > 0 ? (
@@ -749,7 +734,7 @@ function MobileVehicleList({
 
       <Stack direction="column" spacing={1} sx={{ alignItems: "center", mt: 2, mb: 1 }}>
         <Typography variant="caption" color="text.secondary">
-          Showing <strong>{vehicles.length}</strong> of {totalCount} vehicles
+          {t("showingCount", { count: vehicles.length, total: totalCount })}
         </Typography>
         <Pagination
           count={totalPages}
@@ -798,6 +783,7 @@ function DesktopVehicleList({
   toggleVehicleSelection,
   toggleSelectAll,
 }: DesktopVehicleListProps) {
+  const t = useTranslations("dashboardAdmin.vehicles");
   const allSelected = vehicles.length > 0 && vehicles.every(v => selectedVehicleIds.has(v.vehicleId || v.id));
   const someSelected = vehicles.some(v => selectedVehicleIds.has(v.vehicleId || v.id)) && !allSelected;
 
@@ -851,15 +837,15 @@ function DesktopVehicleList({
                   color="primary"
                 />
               </TableCell>
-              <TableCell sx={{ pl: 2 }}>Vehicle</TableCell>
-              <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>Category</TableCell>
-              <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Daily Rate</TableCell>
-              <TableCell sx={{ display: { xs: "none", lg: "table-cell" } }}>Supplier</TableCell>
-              <TableCell sx={{ display: { xs: "none", lg: "table-cell" } }}>Year</TableCell>
-              <TableCell sx={{ display: { xs: "none", lg: "table-cell" } }}>Transmission</TableCell>
-              <TableCell>Availability</TableCell>
+              <TableCell sx={{ pl: 2 }}>{t("tableHeaders.vehicle")}</TableCell>
+              <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>{t("tableHeaders.category")}</TableCell>
+              <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{t("tableHeaders.dailyRate")}</TableCell>
+              <TableCell sx={{ display: { xs: "none", lg: "table-cell" } }}>{t("tableHeaders.supplier")}</TableCell>
+              <TableCell sx={{ display: { xs: "none", lg: "table-cell" } }}>{t("tableHeaders.year")}</TableCell>
+              <TableCell sx={{ display: { xs: "none", lg: "table-cell" } }}>{t("tableHeaders.transmission")}</TableCell>
+              <TableCell>{t("tableHeaders.availability")}</TableCell>
               <TableCell align="right" sx={{ pr: 4 }}>
-                Actions
+                {t("tableHeaders.actions")}
               </TableCell>
             </TableRow>
           </TableHead>
@@ -902,7 +888,7 @@ function DesktopVehicleList({
         }}
       >
         <Typography variant="caption" color="text.secondary">
-          Showing <strong>{vehicles.length}</strong> of {totalCount} vehicles
+          {t("showingCount", { count: vehicles.length, total: totalCount })}
         </Typography>
         <Pagination
           count={totalPages}
@@ -923,6 +909,8 @@ function EmptyState({
   readonly filtersActive: boolean;
   readonly handleClearFilters: () => void;
 }) {
+  const t = useTranslations("dashboardAdmin.vehicles");
+
   return (
     <Box sx={{ py: 8, textAlign: "center" }}>
       <Avatar
@@ -937,12 +925,10 @@ function EmptyState({
         <SearchIcon sx={{ fontSize: 32, color: "text.disabled" }} />
       </Avatar>
       <Typography variant="h6" sx={{ fontWeight: 700 }} color="text.secondary">
-        {filtersActive ? "No vehicles match these filters" : "No vehicles yet"}
+        {filtersActive ? t("emptyState.noMatchTitle") : t("emptyState.noVehiclesTitle")}
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2 }}>
-        {filtersActive
-          ? "Try clearing filters or adjusting your search."
-          : 'Click "Add New Vehicle" to list your first one.'}
+        {filtersActive ? t("emptyState.noMatchDesc") : t("emptyState.noVehiclesDesc")}
       </Typography>
       {filtersActive && (
         <Button
@@ -951,7 +937,7 @@ function EmptyState({
           onClick={handleClearFilters}
           sx={{ fontWeight: 700, borderRadius: 2, textTransform: "none" }}
         >
-          Clear filters
+          {t("emptyState.clearFiltersBtn")}
         </Button>
       )}
     </Box>
@@ -973,7 +959,8 @@ function VehicleTableRow({
   readonly selected: boolean;
   readonly onToggle: () => void;
 }) {
-  const status = getStatusConfig(v);
+  const t = useTranslations("dashboardAdmin.vehicles");
+  const status = getStatusConfig(v, t);
   const paletteColor = theme.palette[status.colorKey] as {
     main: string;
   };
@@ -1036,7 +1023,7 @@ function VehicleTableRow({
                 ·
               </Typography>
               <Typography variant="caption" sx={{ fontWeight: 700 }} color="primary.main">
-                ${v.dailyRate}/day
+                ${v.dailyRate}/{t("tableHeaders.dailyRate").split(" ").pop() || "day"}
               </Typography>
             </Stack>
           </Box>
@@ -1061,7 +1048,7 @@ function VehicleTableRow({
           ${v.dailyRate}
           <Typography component="span" sx={{ fontWeight: 400 }} variant="caption" color="text.secondary">
             {" "}
-            /day
+            /{t("tableHeaders.dailyRate").split(" ").pop() || "day"}
           </Typography>
         </Typography>
       </TableCell>
@@ -1080,7 +1067,11 @@ function VehicleTableRow({
 
       <TableCell sx={{ display: { xs: "none", lg: "table-cell" } }}>
         <Typography variant="body2" color="text.secondary">
-          {v.transmission || "—"}
+          {v.transmission === "Automatic"
+            ? t("transmissions.automatic")
+            : v.transmission === "Manual"
+              ? t("transmissions.manual")
+              : v.transmission || "—"}
         </Typography>
       </TableCell>
 
@@ -1112,10 +1103,10 @@ function VehicleTableRow({
   );
 }
 
-// ── MAIN PAGE ──
 export default function AdminCarsPage() {
   const theme = useTheme();
   const router = useRouter();
+  const t = useTranslations("dashboardAdmin.vehicles");
   const { data: session } = useSession();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
@@ -1129,15 +1120,22 @@ export default function AdminCarsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [bulkAssignLoading, setBulkAssignLoading] = useState(false);
 
-  // ── Filter state. Search is debounced inside `useVehicles`; the other four
-  //    fields take effect immediately. All four flow into the backend
-  //    AdminVehicleFilterRequest so search/filter/sort run on the database
-  //    instead of being computed from the paginated array.
+  const searchParams = useSearchParams();
+  const initialCategoryId = searchParams.get("categoryId") || "";
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<VehicleStatusFilter>("");
   const [supplierFilter, setSupplierFilter] = useState<string>("");
   const [transmissionFilter, setTransmissionFilter] = useState<string>("");
   const [sortBy, setSortBy] = useState<VehicleSortBy>("newest");
+  const [categoryIdFilter, setCategoryIdFilter] = useState<string>(initialCategoryId);
+
+  useEffect(() => {
+    const paramVal = searchParams.get("categoryId");
+    if (paramVal !== null) {
+      setCategoryIdFilter(paramVal);
+    }
+  }, [searchParams]);
 
   const vehicleFilter = useMemo<AdminVehicleFilter>(
     () => ({
@@ -1146,20 +1144,20 @@ export default function AdminCarsPage() {
       supplierId: supplierFilter || undefined,
       transmission: transmissionFilter || undefined,
       sortBy,
+      categoryId: categoryIdFilter || undefined,
     }),
-    [search, statusFilter, supplierFilter, transmissionFilter, sortBy]
+    [search, statusFilter, supplierFilter, transmissionFilter, sortBy, categoryIdFilter]
   );
 
-  // True when any filter / search input is non-default. Drives the
-  // empty-state copy + the "Clear filters" action.
   const filtersActive = useMemo(
     () =>
       Boolean(search) ||
       Boolean(statusFilter) ||
       Boolean(supplierFilter) ||
       Boolean(transmissionFilter) ||
+      Boolean(categoryIdFilter) ||
       sortBy !== "newest",
-    [search, statusFilter, supplierFilter, transmissionFilter, sortBy]
+    [search, statusFilter, supplierFilter, transmissionFilter, sortBy, categoryIdFilter]
   );
 
   const handleClearFilters = useCallback(() => {
@@ -1168,6 +1166,7 @@ export default function AdminCarsPage() {
     setSupplierFilter("");
     setTransmissionFilter("");
     setSortBy("newest");
+    setCategoryIdFilter("");
   }, []);
 
   const {
@@ -1181,11 +1180,6 @@ export default function AdminCarsPage() {
     refresh,
   } = useVehicles(session?.accessToken, vehicleFilter);
 
-  // ── Suppliers list for the "Supplier" filter dropdown. Loaded once on mount.
-  //    Falls back silently to an empty list — the dropdown still works, it just
-  //    won't have any options to pick from. The fetch isn't cancellable; the
-  //    extra setState after unmount is benign with React 19 and lets us avoid a
-  //    useless flag that lint complains about as a no-op.
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   useEffect(() => {
     void (async () => {
@@ -1206,40 +1200,33 @@ export default function AdminCarsPage() {
     })();
   }, []);
 
-  // ── DB-truth stats for the dashboard cards. Counts come from
-  //    /api/vehicles/admin/stats so they are independent of pagination,
-  //    search, and filter state. `refreshStats()` is called alongside
-  //    `refresh()` after a delete so the cards re-sync.
   const { stats: vehicleStats, error: statsError, refresh: refreshStats } = useAdminVehicleStats(session?.accessToken);
 
-  // ── STATS ──
-  // Read from the server stats endpoint (not from the paginated `vehicles`
-  // array) so the cards always show real database totals across all pages
-  // and filters.
   const total = vehicleStats?.totalVehicles ?? 0;
   const availableCount = vehicleStats?.availableVehicles ?? 0;
   const rentalCount = vehicleStats?.onRentalVehicles ?? 0;
-  // Added fallback logic to retrieve maintenance count or default to 0
   const maintenanceCount = vehicleStats?.maintenanceVehicles ?? 0;
 
-  // ── HANDLERS ──
-  const handleDelete = useCallback((id: string, isAvailable: boolean, hasBookings?: boolean) => {
-    if (hasBookings) {
-      setErrorMsg("Cannot delete vehicle with active bookings");
-      return;
-    }
-    if (!isAvailable) {
-      setErrorMsg("Cannot delete a vehicle that is not available (e.g. rented)");
-      return;
-    }
-    setDeleteId(id);
-    setOpenDelete(true);
-  }, []);
+  const handleDelete = useCallback(
+    (id: string, isAvailable: boolean, hasBookings?: boolean) => {
+      if (hasBookings) {
+        setErrorMsg(t("errors.activeBookings"));
+        return;
+      }
+      if (!isAvailable) {
+        setErrorMsg(t("errors.cannotDeleteRented"));
+        return;
+      }
+      setDeleteId(id);
+      setOpenDelete(true);
+    },
+    [t]
+  );
 
   const confirmDelete = useCallback(async () => {
     if (!deleteId) return;
     if (!session?.accessToken) {
-      setErrorMsg("No active session. Please sign in.");
+      setErrorMsg(t("errors.sessionExpired"));
       return;
     }
     try {
@@ -1249,10 +1236,10 @@ export default function AdminCarsPage() {
       refresh();
       refreshStats();
     } catch (err: unknown) {
-      setErrorMsg(getErrorMessage(err));
+      setErrorMsg(getErrorMessage(err, t));
       logger.error("Failed to delete car", err);
     }
-  }, [deleteId, session, refresh, refreshStats]);
+  }, [deleteId, session, refresh, refreshStats, t]);
 
   const handleCloseDelete = useCallback(() => {
     setOpenDelete(false);
@@ -1313,7 +1300,7 @@ export default function AdminCarsPage() {
       refresh();
       refreshStats();
     } catch (err) {
-      setErrorMsg(getErrorMessage(err));
+      setErrorMsg(getErrorMessage(err, t));
     } finally {
       setBulkAssignLoading(false);
     }
@@ -1321,17 +1308,16 @@ export default function AdminCarsPage() {
 
   return (
     <Box sx={{ p: { xs: 1.5, sm: 3, md: 4 }, maxWidth: 1300, mx: "auto" }}>
-      {/* HEADER */}
       <Stack
         direction={{ xs: "column", sm: "row" }}
         sx={{ gap: 2, justifyContent: "space-between", mb: 4, alignItems: { xs: "flex-start", sm: "center" } }}
       >
         <Box>
           <Typography variant="h4" sx={{ fontWeight: 800, fontSize: { xs: "1.5rem", sm: "1.6rem", md: "2rem" } }}>
-            Fleet Inventory
+            {t("inventoryTitle")}
           </Typography>
           <Typography color="text.secondary" variant="body2">
-            Manage fleet vehicles
+            {t("inventorySubtitle")}
           </Typography>
         </Box>
 
@@ -1345,7 +1331,7 @@ export default function AdminCarsPage() {
               }}
               sx={{ fontWeight: 700, borderRadius: 2 }}
             >
-              Bulk Assign Category ({selectedVehicleIds.size})
+              {t("bulkAssignBtn", { count: selectedVehicleIds.size })}
             </Button>
           )}
 
@@ -1372,7 +1358,7 @@ export default function AdminCarsPage() {
             }}
           >
             <AddIcon fontSize="small" />
-            Add New Vehicle
+            {t("addBtn")}
           </Box>
         </Stack>
       </Stack>
@@ -1398,7 +1384,6 @@ export default function AdminCarsPage() {
         </Alert>
       )}
 
-      {/* STATS (Replaced VehicleStats with FleetOverview) */}
       <FleetOverview
         total={total}
         availableCount={availableCount}
@@ -1406,15 +1391,12 @@ export default function AdminCarsPage() {
         maintenanceCount={maintenanceCount}
       />
 
-      {/* FILTER ROW — search + four dropdowns. All four flow through `vehicleFilter`
-          into the backend; the search input is debounced inside the hook so each
-          keystroke doesn't fire a request. */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <TextField
             fullWidth
             size="small"
-            placeholder="Search make, model, plate, or supplier…"
+            placeholder={t("searchVehiclesPlaceholder")}
             value={search}
             onChange={e => {
               setSearch(e.target.value);
@@ -1431,12 +1413,32 @@ export default function AdminCarsPage() {
             }}
           />
         </Grid>
-        <Grid size={{ xs: 6, sm: 6, md: 2 }}>
+        <Grid size={{ xs: 6, sm: 4, md: 1.8 }}>
           <TextField
             select
             fullWidth
             size="small"
-            label="Status"
+            label={t("categoryFilterLabel")}
+            value={categoryIdFilter}
+            onChange={e => {
+              setCategoryIdFilter(e.target.value);
+            }}
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "background.paper" } }}
+          >
+            <MenuItem value="">{t("allCategoriesOpt")}</MenuItem>
+            {categories.map(c => (
+              <MenuItem key={c.id} value={c.id}>
+                {c.name}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+        <Grid size={{ xs: 6, sm: 4, md: 1.8 }}>
+          <TextField
+            select
+            fullWidth
+            size="small"
+            label={t("statusFilterLabel")}
             value={statusFilter}
             onChange={e => {
               setStatusFilter(e.target.value as VehicleStatusFilter);
@@ -1445,24 +1447,32 @@ export default function AdminCarsPage() {
           >
             {STATUS_OPTIONS.map(opt => (
               <MenuItem key={opt.value} value={opt.value}>
-                {opt.label}
+                {opt.value === ""
+                  ? t("allStatusesOpt")
+                  : opt.value === "Available"
+                    ? t("statusLabels.available")
+                    : opt.value === "FullyBooked"
+                      ? t("statusLabels.fullyBooked")
+                      : opt.value === "Maintenance"
+                        ? t("statusLabels.maintenance")
+                        : t("statusLabels.retired")}
               </MenuItem>
             ))}
           </TextField>
         </Grid>
-        <Grid size={{ xs: 6, sm: 6, md: 2 }}>
+        <Grid size={{ xs: 6, sm: 4, md: 1.8 }}>
           <TextField
             select
             fullWidth
             size="small"
-            label="Supplier"
+            label={t("supplierFilterLabel")}
             value={supplierFilter}
             onChange={e => {
               setSupplierFilter(e.target.value);
             }}
             sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "background.paper" } }}
           >
-            <MenuItem value="">All suppliers</MenuItem>
+            <MenuItem value="">{t("allSuppliersOpt")}</MenuItem>
             {suppliers.map(s => (
               <MenuItem key={s.id} value={s.id}>
                 {s.companyProfile?.companyName?.trim() || `${s.firstName} ${s.lastName}`.trim()}
@@ -1470,12 +1480,12 @@ export default function AdminCarsPage() {
             ))}
           </TextField>
         </Grid>
-        <Grid size={{ xs: 6, sm: 6, md: 2 }}>
+        <Grid size={{ xs: 6, sm: 4, md: 1.8 }}>
           <TextField
             select
             fullWidth
             size="small"
-            label="Transmission"
+            label={t("transmissionFilterLabel")}
             value={transmissionFilter}
             onChange={e => {
               setTransmissionFilter(e.target.value);
@@ -1484,17 +1494,23 @@ export default function AdminCarsPage() {
           >
             {TRANSMISSION_OPTIONS.map(opt => (
               <MenuItem key={opt.value} value={opt.value}>
-                {opt.label}
+                {opt.value === ""
+                  ? t("allTransmissionsOpt")
+                  : opt.value === "Automatic"
+                    ? t("transmissions.automatic")
+                    : opt.value === "Manual"
+                      ? t("transmissions.manual")
+                      : opt.label}
               </MenuItem>
             ))}
           </TextField>
         </Grid>
-        <Grid size={{ xs: 6, sm: 6, md: 2 }}>
+        <Grid size={{ xs: 6, sm: 4, md: 1.8 }}>
           <TextField
             select
             fullWidth
             size="small"
-            label="Sort by"
+            label={t("sortByFilterLabel")}
             value={sortBy}
             onChange={e => {
               setSortBy(e.target.value as VehicleSortBy);
@@ -1503,16 +1519,19 @@ export default function AdminCarsPage() {
           >
             {SORT_OPTIONS.map(opt => (
               <MenuItem key={opt.value} value={opt.value}>
-                {opt.label}
+                {opt.value === "newest"
+                  ? t("sortOptions.newest")
+                  : opt.value === "oldest"
+                    ? t("sortOptions.oldest")
+                    : opt.value === "priceHigh"
+                      ? t("sortOptions.priceHigh")
+                      : t("sortOptions.priceLow")}
               </MenuItem>
             ))}
           </TextField>
         </Grid>
       </Grid>
 
-      {/* Inline retry banner: shown when a refetch fails but we still have
-          rows from the previous successful fetch. Avoids replacing the table
-          with a blocking error screen. */}
       {listError && vehicles.length > 0 && (
         <Alert
           severity="warning"
@@ -1534,7 +1553,6 @@ export default function AdminCarsPage() {
         </Alert>
       )}
 
-      {/* TABLE / MOBILE CARDS */}
       <VehicleListContent
         loading={loading}
         vehicles={vehicles}
@@ -1555,7 +1573,6 @@ export default function AdminCarsPage() {
         toggleSelectAll={toggleSelectAll}
       />
 
-      {/* BULK ASSIGN DIALOG */}
       <Dialog
         open={openBulkAssign}
         onClose={() => {
@@ -1567,22 +1584,22 @@ export default function AdminCarsPage() {
           paper: { sx: { borderRadius: 2, p: 1, mx: { xs: 2, sm: "auto" } } },
         }}
       >
-        <DialogTitle sx={{ fontWeight: 700 }}>Bulk Assign Category</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>{t("bulkAssignTitle")}</DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ mb: 3 }}>
-            Select a category to assign to <strong>{selectedVehicleIds.size}</strong> selected vehicles.
+            {t("bulkAssignDesc", { count: selectedVehicleIds.size })}
           </Typography>
           <TextField
             select
             fullWidth
-            label="Category"
+            label={t("categoryFilterLabel")}
             value={selectedCategoryId}
             onChange={e => {
               setSelectedCategoryId(e.target.value);
             }}
           >
             <MenuItem value="" disabled>
-              Select a category
+              {t("selectCategoryPlaceholder")}
             </MenuItem>
             {categories.map(c => (
               <MenuItem key={c.id} value={c.id}>
@@ -1600,7 +1617,7 @@ export default function AdminCarsPage() {
             sx={{ borderRadius: 2, flex: { xs: 1, sm: "none" } }}
             disabled={bulkAssignLoading}
           >
-            Cancel
+            {t("cancelBtn")}
           </Button>
           <Button
             onClick={() => {
@@ -1611,12 +1628,11 @@ export default function AdminCarsPage() {
             disabled={!selectedCategoryId || bulkAssignLoading}
             sx={{ borderRadius: 2, fontWeight: 700, flex: { xs: 1, sm: "none" } }}
           >
-            {bulkAssignLoading ? <CircularProgress size={24} color="inherit" /> : "Confirm"}
+            {bulkAssignLoading ? <CircularProgress size={24} color="inherit" /> : t("confirmBtn")}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* DELETE DIALOG */}
       <Dialog
         open={openDelete}
         onClose={handleCloseDelete}
@@ -1626,15 +1642,11 @@ export default function AdminCarsPage() {
           paper: { sx: { borderRadius: 2, p: 1, mx: { xs: 2, sm: "auto" } } },
         }}
       >
-        <DialogTitle sx={{ fontWeight: 700 }}>Delete Vehicle</DialogTitle>
-        <DialogContent>
-          Are you sure you want to delete this vehicle?
-          <br />
-          <strong>This action cannot be undone.</strong>
-        </DialogContent>
+        <DialogTitle sx={{ fontWeight: 700 }}>{t("deleteDialog.title")}</DialogTitle>
+        <DialogContent>{t("deleteDialog.message")}</DialogContent>
         <DialogActions sx={{ flexWrap: "wrap", gap: 1, pb: 2, px: 2 }}>
           <Button onClick={handleCloseDelete} variant="outlined" sx={{ borderRadius: 2, flex: { xs: 1, sm: "none" } }}>
-            Cancel
+            {t("deleteDialog.cancel")}
           </Button>
           <Button
             onClick={() => {
@@ -1644,12 +1656,11 @@ export default function AdminCarsPage() {
             variant="contained"
             sx={{ borderRadius: 2, fontWeight: 700, flex: { xs: 1, sm: "none" } }}
           >
-            Delete
+            {t("deleteDialog.confirm")}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* ERROR SNACKBAR */}
       <Snackbar
         open={!!errorMsg}
         autoHideDuration={4000}

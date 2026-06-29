@@ -501,6 +501,12 @@ public class VehicleService : IVehicleService
         // Filter out soft-deleted vehicles
         query = query.Where(v => v.IsActive);
 
+        // Filter by Category if provided
+        if (filter.CategoryId.HasValue)
+        {
+            query = query.Where(v => v.CategoryId == filter.CategoryId.Value);
+        }
+
         // Search Keyword - matches Make, Model, LicensePlate, or supplier name
         // (case-insensitive). Translates to a single SQL WHERE with OR'd LIKEs.
         if (!string.IsNullOrWhiteSpace(filter.Keyword))

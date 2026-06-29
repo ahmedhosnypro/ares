@@ -44,6 +44,10 @@ export const driverDashboard: DriverDashboardLabels = {
     day: "Day",
     days: "Days",
     daysRemaining: "{count} Days Remaining",
+    noAssignment: "No Assignment",
+    noActiveAssignment: "No active assignment",
+    noAssignmentDescription:
+      "You have no ongoing trip at the moment. Check your upcoming schedule for future assignments.",
   },
   upcomingSchedule: {
     calendarAndShiftSchedule: "Calendar & Shift Schedule",

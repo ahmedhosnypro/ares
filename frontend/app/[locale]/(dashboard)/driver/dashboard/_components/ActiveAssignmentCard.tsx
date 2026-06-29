@@ -40,11 +40,71 @@ interface TripAssignment {
 }
 
 interface ActiveAssignmentCardProps {
-  readonly assignment: TripAssignment;
+  readonly assignment: TripAssignment | null;
 }
 
 export default function ActiveAssignmentCard({ assignment }: ActiveAssignmentCardProps) {
   const t = useTranslations("dashboard.driverDashboard.activeAssignment");
+
+  if (!assignment) {
+    return (
+      <Card
+        sx={{
+          borderRadius: 4,
+          p: 2,
+          border: "1px solid",
+          borderColor: "border.light",
+          bgcolor: "background.paper",
+          boxShadow: theme => theme.palette.shadow.card,
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <Box
+          sx={{
+            p: 3,
+            borderBottom: "1px solid",
+            borderColor: "border.light",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            bgcolor: "overlay.blur",
+            backdropFilter: "blur(10px)",
+          }}
+        >
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+            <Avatar sx={{ bgcolor: "action.disabledBackground", width: 32, height: 32 }}>
+              <CarIcon fontSize="small" />
+            </Avatar>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: "text.primary" }}>
+              {t("activeRentalAssignment")}
+            </Typography>
+          </Stack>
+          <Chip label={t("noAssignment")} size="small" sx={{ fontWeight: 700, borderRadius: 2 }} />
+        </Box>
+        <CardContent
+          sx={{
+            flexGrow: 1,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 2,
+            py: 8,
+          }}
+        >
+          <CarIcon sx={{ fontSize: 64, color: "text.disabled", opacity: 0.3 }} />
+          <Typography variant="body1" sx={{ fontWeight: 600, color: "text.secondary" }}>
+            {t("noActiveAssignment")}
+          </Typography>
+          <Typography variant="caption" color="text.disabled" sx={{ textAlign: "center", maxWidth: 280 }}>
+            {t("noAssignmentDescription")}
+          </Typography>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card

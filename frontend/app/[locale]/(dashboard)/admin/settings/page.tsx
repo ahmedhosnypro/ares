@@ -2,10 +2,10 @@
 
 import { useState, type SyntheticEvent } from "react";
 import { Box, Stack, Tab, Tabs, Typography } from "@mui/material";
+import { useTranslations } from "next-intl";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import GavelRoundedIcon from "@mui/icons-material/GavelRounded";
 import InfoRoundedIcon from "@mui/icons-material/InfoRounded";
-import ShieldRoundedIcon from "@mui/icons-material/ShieldRounded";
 import GeneralSettingsTab from "./_components/GeneralSettingsTab";
 import TermsSettingsTab from "./_components/TermsSettingsTab";
 import AboutSettingsTab from "./_components/AboutSettingsTab";
@@ -16,6 +16,7 @@ import AccountBalanceRoundedIcon from "@mui/icons-material/AccountBalanceRounded
 type SettingsTabKey = "general" | "terms" | "privacy" | "about" | "commission";
 
 export default function AdminSettingsPage() {
+  const t = useTranslations("dashboardAdmin.settings");
   const [tab, setTab] = useState<SettingsTabKey>("general");
 
   const handleTabChange = (_: SyntheticEvent, value: SettingsTabKey) => {
@@ -28,36 +29,35 @@ export default function AdminSettingsPage() {
         <SettingsRoundedIcon fontSize="large" color="primary" />
         <Box>
           <Typography variant="h4" sx={{ fontWeight: 800 }}>
-            Platform Settings
+            {t("title")}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Manage global configuration, terms of service, and about page
+            {t("subtitle")}
           </Typography>
         </Box>
       </Stack>
 
       <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
         <Tabs value={tab} onChange={handleTabChange}>
-          <Tab icon={<SettingsRoundedIcon fontSize="small" />} iconPosition="start" label="General" value="general" />
+          <Tab
+            icon={<SettingsRoundedIcon fontSize="small" />}
+            iconPosition="start"
+            label={t("tabs.general")}
+            value="general"
+          />
           <Tab
             icon={<AccountBalanceRoundedIcon fontSize="small" />}
             iconPosition="start"
-            label="Commission"
+            label={t("tabs.commission")}
             value="commission"
           />
           <Tab
             icon={<GavelRoundedIcon fontSize="small" />}
             iconPosition="start"
-            label="Terms of Service"
+            label={t("tabs.terms")}
             value="terms"
           />
-          <Tab
-            icon={<ShieldRoundedIcon fontSize="small" />}
-            iconPosition="start"
-            label="Privacy Policy"
-            value="privacy"
-          />
-          <Tab icon={<InfoRoundedIcon fontSize="small" />} iconPosition="start" label="About Page" value="about" />
+          <Tab icon={<InfoRoundedIcon fontSize="small" />} iconPosition="start" label={t("tabs.about")} value="about" />
         </Tabs>
       </Box>
 

@@ -17,7 +17,7 @@ interface TodaysTasksListProps {
 
 export default function TodayTasksList({ tasks, loading }: TodaysTasksListProps) {
   const theme = useTheme();
-  const t = useTranslations("dashboard.inspectorInspections.tasksList");
+  const t = useTranslations("dashboardInspector.inspections");
   const [activeFilter, setActiveFilter] = useState<FilterType>("All");
   const [plateSearch, setPlateSearch] = useState("");
 
@@ -124,7 +124,7 @@ export default function TodayTasksList({ tasks, loading }: TodaysTasksListProps)
 }
 
 function EmptyState({ hasSearch }: { readonly hasSearch: boolean }) {
-  const emptyT = useTranslations("dashboard.inspectorInspections.emptyState");
+  const t = useTranslations("dashboardInspector.inspections");
   return (
     <Paper
       elevation={0}
@@ -139,10 +139,10 @@ function EmptyState({ hasSearch }: { readonly hasSearch: boolean }) {
     >
       <AssignmentIcon sx={{ fontSize: 56, mb: 2, color: "text.disabled" }} />
       <Typography variant="h6" sx={{ fontWeight: 700 }}>
-        {hasSearch ? emptyT("noMatchingTasks") : emptyT("allCaughtUp")}
+        {hasSearch ? t("emptyState.noMatchingTasks") : t("emptyState.allCaughtUp")}
       </Typography>
       <Typography variant="body2" sx={{ color: "text.secondary" }}>
-        {hasSearch ? emptyT("tryAdjusting") : emptyT("noPendingTasks")}
+        {hasSearch ? t("emptyState.adjustFilter") : t("emptyState.noPendingTasks")}
       </Typography>
     </Paper>
   );

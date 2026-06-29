@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -20,7 +20,7 @@ import { createInspector, type CreateInspectorPayload } from "@/api-clients/insp
 import { ApiError } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
 import { z } from "zod";
-import { emailSchema, passwordSchema } from "@/lib/validation/schemas";
+import { useTranslations } from "next-intl";
 
 interface Props {
   readonly open: boolean;
@@ -28,15 +28,7 @@ interface Props {
   readonly onCreated: () => void;
 }
 
-const createInspectorSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  email: emailSchema,
-  password: passwordSchema,
-  phoneNumber: z.string().optional().or(z.literal("")),
-  employeeCode: z.string().min(1, "Employee code is required"),
-  isAvailable: z.boolean(),
-});
+// createInspectorSchema will be defined dynamically inside the component to support localized error messages.
 
 const initial: CreateInspectorPayload = {
   firstName: "",
@@ -54,6 +46,40 @@ const initial: CreateInspectorPayload = {
  * Inspector profile in one call.
  */
 export default function AddInspectorDialog({ open, onClose, onCreated }: Props) {
+  const t = useTranslations("dashboardAdmin.inspectors");
+
+  const createInspectorSchema = useMemo(
+    () =>
+      z.object({
+        firstName: z.string().min(1, t("validation.firstNameRequired")),
+        lastName: z.string().min(1, t("validation.lastNameRequired")),
+        email: z
+          .string()
+          .min(1, t("validation.emailRequired"))
+          .refine(
+            val => {
+              const parts = val.split("@");
+              if (parts.length !== 2) return false;
+              const [local, domain] = parts;
+              return local.length > 0 && domain.includes(".") && !domain.startsWith(".") && !domain.endsWith(".");
+            },
+            { message: t("validation.emailInvalid") }
+          )
+          .max(256, t("validation.emailTooLong")),
+        password: z
+          .string()
+          .min(8, t("validation.passwordTooShort"))
+          .regex(/[A-Z]/, t("validation.passwordUppercase"))
+          .regex(/[a-z]/, t("validation.passwordLowercase"))
+          .regex(/\d/, t("validation.passwordDigit"))
+          .regex(/[\W_]/, t("validation.passwordSpecial")),
+        phoneNumber: z.string().optional().or(z.literal("")),
+        employeeCode: z.string().min(1, t("validation.employeeCodeRequired")),
+        isAvailable: z.boolean(),
+      }),
+    [t]
+  );
+
   const [form, setForm] = useState<CreateInspectorPayload>(initial);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState<string | null>(null);
@@ -107,7 +133,7 @@ export default function AddInspectorDialog({ open, onClose, onCreated }: Props) 
         } else if (err instanceof Error) {
           setServerError(err.message);
         } else {
-          setServerError("Failed to create inspector. Please try again.");
+          setServerError(t("alerts.createGenericError"));
         }
       } finally {
         setSaving(false);
@@ -128,10 +154,10 @@ export default function AddInspectorDialog({ open, onClose, onCreated }: Props) 
       <DialogTitle sx={{ fontWeight: 800 }}>
         <Box>
           <Typography variant="h6" sx={{ fontWeight: 800 }}>
-            Add New Inspector
+            {t("dialog.title")}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Provision an inspector account that can perform vehicle inspections.
+            {t("dialog.subtitle")}
           </Typography>
         </Box>
       </DialogTitle>
@@ -141,7 +167,7 @@ export default function AddInspectorDialog({ open, onClose, onCreated }: Props) 
 
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
             <TextField
-              label="First Name"
+              label={t("dialog.firstName")}
               fullWidth
               value={form.firstName}
               onChange={e => {
@@ -152,7 +178,7 @@ export default function AddInspectorDialog({ open, onClose, onCreated }: Props) 
               disabled={saving}
             />
             <TextField
-              label="Last Name"
+              label={t("dialog.lastName")}
               fullWidth
               value={form.lastName}
               onChange={e => {
@@ -165,7 +191,7 @@ export default function AddInspectorDialog({ open, onClose, onCreated }: Props) 
           </Stack>
 
           <TextField
-            label="Email"
+            label={t("dialog.email")}
             type="email"
             fullWidth
             value={form.email}
@@ -178,7 +204,7 @@ export default function AddInspectorDialog({ open, onClose, onCreated }: Props) 
           />
 
           <TextField
-            label="Phone Number"
+            label={t("dialog.phoneNumber")}
             fullWidth
             value={form.phoneNumber ?? ""}
             onChange={e => {
@@ -190,7 +216,7 @@ export default function AddInspectorDialog({ open, onClose, onCreated }: Props) 
 
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
             <TextField
-              label="Password"
+              label={t("dialog.password")}
               type="password"
               fullWidth
               value={form.password}
@@ -202,7 +228,7 @@ export default function AddInspectorDialog({ open, onClose, onCreated }: Props) 
               disabled={saving}
             />
             <TextField
-              label="Employee Code"
+              label={t("dialog.employeeCode")}
               fullWidth
               value={form.employeeCode}
               onChange={e => {
@@ -224,13 +250,13 @@ export default function AddInspectorDialog({ open, onClose, onCreated }: Props) 
                 disabled={saving}
               />
             }
-            label={form.isAvailable ? "Available for assignment" : "Currently unavailable"}
+            label={form.isAvailable ? t("dialog.availableForAssignment") : t("dialog.currentlyUnavailable")}
           />
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button onClick={handleClose} disabled={saving} color="inherit">
-          Cancel
+          {t("dialog.cancel")}
         </Button>
         <Button
           variant="contained"
@@ -238,7 +264,7 @@ export default function AddInspectorDialog({ open, onClose, onCreated }: Props) 
           disabled={saving}
           startIcon={saving ? <CircularProgress size={16} color="inherit" /> : undefined}
         >
-          {saving ? "Creating..." : "Create Inspector"}
+          {saving ? t("dialog.creating") : t("dialog.create")}
         </Button>
       </DialogActions>
     </Dialog>
