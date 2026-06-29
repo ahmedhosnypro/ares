@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "@/shared/i18n/routing";
+import { useTranslations } from "next-intl";
 import { Box, MenuItem, Paper, TextField } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -40,6 +41,7 @@ export default function SearchFormFilter({
 }: SearchFormFilterProps) {
   const router = useRouter();
   const theme = useTheme();
+  const t = useTranslations("publicPages.search");
   const [pickupLocationId, setPickupLocationId] = useState(defaultLocationId);
   const [pickupDate, setPickupDate] = useState<Date | null>(new Date(defaultPickupDate));
   const [returnDate, setReturnDate] = useState<Date | null>(new Date(defaultReturnDate));
@@ -48,21 +50,21 @@ export default function SearchFormFilter({
   const [sort, setSort] = useState(defaultSort || "");
 
   const vehicleCategories = [
-    { value: "", label: "All Categories" },
+    { value: "", label: t("allCategories") },
     ...categories.map(c => ({ value: c.name, label: c.name })),
   ];
 
   const transmissionOptions = [
-    { value: "", label: "All Transmissions" },
-    { value: "Automatic", label: "Automatic" },
-    { value: "Manual", label: "Manual" },
+    { value: "", label: t("allTransmissions") },
+    { value: "Automatic", label: t("automatic") },
+    { value: "Manual", label: t("manual") },
   ];
 
   const sortOptions = [
-    { value: "", label: "Sort: Default" },
-    { value: "newest", label: "Newest first" },
-    { value: "price", label: "Price: Low to High" },
-    { value: "rating", label: "Top Rated" },
+    { value: "", label: t("sortDefault") },
+    { value: "newest", label: t("newestFirst") },
+    { value: "price", label: t("priceLowToHigh") },
+    { value: "rating", label: t("topRated") },
   ];
 
   const formatDateForUrl = (date: Date | null) => {
@@ -134,7 +136,7 @@ export default function SearchFormFilter({
           {/* Location Selector */}
           <TextField
             select
-            label="Pickup location"
+            label={t("pickupLocation")}
             value={pickupLocationId}
             onChange={e => {
               const newValue = e.target.value;
@@ -171,7 +173,7 @@ export default function SearchFormFilter({
             }}
           >
             <MenuItem value="">
-              <em>Select a location</em>
+              <em>{t("selectALocation")}</em>
             </MenuItem>
             {locations.map(location => (
               <MenuItem key={location.id} value={location.id}>
@@ -182,7 +184,7 @@ export default function SearchFormFilter({
 
           {/* Pickup Date */}
           <DatePicker
-            label="Pickup date"
+            label={t("pickupDate")}
             value={pickupDate}
             onChange={newValue => {
               setPickupDate(newValue);
@@ -222,7 +224,7 @@ export default function SearchFormFilter({
 
           {/* Return Date */}
           <DatePicker
-            label="Return date"
+            label={t("returnDate")}
             value={returnDate}
             onChange={newValue => {
               setReturnDate(newValue);
@@ -264,7 +266,7 @@ export default function SearchFormFilter({
           {/* Category Filter */}
           <TextField
             select
-            label="Vehicle class"
+            label={t("vehicleClass")}
             value={category}
             onChange={e => {
               const newValue = e.target.value;
@@ -310,7 +312,7 @@ export default function SearchFormFilter({
           {/* Transmission Filter */}
           <TextField
             select
-            label="Transmission"
+            label={t("transmission")}
             value={transmission}
             onChange={e => {
               const newValue = e.target.value;
@@ -356,7 +358,7 @@ export default function SearchFormFilter({
           {/* Sort Filter */}
           <TextField
             select
-            label="Sort by"
+            label={t("sortBy")}
             value={sort}
             onChange={e => {
               const newValue = e.target.value;

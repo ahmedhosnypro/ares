@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "@/shared/i18n/routing";
+import { useTranslations } from "next-intl";
 import { Box, Button, Skeleton, Stack, Typography, alpha } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import HourglassTopRoundedIcon from "@mui/icons-material/HourglassTopRounded";
@@ -9,19 +10,11 @@ import WarningAmberOutlinedIcon from "@mui/icons-material/WarningAmberOutlined";
 import KeyboardArrowRightRoundedIcon from "@mui/icons-material/KeyboardArrowRightRounded";
 import type { VerificationStatus } from "@/hooks/useVerificationStatus";
 
-/**
- * URL of the profile section where the user can submit / track their
- * identity verification. Exported so other call-sites (e.g. checkout)
- * can link to the same place without forking the path.
- */
 export const VERIFICATION_PROFILE_URL = "/account/profile#identity-verification";
 
 interface VerificationRequiredCardProps {
-  /** Discriminated status from `useVerificationStatus()`. */
   readonly status: VerificationStatus | null;
-  /** True while the hook is still resolving the session / fetching. */
   readonly loading?: boolean;
-  /** Optional non-fatal error message from the status fetch. */
   readonly error?: string | null;
 }
 
@@ -30,36 +23,36 @@ interface StatusContent {
   readonly body: string;
   readonly cta: string;
   readonly icon: typeof WarningAmberOutlinedIcon;
-  /**
-   * Logical role for the surface — drives the colour palette without
-   * hard-coding hex values. Maps to MUI theme palette keys.
-   */
   readonly tone: "warning" | "info" | "error" | "primary" | "secondary";
 }
 
-const STATUS_CONTENT: Record<Exclude<VerificationStatus, "Approved">, StatusContent> = {
-  NotSubmitted: {
-    title: "Identity Verification Required",
-    body: "Complete your identity verification to enable booking features. It's a one-time process to ensure a safe rental experience.",
-    cta: "Verify Identity",
-    icon: WarningAmberOutlinedIcon,
-    tone: "warning",
-  },
-  Pending: {
-    title: "Verification in Progress",
-    body: "Our team is currently reviewing your documents. This typically takes a few hours. We'll notify you as soon as you're cleared to book.",
-    cta: "Check Status",
-    icon: HourglassTopRoundedIcon,
-    tone: "secondary",
-  },
-  Rejected: {
-    title: "Verification Unsuccessful",
-    body: "Your identity verification could not be approved. Please review the requirements and re-submit your documents.",
-    cta: "Re-submit Identity",
-    icon: ErrorOutlineRoundedIcon,
-    tone: "error",
-  },
-};
+function useStatusContent(
+  t: ReturnType<typeof useTranslations<"publicPages.vehicles.detail">>
+): Record<Exclude<VerificationStatus, "Approved">, StatusContent> {
+  return {
+    NotSubmitted: {
+      title: t("verificationNotSubmittedTitle"),
+      body: t("verificationNotSubmittedBody"),
+      cta: t("verifyIdentity"),
+      icon: WarningAmberOutlinedIcon,
+      tone: "warning",
+    },
+    Pending: {
+      title: t("verificationPendingTitle"),
+      body: t("verificationPendingBody"),
+      cta: t("checkStatus"),
+      icon: HourglassTopRoundedIcon,
+      tone: "secondary",
+    },
+    Rejected: {
+      title: t("verificationRejectedTitle"),
+      body: t("verificationRejectedBody"),
+      cta: t("resubmitIdentity"),
+      icon: ErrorOutlineRoundedIcon,
+      tone: "error",
+    },
+  };
+}
 
 /**
  * High-fidelity, professional status card for identity verification.
@@ -72,6 +65,8 @@ export default function VerificationRequiredCard({
 }: VerificationRequiredCardProps) {
   const theme = useTheme();
   const router = useRouter();
+  const t = useTranslations("publicPages.vehicles.detail");
+  const STATUS_CONTENT = useStatusContent(t);
 
   if (loading) {
     return (

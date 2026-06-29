@@ -16,11 +16,14 @@ export type CategoriesLabels = {
     readonly offerValue: string;
     readonly statusActive: string;
     readonly statusInactive: string;
+    readonly offerEndsIn: string;
+    readonly expiredOffer: string;
   };
   readonly actions: {
     readonly edit: string;
     readonly delete: string;
     readonly deleteConfirm: string;
+    readonly viewDetails: string;
   };
   readonly alerts: {
     readonly deleteSuccess: string;
@@ -52,5 +55,37 @@ export type CategoriesLabels = {
     readonly errors: {
       readonly saveFailed: string;
     };
+  };
+  readonly summaryCards: {
+    readonly categories: string;
+    readonly vehicles: string;
+    readonly withOffers: string;
+    readonly avgCommission: string;
+  };
+  readonly emptyState: {
+    readonly noMatchTitle: string;
+    readonly noCategoriesTitle: string;
+    readonly noMatchDesc: string;
+    readonly noCategoriesDesc: string;
+    readonly clearFiltersBtn: string;
+  };
+  readonly toolbar: {
+    readonly searchPlaceholder: string;
+    readonly statusLabel: string;
+    readonly allStatuses: string;
+    readonly offerLabel: string;
+    readonly allOffers: string;
+    readonly activeOffer: string;
+    readonly expiredOffer: string;
+    readonly noOffer: string;
+    readonly sortByLabel: string;
+    readonly sortNameAZ: string;
+    readonly sortNameZA: string;
+    readonly sortVehiclesCount: string;
+    readonly sortCommission: string;
+    readonly sortCreatedDate: string;
+  };
+  readonly pagination: {
+    readonly showing: string;
   };
 };

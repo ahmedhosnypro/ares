@@ -4,14 +4,9 @@ import { useEffect } from "react";
 import { Box, Typography, Button, Container, useTheme, alpha } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import ErrorOutlinedIcon from "@mui/icons-material/ErrorOutlined";
+import { useTranslations } from "next-intl";
 import { logger } from "@/utils/logger";
 
-/**
- * Global Error Boundary page.
- *
- * Catches runtime exceptions and displays a user-friendly error state with
- * themed styling that respects light/dark modes.
- */
 export default function GlobalError({
   error,
   reset,
@@ -20,9 +15,9 @@ export default function GlobalError({
   readonly reset: () => void;
 }) {
   const theme = useTheme();
+  const t = useTranslations("rootPages.error");
 
   useEffect(() => {
-    // Log the error using the central logger
     logger.error("Global Error Boundary caught an exception:", error);
   }, [error]);
 
@@ -49,7 +44,6 @@ export default function GlobalError({
             gap: 4,
           }}
         >
-          {/* Visual Indicator */}
           <Box
             sx={{
               position: "relative",
@@ -68,11 +62,10 @@ export default function GlobalError({
 
           <Box>
             <Typography variant="h3" sx={{ fontWeight: 800, mb: 1, color: "text.primary" }}>
-              Something went wrong
+              {t("title")}
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 480, mx: "auto", fontWeight: 500 }}>
-              An unexpected error occurred while processing your request. Our team has been notified and we are working
-              to resolve it.
+              {t("description")}
             </Typography>
           </Box>
 
@@ -97,7 +90,7 @@ export default function GlobalError({
                 transition: "all 0.2s",
               }}
             >
-              Try Again
+              {t("tryAgain")}
             </Button>
             <Button
               variant="outlined"
@@ -115,13 +108,13 @@ export default function GlobalError({
                 transition: "all 0.2s",
               }}
             >
-              Go to Homepage
+              {t("goToHomepage")}
             </Button>
           </Box>
 
           {error.digest && (
             <Typography variant="caption" color="text.disabled" sx={{ mt: 2, fontFamily: "monospace" }}>
-              Error ID: {error.digest}
+              {t("errorId")}: {error.digest}
             </Typography>
           )}
         </Box>

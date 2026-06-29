@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { Box, Paper, Rating, Stack, Typography } from "@mui/material";
 import type { VehicleReviewViewModel } from "./types";
 
@@ -19,15 +22,16 @@ function formatReviewDate(value: string): string {
 }
 
 export default function ReviewSection({ reviews }: ReviewSectionProps) {
+  const t = useTranslations("publicPages.vehicles.detail");
   return (
     <Stack spacing={2}>
       <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
         <Typography variant="h5" sx={{ fontWeight: 800 }}>
-          Customer reviews
+          {t("customerReviews")}
         </Typography>
         {reviews.length > 0 ? (
           <Typography variant="body2" color="text.secondary">
-            {reviews.length} {reviews.length === 1 ? "review" : "reviews"}
+            {reviews.length} {reviews.length === 1 ? t("review") : t("reviews")}
           </Typography>
         ) : null}
       </Stack>
@@ -47,14 +51,14 @@ export default function ReviewSection({ reviews }: ReviewSectionProps) {
                 </Stack>
                 <Rating value={review.rating} readOnly size="small" />
                 <Typography variant="body2" color="text.secondary">
-                  {review.comment || "No written feedback provided."}
+                  {review.comment || t("noWrittenFeedback")}
                 </Typography>
                 {review.supplierReply ? (
                   <Box sx={{ mt: 1, p: 1.5, bgcolor: "action.hover", borderRadius: 2 }}>
                     <Stack spacing={0.5}>
                       <Stack direction="row" sx={{ justifyContent: "space-between" }}>
                         <Typography variant="caption" sx={{ fontWeight: 700, color: "text.primary" }}>
-                          Response from supplier
+                          {t("responseFromSupplier")}
                         </Typography>
                         {review.repliedAt && (
                           <Typography variant="caption" color="text.secondary">
@@ -75,7 +79,7 @@ export default function ReviewSection({ reviews }: ReviewSectionProps) {
       ) : (
         <Box sx={{ border: "1px dashed", borderColor: "divider", borderRadius: 2, p: 4, textAlign: "center" }}>
           <Typography variant="body1" color="text.secondary">
-            No reviews yet for this vehicle.
+            {t("noReviewsYet")}
           </Typography>
         </Box>
       )}

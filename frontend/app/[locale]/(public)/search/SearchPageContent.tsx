@@ -1,6 +1,7 @@
 "use client";
 
 import { Link } from "@/shared/i18n/routing";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useState } from "react";
 import {
@@ -44,6 +45,7 @@ interface SearchPageContentProps {
 function VehicleCard({ vehicle }: Readonly<{ vehicle: PublicVehicleCard }>) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const theme = useTheme();
+  const t = useTranslations("publicPages.search");
   const imageUrl = toImageUrl(vehicle.imageUrl);
 
   return (
@@ -112,11 +114,11 @@ function VehicleCard({ vehicle }: Readonly<{ vehicle: PublicVehicleCard }>) {
             ) : (
               <Stack sx={{ height: "100%", color: "text.secondary", alignItems: "center", justifyContent: "center" }}>
                 <StarRoundedIcon fontSize="large" />
-                <Typography variant="caption">No image yet</Typography>
+                <Typography variant="caption">{t("noImageYet")}</Typography>
               </Stack>
             )}
             <Chip
-              label={vehicle.available ? "Available now" : vehicle.status || "Check availability"}
+              label={vehicle.available ? t("availableNow") : vehicle.status || t("checkAvailability")}
               color="secondary"
               sx={{
                 position: "absolute",
@@ -144,7 +146,7 @@ function VehicleCard({ vehicle }: Readonly<{ vehicle: PublicVehicleCard }>) {
                     fontWeight: 500,
                   }}
                 >
-                  {vehicle.locationCity || "Available location"}
+                  {vehicle.locationCity || t("availableLocation")}
                 </Typography>
               </Box>
 
@@ -158,7 +160,7 @@ function VehicleCard({ vehicle }: Readonly<{ vehicle: PublicVehicleCard }>) {
                       fontWeight: 500,
                     }}
                   >
-                    From
+                    {t("from")}
                   </Typography>
                   {vehicle.discountPercentage ? (
                     <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
@@ -195,7 +197,7 @@ function VehicleCard({ vehicle }: Readonly<{ vehicle: PublicVehicleCard }>) {
                       fontSize: { xs: "0.75rem", md: "0.75rem" },
                     }}
                   >
-                    {vehicle.reviewCount} reviews
+                    {vehicle.reviewCount} {t("reviews")}
                   </Typography>
                 </Stack>
               </Stack>
@@ -214,7 +216,7 @@ function VehicleCard({ vehicle }: Readonly<{ vehicle: PublicVehicleCard }>) {
                       fontWeight: 500,
                     }}
                   >
-                    {vehicle.locationCity || "Demo city"}
+                    {vehicle.locationCity || t("demoCity")}
                   </Typography>
                 </Stack>
                 <Box
@@ -244,7 +246,7 @@ function VehicleCard({ vehicle }: Readonly<{ vehicle: PublicVehicleCard }>) {
                       fontWeight: 700,
                     }}
                   >
-                    View details →
+                    {t("viewDetails")}
                   </Typography>
                 </Box>
               </Stack>
@@ -258,6 +260,7 @@ function VehicleCard({ vehicle }: Readonly<{ vehicle: PublicVehicleCard }>) {
 
 function SearchResults({ vehicles, idle }: Readonly<{ vehicles: readonly PublicVehicleCard[]; idle?: boolean }>) {
   const theme = useTheme();
+  const t = useTranslations("publicPages.search");
 
   if (vehicles.length === 0) {
     return (
@@ -274,12 +277,10 @@ function SearchResults({ vehicles, idle }: Readonly<{ vehicles: readonly PublicV
         <Stack spacing={2} sx={{ alignItems: "center" }}>
           <SearchRoundedIcon color="primary" sx={{ fontSize: 44 }} />
           <Typography variant="h5" sx={{ fontWeight: 800 }}>
-            {idle ? "Start your search" : "No cars matched that search"}
+            {idle ? t("startYourSearch") : t("noCarsMatched")}
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            {idle
-              ? "Select a pickup location above to see available vehicles."
-              : "Try another location or stretch the dates a bit wider."}
+            {idle ? t("selectLocationPrompt") : t("tryAnotherLocation")}
           </Typography>
           {!idle && (
             <Button
@@ -294,7 +295,7 @@ function SearchResults({ vehicles, idle }: Readonly<{ vehicles: readonly PublicV
                 },
               }}
             >
-              Back to landing page
+              {t("backToLandingPage")}
             </Button>
           )}
         </Stack>
@@ -342,6 +343,7 @@ export default function SearchPageContent({
   sort,
 }: SearchPageContentProps) {
   const theme = useTheme();
+  const t = useTranslations("publicPages.search");
 
   const getCategoryDisplayName = (cat?: string): string | undefined => {
     if (!cat) return undefined;
@@ -350,9 +352,9 @@ export default function SearchPageContent({
   };
 
   const getSortDisplayName = (s?: string): string | undefined => {
-    if (s === "newest") return "Newest first";
-    if (s === "price") return "Price: Low to High";
-    if (s === "rating") return "Top Rated";
+    if (s === "newest") return t("newestFirst");
+    if (s === "price") return t("priceLowToHigh");
+    if (s === "rating") return t("topRated");
     return undefined;
   };
 
@@ -396,7 +398,7 @@ export default function SearchPageContent({
                   lineHeight: { xs: 1.3, md: 1.2 },
                 }}
               >
-                Find the perfect car for your trip
+                {t("title")}
               </Typography>
             </Box>
 
@@ -426,7 +428,7 @@ export default function SearchPageContent({
             >
               <Chip
                 icon={<MapRoundedIcon />}
-                label={selectedLocation?.label || "Select location"}
+                label={selectedLocation?.label || t("selectLocation")}
                 color="primary"
                 variant="outlined"
                 size="small"

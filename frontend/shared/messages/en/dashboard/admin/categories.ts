@@ -18,11 +18,14 @@ const categories: CategoriesLabels = {
     offerValue: "{discount}% off",
     statusActive: "Active",
     statusInactive: "Inactive",
+    offerEndsIn: "Ends in {days} days",
+    expiredOffer: "Expired",
   },
   actions: {
     edit: "Edit",
     delete: "Delete",
     deleteConfirm: "Are you sure you want to delete this category?",
+    viewDetails: "View Details",
   },
   alerts: {
     deleteSuccess: "Category deleted successfully.",
@@ -54,6 +57,38 @@ const categories: CategoriesLabels = {
     errors: {
       saveFailed: "Failed to save category. Please try again.",
     },
+  },
+  summaryCards: {
+    categories: "Categories",
+    vehicles: "Vehicles",
+    withOffers: "With Offers",
+    avgCommission: "Avg. Commission",
+  },
+  emptyState: {
+    noMatchTitle: "No matching categories",
+    noCategoriesTitle: "No categories yet",
+    noMatchDesc: "Try adjusting your filters to find what you're looking for.",
+    noCategoriesDesc: "Get started by adding your first category.",
+    clearFiltersBtn: "Clear Filters",
+  },
+  toolbar: {
+    searchPlaceholder: "Search categories...",
+    statusLabel: "Status",
+    allStatuses: "All Statuses",
+    offerLabel: "Offer",
+    allOffers: "All Offers",
+    activeOffer: "Active",
+    expiredOffer: "Expired",
+    noOffer: "No Offer",
+    sortByLabel: "Sort By",
+    sortNameAZ: "Name (A-Z)",
+    sortNameZA: "Name (Z-A)",
+    sortVehiclesCount: "Vehicles Count",
+    sortCommission: "Commission",
+    sortCreatedDate: "Created Date",
+  },
+  pagination: {
+    showing: "Showing {count} of {total} categories",
   },
 };
 

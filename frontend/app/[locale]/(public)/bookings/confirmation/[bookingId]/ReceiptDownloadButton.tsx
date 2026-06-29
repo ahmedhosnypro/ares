@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button, CircularProgress } from "@mui/material";
 import ReceiptIcon from "@mui/icons-material/Receipt";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
 
@@ -13,6 +14,7 @@ interface Props {
 
 export default function ReceiptDownloadButton({ transactionId }: Props) {
   const { data: session } = useSession();
+  const t = useTranslations("publicPages.bookings.confirmation");
   const [loading, setLoading] = useState(false);
 
   async function handleDownload() {
@@ -48,7 +50,7 @@ export default function ReceiptDownloadButton({ transactionId }: Props) {
       disabled={loading}
       sx={{ borderRadius: 2, py: 1.5, px: 4, fontWeight: 700 }}
     >
-      Download Receipt
+      {t("downloadReceipt")}
     </Button>
   );
 }

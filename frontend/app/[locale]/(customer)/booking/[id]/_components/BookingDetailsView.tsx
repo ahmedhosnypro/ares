@@ -120,7 +120,7 @@ function getStatusLabel(status: string | undefined, t: (key: string) => string):
       return t("status.expired");
     case "rejected":
       return t("status.rejected");
-    case "cancelledbyadmin":
+    case "cancelledbyadmin": // cspell:disable-line
       return t("status.cancelledByAdmin");
     default:
       return t("status.unknown");

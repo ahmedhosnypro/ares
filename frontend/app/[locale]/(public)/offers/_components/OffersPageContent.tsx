@@ -31,7 +31,7 @@ export default function OffersPageContent() {
     }
 
     void loadOffers();
-  }, []);
+  }, [t]);
 
   const categories = useMemo(() => {
     const categorySet = new Set<string>();

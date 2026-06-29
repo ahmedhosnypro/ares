@@ -1,0 +1,38 @@
+import type { SuppliersLabels } from "../../types/public/suppliers";
+
+const suppliers: SuppliersLabels = {
+  pageTitle: "الموردين | أريس لتأجير السيارات",
+  heading: "موردونا",
+  subtitle: "تصفح وقارن موردي تأجير السيارات مع التصفية حسب الموقع والتقييم والتخصص وحجم الأسطول.",
+  searchPlaceholder: "ابحث عن الموردين بالاسم...",
+  noResultsTitle: "لم يتم العثور على موردين مطابقين لبحثك.",
+  noResultsSuggestion: "حاول تعديل عوامل التصفية أو ابحث عن مورد آخر.",
+  minRating: "الحد الأدنى للتقييم",
+  location: "الموقع",
+  specialization: "التخصص",
+  fleetSize: "حجم الأسطول",
+  sortBy: "ترتيب حسب",
+  sortRating: "التقييم",
+  sortName: "الاسم",
+  sortFleetSize: "حجم الأسطول",
+  sortResponseTime: "وقت الاستجابة",
+  sortOrder: "ترتيب",
+  sortAsc: "تصاعدي",
+  sortDesc: "تنازلي",
+  specializationLuxury: "فاخر",
+  specializationElectric: "كهربائي",
+  specializationAccessible: "متاح للجميع",
+  specializationCommercial: "تجاري",
+  specializationBudget: "اقتصادي",
+  fleetSizeSmall: "صغير",
+  fleetSizeMedium: "متوسط",
+  fleetSizeLarge: "كبير",
+  reviewCount: "{count} تقييم",
+  vehiclesAvailable: "{count} مركبة متاحة",
+  viewProfile: "عرض الملف الشخصي",
+  compare: "مقارنة",
+  compareTitle: "مقارنة الموردين",
+  loadError: "فشل تحميل الموردين. يرجى المحاولة مرة أخرى لاحقاً.",
+};
+
+export default suppliers;

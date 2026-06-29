@@ -3,6 +3,7 @@
 import { useRouter } from "@/shared/i18n/routing";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import {
   Alert,
   Box,
@@ -74,6 +75,7 @@ function getFallbackVehicle(vehicleId?: string, basePrice?: number): VehicleDeta
 export default function BookingCard({ vehicle, locationOptions, vehicleId, basePrice }: BookingCardProps) {
   const { data: session, status: authStatus } = useSession();
   const router = useRouter();
+  const t = useTranslations("publicPages.vehicles.detail");
 
   // Identity-verification gate. Approved users see the booking form as
   // usual; everyone else (NotSubmitted / Pending / Rejected) sees the
@@ -120,24 +122,24 @@ export default function BookingCard({ vehicle, locationOptions, vehicleId, baseP
     today.setHours(0, 0, 0, 0);
 
     if (pickupLocationId === "") {
-      nextErrors.pickupLocationId = "Pickup location is required.";
+      nextErrors.pickupLocationId = t("pickupLocationRequired");
     }
     if (dropoffLocationId === "") {
-      nextErrors.dropoffLocationId = "Drop-off location is required.";
+      nextErrors.dropoffLocationId = t("dropoffLocationRequired");
     }
     if (!pickupDate) {
-      nextErrors.pickupDate = "Pickup date is required.";
+      nextErrors.pickupDate = t("pickupDateRequired");
     } else if (pickupDate < today) {
-      nextErrors.pickupDate = "Pickup date must be today or later.";
+      nextErrors.pickupDate = t("pickupDateMustBeFuture");
     }
     if (!returnDate) {
-      nextErrors.returnDate = "Return date is required.";
+      nextErrors.returnDate = t("returnDateRequired");
     } else if (pickupDate && returnDate <= pickupDate) {
-      nextErrors.returnDate = "Return date must be after pickup date.";
+      nextErrors.returnDate = t("returnDateMustBeAfterPickup");
     }
 
     return nextErrors;
-  }, [pickupLocationId, dropoffLocationId, pickupDate, returnDate]);
+  }, [pickupLocationId, dropoffLocationId, pickupDate, returnDate, t]);
 
   useEffect(() => {
     const validationErrors = validate();
@@ -226,7 +228,7 @@ export default function BookingCard({ vehicle, locationOptions, vehicleId, baseP
       <Stack spacing={2} sx={{ p: { xs: 2, md: 3 } }}>
         <Stack spacing={0.5}>
           <Typography variant="h6" sx={{ fontWeight: 800 }}>
-            Reserve this vehicle
+            {t("reserveThisVehicle")}
           </Typography>
           {resolvedVehicle.discountPercentage ? (
             <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
@@ -238,12 +240,12 @@ export default function BookingCard({ vehicle, locationOptions, vehicleId, baseP
                 {formatCurrency(resolvedVehicle.originalPricePerDay ?? 0)}
               </Typography>
               <Typography variant="body2" color="primary.main" sx={{ fontWeight: 700 }}>
-                {formatCurrency(resolvedVehicle.pricePerDay)} / day
+                {formatCurrency(resolvedVehicle.pricePerDay)} {t("perDay")}
               </Typography>
             </Stack>
           ) : (
             <Typography variant="body2" color="text.secondary">
-              {formatCurrency(resolvedVehicle.pricePerDay)} / day
+              {formatCurrency(resolvedVehicle.pricePerDay)} {t("perDay")}
             </Typography>
           )}
         </Stack>
@@ -251,11 +253,11 @@ export default function BookingCard({ vehicle, locationOptions, vehicleId, baseP
         {resolvedLocations.length > 0 ? (
           <Stack spacing={2}>
             <FormControl fullWidth error={Boolean(errors.pickupLocationId)} disabled={isBookingDisabled}>
-              <InputLabel id="pickup-location-label">Pickup location</InputLabel>
+              <InputLabel id="pickup-location-label">{t("pickupLocation")}</InputLabel>
               <Select
                 labelId="pickup-location-label"
                 value={pickupLocationId}
-                label="Pickup location"
+                label={t("pickupLocation")}
                 onChange={event => {
                   setPickupLocationId(event.target.value);
                 }}
@@ -274,11 +276,11 @@ export default function BookingCard({ vehicle, locationOptions, vehicleId, baseP
             )}
 
             <FormControl fullWidth error={Boolean(errors.dropoffLocationId)} disabled={isBookingDisabled}>
-              <InputLabel id="dropoff-location-label">Drop-off location</InputLabel>
+              <InputLabel id="dropoff-location-label">{t("dropoffLocation")}</InputLabel>
               <Select
                 labelId="dropoff-location-label"
                 value={dropoffLocationId}
-                label="Drop-off location"
+                label={t("dropoffLocation")}
                 onChange={event => {
                   setDropoffLocationId(event.target.value);
                 }}
@@ -297,11 +299,11 @@ export default function BookingCard({ vehicle, locationOptions, vehicleId, baseP
             )}
           </Stack>
         ) : (
-          <Alert severity="warning">No pickup locations are available at the moment.</Alert>
+          <Alert severity="warning">{t("noPickupLocations")}</Alert>
         )}
 
         <DatePicker
-          label="Pickup date"
+          label={t("pickupDate")}
           value={pickupDate}
           disabled={isBookingDisabled}
           onChange={value => {
@@ -316,7 +318,7 @@ export default function BookingCard({ vehicle, locationOptions, vehicleId, baseP
         )}
 
         <DatePicker
-          label="Return date"
+          label={t("returnDate")}
           value={returnDate}
           disabled={isBookingDisabled}
           onChange={value => {
@@ -333,10 +335,10 @@ export default function BookingCard({ vehicle, locationOptions, vehicleId, baseP
         <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: 2, bgcolor: "background.default" }}>
           <Stack direction="row" sx={{ justifyContent: "space-between" }}>
             <Typography variant="body2" color="text.secondary">
-              Estimated total ({days} {days === 1 ? "day" : "days"})
+              {t("estimatedTotal")} ({days} {days === 1 ? t("day") : t("days")})
             </Typography>
             <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
-              {isPricingLoading ? "Updating..." : formatCurrency(totalPrice)}
+              {isPricingLoading ? t("updating") : formatCurrency(totalPrice)}
             </Typography>
           </Stack>
         </Box>
@@ -349,18 +351,18 @@ export default function BookingCard({ vehicle, locationOptions, vehicleId, baseP
           }}
           disabled={isBookingDisabled || resolvedLocations.length === 0 || resolvedVehicle.vehicleId === ""}
         >
-          {isBookingDisabled ? "Verification Required" : "Reserve now"}
+          {isBookingDisabled ? t("verificationRequired") : t("reserveNow")}
         </Button>
 
         {isBookingDisabled && (
           <Typography variant="caption" color="warning.main" sx={{ textAlign: "center", fontWeight: 600 }}>
-            Please complete verification to enable booking.
+            {t("completeVerificationToBook")}
           </Typography>
         )}
 
         {!session?.accessToken && (
           <Typography variant="caption" color="text.secondary" sx={{ textAlign: "center" }}>
-            You&apos;ll be asked to sign in or create an account at checkout.
+            {t("signInAtCheckout")}
           </Typography>
         )}
       </Stack>
