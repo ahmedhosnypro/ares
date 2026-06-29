@@ -80,9 +80,10 @@ export default function DiscountCodeForm({ initialData, onSubmit, onCancel, load
     void (async () => {
       try {
         const data = await fetchPublicCategories();
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (mounted) {
           setCategories(data);
-        } // eslint-disable-line @typescript-eslint/no-unnecessary-condition
+        }
       } catch (err) {
         logger.error("Failed to fetch categories", err);
       }

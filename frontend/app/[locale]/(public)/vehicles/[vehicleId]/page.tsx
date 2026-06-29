@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { Box, Typography } from "@mui/material";
+import { getTranslations } from "next-intl/server";
 import VehicleDetailsClient from "@/app/[locale]/(public)/vehicles/[vehicleId]/_components/vehicle-details/VehicleDetailsClient";
 import {
   type BookingLocationOption,
@@ -182,6 +183,7 @@ async function fetchLocations(): Promise<readonly BookingLocationOption[]> {
 
 export default async function VehicleDetailsPage({ params }: PageProps) {
   const { vehicleId } = await params;
+  const t = await getTranslations("publicPages.vehicles.detail");
 
   const [session, pageData] = await Promise.all([
     getServerSession(authOptions).catch(() => null),
@@ -204,7 +206,7 @@ export default async function VehicleDetailsPage({ params }: PageProps) {
     return (
       <Box component="main" sx={{ minHeight: "60vh", display: "grid", placeItems: "center", px: 2 }}>
         <Typography variant="h6" color="text.secondary" sx={{ textAlign: "center" }}>
-          We were unable to load this vehicle right now.
+          {t("unableToLoad")}
         </Typography>
       </Box>
     );

@@ -1,24 +1,28 @@
-# Supplier Detail Translation Tasks
+# Translation Plan: Supplier Detail Page (`/(public)/suppliers/[supplierId]`)
 
-## Page Overview
+## Status: Complete
 
-- Route: `/(public)/suppliers/[supplierId]`
-- Source: app/[locale]/(public)/suppliers/[supplierId]/
+## Components Audited
 
-## Translation Status
+| File       | Hardcoded Strings       | Status    |
+| ---------- | ----------------------- | --------- |
+| `page.tsx` | `Supplier Profile Page` | Extracted |
 
-- [ ] Not started
-- [ ] In progress
-- [ ] Completed
+## Message Keys
 
-## Shared Components
+| Key         | English          | Arabic     |
+| ----------- | ---------------- | ---------- |
+| `pageTitle` | Supplier Profile | ملف المورد |
 
-(To be filled during execution)
+## Files Created
 
-## Component Discovery
+- `shared/messages/types/public/suppliers/_supplierId.ts`
+- `shared/messages/en/public/suppliers/_supplierId.ts`
+- `shared/messages/ar/public/suppliers/_supplierId.ts`
 
-(To be filled during execution)
+## Files Modified
 
-## Translation Tasks
-
-(To be filled during execution)
+- `shared/messages/types/message.ts` - Added `SupplierDetailLabels` import, `PublicSuppliersSchema`, and `suppliers` to `PublicPagesSchema`
+- `shared/messages/en.ts` - Added `supplierDetail` import and `suppliers: { detail: supplierDetail }` to `publicPages`
+- `shared/messages/ar.ts` - Added `supplierDetail` import and `suppliers: { detail: supplierDetail }` to `publicPages`
+- `frontend/app/[locale]/(public)/suppliers/[supplierId]/page.tsx` - Replaced hardcoded string with `getTranslations()`

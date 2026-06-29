@@ -1,0 +1,38 @@
+import type { SuppliersLabels } from "../../types/public/suppliers";
+
+const suppliers: SuppliersLabels = {
+  pageTitle: "Suppliers | Ares Car Rental",
+  heading: "Our Suppliers",
+  subtitle: "Browse and compare rental suppliers with filtering by location, rating, specialization, and fleet size.",
+  searchPlaceholder: "Search suppliers by name...",
+  noResultsTitle: "No suppliers found matching your search.",
+  noResultsSuggestion: "Try adjusting your filters or search for another supplier.",
+  minRating: "Minimum Rating",
+  location: "Location",
+  specialization: "Specialization",
+  fleetSize: "Fleet Size",
+  sortBy: "Sort By",
+  sortRating: "Rating",
+  sortName: "Name",
+  sortFleetSize: "Fleet Size",
+  sortResponseTime: "Response Time",
+  sortOrder: "Sort Order",
+  sortAsc: "Ascending",
+  sortDesc: "Descending",
+  specializationLuxury: "Luxury",
+  specializationElectric: "Electric",
+  specializationAccessible: "Accessible",
+  specializationCommercial: "Commercial",
+  specializationBudget: "Budget",
+  fleetSizeSmall: "Small",
+  fleetSizeMedium: "Medium",
+  fleetSizeLarge: "Large",
+  reviewCount: "{count} reviews",
+  vehiclesAvailable: "{count} vehicles available",
+  viewProfile: "View Profile",
+  compare: "Compare",
+  compareTitle: "Compare Suppliers",
+  loadError: "Failed to load suppliers. Please try again later.",
+};
+
+export default suppliers;

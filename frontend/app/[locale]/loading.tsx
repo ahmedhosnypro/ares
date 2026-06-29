@@ -1,9 +1,24 @@
-import { Box, Container, Skeleton } from "@mui/material";
+import { Box, Container, Skeleton, Typography } from "@mui/material";
+import { getTranslations } from "next-intl/server";
 import PopularDestinationsSkeleton from "./_components/home/PopularDestinationsSkeleton";
 
-export default function HomeLoading() {
+export default async function HomeLoading() {
+  const t = await getTranslations("rootPages.loading");
+
   return (
     <Box component="main" sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+      <Typography
+        sx={{
+          position: "absolute",
+          width: 1,
+          height: 1,
+          overflow: "hidden",
+          clip: "rect(0,0,0,0)",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {t("loading")}
+      </Typography>
       {/* Hero Section Skeleton */}
       <Box
         sx={{

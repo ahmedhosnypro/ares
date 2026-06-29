@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "@/shared/i18n/routing";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { Autocomplete, TextField, Box, Typography, Avatar } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
@@ -16,6 +17,7 @@ interface VehicleAutocompleteProps {
 export default function VehicleAutocomplete({ vehicles }: VehicleAutocompleteProps) {
   const router = useRouter();
   const theme = useTheme();
+  const t = useTranslations("publicPages.search");
   const [inputValue, setInputValue] = useState("");
 
   // Limit to 10 results for autocomplete
@@ -58,11 +60,11 @@ export default function VehicleAutocomplete({ vehicles }: VehicleAutocompletePro
           handleVehicleSelect(newValue);
         }}
         filterOptions={x => x} // We handle filtering ourselves
-        noOptionsText={inputValue ? "No vehicles found" : "Start typing to search..."}
+        noOptionsText={inputValue ? t("noVehiclesFound") : t("startTypingToSearch")}
         renderInput={params => (
           <TextField
             {...params}
-            placeholder="Search by make, model, or location..."
+            placeholder={t("searchPlaceholder")}
             variant="outlined"
             slotProps={{
               ...params.slotProps,
@@ -161,7 +163,8 @@ export default function VehicleAutocomplete({ vehicles }: VehicleAutocompletePro
                   {option.make} {option.model}
                 </Typography>
                 <Typography variant="caption" color="text.secondary" noWrap>
-                  {option.locationCity || "Available"} • ${option.dailyRate}/day
+                  {option.locationCity || t("available")} • ${option.dailyRate}
+                  {t("perDay")}
                   {option.status && ` • ${option.status}`}
                 </Typography>
               </Box>
@@ -190,7 +193,7 @@ export default function VehicleAutocomplete({ vehicles }: VehicleAutocompletePro
           fontSize: "0.75rem",
         }}
       >
-        Showing up to 10 vehicles matching your filters
+        {t("showingVehiclesLimit")}
       </Typography>
     </Box>
   );

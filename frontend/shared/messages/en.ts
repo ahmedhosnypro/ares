@@ -45,9 +45,18 @@ import security from "./en/dashboard/admin/admin/security";
 import vehicles from "./en/dashboard/admin/admin/vehicles";
 import bankDetails from "./en/dashboard/admin/bank-details";
 import about from "./en/public/about";
+import search from "./en/public/search";
+import cookiePolicy from "./en/public/cookie-policy";
+import locations from "./en/public/locations";
 import privacy from "./en/public/privacy";
 import terms from "./en/public/terms";
 import offers from "./en/public/offers";
+import checkoutSession from "./en/public/checkout-session";
+import faq from "./en/public/faq";
+import contact from "./en/public/contact";
+import confirmation from "./en/public/bookings/confirmation";
+import checkout from "./en/public/checkout";
+import publicBookings from "./en/public/bookings";
 import adminBookings from "./en/dashboard/admin/bookings";
 import createBooking from "./en/dashboard/admin/bookings/create";
 import bookingDetails from "./en/dashboard/admin/bookings/_id/details";
@@ -70,6 +79,13 @@ import inspectorHistory from "./en/dashboard/inspector/history";
 import inspectorInspections from "./en/dashboard/inspector/inspections";
 import inspectorInspectionDetail from "./en/dashboard/inspector/inspection-detail";
 import inspectorProfile from "./en/dashboard/inspector/profile";
+import notFound from "./en/root/not-found";
+import errorPage from "./en/root/error";
+import loadingPage from "./en/root/loading";
+import supplierDetail from "./en/public/suppliers/_supplierId";
+import suppliers from "./en/public/suppliers";
+import vehicleDetail from "./en/public/vehicles/_vehicleId";
+import vehiclesList from "./en/public/vehicles";
 
 const en: MessageSchema = {
   common,
@@ -156,6 +172,30 @@ const en: MessageSchema = {
     privacy,
     terms,
     offers,
+    bookings: {
+      index: publicBookings,
+      confirmation,
+    },
+    checkout,
+    checkoutSession,
+    contact,
+    cookiePolicy,
+    faq,
+    locations,
+    search,
+    suppliers: {
+      index: suppliers,
+      detail: supplierDetail,
+    },
+    vehicles: {
+      index: vehiclesList,
+      detail: vehicleDetail,
+    },
+  },
+  rootPages: {
+    error: errorPage,
+    loading: loadingPage,
+    notFound,
   },
 };
 

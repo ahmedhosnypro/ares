@@ -1,7 +1,11 @@
-export default function ContactPage() {
+import { getTranslations } from "next-intl/server";
+
+export default async function ContactPage() {
+  const t = await getTranslations("publicPages.contact");
+
   return (
     <main>
-      <h1>Contact</h1>
+      <h1>{t("title")}</h1>
     </main>
   );
 }

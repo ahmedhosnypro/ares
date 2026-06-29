@@ -48,9 +48,21 @@ import type { AdminSecurityLabels } from "./dashboard/admin/admin/security";
 import type { AdminVehiclesMgmtLabels } from "./dashboard/admin/admin/vehicles";
 import type { BankDetailsLabels } from "./dashboard/admin/bank-details";
 import type { AboutLabels } from "./public/about";
+import type { SearchLabels } from "./public/search";
+import type { LocationsLabels } from "./public/locations";
+import type { CookiePolicyLabels } from "./public/cookie-policy";
 import type { PrivacyLabels } from "./public/privacy";
 import type { TermsLabels } from "./public/terms";
+import type { CheckoutSessionLabels } from "./public/checkout-session";
 import type { OffersLabels } from "./public/offers";
+import type { FaqLabels } from "./public/faq";
+import type { ContactLabels } from "./public/contact";
+import type { CheckoutLabels } from "./public/checkout";
+import type { SuppliersLabels } from "./public/suppliers";
+import type { VehicleDetailLabels } from "./public/vehicles/_vehicleId";
+import type { BookingConfirmationLabels } from "./public/bookings/confirmation";
+import type { PublicBookingsLabels } from "./public/bookings";
+import type { VehiclesLabels } from "./public/vehicles";
 import type { AdminBookingsLabels } from "./dashboard/admin/bookings";
 import type { CreateBookingLabels } from "./dashboard/admin/bookings/create";
 import type { BookingDetailsLabels } from "./dashboard/admin/bookings/_id/details";
@@ -68,7 +80,11 @@ import type { AdminDriversLabels } from "./dashboard/admin/drivers";
 import type { AdminInspectorsLabels } from "./dashboard/admin/inspectors";
 import type { AdminVehiclesLabels } from "./dashboard/admin/vehicles";
 import type { AdminVerificationsLabels } from "./dashboard/admin/verifications";
+import type { SupplierDetailLabels } from "./public/suppliers/_supplierId";
 import type { PromotionsLabels } from "./dashboard/admin/promotions";
+import type { ErrorPageLabels } from "./root/error";
+import type { LoadingPageLabels } from "./root/loading";
+import type { NotFoundLabels } from "./root/not-found";
 
 export type {
   AuthLabels,
@@ -120,28 +136,27 @@ export type {
   SupplierVehiclesLabels,
   CreateSupplierVehicleLabels,
   SupplierVehicleDetailLabels,
+  BookingConfirmationLabels,
+  CheckoutLabels,
+  VehicleDetailLabels,
   AboutLabels,
+  SearchLabels,
+  LocationsLabels,
+  CookiePolicyLabels,
   PrivacyLabels,
   TermsLabels,
   OffersLabels,
+  CheckoutSessionLabels,
+  PublicBookingsLabels,
+  ContactLabels,
+  SuppliersLabels,
   PromotionsLabels,
-  AdminBookingsLabels,
-  CreateBookingLabels,
-  BookingDetailsLabels,
-  EditBookingLabels,
-  CategoriesLabels,
-  CategoryDetailsLabels,
-  CountriesLabels,
-  CreateCountryLabels,
-  AdminLocationsEditLabels,
-  AdminNotificationsLabels,
-  AdminSchedulerLabels,
-  AdminSettingsLabels,
-  AdminUsersLabels,
-  AdminDriversLabels,
-  AdminInspectorsLabels,
   AdminVehiclesLabels,
   AdminVerificationsLabels,
+  VehiclesLabels,
+  ErrorPageLabels,
+  LoadingPageLabels,
+  NotFoundLabels,
 };
 
 export type AuthPagesSchema = {
@@ -225,11 +240,42 @@ export type DashboardInspectorSchema = {
   readonly profile: InspectorProfileLabels;
 };
 
+export type PublicBookingsSchema = {
+  readonly index: PublicBookingsLabels;
+  readonly confirmation: BookingConfirmationLabels;
+};
+
+export type PublicSuppliersSchema = {
+  readonly index: SuppliersLabels;
+  readonly detail: SupplierDetailLabels;
+};
+
+export type PublicVehiclesSchema = {
+  readonly index: VehiclesLabels;
+  readonly detail: VehicleDetailLabels;
+};
+
 export type PublicPagesSchema = {
   readonly about: AboutLabels;
   readonly privacy: PrivacyLabels;
   readonly terms: TermsLabels;
   readonly offers: OffersLabels;
+  readonly bookings: PublicBookingsSchema;
+  readonly checkout: CheckoutLabels;
+  readonly checkoutSession: CheckoutSessionLabels;
+  readonly contact: ContactLabels;
+  readonly cookiePolicy: CookiePolicyLabels;
+  readonly faq: FaqLabels;
+  readonly locations: LocationsLabels;
+  readonly search: SearchLabels;
+  readonly suppliers: PublicSuppliersSchema;
+  readonly vehicles: PublicVehiclesSchema;
+};
+
+export type RootPagesSchema = {
+  readonly error: ErrorPageLabels;
+  readonly loading: LoadingPageLabels;
+  readonly notFound: NotFoundLabels;
 };
 
 export type MessageSchema = {
@@ -244,4 +290,5 @@ export type MessageSchema = {
   readonly dashboardInspector: DashboardInspectorSchema;
   readonly deleteNotificationDialog: DeleteNotificationDialogLabels;
   readonly publicPages: PublicPagesSchema;
+  readonly rootPages: RootPagesSchema;
 };

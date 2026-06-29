@@ -3,14 +3,14 @@
 ## Overall Progress
 
 - Total Pages: 94
-- Completed Pages: 45
-- Progress: 48%
+- Completed Pages: 61
+- Progress: 65%
 
 ## Messages Structure Progress
 
-- **Types**: 45/94 split (common, auth, errors + 6 auth + 10 customer + 6 admin + 7 driver + 4 inspector + 9 supplier page types done; 49 remaining)
-- **English**: 45/94 split (common, auth, errors + 6 auth + 10 customer + 6 admin + 7 driver + 4 inspector + 9 supplier page translations done; 49 remaining)
-- **Arabic**: 45/94 split (common, auth, errors + 6 auth + 10 customer + 6 admin + 7 driver + 4 inspector + 9 supplier page translations done; 49 remaining)
+- **Types**: 61/94 split (common, auth, errors + 6 auth + 10 customer + 6 admin + 7 driver + 4 inspector + 9 supplier + 16 public/root page types done; 33 remaining)
+- **English**: 61/94 split (common, auth, errors + 6 auth + 10 customer + 6 admin + 7 driver + 4 inspector + 9 supplier + 16 public/root page translations done; 33 remaining)
+- **Arabic**: 61/94 split (common, auth, errors + 6 auth + 10 customer + 6 admin + 7 driver + 4 inspector + 9 supplier + 16 public/root page translations done; 33 remaining)
 
 > See `shared/Messages_README.md` for messages directory conventions.
 
@@ -110,26 +110,26 @@
 ## Public Pages (17)
 
 - [x] [About](pages/public/about.md) — `/(public)/about`
-- [ ] [Public Bookings](pages/public/bookings.md) — `/(public)/bookings`
-- [ ] [Booking Confirmation](pages/public/bookings/confirmation/_bookingId.md) — `/(public)/bookings/confirmation/[bookingId]`
-- [ ] [Checkout](pages/public/checkout/_id.md) — `/(public)/checkout/[id]`
-- [ ] [Checkout Session](pages/public/checkout-session/_sessionId.md) — `/(public)/checkout-session/[sessionId]`
-- [ ] [Contact](pages/public/contact.md) — `/(public)/contact`
-- [ ] [Cookie Policy](pages/public/cookie-policy.md) — `/(public)/cookie-policy`
-- [ ] [FAQ](pages/public/faq.md) — `/(public)/faq`
-- [ ] [Locations](pages/public/locations.md) — `/(public)/locations`
+- [x] [Public Bookings](pages/public/bookings.md) — `/(public)/bookings`
+- [x] [Booking Confirmation](pages/public/bookings/confirmation/_bookingId.md) — `/(public)/bookings/confirmation/[bookingId]`
+- [x] [Checkout](pages/public/checkout/_id.md) — `/(public)/checkout/[id]`
+- [x] [Checkout Session](pages/public/checkout-session/_sessionId.md) — `/(public)/checkout-session/[sessionId]`
+- [x] [Contact](pages/public/contact.md) — `/(public)/contact`
+- [x] [Cookie Policy](pages/public/cookie-policy.md) — `/(public)/cookie-policy`
+- [x] [FAQ](pages/public/faq.md) — `/(public)/faq`
+- [x] [Locations](pages/public/locations.md) — `/(public)/locations`
 - [x] [Privacy](pages/public/privacy.md) — `/(public)/privacy`
-- [ ] [Search](pages/public/search.md) — `/(public)/search`
-- [ ] [Suppliers](pages/public/suppliers.md) — `/(public)/suppliers`
-- [ ] [Supplier Detail](pages/public/suppliers/_supplierId.md) — `/(public)/suppliers/[supplierId]`
+- [x] [Search](pages/public/search.md) — `/(public)/search`
+- [x] [Suppliers](pages/public/suppliers.md) — `/(public)/suppliers`
+- [x] [Supplier Detail](pages/public/suppliers/_supplierId.md) — `/(public)/suppliers/[supplierId]`
 - [x] [Terms](pages/public/terms.md) — `/(public)/terms`
 - [ ] [TOS](pages/public/tos.md) — `/(public)/tos`
-- [ ] [Vehicles](pages/public/vehicles.md) — `/(public)/vehicles`
-- [ ] [Vehicle Detail](pages/public/vehicles/_vehicleId.md) — `/(public)/vehicles/[vehicleId]`
+- [x] [Vehicles](pages/public/vehicles.md) — `/(public)/vehicles`
+- [x] [Vehicle Detail](pages/public/vehicles/_vehicleId.md) — `/(public)/vehicles/[vehicleId]`
 
 ## Root Pages (4)
 
-- [ ] [Error Page](pages/root/error.md) — `/error`
-- [ ] [Loading Page](pages/root/loading.md) — `/loading`
-- [ ] [Not Found](pages/root/not-found.md) — `/not-found`
+- [x] [Error Page](pages/root/error.md) — `/error`
+- [x] [Loading Page](pages/root/loading.md) — `/loading`
+- [x] [Not Found](pages/root/not-found.md) — `/not-found`
 - [ ] [Home](pages/root/home.md) — `/`

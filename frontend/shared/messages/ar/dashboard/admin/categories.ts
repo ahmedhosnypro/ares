@@ -18,11 +18,14 @@ const categories: CategoriesLabels = {
     offerValue: "خصم {discount}%",
     statusActive: "نشط",
     statusInactive: "غير نشط",
+    offerEndsIn: "ينتهي خلال {days} يوم",
+    expiredOffer: "منتهي",
   },
   actions: {
     edit: "تعديل",
     delete: "حذف",
     deleteConfirm: "هل أنت متأكد من رغبتك في حذف هذه الفئة؟",
+    viewDetails: "عرض التفاصيل",
   },
   alerts: {
     deleteSuccess: "تم حذف الفئة بنجاح.",
@@ -54,6 +57,38 @@ const categories: CategoriesLabels = {
     errors: {
       saveFailed: "فشل حفظ الفئة. يرجى المحاولة مرة أخرى.",
     },
+  },
+  summaryCards: {
+    categories: "الفئات",
+    vehicles: "المركبات",
+    withOffers: "ذات عروض",
+    avgCommission: "متوسط العمولة",
+  },
+  emptyState: {
+    noMatchTitle: "لا توجد فئات مطابقة",
+    noCategoriesTitle: "لا توجد فئات بعد",
+    noMatchDesc: "حاول تعديل الفلاتر للعثور على ما تبحث عنه.",
+    noCategoriesDesc: "ابدأ بإضافة فئتك الأولى.",
+    clearFiltersBtn: "مسح الفلاتر",
+  },
+  toolbar: {
+    searchPlaceholder: "بحث في الفئات...",
+    statusLabel: "الحالة",
+    allStatuses: "جميع الحالات",
+    offerLabel: "العرض",
+    allOffers: "جميع العروض",
+    activeOffer: "نشط",
+    expiredOffer: "منتهي",
+    noOffer: "بدون عرض",
+    sortByLabel: "ترتيب حسب",
+    sortNameAZ: "الاسم (أ-ي)",
+    sortNameZA: "الاسم (ي-أ)",
+    sortVehiclesCount: "عدد المركبات",
+    sortCommission: "العمولة",
+    sortCreatedDate: "تاريخ الإنشاء",
+  },
+  pagination: {
+    showing: "عرض {count} من {total} فئة",
   },
 };
 
