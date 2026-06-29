@@ -124,6 +124,36 @@ export async function createCategory(payload: {
   });
 }
 
+/**
+ * Creates a category with an image file upload.
+ * The backend endpoint must accept multipart/form-data with an `image` file field.
+ * All other fields are appended as plain string form fields.
+ */
+export async function createCategoryWithImage(
+  payload: {
+    name: string;
+    description?: string;
+    commissionPercentage: number;
+    isActive: boolean;
+  },
+  imageFile: File
+): Promise<Category> {
+  const session = await getSession();
+
+  const formData = new FormData();
+  formData.append("name", payload.name);
+  if (payload.description) formData.append("description", payload.description);
+  formData.append("commissionPercentage", String(payload.commissionPercentage));
+  formData.append("isActive", String(payload.isActive));
+  formData.append("image", imageFile);
+
+  return apiFetchJson<Category>(`/api/admin/categories`, {
+    method: "POST",
+    accessToken: session?.accessToken ?? undefined,
+    body: formData,
+  });
+}
+
 export async function updateCategory(
   id: string,
   payload: {

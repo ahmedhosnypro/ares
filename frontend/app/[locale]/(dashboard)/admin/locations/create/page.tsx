@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, ChangeEvent, SyntheticEvent } from "react";
+import { useState, useRef, ChangeEvent, SyntheticEvent } from "react";
 import {
   Box,
   Typography,
@@ -17,29 +17,35 @@ import {
 } from "@mui/material";
 import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
-import { createLocation } from "@/api-clients/locations/locations";
+import { createLocationWithImage, createLocation } from "@/api-clients/locations/locations";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import Image from "next/image";
 
 export default function AdminCreateLocationPage() {
   const router = useRouter();
   const { data: session } = useSession();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
+  // Selected image file and local preview URL
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
   const [formData, setFormData] = useState({
-    userId: session?.user.id || "00000000-0000-0000-0000-000000000000", // Fallback for Guid
+    userId: session?.user.id || "00000000-0000-0000-0000-000000000000",
     addressLine: "",
     city: "",
     governorate: "",
-    country: "Egypt", // Default
+    country: "Egypt",
     postalCode: "",
     latitude: "",
     longitude: "",
     isPrimary: false,
-    imageUrl: "",
   });
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -48,6 +54,22 @@ export default function AdminCreateLocationPage() {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+  };
+
+  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    // Create a local object URL for the preview
+    const url = URL.createObjectURL(file);
+    setImagePreview(url);
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSubmit = async (e: SyntheticEvent) => {
@@ -68,17 +90,21 @@ export default function AdminCreateLocationPage() {
         longitude: formData.longitude ? parseFloat(formData.longitude) : null,
       };
 
-      await createLocation(session.accessToken, payload);
+      if (imageFile) {
+        // Send as multipart/form-data — backend must accept `image` file field
+        await createLocationWithImage(session.accessToken, payload, imageFile);
+      } else {
+        // No image selected — fall back to JSON request without image
+        await createLocation(session.accessToken, payload);
+      }
+
       setSuccessMsg("Location created successfully");
       setTimeout(() => {
         router.push("/admin/locations");
       }, 1500);
     } catch (err: unknown) {
       let message = "Failed to create location";
-      if (err && typeof err === "object" && "response" in err) {
-        const resp = err.response as { data?: { message?: string } };
-        message = resp.data?.message || message;
-      } else if (err instanceof Error) {
+      if (err instanceof Error) {
         message = err.message;
       }
       setErrorMsg(message);
@@ -162,7 +188,7 @@ export default function AdminCreateLocationPage() {
 
             <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
               <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-                Coordinates & Media
+                Coordinates &amp; Media
               </Typography>
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
@@ -187,16 +213,86 @@ export default function AdminCreateLocationPage() {
                 onChange={handleChange}
               />
             </Grid>
+
+            {/* Image Upload */}
             <Grid size={{ xs: 12 }}>
-              <TextField
-                fullWidth
-                label="Image URL"
-                name="imageUrl"
-                value={formData.imageUrl}
-                onChange={handleChange}
-                placeholder="https://example.com/image.jpg"
+              <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                Location Image
+              </Typography>
+
+              {/* Hidden native file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={handleImageChange}
               />
+
+              {imagePreview ? (
+                <Box>
+                  {/* Preview */}
+                  <Box
+                    sx={{
+                      position: "relative",
+                      width: "100%",
+                      height: 220,
+                      borderRadius: 2,
+                      overflow: "hidden",
+                      border: "1px solid",
+                      borderColor: "divider",
+                      mb: 1,
+                    }}
+                  >
+                    <Image src={imagePreview} alt="Location preview" fill style={{ objectFit: "cover" }} />
+                  </Box>
+                  <Stack direction="row" spacing={1}>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => {
+                        fileInputRef.current?.click();
+                      }}
+                    >
+                      Change Image
+                    </Button>
+                    <Button size="small" variant="outlined" color="error" onClick={handleRemoveImage}>
+                      Remove
+                    </Button>
+                  </Stack>
+                </Box>
+              ) : (
+                <Box
+                  onClick={() => {
+                    fileInputRef.current?.click();
+                  }}
+                  sx={{
+                    border: "2px dashed",
+                    borderColor: "divider",
+                    borderRadius: 2,
+                    p: 4,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 1,
+                    cursor: "pointer",
+                    transition: "border-color 0.2s",
+                    "&:hover": {
+                      borderColor: "primary.main",
+                    },
+                  }}
+                >
+                  <CloudUploadIcon sx={{ fontSize: 40, color: "text.secondary" }} />
+                  <Typography variant="body2" color="text.secondary">
+                    Click to upload an image
+                  </Typography>
+                  <Typography variant="caption" color="text.disabled">
+                    PNG, JPG, WEBP up to 10 MB
+                  </Typography>
+                </Box>
+              )}
             </Grid>
+
             <Grid size={{ xs: 12 }}>
               <FormControlLabel
                 control={
