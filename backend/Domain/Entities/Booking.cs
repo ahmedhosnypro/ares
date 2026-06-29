@@ -46,6 +46,9 @@ namespace Backend.Domain.Entities
         [Column(TypeName = "decimal(18,2)")]
         public decimal? DiscountAmount { get; set; }
 
+        [MaxLength(2000)]
+        public string? AppliedDiscountCodes { get; set; }
+
         [Column(TypeName = "decimal(18,2)")]
         public decimal? TotalPrice { get; set; }
 
@@ -54,6 +57,10 @@ namespace Backend.Domain.Entities
         public DateTime? CancelledAt { get; set; }
 
         public string? CancellationReason { get; set; }
+
+        public Guid? ApprovedBy { get; set; }
+        public DateTime? ApprovedAt { get; set; }
+        public string? RejectionReason { get; set; }
 
         public virtual Review? Review { get; set; }
 

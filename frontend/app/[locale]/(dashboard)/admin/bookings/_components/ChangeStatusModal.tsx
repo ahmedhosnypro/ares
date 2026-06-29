@@ -24,7 +24,15 @@ import { logger } from "@/utils/logger";
  * accepts. Anything else (Confirmed / inspection-workflow values) is
  * intentionally NOT exposed to the operator here.
  */
-const OPERATIONAL_STATUSES = ["PaymentPending", "Confirmed", "Active", "Completed", "Cancelled"] as const;
+const OPERATIONAL_STATUSES = [
+  "PaymentPending",
+  "PendingApproval",
+  "Confirmed",
+  "Active",
+  "Completed",
+  "Cancelled",
+  "Rejected",
+] as const;
 type OperationalStatus = (typeof OPERATIONAL_STATUSES)[number];
 
 interface ChangeStatusModalProps {
@@ -57,6 +65,9 @@ export default function ChangeStatusModal({
   const [selected, setSelected] = useState<OperationalStatus | "">("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const isRejected = currentStatus?.toLowerCase() === "rejected";
+  const selectableStatuses = OPERATIONAL_STATUSES.filter(s => s !== "PendingApproval");
 
   useEffect(() => {
     if (open) {
@@ -93,6 +104,8 @@ export default function ChangeStatusModal({
     switch (status) {
       case "PaymentPending":
         return t("changeStatusModal.statuses.paymentPending");
+      case "PendingApproval":
+        return t("changeStatusModal.statuses.pendingApproval");
       case "Confirmed":
         return t("changeStatusModal.statuses.confirmed");
       case "Active":
@@ -101,6 +114,8 @@ export default function ChangeStatusModal({
         return t("changeStatusModal.statuses.completed");
       case "Cancelled":
         return t("changeStatusModal.statuses.cancelled");
+      case "Rejected":
+        return t("changeStatusModal.statuses.rejected");
       default:
         return status;
     }
@@ -113,7 +128,7 @@ export default function ChangeStatusModal({
     return status;
   };
 
-  const disabled = submitting || !selected || selected === currentStatus;
+  const disabled = submitting || !selected || selected === currentStatus || isRejected;
 
   return (
     <Dialog
@@ -165,8 +180,8 @@ export default function ChangeStatusModal({
                 },
               }}
             >
-              {OPERATIONAL_STATUSES.map(s => (
-                <ToggleButton key={s} value={s}>
+              {selectableStatuses.map(s => (
+                <ToggleButton key={s} value={s} disabled={isRejected}>
                   {getOperationalStatusLabel(s)}
                 </ToggleButton>
               ))}

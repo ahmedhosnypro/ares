@@ -219,7 +219,7 @@ export default function AdminCategoriesPage() {
       const isPaletteColor = color in theme.palette;
       return isPaletteColor ? (theme.palette[color as keyof typeof theme.palette] as { main: string }).main : color;
     },
-    [theme, theme.palette]
+    [theme]
   );
 
   return (

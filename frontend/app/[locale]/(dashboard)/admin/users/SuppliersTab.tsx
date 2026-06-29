@@ -407,6 +407,7 @@ export default function SuppliersTab() {
 
               <TableBody>
                 {pageData.length > 0 ? (
+                  // eslint-disable-next-line sonarjs/cognitive-complexity
                   pageData.map(s => {
                     const isActive = s.status === "active";
                     return (

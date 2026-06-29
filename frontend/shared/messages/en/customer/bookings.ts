@@ -51,10 +51,16 @@ const bookings: CustomerBookingsLabels = {
     status: {
       draft: "Draft",
       pending: "Pending",
+      paymentPending: "Payment Pending",
+      pendingApproval: "Pending Approval",
       confirmed: "Confirmed",
       active: "Active",
       completed: "Completed",
       cancelled: "Cancelled",
+      expired: "Expired",
+      rejected: "Rejected",
+      cancelledByAdmin: "Cancelled by Admin",
+      unknown: "Unknown",
     },
     actions: {
       view: "View Details",

@@ -6,12 +6,14 @@ namespace Backend.Domain.Entities.Enums
     {
         Draft,
         PaymentPending,
+        PendingApproval,
         Confirmed,
         Active,
         Completed,
         Cancelled,
         CancelledByAdmin,
-        Expired
+        Expired,
+        Rejected
     }
 
     public enum DriverAssignmentStatus

@@ -50,10 +50,16 @@ const bookings: CustomerBookingsLabels = {
     status: {
       draft: "مسودة",
       pending: "معلق",
+      paymentPending: "في انتظار الدفع",
+      pendingApproval: "في انتظار الموافقة",
       confirmed: "مؤكد",
       active: "نشط",
       completed: "مكتمل",
       cancelled: "ملغى",
+      expired: "منتهي الصلاحية",
+      rejected: "مرفوض",
+      cancelledByAdmin: "ملغى بواسطة المسؤول",
+      unknown: "غير معروف",
     },
     actions: {
       view: "عرض التفاصيل",

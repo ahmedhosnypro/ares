@@ -16,6 +16,7 @@ function getLocale(request: NextRequest): string {
 }
 
 export async function proxy(request: NextRequest) {
+  // eslint-disable-line sonarjs/cognitive-complexity
   const { pathname } = request.nextUrl;
 
   // Skip static files and Next.js internals

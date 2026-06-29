@@ -122,6 +122,9 @@ export interface Booking {
   returnInspection?: BookingInspectionFull | null;
   paymentDetails?: BookingPaymentDetails | null;
   timeline?: BookingTimelineEvent[] | null;
+  approvedBy?: string | null;
+  approvedAt?: string | null;
+  rejectionReason?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
   [key: string]: unknown;
@@ -351,6 +354,21 @@ export async function updateBookingStatus(
     method: "PUT",
     accessToken,
     body: JSON.stringify({ status, remarks: remarks ?? null }),
+  });
+}
+
+export async function approveBooking(accessToken: string, bookingId: string): Promise<void> {
+  await apiFetchJson(`/api/admin/booking-approvals/${bookingId}/approve`, {
+    method: "PATCH",
+    accessToken,
+  });
+}
+
+export async function rejectBooking(accessToken: string, bookingId: string, reason: string): Promise<void> {
+  await apiFetchJson(`/api/admin/booking-approvals/${bookingId}/reject`, {
+    method: "PATCH",
+    accessToken,
+    body: JSON.stringify({ reason }),
   });
 }
 

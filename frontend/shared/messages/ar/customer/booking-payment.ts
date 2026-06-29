@@ -68,9 +68,17 @@ const bookingPayment: BookingPaymentLabels = {
       day: "يوم",
       days: "أيام",
       discount: "الخصم",
+      discountSavings: "توفّر {amount}",
       totalAmount: "المبلغ الإجمالي",
     },
   },
+  discountCodePlaceholder: "أدخل كود الخصم",
+  discountCodeApply: "تطبيق",
+  discountCodeApplied: "تم تطبيق الخصم!",
+  discountCodeInvalid: "كود خصم غير صالح",
+  discountCodeRemove: "إزالة",
+  discountSavings: "توفّر {amount}",
+  discountCodeLabel: "كود الخصم",
 };
 
 export default bookingPayment;

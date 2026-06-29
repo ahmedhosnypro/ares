@@ -33,11 +33,8 @@ public class VehicleServiceTests : IDisposable
         _contextMock = new Mock<IApplicationDbContext>();
         _pricingServiceMock = new Mock<IPricingService>();
 
-        var promotionsQueryable = new List<Promotion>().AsQueryable().BuildMockDbSet();
-        _contextMock.Setup(x => x.Promotions).Returns(promotionsQueryable.Object);
-
-        var categoryOffersQueryable = new List<CategoryOffer>().AsQueryable().BuildMockDbSet();
-        _contextMock.Setup(x => x.CategoryOffers).Returns(categoryOffersQueryable.Object);
+        var discountCodesQueryable = new List<DiscountCode>().AsQueryable().BuildMockDbSet();
+        _contextMock.Setup(x => x.DiscountCodes).Returns(discountCodesQueryable.Object);
 
         _pricingServiceMock.Setup(x => x.CalculateBookingPricingAsync(It.IsAny<Guid>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Guid vId, DateTime start, DateTime end, CancellationToken ct) =>
@@ -1224,8 +1221,8 @@ public class VehicleServiceTests : IDisposable
             v.PricePerDay == request.PricePerDay &&
             v.LocationCity == request.LocationCity &&
             v.Description == request.Description &&
-            v.Status == request.Status &&
-            v.AvailabilityStatus == request.AvailabilityStatus &&
+            v.Status == "Pending" &&
+            v.AvailabilityStatus == "Unavailable" &&
             v.IsActive == true), It.IsAny<CancellationToken>()), Times.Once);
 
         _vehicleRepositoryMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);

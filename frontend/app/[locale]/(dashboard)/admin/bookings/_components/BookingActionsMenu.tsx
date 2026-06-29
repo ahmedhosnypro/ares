@@ -6,6 +6,8 @@ import {
   EditOutlined as EditIcon,
   SyncAltOutlined as ChangeStatusIcon,
   DeleteOutlined as DeleteIcon,
+  CheckCircleOutlined as ApproveIcon,
+  CancelOutlined as RejectIcon,
 } from "@mui/icons-material";
 import { useTranslations } from "next-intl";
 
@@ -16,6 +18,9 @@ interface BookingActionsMenuProps {
   readonly onEdit: () => void;
   readonly onChangeStatus: () => void;
   readonly onDelete: () => void;
+  readonly onApprove?: () => void;
+  readonly onReject?: () => void;
+  readonly bookingStatus?: string;
   readonly t: ReturnType<typeof useTranslations>;
 }
 
@@ -26,9 +31,13 @@ export default function BookingActionsMenu({
   onEdit,
   onChangeStatus,
   onDelete,
+  onApprove,
+  onReject,
+  bookingStatus,
   t,
 }: BookingActionsMenuProps) {
   const theme = useTheme();
+  const isPendingApproval = bookingStatus?.toLowerCase() === "pendingapproval";
 
   return (
     <Menu
@@ -57,6 +66,39 @@ export default function BookingActionsMenu({
         <ChangeStatusIcon fontSize="small" />
         {t("menu.changeStatus")}
       </MenuItem>
+      {isPendingApproval && (
+        <>
+          <Divider />
+          <MenuItem
+            onClick={() => {
+              onApprove?.();
+            }}
+            sx={{
+              fontSize: 14,
+              gap: 1.5,
+              color: "success.main",
+              fontWeight: 600,
+            }}
+          >
+            <ApproveIcon fontSize="small" color="success" />
+            {t("menu.approveBooking")}
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              onReject?.();
+            }}
+            sx={{
+              fontSize: 14,
+              gap: 1.5,
+              color: "warning.main",
+              fontWeight: 600,
+            }}
+          >
+            <RejectIcon fontSize="small" color="warning" />
+            {t("menu.rejectBooking")}
+          </MenuItem>
+        </>
+      )}
       <Divider />
       <MenuItem
         onClick={onDelete}

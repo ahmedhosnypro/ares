@@ -11,6 +11,13 @@ export type AdminBookingsLabels = {
   };
   readonly table: {
     readonly daysCount: string;
+    readonly fallbacks: {
+      readonly unknownCustomer: string;
+      readonly unknownVehicle: string;
+      readonly noPlate: string;
+      readonly noPaymentMethod: string;
+      readonly currencySymbol: string;
+    };
     readonly headers: {
       readonly booking: string;
       readonly vehicle: string;
@@ -37,10 +44,12 @@ export type AdminBookingsLabels = {
       readonly all: string;
       readonly draft: string;
       readonly paymentPending: string;
+      readonly pendingApproval: string;
       readonly confirmed: string;
       readonly active: string;
       readonly completed: string;
       readonly cancelled: string;
+      readonly rejected: string;
     };
   };
   readonly paymentStatuses: {
@@ -60,6 +69,8 @@ export type AdminBookingsLabels = {
     readonly editBooking: string;
     readonly changeStatus: string;
     readonly deleteBooking: string;
+    readonly approveBooking: string;
+    readonly rejectBooking: string;
   };
   readonly changeStatusModal: {
     readonly title: string;
@@ -67,11 +78,36 @@ export type AdminBookingsLabels = {
     readonly newStatusLabel: string;
     readonly statuses: {
       readonly paymentPending: string;
+      readonly pendingApproval: string;
       readonly confirmed: string;
       readonly active: string;
       readonly completed: string;
       readonly cancelled: string;
+      readonly rejected: string;
     };
+  };
+  readonly approvals: {
+    readonly approveDialog: {
+      readonly title: string;
+      readonly content: string;
+    };
+    readonly rejectDialog: {
+      readonly title: string;
+      readonly content: string;
+      readonly reasonLabel: string;
+      readonly reasonPlaceholder: string;
+    };
+    readonly approvedSuccess: string;
+    readonly rejectedSuccess: string;
+    readonly approveError: string;
+    readonly rejectError: string;
+  };
+  readonly overview: {
+    readonly title: string;
+    readonly total: string;
+    readonly noBookings: string;
+    readonly loadFailed: string;
+    readonly fallbackStatus: string;
   };
   readonly analytics: {
     readonly title: string;
@@ -86,11 +122,13 @@ export type AdminBookingsLabels = {
     readonly statuses: {
       readonly draft: string;
       readonly paymentPending: string;
+      readonly pendingApproval: string;
       readonly confirmed: string;
       readonly active: string;
       readonly completed: string;
       readonly cancelled: string;
       readonly cancelledByAdmin: string;
+      readonly rejected: string;
     };
   };
 };

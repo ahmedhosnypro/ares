@@ -66,9 +66,38 @@ public class VehicleService : IVehicleService
                 .ToList();
         }
 
-        var activeOffers = await _context.CategoryOffers
-            .Where(o => o.IsActive && o.StartDate <= DateTime.UtcNow && o.EndDate >= DateTime.UtcNow)
-            .ToDictionaryAsync(o => o.CategoryId, o => o.DiscountPercentage, cancellationToken);
+        var activeDiscounts = await _context.DiscountCodes
+            .Include(d => d.VehicleCategories)
+            .Where(d => d.IsActive && d.IsAutomatic && d.ValidFrom <= DateTime.UtcNow && d.ValidTo >= DateTime.UtcNow)
+            .ToListAsync(cancellationToken);
+
+        var categoryDiscountLookup = new Dictionary<Guid, (decimal Percentage, string Type, decimal Value)>();
+        foreach (var discount in activeDiscounts)
+        {
+            if (!discount.VehicleCategories.Any())
+            {
+                var allCategoryIds = await _context.Categories.Select(c => c.Id).ToListAsync(cancellationToken);
+                foreach (var catId in allCategoryIds)
+                {
+                    if (!categoryDiscountLookup.ContainsKey(catId))
+                    {
+                        var pct = discount.DiscountType == "percentage" ? discount.DiscountValue : 0m;
+                        categoryDiscountLookup[catId] = (pct, discount.DiscountType, discount.DiscountValue);
+                    }
+                }
+            }
+            else
+            {
+                foreach (var vc in discount.VehicleCategories)
+                {
+                    if (!categoryDiscountLookup.ContainsKey(vc.CategoryId))
+                    {
+                        var pct = discount.DiscountType == "percentage" ? discount.DiscountValue : 0m;
+                        categoryDiscountLookup[vc.CategoryId] = (pct, discount.DiscountType, discount.DiscountValue);
+                    }
+                }
+            }
+        }
 
         var vehicleDtos = new List<VehicleListDto>();
         foreach (var vehicle in vehicleList)
@@ -84,11 +113,13 @@ public class VehicleService : IVehicleService
             decimal? originalDailyRate = null;
             decimal? discountPercentage = null;
 
-            if (vehicle.CategoryId.HasValue && activeOffers.TryGetValue(vehicle.CategoryId.Value, out var discount))
+            if (vehicle.CategoryId.HasValue && categoryDiscountLookup.TryGetValue(vehicle.CategoryId.Value, out var disc))
             {
                 originalDailyRate = baseRate;
-                discountPercentage = discount;
-                dailyRate = baseRate * (1 - (discount / 100m));
+                discountPercentage = disc.Type == "percentage" ? disc.Percentage : Math.Round((disc.Value / baseRate) * 100, 2);
+                dailyRate = disc.Type == "percentage"
+                    ? baseRate * (1 - (disc.Percentage / 100m))
+                    : Math.Max(baseRate - disc.Value, 0);
             }
 
             vehicleDtos.Add(new VehicleListDto(
@@ -188,16 +219,27 @@ public class VehicleService : IVehicleService
 
         if (vehicle.CategoryId.HasValue)
         {
-            var activeOffer = await _context.CategoryOffers
-                .Where(o => o.CategoryId == vehicle.CategoryId.Value && o.IsActive && o.StartDate <= DateTime.UtcNow && o.EndDate >= DateTime.UtcNow)
-                .OrderByDescending(o => o.CreatedAt)
+            var vehicleDiscounts = await _context.DiscountCodes
+                .Include(d => d.VehicleCategories)
+                .Where(d => d.IsActive && d.IsAutomatic && d.ValidFrom <= DateTime.UtcNow && d.ValidTo >= DateTime.UtcNow)
+                .Where(d => !d.VehicleCategories.Any() || d.VehicleCategories.Any(vc => vc.CategoryId == vehicle.CategoryId.Value))
+                .OrderByDescending(d => d.Priority)
+                .ThenByDescending(d => d.DiscountValue)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (activeOffer != null)
+            if (vehicleDiscounts != null)
             {
                 originalPricePerDay = baseRate;
-                discountPercentage = activeOffer.DiscountPercentage;
-                dailyRate = baseRate * (1 - (activeOffer.DiscountPercentage / 100m));
+                if (vehicleDiscounts.DiscountType == "percentage")
+                {
+                    discountPercentage = vehicleDiscounts.DiscountValue;
+                    dailyRate = baseRate * (1 - (vehicleDiscounts.DiscountValue / 100m));
+                }
+                else
+                {
+                    discountPercentage = Math.Round((vehicleDiscounts.DiscountValue / baseRate) * 100, 2);
+                    dailyRate = Math.Max(baseRate - vehicleDiscounts.DiscountValue, 0);
+                }
             }
         }
 
@@ -556,7 +598,22 @@ public class VehicleService : IVehicleService
             {
                 query = query.Where(v => v.AvailabilityStatus != "Available" && !activeBookedVehicleIds.Contains(v.Id));
             }
-            // Any other value is silently ignored (no filter applied).
+            else if (status.Equals("Pending", StringComparison.OrdinalIgnoreCase))
+            {
+                query = query.Where(v => v.Status == "Pending");
+            }
+            else if (status.Equals("Approved", StringComparison.OrdinalIgnoreCase))
+            {
+                query = query.Where(v => v.Status == "Approved" || v.Status == "Active");
+            }
+            else if (status.Equals("Rejected", StringComparison.OrdinalIgnoreCase))
+            {
+                query = query.Where(v => v.Status == "Rejected");
+            }
+            else if (status.Equals("Maintenance", StringComparison.OrdinalIgnoreCase))
+            {
+                query = query.Where(v => v.Status == "Maintenance" || v.AvailabilityStatus == "Maintenance");
+            }
         }
 
         // Sorting - safe whitelist; unknown / null falls back to "newest".
@@ -602,9 +659,38 @@ public class VehicleService : IVehicleService
             .ToListAsync(cancellationToken);
         var onRentalIds = new HashSet<Guid>(onRentalIdSet);
 
-        var activeOffers = await _context.CategoryOffers
-            .Where(o => o.IsActive && o.StartDate <= DateTime.UtcNow && o.EndDate >= DateTime.UtcNow)
-            .ToDictionaryAsync(o => o.CategoryId, o => o.DiscountPercentage, cancellationToken);
+        var activeDiscounts = await _context.DiscountCodes
+            .Include(d => d.VehicleCategories)
+            .Where(d => d.IsActive && d.IsAutomatic && d.ValidFrom <= DateTime.UtcNow && d.ValidTo >= DateTime.UtcNow)
+            .ToListAsync(cancellationToken);
+
+        var adminCategoryDiscountLookup = new Dictionary<Guid, (decimal Percentage, string Type, decimal Value)>();
+        foreach (var discount in activeDiscounts)
+        {
+            if (!discount.VehicleCategories.Any())
+            {
+                var allCategoryIds = await _context.Categories.Select(c => c.Id).ToListAsync(cancellationToken);
+                foreach (var catId in allCategoryIds)
+                {
+                    if (!adminCategoryDiscountLookup.ContainsKey(catId))
+                    {
+                        var pct = discount.DiscountType == "percentage" ? discount.DiscountValue : 0m;
+                        adminCategoryDiscountLookup[catId] = (pct, discount.DiscountType, discount.DiscountValue);
+                    }
+                }
+            }
+            else
+            {
+                foreach (var vc in discount.VehicleCategories)
+                {
+                    if (!adminCategoryDiscountLookup.ContainsKey(vc.CategoryId))
+                    {
+                        var pct = discount.DiscountType == "percentage" ? discount.DiscountValue : 0m;
+                        adminCategoryDiscountLookup[vc.CategoryId] = (pct, discount.DiscountType, discount.DiscountValue);
+                    }
+                }
+            }
+        }
 
         var vehicleDtos = new List<VehicleListDto>();
         foreach (var vehicle in vehicles)
@@ -624,11 +710,13 @@ public class VehicleService : IVehicleService
             decimal? originalDailyRate = null;
             decimal? discountPercentage = null;
 
-            if (vehicle.CategoryId.HasValue && activeOffers.TryGetValue(vehicle.CategoryId.Value, out var discount))
+            if (vehicle.CategoryId.HasValue && adminCategoryDiscountLookup.TryGetValue(vehicle.CategoryId.Value, out var disc))
             {
                 originalDailyRate = baseRate;
-                discountPercentage = discount;
-                dailyRate = baseRate * (1 - (discount / 100m));
+                discountPercentage = disc.Type == "percentage" ? disc.Percentage : Math.Round((disc.Value / baseRate) * 100, 2);
+                dailyRate = disc.Type == "percentage"
+                    ? baseRate * (1 - (disc.Percentage / 100m))
+                    : Math.Max(baseRate - disc.Value, 0);
             }
 
             vehicleDtos.Add(new VehicleListDto(
@@ -703,14 +791,45 @@ public class VehicleService : IVehicleService
             LocationCity = request.LocationCity,
             CategoryId = request.CategoryId,
             Description = request.Description,
-            Status = request.Status,
-            AvailabilityStatus = request.AvailabilityStatus,
+            Status = "Pending",
+            AvailabilityStatus = "Unavailable",
             IsActive = true,
-            ApprovedAt = DateTime.UtcNow
+            ApprovedAt = null
         };
 
         var createdVehicle = await _vehicleRepository.AddAsync(vehicle, cancellationToken);
         await _vehicleRepository.SaveChangesAsync(cancellationToken);
+
+        // Best-effort "pending review" notification — wrapped in try/catch
+        // so a notification-service failure can never cause the create
+        // request to roll back.
+        if (_notificationService is not null)
+        {
+            try
+            {
+                var label = string.IsNullOrWhiteSpace(createdVehicle.Make) && string.IsNullOrWhiteSpace(createdVehicle.Model)
+                    ? "Your vehicle"
+                    : $"{createdVehicle.Make} {createdVehicle.Model}".Trim();
+
+                await _notificationService.CreateNotificationAsync(
+                    createdVehicle.UserId,
+                    "Vehicle pending review",
+                    $"{label} has been submitted and is pending admin review.",
+                    SupplierNotificationTypes.Format(SupplierNotificationTypes.VehiclePendingReview, createdVehicle.Id),
+                    cancellationToken);
+
+                // Notify admins so they can review the new submission.
+                await _notificationService.NotifyAdminsAsync(
+                    "New vehicle pending review",
+                    $"{label} was submitted and is awaiting review.",
+                    "VehiclePendingReview",
+                    cancellationToken);
+            }
+            catch
+            {
+                // Best-effort only.
+            }
+        }
 
         return new VehicleResponse(
             createdVehicle.Id,
@@ -872,6 +991,13 @@ public class VehicleService : IVehicleService
         var previousStatus = vehicle.Status;
         if (!string.IsNullOrWhiteSpace(request.Status))
             vehicle.Status = request.Status;
+
+        // When admin approves a vehicle, stamp ApprovedAt
+        if (string.Equals(request.Status, "Approved", StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(previousStatus, "Approved", StringComparison.OrdinalIgnoreCase))
+        {
+            vehicle.ApprovedAt = DateTime.UtcNow;
+        }
 
         if (!string.IsNullOrWhiteSpace(request.AvailabilityStatus))
             vehicle.AvailabilityStatus = request.AvailabilityStatus;
