@@ -106,6 +106,7 @@ namespace Backend.Infrastructure.BackgroundServices
                     // Increment attempts
                     booking.PickupAssignmentAttempts++;
                     await bookingRepository.UpdateAsync(booking, cancellationToken);
+                    await bookingRepository.SaveChangesAsync(cancellationToken);
 
                     if (booking.PickupAssignmentAttempts >= 6)
                     {
@@ -120,6 +121,7 @@ namespace Backend.Infrastructure.BackgroundServices
                     // Increment attempts
                     booking.PickupAssignmentAttempts++;
                     await bookingRepository.UpdateAsync(booking, cancellationToken);
+                    await bookingRepository.SaveChangesAsync(cancellationToken);
 
                     if (booking.PickupAssignmentAttempts >= 6)
                     {
@@ -165,6 +167,7 @@ namespace Backend.Infrastructure.BackgroundServices
                     // Increment attempts
                     booking.ReturnAssignmentAttempts++;
                     await bookingRepository.UpdateAsync(booking, cancellationToken);
+                    await bookingRepository.SaveChangesAsync(cancellationToken);
 
                     if (booking.ReturnAssignmentAttempts >= 6)
                     {
@@ -179,6 +182,7 @@ namespace Backend.Infrastructure.BackgroundServices
                     // Increment attempts
                     booking.ReturnAssignmentAttempts++;
                     await bookingRepository.UpdateAsync(booking, cancellationToken);
+                    await bookingRepository.SaveChangesAsync(cancellationToken);
 
                     if (booking.ReturnAssignmentAttempts >= 6)
                     {

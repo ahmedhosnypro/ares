@@ -4,7 +4,9 @@ using Backend.Application.Interfaces;
 using Backend.Domain.Entities;
 using Backend.Domain.Entities.Enums;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Linq;
 
 namespace Backend.Application.Services;
 
@@ -22,6 +24,7 @@ public class InspectionService : IInspectionService
     private readonly IBookingRepository _bookingRepository;
     private readonly INotificationService _notificationService;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IApplicationDbContext _context;
     private readonly ILogger<InspectionService> _logger;
 
     // Notification type tags — kept here so the front-end can switch on
@@ -37,6 +40,7 @@ public class InspectionService : IInspectionService
         IBookingRepository bookingRepository,
         INotificationService notificationService,
         UserManager<ApplicationUser> userManager,
+        IApplicationDbContext context,
         ILogger<InspectionService> logger)
     {
         _inspectionRepository = inspectionRepository;
@@ -45,6 +49,7 @@ public class InspectionService : IInspectionService
         _bookingRepository = bookingRepository;
         _notificationService = notificationService;
         _userManager = userManager;
+        _context = context;
         _logger = logger;
     }
 
@@ -55,130 +60,140 @@ public class InspectionService : IInspectionService
         Guid adminUserId,
         CancellationToken cancellationToken = default)
     {
-        var booking = await _bookingRepository.GetBookingWithDetailsAsync(bookingId, cancellationToken)
-            ?? throw new NotFoundException("Booking", bookingId);
+        using var tx = await _context.BeginTransactionAsync(cancellationToken);
 
-        string targetInspectionType;
-        if (booking.Status == BookingStatus.Confirmed)
-        {
-            targetInspectionType = "Pickup";
-        }
-        else if (booking.Status == BookingStatus.Active)
-        {
-            targetInspectionType = "Return";
-        }
-        else
-        {
-            throw new ValidationException(
-                "BookingStatus",
-                "Inspector assignment is only allowed:\n- For Pickup Inspection when booking status is Confirmed.\n- For Return Inspection when booking status is Active.");
-        }
-
-        // Resolve inspector. Spec mandates inactive inspectors must be
-        // rejected, so we look the profile up by UserId and validate.
-        var inspector = (await _inspectorRepository.GetAllAsync(cancellationToken))
-            .FirstOrDefault(i => i.UserId == request.InspectorUserId)
-            ?? throw new NotFoundException(
-                $"No inspector profile exists for user '{request.InspectorUserId}'.");
-
-        if (!inspector.IsActive)
-        {
-            throw new ConflictException("Cannot assign an inactive inspector.");
-        }
-
-        var inspectorUser = await _userManager.FindByIdAsync(inspector.UserId.ToString())
-            ?? throw new NotFoundException("Inspector user", inspector.UserId);
-
-        // Ensure we never create a second inspection of the same type for the same booking.
-        var allInspections = await _inspectionRepository.GetAllAsync(cancellationToken);
-        var inspection = allInspections.FirstOrDefault(i => i.BookingId == bookingId && string.Equals(i.InspectionType, targetInspectionType, StringComparison.OrdinalIgnoreCase));
-
-        Guid? previousInspectorId = null;
-
-        if (inspection == null)
-        {
-            inspection = new VehicleInspection
-            {
-                InspectionId = Guid.NewGuid(),
-                VehicleId = booking.VehicleId,
-                BookingId = booking.Id,
-                InspectorId = inspector.UserId,
-                InspectionType = targetInspectionType,
-                InspectionDate = targetInspectionType.Equals("Pickup", StringComparison.OrdinalIgnoreCase)
-                    ? (booking.PickupDate ?? DateTime.UtcNow)
-                    : (booking.ReturnDate ?? booking.PickupDate?.AddDays(1) ?? DateTime.UtcNow),
-                Status = InspectionStatus.Pending,
-                IsSubmitted = false,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
-            };
-            await _inspectionRepository.AddAsync(inspection, cancellationToken);
-        }
-        else
-        {
-            // Reassignment to a different inspector is allowed only while
-            // the inspection is still pending and not yet submitted.
-            if (inspection.IsSubmitted)
-            {
-                throw new ConflictException(
-                    "Inspection has already been submitted and is locked.");
-            }
-
-            previousInspectorId = inspection.InspectorId;
-            inspection.InspectorId = inspector.UserId;
-            inspection.Status = InspectionStatus.Pending;
-            inspection.UpdatedAt = DateTime.UtcNow;
-            await _inspectionRepository.UpdateAsync(inspection, cancellationToken);
-        }
-
-        // Mirror onto booking.
-        if (string.Equals(targetInspectionType, "Pickup", StringComparison.OrdinalIgnoreCase))
-        {
-            booking.AssignedInspectorId = inspector.UserId;
-        }
-        booking.InspectionStatus = InspectionStatus.Pending;
-        booking.UpdatedAt = DateTime.UtcNow;
-        await _bookingRepository.UpdateAsync(booking, cancellationToken);
-
-        await _inspectionRepository.SaveChangesAsync(cancellationToken);
-
-        // Notify the inspector — best-effort, never break the workflow.
         try
         {
-            if (previousInspectorId != inspector.UserId)
+            var booking = await _bookingRepository.GetBookingWithDetailsAsync(bookingId, cancellationToken)
+                ?? throw new NotFoundException("Booking", bookingId);
+
+            string targetInspectionType;
+            if (booking.Status == BookingStatus.Confirmed)
             {
-                await _notificationService.CreateNotificationAsync(
-                    inspector.UserId,
-                    "New inspection assigned",
-                    $"You have been assigned to inspect booking {booking.BookingNumber ?? booking.Id.ToString()} ({targetInspectionType}).",
-                    NotificationTypeInspectionAssigned,
-                    cancellationToken);
+                targetInspectionType = "Pickup";
+            }
+            else if (booking.Status == BookingStatus.Active)
+            {
+                targetInspectionType = "Return";
+            }
+            else
+            {
+                throw new ValidationException(
+                    "BookingStatus",
+                    "Inspector assignment is only allowed:\n- For Pickup Inspection when booking status is Confirmed.\n- For Return Inspection when booking status is Active.");
             }
 
-            // Notify previous inspector of reassignment
-            if (previousInspectorId != null && previousInspectorId != inspector.UserId)
+            // Resolve inspector. Spec mandates inactive inspectors must be
+            // rejected, so we look the profile up by UserId and validate.
+            var inspector = await _context.Inspectors
+                .FirstOrDefaultAsync(i => i.UserId == request.InspectorUserId, cancellationToken)
+                ?? throw new NotFoundException(
+                    $"No inspector profile exists for user '{request.InspectorUserId}'.");
+
+            if (!inspector.IsActive)
             {
-                await _notificationService.CreateNotificationAsync(
-                    previousInspectorId.Value,
-                    "Inspection Reassigned",
-                    $"Your assignment for booking {booking.BookingNumber ?? booking.Id.ToString()} ({targetInspectionType}) has been reassigned to another inspector.",
-                    "InspectionReassigned",
-                    cancellationToken);
+                throw new ConflictException("Cannot assign an inactive inspector.");
             }
+
+            var inspectorUser = await _userManager.FindByIdAsync(inspector.UserId.ToString())
+                ?? throw new NotFoundException("Inspector user", inspector.UserId);
+
+            // Ensure we never create a second inspection of the same type for the same booking.
+            var inspection = await _context.VehicleInspections
+                .FirstOrDefaultAsync(i => i.BookingId == bookingId && i.InspectionType == targetInspectionType, cancellationToken);
+
+            Guid? previousInspectorId = null;
+
+            if (inspection == null)
+            {
+                inspection = new VehicleInspection
+                {
+                    InspectionId = Guid.NewGuid(),
+                    VehicleId = booking.VehicleId,
+                    BookingId = booking.Id,
+                    InspectorId = inspector.UserId,
+                    InspectionType = targetInspectionType,
+                    InspectionDate = targetInspectionType.Equals("Pickup", StringComparison.OrdinalIgnoreCase)
+                        ? (booking.PickupDate ?? DateTime.UtcNow)
+                        : (booking.ReturnDate ?? booking.PickupDate?.AddDays(1) ?? DateTime.UtcNow),
+                    Status = InspectionStatus.Pending,
+                    IsSubmitted = false,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                };
+                await _inspectionRepository.AddAsync(inspection, cancellationToken);
+            }
+            else
+            {
+                // Reassignment to a different inspector is allowed only while
+                // the inspection is still pending and not yet submitted.
+                if (inspection.IsSubmitted)
+                {
+                    throw new ConflictException(
+                        "Inspection has already been submitted and is locked.");
+                }
+
+                previousInspectorId = inspection.InspectorId;
+                inspection.InspectorId = inspector.UserId;
+                inspection.Status = InspectionStatus.Pending;
+                inspection.UpdatedAt = DateTime.UtcNow;
+                await _inspectionRepository.UpdateAsync(inspection, cancellationToken);
+            }
+
+            // Mirror onto booking.
+            if (string.Equals(targetInspectionType, "Pickup", StringComparison.OrdinalIgnoreCase))
+            {
+                booking.AssignedInspectorId = inspector.UserId;
+            }
+            booking.InspectionStatus = InspectionStatus.Pending;
+            booking.UpdatedAt = DateTime.UtcNow;
+            await _bookingRepository.UpdateAsync(booking, cancellationToken);
+
+            await _inspectionRepository.SaveChangesAsync(cancellationToken);
+            await tx.CommitAsync(cancellationToken);
+
+            // Notify the inspector — best-effort, never break the workflow.
+            try
+            {
+                if (previousInspectorId != inspector.UserId)
+                {
+                    await _notificationService.CreateNotificationAsync(
+                        inspector.UserId,
+                        "New inspection assigned",
+                        $"You have been assigned to inspect booking {booking.BookingNumber ?? booking.Id.ToString()} ({targetInspectionType}).",
+                        NotificationTypeInspectionAssigned,
+                        cancellationToken);
+                }
+
+                // Notify previous inspector of reassignment
+                if (previousInspectorId != null && previousInspectorId != inspector.UserId)
+                {
+                    await _notificationService.CreateNotificationAsync(
+                        previousInspectorId.Value,
+                        "Inspection Reassigned",
+                        $"Your assignment for booking {booking.BookingNumber ?? booking.Id.ToString()} ({targetInspectionType}) has been reassigned to another inspector.",
+                        "InspectionReassigned",
+                        cancellationToken);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send inspection-assigned notification");
+            }
+
+            _logger.LogInformation(
+                "Admin {AdminId} assigned inspector {InspectorUserId} to booking {BookingId}",
+                adminUserId, inspector.UserId, booking.Id);
+
+            return await BuildDetailsDtoAsync(inspection.InspectionId, cancellationToken)
+                ?? throw new InvalidOperationException("Failed to load just-created inspection.");
         }
-        catch (Exception ex)
+        catch
         {
-            _logger.LogWarning(ex, "Failed to send inspection-assigned notification");
+            await tx.RollbackAsync(cancellationToken);
+            throw;
         }
-
-        _logger.LogInformation(
-            "Admin {AdminId} assigned inspector {InspectorUserId} to booking {BookingId}",
-            adminUserId, inspector.UserId, booking.Id);
-
-        return await BuildDetailsDtoAsync(inspection.InspectionId, cancellationToken)
-            ?? throw new InvalidOperationException("Failed to load just-created inspection.");
     }
-
 
     public async Task<InspectionDetailsDto?> GetByIdAsync(
         Guid inspectionId,
@@ -257,9 +272,9 @@ public class InspectionService : IInspectionService
             throw new ValidationException("notes", "Inspection notes are required.");
         }
 
-        var images = (await _inspectionImageRepository.GetAllAsync(cancellationToken))
+        var images = await _context.InspectionImages
             .Where(i => i.InspectionId == inspection.InspectionId)
-            .ToList();
+            .ToListAsync(cancellationToken);
         if (images.Count == 0)
         {
             throw new ValidationException("images", "At least one inspection image is required before submission.");
@@ -327,11 +342,10 @@ public class InspectionService : IInspectionService
         Guid inspectorUserId,
         CancellationToken cancellationToken = default)
     {
-        var all = await _inspectionRepository.GetAllAsync(cancellationToken);
-        var submitted = all
+        var submitted = await _context.VehicleInspections
             .Where(i => i.InspectorId == inspectorUserId && i.IsSubmitted)
             .OrderByDescending(i => i.SubmittedAt ?? i.UpdatedAt)
-            .ToList();
+            .ToListAsync(cancellationToken);
 
         return await ToDtoListAsync(submitted, cancellationToken);
     }
@@ -380,11 +394,11 @@ public class InspectionService : IInspectionService
             ? await _userManager.FindByIdAsync(inspection.InspectorId.Value.ToString())
             : null;
 
-        var images = (await _inspectionImageRepository.GetAllAsync(cancellationToken))
+        var images = await _context.InspectionImages
             .Where(i => i.InspectionId == inspection.InspectionId)
             .OrderBy(i => i.CreatedAt)
             .Select(i => new InspectionImageDto(i.Id, i.InspectionId, i.ImageUrl, i.CreatedAt))
-            .ToList();
+            .ToListAsync(cancellationToken);
 
         return new InspectionDetailsDto(
             InspectionId: inspection.InspectionId,
@@ -413,9 +427,12 @@ public class InspectionService : IInspectionService
         if (inspections.Count == 0) return Array.Empty<InspectionDto>();
 
         // Pre-fetch the image counts and booking info once per inspection.
-        var allImages = (await _inspectionImageRepository.GetAllAsync(cancellationToken))
+        var inspectionIds = inspections.Select(i => i.InspectionId).ToList();
+        var allImages = await _context.InspectionImages
+            .Where(i => inspectionIds.Contains(i.InspectionId))
             .GroupBy(i => i.InspectionId)
-            .ToDictionary(g => g.Key, g => g.Count());
+            .Select(g => new { InspectionId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.InspectionId, x => x.Count, cancellationToken);
 
         var dtos = new List<InspectionDto>(inspections.Count);
         foreach (var inspection in inspections)

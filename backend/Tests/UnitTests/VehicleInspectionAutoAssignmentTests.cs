@@ -28,6 +28,7 @@ namespace Backend.Tests.UnitTests
         {
             var options = new DbContextOptionsBuilder<ApplicationDbContext>()
                 .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                .ConfigureWarnings(x => x.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning))
                 .EnableSensitiveDataLogging()
                 .Options;
             return new ApplicationDbContext(options);
