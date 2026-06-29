@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getLocale } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { redirect } from "@/shared/i18n/routing";
 import { getServerSession } from "next-auth";
 import { Box, Container, Paper, Stack, Typography, Button, Divider, Grid } from "@mui/material";
@@ -74,6 +74,7 @@ async function fetchTransactionId(bookingId: string, accessToken: string): Promi
 
 export default async function ConfirmationPage({ params }: PageProps) {
   const locale = await getLocale();
+  const t = await getTranslations("publicPages.bookings.confirmation");
   const { bookingId } = await params;
   const session = await getServerSession(authOptions);
 
@@ -107,17 +108,17 @@ export default async function ConfirmationPage({ params }: PageProps) {
         >
           <CheckCircleOutlinedIcon sx={{ fontSize: 80, color: "success.main", mb: 2 }} />
           <Typography variant="h3" gutterBottom sx={{ fontWeight: 900 }}>
-            Booking Confirmed!
+            {t("bookingConfirmed")}
           </Typography>
           <Typography variant="h6" color="text.secondary" sx={{ mb: 4 }}>
-            Your reservation has been successfully placed and paid.
+            {t("reservationPlaced")}
           </Typography>
 
           <Box sx={{ bgcolor: "background.default", borderRadius: 2, p: { xs: 2, md: 4 }, mb: 4, textAlign: "left" }}>
             <Grid container spacing={3}>
               <Grid size={12}>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Booking Reference
+                  {t("bookingReference")}
                 </Typography>
                 <Typography variant="h5" color="primary.main" sx={{ fontWeight: 800 }}>
                   {bookingId.slice(0, 8).toUpperCase()}
@@ -133,7 +134,7 @@ export default async function ConfirmationPage({ params }: PageProps) {
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <CalendarTodayIcon fontSize="small" color="action" />
                     <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                      Dates
+                      {t("dates")}
                     </Typography>
                   </Box>
                   <Typography variant="body2">
@@ -147,7 +148,7 @@ export default async function ConfirmationPage({ params }: PageProps) {
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <LocationOnIcon fontSize="small" color="action" />
                     <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                      Vehicle
+                      {t("vehicle")}
                     </Typography>
                   </Box>
                   <Typography variant="body2">
@@ -163,7 +164,7 @@ export default async function ConfirmationPage({ params }: PageProps) {
               <Grid size={12}>
                 <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                    Total Paid
+                    {t("totalPaid")}
                   </Typography>
                   <Typography variant="h5" sx={{ fontWeight: 900 }}>
                     {formatCurrency(booking.price)}
@@ -181,7 +182,7 @@ export default async function ConfirmationPage({ params }: PageProps) {
               href="/bookings"
               sx={{ borderRadius: 2, py: 1.5, px: 4, fontWeight: 700 }}
             >
-              My Bookings
+              {t("myBookings")}
             </Button>
           </Stack>
         </Paper>

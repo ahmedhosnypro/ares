@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { Box, Chip, Divider, Grid, Rating, Stack, Typography } from "@mui/material";
 import type { VehicleDetailsViewModel } from "./types";
 
@@ -5,26 +8,19 @@ interface VehicleInfoProps {
   readonly vehicle: VehicleDetailsViewModel;
 }
 
-interface SpecItem {
-  readonly label: string;
-  readonly value: string;
-}
-
-function buildSpecs(vehicle: VehicleDetailsViewModel): readonly SpecItem[] {
-  return [
-    { label: "Transmission", value: vehicle.transmission },
-    { label: "Fuel Type", value: vehicle.fuelType },
-    { label: "Seats", value: String(vehicle.seats) },
-    { label: "Color", value: vehicle.color },
-    { label: "Category", value: vehicle.status },
-    { label: "Location", value: vehicle.locationCity },
-  ].filter(item => item.value !== "");
-}
-
 export default function VehicleInfo({ vehicle }: VehicleInfoProps) {
+  const t = useTranslations("publicPages.vehicles.detail");
   const title = `${vehicle.make} ${vehicle.model}`.trim();
-  const specs = buildSpecs(vehicle);
   const isAvailable = vehicle.availabilityStatus.toLowerCase() === "available";
+
+  const specs = [
+    { label: t("transmission"), value: vehicle.transmission },
+    { label: t("fuelType"), value: vehicle.fuelType },
+    { label: t("seats"), value: String(vehicle.seats) },
+    { label: t("color"), value: vehicle.color },
+    { label: t("category"), value: vehicle.status },
+    { label: t("location"), value: vehicle.locationCity },
+  ].filter(item => item.value !== "");
 
   return (
     <Stack spacing={3}>
@@ -38,10 +34,10 @@ export default function VehicleInfo({ vehicle }: VehicleInfoProps) {
           }}
         >
           <Typography variant="h4" color="text.primary" sx={{ fontWeight: 800 }}>
-            {title || "Vehicle Details"}
+            {title || t("vehicleDetails")}
           </Typography>
           <Chip
-            label={isAvailable ? "Available now" : vehicle.availabilityStatus || "Unavailable"}
+            label={isAvailable ? t("availableNow") : vehicle.availabilityStatus || t("unavailable")}
             color={isAvailable ? "success" : "default"}
             variant={isAvailable ? "filled" : "outlined"}
           />
@@ -50,13 +46,14 @@ export default function VehicleInfo({ vehicle }: VehicleInfoProps) {
         <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
           <Rating value={vehicle.averageRating} precision={0.5} readOnly />
           <Typography variant="body2" color="text.secondary">
-            {vehicle.averageRating.toFixed(1)} ({vehicle.reviewCount} reviews)
+            {vehicle.averageRating.toFixed(1)} ({vehicle.reviewCount}{" "}
+            {vehicle.reviewCount === 1 ? t("review") : t("reviews")})
           </Typography>
         </Stack>
 
         {vehicle.year > 0 ? (
           <Typography variant="body1" color="text.secondary">
-            Model year {vehicle.year}
+            {t("modelYear")} {vehicle.year}
           </Typography>
         ) : null}
       </Stack>
@@ -65,17 +62,17 @@ export default function VehicleInfo({ vehicle }: VehicleInfoProps) {
 
       <Stack spacing={1}>
         <Typography variant="h6" sx={{ fontWeight: 700 }}>
-          About this vehicle
+          {t("aboutThisVehicle")}
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.8 }}>
-          {vehicle.description || "Vehicle description is currently unavailable."}
+          {vehicle.description || t("descriptionUnavailable")}
         </Typography>
       </Stack>
 
       {specs.length > 0 ? (
         <Stack spacing={1.5}>
           <Typography variant="h6" sx={{ fontWeight: 700 }}>
-            Key specifications
+            {t("keySpecifications")}
           </Typography>
           <Grid container spacing={1.5}>
             {specs.map(spec => (
@@ -106,7 +103,7 @@ export default function VehicleInfo({ vehicle }: VehicleInfoProps) {
       {vehicle.features.length > 0 ? (
         <Stack spacing={1.5}>
           <Typography variant="h6" sx={{ fontWeight: 700 }}>
-            Included features
+            {t("includedFeatures")}
           </Typography>
           <Grid container spacing={1.5}>
             {vehicle.features.map(feature => (
@@ -138,7 +135,7 @@ export default function VehicleInfo({ vehicle }: VehicleInfoProps) {
             },
           }}
         >
-          Listed by <span className="supplierName">{vehicle.supplierName}</span>
+          {t("listedBy")} <span className="supplierName">{vehicle.supplierName}</span>
         </Typography>
       ) : null}
     </Stack>

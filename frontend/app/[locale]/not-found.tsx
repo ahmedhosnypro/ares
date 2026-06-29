@@ -1,18 +1,14 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Link } from "@/shared/i18n/routing";
 import { Box, Typography, Button, Container, useTheme, alpha } from "@mui/material";
 import HomeIcon from "@mui/icons-material/Home";
 import SearchIcon from "@mui/icons-material/Search";
 
-/**
- * Global 404 Not Found page.
- *
- * Implements themed background and text colors to prevent "white on white"
- * issues in light mode, following AGENTS.md rules.
- */
 export default function NotFound() {
   const theme = useTheme();
+  const t = useTranslations("rootPages.notFound");
 
   return (
     <Box
@@ -37,7 +33,6 @@ export default function NotFound() {
             gap: 4,
           }}
         >
-          {/* Visual Indicator */}
           <Box
             sx={{
               position: "relative",
@@ -76,17 +71,17 @@ export default function NotFound() {
                   lineHeight: 1,
                 }}
               >
-                404
+                {t("errorCode")}
               </Typography>
             </Box>
           </Box>
 
           <Box>
             <Typography variant="h3" sx={{ fontWeight: 800, mb: 1, color: "text.primary" }}>
-              Page not found
+              {t("title")}
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 480, mx: "auto", fontWeight: 500 }}>
-              The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.
+              {t("description")}
             </Typography>
           </Box>
 
@@ -108,7 +103,7 @@ export default function NotFound() {
                 transition: "all 0.2s",
               }}
             >
-              Back to Home
+              {t("backToHome")}
             </Button>
             <Button
               variant="outlined"
@@ -127,7 +122,7 @@ export default function NotFound() {
                 transition: "all 0.2s",
               }}
             >
-              Search Vehicles
+              {t("searchVehicles")}
             </Button>
           </Box>
         </Box>

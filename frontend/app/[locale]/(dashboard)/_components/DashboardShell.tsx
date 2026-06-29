@@ -69,8 +69,8 @@ function resolveActiveMenuItem(menuItems: DashboardMenuItem[], pathname: string)
   return menuItems.filter(item => matchesItem(item.path)).sort((a, b) => b.path.length - a.path.length)[0];
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function DashboardShell({
-  // eslint-disable-line sonarjs/cognitive-complexity
   children,
   menuItems,
   sidebarLabel,

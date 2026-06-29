@@ -21,27 +21,27 @@ import SearchIcon from "@mui/icons-material/Search";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { useLocations } from "@/api-clients/locations/locations";
 import { toImageUrl } from "@/utils/image-url";
+import { useTranslations } from "next-intl";
 
 export default function LocationsPage() {
+  const t = useTranslations("publicPages.locations");
   const [searchTerm, setSearchTerm] = useState("");
   const { locations, loading, page, totalPages, setPage, setSearch } = useLocations();
 
-  // Debounce search input to avoid spamming the API on every keypress
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       setSearch(searchTerm);
-      setPage(1); // Reset to page 1 on new search
-    }, 300); // 300ms delay
+      setPage(1);
+    }, 300);
 
     return () => {
       clearTimeout(delayDebounceFn);
     };
   }, [searchTerm, setSearch, setPage]);
 
-  // Page title metadata on client-side
   useEffect(() => {
-    document.title = "Explore Locations | Ares Car Rental";
-  }, []);
+    document.title = t("pageTitle");
+  }, [t]);
 
   const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
@@ -51,7 +51,6 @@ export default function LocationsPage() {
   return (
     <Box sx={{ py: { xs: 6, md: 10 }, minHeight: "80vh", bgcolor: "background.default" }}>
       <Container maxWidth="xl">
-        {/* Header section */}
         <Stack spacing={2} sx={{ alignItems: "center", mb: 6 }}>
           <Typography
             variant="h3"
@@ -62,7 +61,7 @@ export default function LocationsPage() {
               color: "text.primary",
             }}
           >
-            Our Locations
+            {t("heading")}
           </Typography>
           <Typography
             variant="body1"
@@ -72,15 +71,14 @@ export default function LocationsPage() {
               color: "text.secondary",
             }}
           >
-            Browse all our pickup and drop-off locations to find the perfect starting point for your next trip.
+            {t("subtitle")}
           </Typography>
         </Stack>
 
-        {/* Search Bar */}
         <Box sx={{ display: "flex", justifyContent: "center", mb: 8 }}>
           <TextField
             fullWidth
-            placeholder="Search locations by name..."
+            placeholder={t("searchPlaceholder")}
             value={searchTerm}
             onChange={e => {
               setSearchTerm(e.target.value);
@@ -109,30 +107,26 @@ export default function LocationsPage() {
           />
         </Box>
 
-        {/* Loading Spinner */}
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
             <CircularProgress color="primary" size={50} />
           </Box>
         ) : locations.length === 0 ? (
-          /* Empty State */
           <Box sx={{ textAlign: "center", py: 10 }}>
             <Typography variant="h6" sx={{ color: "text.secondary", mb: 1 }}>
-              No locations found matching your search.
+              {t("noResultsTitle")}
             </Typography>
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              Try checking your spelling or search for another city.
+              {t("noResultsSuggestion")}
             </Typography>
           </Box>
         ) : (
-          /* Locations Grid */
           <>
             <Grid container spacing={3}>
               {locations.map(loc => {
-                // Map API properties safely to match the Home Page card expectation
                 const id = (loc.id as string | undefined) || (loc._id as string | undefined) || "";
-                const city = loc.city || loc.name || "Location";
-                const country = loc.country || "Egypt";
+                const city = loc.city || loc.name || t("fallbackCity");
+                const country = loc.country || t("fallbackCountry");
                 const rawImage =
                   typeof loc.imageUrl === "string"
                     ? loc.imageUrl
@@ -140,8 +134,8 @@ export default function LocationsPage() {
                       ? loc.image
                       : undefined;
                 const imageUrl = toImageUrl(rawImage);
-                const startingPrice = 25; // Reused static mock price from home page card
-                const vehicleCount = 50; // Reused static mock count from home page card
+                const startingPrice = 25;
+                const vehicleCount = 50;
 
                 return (
                   <Grid key={id} size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -210,7 +204,6 @@ export default function LocationsPage() {
                             </Box>
                           )}
 
-                          {/* Price badge */}
                           <Box
                             sx={{
                               position: "absolute",
@@ -225,7 +218,7 @@ export default function LocationsPage() {
                             }}
                           >
                             <Typography variant="caption" sx={{ fontWeight: "bold" }}>
-                              From ${startingPrice}/day
+                              {t("priceBadge", { price: startingPrice })}
                             </Typography>
                           </Box>
                         </Box>
@@ -238,7 +231,8 @@ export default function LocationsPage() {
                             {country}
                           </Typography>
                           <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                            {vehicleCount}+ vehicles available
+                            {vehicleCount}
+                            {t("vehiclesAvailable")}
                           </Typography>
                         </CardContent>
                       </Card>
@@ -248,7 +242,6 @@ export default function LocationsPage() {
               })}
             </Grid>
 
-            {/* Pagination Controls */}
             {totalPages > 1 && (
               <Box sx={{ display: "flex", justifyContent: "center", mt: 6 }}>
                 <Pagination
