@@ -23,7 +23,7 @@ namespace Backend.Domain.Entities
         [Column(TypeName = "decimal(5,2)")]
         public decimal DiscountPercentage { get; set; }
 
-        [NotMapped]
+        [MaxLength(500)]
         public string? ImageUrl { get; set; }
 
         public bool IsActive { get; set; } = true;

@@ -2,6 +2,11 @@ using Backend.Application.DTOs.Location;
 using Backend.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Backend.Api.Controllers;
 
@@ -207,5 +212,94 @@ public class LocationsController : ControllerBase
             return NotFound(new { message = $"Location with ID {id} not found" });
         }
         return Ok(new { message = "Location deleted successfully" });
+    }
+
+    /// <summary>
+    /// Upload an image for a location (Admin only)
+    /// </summary>
+    [HttpPost("/api/admin/locations/{id:guid}/image")]
+    [Authorize(Roles = "Admin")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(10 * 1024 * 1024)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UploadLocationImage(
+        Guid id,
+        IFormFile file,
+        CancellationToken cancellationToken)
+    {
+        if (file.Length == 0)
+        {
+            return BadRequest(new { message = "File is empty." });
+        }
+
+        const long maxFileSize = 10 * 1024 * 1024;
+        if (file.Length > maxFileSize)
+        {
+            return BadRequest(new { message = "File size exceeds the maximum limit of 10MB." });
+        }
+
+        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
+        {
+            return BadRequest(new { message = $"Invalid file type. Allowed types: {string.Join(", ", allowedExtensions)}" });
+        }
+
+        var allowedContentTypes = new[] { "image/jpeg", "image/png", "image/webp" };
+        if (!allowedContentTypes.Contains(file.ContentType.ToLowerInvariant()))
+        {
+            return BadRequest(new { message = "Invalid content type. Only image/jpeg, image/png, and image/webp are allowed." });
+        }
+
+        string? oldImageUrl = null;
+        try
+        {
+            var existingLocation = await _locationService.GetLocationByIdAsync(id, cancellationToken);
+            oldImageUrl = existingLocation.ImageUrl;
+        }
+        catch (ArgumentException ex) when (ex.Message.Contains("not found"))
+        {
+            return NotFound(new { message = $"Location with ID {id} not found" });
+        }
+
+        var fileName = $"{id}_{Guid.NewGuid():N}{extension}";
+        var uploadsFolder = Path.Combine("wwwroot", "uploads", "locations");
+        Directory.CreateDirectory(uploadsFolder);
+
+        var filePath = Path.Combine(uploadsFolder, fileName);
+        try
+        {
+            await using (var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                await file.CopyToAsync(stream, cancellationToken);
+            }
+
+            var updateRequest = new UpdateLocationImageRequest($"/uploads/locations/{fileName}");
+            var location = await _locationService.UpdateLocationImageUrlAsync(id, updateRequest, cancellationToken);
+        }
+        catch
+        {
+            if (System.IO.File.Exists(filePath))
+            {
+                System.IO.File.Delete(filePath);
+            }
+            throw;
+        }
+
+        if (!string.IsNullOrEmpty(oldImageUrl))
+        {
+            var oldFilePath = Path.Combine("wwwroot", oldImageUrl.TrimStart('/'));
+            if (System.IO.File.Exists(oldFilePath))
+            {
+                System.IO.File.Delete(oldFilePath);
+            }
+        }
+
+        var updatedLocation = await _locationService.GetLocationByIdAsync(id, cancellationToken);
+        return Ok(updatedLocation);
     }
 }

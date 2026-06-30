@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -37,6 +38,7 @@ namespace Backend.Api.Controllers
                     Description = c.Description,
                     CommissionPercentage = c.CommissionPercentage,
                     IsActive = c.IsActive,
+                    ImageUrl = c.ImageUrl,
                     VehicleCount = _context.Vehicles.Count(v => v.CategoryId == c.Id)
                 })
                 .ToListAsync(cancellationToken);
@@ -269,6 +271,82 @@ namespace Backend.Api.Controllers
             return Ok(new { message = $"Successfully assigned {vehicles.Count} vehicles to {category.Name}." });
         }
 
+        [HttpPost("{id}/image")]
+        [Consumes("multipart/form-data")]
+        [RequestSizeLimit(10 * 1024 * 1024)]
+        public async Task<IActionResult> UploadImage(
+            Guid id,
+            IFormFile file,
+            CancellationToken cancellationToken)
+        {
+            var category = await _context.Categories
+                .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+
+            if (category == null) return NotFound();
+
+            if (file.Length == 0)
+            {
+                return BadRequest(new { message = "File is empty." });
+            }
+
+            const long maxFileSize = 10 * 1024 * 1024;
+            if (file.Length > maxFileSize)
+            {
+                return BadRequest(new { message = "File size exceeds the maximum limit of 10MB." });
+            }
+
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
+            {
+                return BadRequest(new { message = $"Invalid file type. Allowed types: {string.Join(", ", allowedExtensions)}" });
+            }
+
+            var allowedContentTypes = new[] { "image/jpeg", "image/png", "image/webp" };
+            if (!allowedContentTypes.Contains(file.ContentType.ToLowerInvariant()))
+            {
+                return BadRequest(new { message = "Invalid content type. Only image/jpeg, image/png, and image/webp are allowed." });
+            }
+
+            var oldImageUrl = category.ImageUrl;
+
+            var fileName = $"{id}_{Guid.NewGuid():N}{extension}";
+            var uploadsFolder = Path.Combine("wwwroot", "uploads", "categories");
+            Directory.CreateDirectory(uploadsFolder);
+
+            var filePath = Path.Combine(uploadsFolder, fileName);
+            try
+            {
+                await using (var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None))
+                {
+                    await file.CopyToAsync(stream, cancellationToken);
+                }
+
+                category.ImageUrl = $"/uploads/categories/{fileName}";
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+            catch
+            {
+                if (System.IO.File.Exists(filePath))
+                {
+                    System.IO.File.Delete(filePath);
+                }
+                throw;
+            }
+
+            if (!string.IsNullOrEmpty(oldImageUrl))
+            {
+                var oldFilePath = Path.Combine("wwwroot", oldImageUrl.TrimStart('/'));
+                if (System.IO.File.Exists(oldFilePath))
+                {
+                    System.IO.File.Delete(oldFilePath);
+                }
+            }
+
+            var response = await GetCategoryResponseAsync(category.Id, cancellationToken);
+            return Ok(response);
+        }
+
         private async Task<CategoryResponseDto?> GetCategoryResponseAsync(Guid id, CancellationToken cancellationToken)
         {
             return await _context.Categories
@@ -280,6 +358,7 @@ namespace Backend.Api.Controllers
                     Description = c.Description,
                     CommissionPercentage = c.CommissionPercentage,
                     IsActive = c.IsActive,
+                    ImageUrl = c.ImageUrl,
                     VehicleCount = _context.Vehicles.Count(v => v.CategoryId == c.Id)
                 })
                 .FirstOrDefaultAsync(cancellationToken);
@@ -294,6 +373,7 @@ namespace Backend.Api.Controllers
         public decimal CommissionPercentage { get; set; }
         public bool IsActive { get; set; }
         public int VehicleCount { get; set; }
+        public string? ImageUrl { get; set; }
     }
 
     public class CategoryDto

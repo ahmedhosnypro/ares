@@ -168,7 +168,6 @@ public class LocationService : ILocationService
             throw new ArgumentException($"Location with ID {locationId} not found.", nameof(locationId));
         }
 
-        // Update location properties
         location.AddressLine = request.AddressLine;
         location.City = request.City;
         location.Governorate = request.Governorate;
@@ -236,6 +235,37 @@ public class LocationService : ILocationService
         await _locationRepository.SaveChangesAsync(cancellationToken);
 
         return true;
+    }
+
+    public async Task<LocationDto> UpdateLocationImageUrlAsync(
+        Guid locationId,
+        UpdateLocationImageRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var location = await _locationRepository.GetByIdAsync(locationId, cancellationToken);
+        if (location == null)
+        {
+            throw new ArgumentException($"Location with ID {locationId} not found.", nameof(locationId));
+        }
+
+        location.ImageUrl = request.ImageUrl;
+
+        await _locationRepository.UpdateAsync(location, cancellationToken);
+        await _locationRepository.SaveChangesAsync(cancellationToken);
+
+        return new LocationDto(
+            Id: location.Id,
+            AddressLine: location.AddressLine,
+            City: location.City,
+            Governorate: location.Governorate,
+            Country: location.Country,
+            PostalCode: location.PostalCode,
+            Latitude: location.Latitude,
+            Longitude: location.Longitude,
+            IsPrimary: location.IsPrimary,
+            ImageUrl: location.ImageUrl,
+            CreatedAt: location.CreatedAt,
+            UpdatedAt: location.UpdatedAt);
     }
 
     private static string BuildDisplayText(Domain.Entities.UserAddress location)

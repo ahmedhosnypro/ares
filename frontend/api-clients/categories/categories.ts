@@ -8,6 +8,7 @@ export interface Category {
   commissionPercentage: number;
   isActive: boolean;
   vehicleCount?: number;
+  imageUrl?: string;
 }
 
 export interface CategoryDetails extends Category {
@@ -124,30 +125,13 @@ export async function createCategory(payload: {
   });
 }
 
-/**
- * Creates a category with an image file upload.
- * The backend endpoint must accept multipart/form-data with an `image` file field.
- * All other fields are appended as plain string form fields.
- */
-export async function createCategoryWithImage(
-  payload: {
-    name: string;
-    description?: string;
-    commissionPercentage: number;
-    isActive: boolean;
-  },
-  imageFile: File
-): Promise<Category> {
+export async function uploadCategoryImage(id: string, file: File): Promise<Category> {
   const session = await getSession();
 
   const formData = new FormData();
-  formData.append("name", payload.name);
-  if (payload.description) formData.append("description", payload.description);
-  formData.append("commissionPercentage", String(payload.commissionPercentage));
-  formData.append("isActive", String(payload.isActive));
-  formData.append("image", imageFile);
+  formData.append("file", file);
 
-  return apiFetchJson<Category>(`/api/admin/categories`, {
+  return apiFetchJson<Category>(`/api/admin/categories/${id}/image`, {
     method: "POST",
     accessToken: session?.accessToken ?? undefined,
     body: formData,

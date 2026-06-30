@@ -37,4 +37,9 @@ public interface ILocationService
     Task<bool> DeleteLocationAsync(
         Guid locationId,
         CancellationToken cancellationToken = default);
+
+    Task<LocationDto> UpdateLocationImageUrlAsync(
+        Guid locationId,
+        UpdateLocationImageRequest request,
+        CancellationToken cancellationToken = default);
 }

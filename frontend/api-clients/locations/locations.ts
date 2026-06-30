@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { apiFetchJson } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
 
@@ -94,25 +94,11 @@ export async function createLocation(accessToken: string, data: Record<string, u
   });
 }
 
-/**
- * Creates a location with an image file upload.
- * The backend endpoint must accept multipart/form-data with an `image` file field.
- * All other fields are appended as plain string form fields.
- */
-export async function createLocationWithImage(
-  accessToken: string,
-  data: Record<string, unknown>,
-  imageFile: File
-): Promise<Location> {
+export async function uploadLocationImage(accessToken: string, id: string, file: File): Promise<Location> {
   const formData = new FormData();
-  Object.entries(data).forEach(([key, value]) => {
-    if (value !== null && value !== undefined) {
-      formData.append(key, String(value));
-    }
-  });
-  formData.append("image", imageFile);
+  formData.append("file", file);
 
-  return apiFetchJson<Location>("/api/admin/locations/create", {
+  return apiFetchJson<Location>(`/api/admin/locations/${encodeURIComponent(id)}/image`, {
     method: "POST",
     accessToken,
     body: formData,
