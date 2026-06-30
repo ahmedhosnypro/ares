@@ -23,6 +23,7 @@ export interface FrontendEnvConfig {
   // Features
   nextPublicEnableAnalytics: boolean;
   nextPublicEnableDebug: boolean;
+  nextPublicDemoLogin: boolean;
 
   // JWT Timing alignment
   nextPublicJwtExpirationMinutes: number;
@@ -61,6 +62,7 @@ export function getDefaultFrontendConfig(backendConfig?: BackendEnvConfig): Fron
     // Features
     nextPublicEnableAnalytics: false,
     nextPublicEnableDebug: true,
+    nextPublicDemoLogin: false,
 
     // Timing
     nextPublicJwtExpirationMinutes: expiration,
@@ -178,6 +180,12 @@ export async function promptFrontendConfig(
     getExisting("NEXT_PUBLIC_ENABLE_DEBUG"),
     "confirm"
   );
+  config.nextPublicDemoLogin = await promptValue(
+    "Enable demo login?",
+    defaults.nextPublicDemoLogin,
+    getExisting("NEXT_PUBLIC_DEMO_LOGIN"),
+    "confirm"
+  );
 
   const configureOptional = await prompts({
     type: "confirm",
@@ -249,6 +257,7 @@ NEXT_PUBLIC_JWT_EXPIRATION_MINUTES=${config.nextPublicJwtExpirationMinutes.toStr
 # ============================================
 NEXT_PUBLIC_ENABLE_ANALYTICS=${config.nextPublicEnableAnalytics.toString()}
 NEXT_PUBLIC_ENABLE_DEBUG=${config.nextPublicEnableDebug.toString()}
+NEXT_PUBLIC_DEMO_LOGIN=${config.nextPublicDemoLogin.toString()}
 
 # ============================================
 # Google OAuth Configuration
@@ -341,6 +350,7 @@ export async function setupFrontendEnv(
       "NEXT_PUBLIC_JWT_EXPIRATION_MINUTES",
       "NEXT_PUBLIC_ENABLE_ANALYTICS",
       "NEXT_PUBLIC_ENABLE_DEBUG",
+      "NEXT_PUBLIC_DEMO_LOGIN",
       "NEXT_PUBLIC_GOOGLE_CLIENT_ID",
       "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY",
       "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",

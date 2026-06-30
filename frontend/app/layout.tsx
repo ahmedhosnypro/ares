@@ -9,9 +9,8 @@ import { getServerTheme } from "@/lib/server-theme-detection";
 import ThemeWatcher from "./[locale]/_components/ThemeWatcher";
 import React from "react";
 import { createAppTheme } from "@/providers/theme";
-import { cookies } from "next/headers";
 import { NextIntlClientProvider } from "next-intl";
-import { getMessages } from "next-intl/server";
+import { getLocale, getMessages } from "next-intl/server";
 
 const geistSans = localFont({
   variable: "--font-geist-sans",
@@ -96,15 +95,6 @@ const geistMono = localFont({
     { path: "../public/fonts/geist-mono-latin-900-italic.woff2", weight: "900", style: "italic" },
   ],
 });
-
-async function getLocale() {
-  const cookieStore = await cookies();
-  const localeCookie = cookieStore.get("NEXT_LOCALE");
-  if (localeCookie?.value && ["ar", "en"].includes(localeCookie.value)) {
-    return localeCookie.value;
-  }
-  return "en";
-}
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();

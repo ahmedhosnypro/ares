@@ -82,19 +82,20 @@ function handleAuthError(res: Response, data: AuthResponse): never {
 }
 
 async function refreshAccessToken(token: JWT): Promise<JWT> {
+  const baseUrl = getApiBaseUrl();
   try {
-    const baseUrl = getApiBaseUrl();
     const response = await fetch(`${baseUrl}/api/auth/refresh-token`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken: token.refreshToken }),
     });
 
-    const refreshedTokens = (await response.json()) as AuthResponse;
-
     if (!response.ok) {
-      throw refreshedTokens;
+      logger.error("Refresh token request failed with status %d", response.status);
+      return { ...token, accessToken: "", error: "RefreshAccessTokenError" };
     }
+
+    const refreshedTokens = (await response.json()) as AuthResponse;
 
     return {
       ...token,
@@ -106,10 +107,7 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
     };
   } catch (error) {
     logger.error("Error refreshing access token:", error);
-    return {
-      ...token,
-      error: "RefreshAccessTokenError",
-    };
+    return { ...token, accessToken: "", error: "RefreshAccessTokenError" };
   }
 }
 
@@ -193,9 +191,15 @@ export const authOptions: NextAuthOptions = {
       // Access token has expired, try to refresh it
       const refreshedToken = await refreshAccessToken(token);
 
-      // If refresh failed, return error to force re-login
+      // If refresh failed, force the JWT to expire so NextAuth treats the
+      // session as invalid and the client-side useSessionMonitor signs out.
       if (refreshedToken.error) {
-        return { ...token, error: "RefreshAccessTokenError" };
+        return {
+          ...token,
+          accessToken: "",
+          error: "RefreshAccessTokenError",
+          accessTokenExpires: 0,
+        };
       }
 
       return refreshedToken;

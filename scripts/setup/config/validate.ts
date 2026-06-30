@@ -33,6 +33,7 @@ const frontendEnvSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.url(),
   NEXT_PUBLIC_ENABLE_ANALYTICS: z.string().regex(/^(true|false)$/i),
   NEXT_PUBLIC_ENABLE_DEBUG: z.string().regex(/^(true|false)$/i),
+  NEXT_PUBLIC_DEMO_LOGIN: z.string().regex(/^(true|false)$/i),
 });
 
 export interface ValidationResult {
