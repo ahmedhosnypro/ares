@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { Card, CardContent, Box, Avatar, Typography, useTheme, alpha } from "@mui/material";
+import React, { useMemo } from "react";
+import { Card, Box, Avatar, Typography, useTheme, alpha, Stack } from "@mui/material";
 
 interface StatCardProps {
   readonly title: string;
@@ -10,63 +10,77 @@ interface StatCardProps {
   readonly trend?: {
     readonly value?: number;
     readonly label: string;
+    readonly isUp?: boolean;
   };
+  readonly color?: "primary" | "success" | "warning" | "error" | "info" | string;
 }
 
-export default function StatCard({ title, value, icon, trend }: StatCardProps) {
+export default function StatCard({ title, value, icon, trend, color = "primary" }: StatCardProps) {
   const theme = useTheme();
+
+  const mainColor = useMemo(() => {
+    const isPaletteColor = color in theme.palette;
+    return isPaletteColor ? (theme.palette[color as keyof typeof theme.palette] as { main: string }).main : color;
+  }, [color, theme]);
 
   return (
     <Card
       elevation={0}
       sx={{
+        p: { xs: 2, sm: 2.5 },
         borderRadius: 2,
         border: "1px solid",
         borderColor: "divider",
-        bgcolor: "background.paper",
-        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-        boxShadow: theme.palette.mode === "light" ? `0 4px 20px ${alpha(theme.palette.common.black, 0.02)}` : "none",
+        position: "relative",
+        overflow: "hidden",
+        height: "100%",
+        background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${alpha(mainColor, 0.08)} 100%)`,
+        transition: "transform 0.2s, box-shadow 0.2s",
         "&:hover": {
-          transform: "translateY(-4px)",
-          boxShadow:
-            theme.palette.mode === "light"
-              ? `0 12px 28px ${alpha(theme.palette.common.black, 0.06)}`
-              : `0 12px 28px ${alpha(theme.palette.common.black, 0.3)}`,
-          borderColor: "primary.main",
+          transform: "translateY(-2px)",
+          boxShadow: `0 8px 24px ${alpha(mainColor, 0.18)}`,
         },
       }}
     >
-      <CardContent sx={{ p: 3, "&:last-child": { pb: 3 } }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", fontSize: "0.75rem" }}
-          >
+      <Box
+        sx={{
+          position: "absolute",
+          top: -18,
+          right: -18,
+          width: 80,
+          height: 80,
+          borderRadius: "50%",
+          bgcolor: alpha(mainColor, 0.1),
+        }}
+      />
+      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+        <Avatar sx={{ bgcolor: alpha(mainColor, 0.15), color: mainColor, width: 40, height: 40 }}>{icon}</Avatar>
+        <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+          <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 700, lineHeight: 1.2 }} noWrap>
             {title}
           </Typography>
-          <Avatar
+          <Typography
+            variant="h4"
             sx={{
-              bgcolor: alpha(theme.palette.primary.main, 0.08),
-              color: "primary.main",
-              width: 44,
-              height: 44,
+              fontWeight: 800,
+              color: mainColor,
+              lineHeight: 1.1,
+              fontSize: { xs: "1.6rem", sm: "2.125rem" },
             }}
+            noWrap
           >
-            {icon}
-          </Avatar>
-        </Box>
-
-        <Typography variant="h4" sx={{ fontWeight: 800, mb: 1, letterSpacing: "-0.5px", color: "text.primary" }}>
-          {value}
-        </Typography>
-
-        {trend && (
-          <Typography variant="caption" color="text.secondary" sx={{ display: "block", fontWeight: 500 }}>
-            {trend.label}
+            {value}
           </Typography>
-        )}
-      </CardContent>
+          {trend && (
+            <Typography
+              variant="caption"
+              sx={{ color: trend.isUp ? "success.main" : "error.main", display: "block", mt: 0.5, fontWeight: 600 }}
+            >
+              {trend.label}
+            </Typography>
+          )}
+        </Box>
+      </Stack>
     </Card>
   );
 }

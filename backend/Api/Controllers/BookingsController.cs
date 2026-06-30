@@ -591,18 +591,29 @@ public class AdminBookingsController : ControllerBase
                 (u.PhoneNumber != null && u.PhoneNumber.Contains(term)));
         }
 
-        var items = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions
+        var pagedUsers = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions
             .ToListAsync(
                 query
                     .OrderBy(u => u.FirstName)
                     .ThenBy(u => u.LastName)
-                    .Take(limit)
-                    .Select(u => new CustomerPickerItemDto(
-                        u.Id,
-                        ((u.FirstName ?? string.Empty) + " " + (u.LastName ?? string.Empty)).Trim(),
-                        u.Email,
-                        u.PhoneNumber)),
+                    .Take(limit),
                 cancellationToken);
+
+        var pagedUserIds = pagedUsers.Select(u => u.Id).ToList();
+
+        var verifiedDriverUserIds = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions
+            .ToListAsync(
+                _context.Drivers
+                    .Where(d => pagedUserIds.Contains(d.UserId) && d.IsVerified && d.IsActive)
+                    .Select(d => d.UserId),
+                cancellationToken);
+
+        var items = pagedUsers.Select(u => new CustomerPickerItemDto(
+            u.Id,
+            ((u.FirstName ?? string.Empty) + " " + (u.LastName ?? string.Empty)).Trim(),
+            u.Email,
+            u.PhoneNumber,
+            verifiedDriverUserIds.Contains(u.Id)));
 
         return Ok(items);
     }
@@ -730,6 +741,48 @@ public class AdminBookingsController : ControllerBase
                 cancellationToken);
 
         return Ok(items);
+    }
+
+    /// <summary>
+    /// Calculate booking price dynamically for the frontend
+    /// </summary>
+    [HttpPost("calculate-price")]
+    [ProducesResponseType(typeof(Backend.Application.DTOs.Booking.CalculateBookingPriceResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<Backend.Application.DTOs.Booking.CalculateBookingPriceResponse>> CalculatePrice(
+        [FromBody] Backend.Application.DTOs.Booking.CalculateBookingPriceRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var pricingService = HttpContext.RequestServices.GetRequiredService<Backend.Application.Interfaces.IPricingService>();
+        var driverPricingService = HttpContext.RequestServices.GetRequiredService<Backend.Application.Interfaces.IDriverPricingService>();
+
+        if (request.PickupDate >= request.ReturnDate)
+        {
+            return BadRequest(new { Message = "Return date must be after pickup date." });
+        }
+
+        var vehiclePricingResult = await pricingService.CalculateBookingPricingAsync(request.VehicleId, request.PickupDate, request.ReturnDate, cancellationToken);
+        var totalDays = (int)Math.Ceiling((request.ReturnDate - request.PickupDate).TotalDays);
+        if (totalDays <= 0) totalDays = 1;
+
+        var driverFee = 0m;
+        if (request.DriverProfileId.HasValue)
+        {
+            var dailyRate = await driverPricingService.GetDailyRateAsync(cancellationToken);
+            driverFee = dailyRate * totalDays;
+        }
+
+        var grandTotal = vehiclePricingResult.FinalPrice + driverFee;
+
+        var response = new Backend.Application.DTOs.Booking.CalculateBookingPriceResponse(
+            totalDays,
+            vehiclePricingResult.FinalPrice,
+            driverFee,
+            grandTotal
+        );
+
+        return Ok(response);
     }
 }
 

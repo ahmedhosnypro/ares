@@ -123,6 +123,8 @@ const bookings: AdminBookingsLabels = {
     },
     statuses: {
       draft: "مسودة",
+      pending: "قيد الانتظار",
+      scheduled: "مجدول",
       paymentPending: "في انتظار الدفع",
       pendingApproval: "في انتظار الموافقة",
       confirmed: "مؤكد",

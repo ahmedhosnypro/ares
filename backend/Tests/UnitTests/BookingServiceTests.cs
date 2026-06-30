@@ -56,6 +56,10 @@ public class BookingServiceTests
         var driversDbSet = emptyDrivers.BuildMockDbSet();
         _contextMock.Setup(x => x.Drivers).Returns(driversDbSet.Object);
 
+        var emptyDriverProfiles = new List<DriverProfile>().AsQueryable();
+        var driverProfilesDbSet = emptyDriverProfiles.BuildMockDbSet();
+        _contextMock.Setup(x => x.DriverProfiles).Returns(driverProfilesDbSet.Object);
+
         _bookingService = new BookingService(
             _bookingRepositoryMock.Object,
             _vehicleRepositoryMock.Object,
@@ -137,6 +141,12 @@ public class BookingServiceTests
 
         _bookingRepositoryMock.Setup(x => x.ReserveVehicleAtomicAsync(It.IsAny<Booking>(), It.IsAny<BookingStatus>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+
+        // Set up approved driving license for the customer user
+        var verifiedDriver = new Driver { Id = Guid.NewGuid(), UserId = userId, IsVerified = true, VerificationStatus = "Verified", LicenseNumber = "TEST-LICENSE", LicenseExpiryDate = DateTime.UtcNow.AddYears(1) };
+        var driversList = new List<Driver> { verifiedDriver }.AsQueryable();
+        var driversDbSet = driversList.BuildMockDbSet();
+        _contextMock.Setup(x => x.Drivers).Returns(driversDbSet.Object);
 
         // Act
         var result = await _bookingService.CreateBookingAsync(request, userId);
@@ -337,7 +347,8 @@ public class BookingServiceTests
             PickupDate: pickupDate,
             ReturnDate: returnDate,
             DriverId: driverId,
-            PayLater: true
+            PayLater: true,
+            NeedDriver: true
         );
 
         var vehicle = new Vehicle
@@ -359,6 +370,12 @@ public class BookingServiceTests
 
         _bookingRepositoryMock.Setup(x => x.ReserveVehicleAtomicAsync(It.IsAny<Booking>(), It.IsAny<BookingStatus>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+
+        // Set up approved driving license for the customer user
+        var verifiedDriver = new Driver { Id = Guid.NewGuid(), UserId = userId, IsVerified = true, VerificationStatus = "Verified", LicenseNumber = "TEST-LICENSE", LicenseExpiryDate = DateTime.UtcNow.AddYears(1) };
+        var driversList = new List<Driver> { verifiedDriver }.AsQueryable();
+        var driversDbSet = driversList.BuildMockDbSet();
+        _contextMock.Setup(x => x.Drivers).Returns(driversDbSet.Object);
 
         // Act
         var result = await _bookingService.CreateBookingAsync(request, userId);
@@ -418,6 +435,12 @@ public class BookingServiceTests
         _bookingRepositoryMock.Setup(x => x.ReserveVehicleAtomicAsync(It.IsAny<Booking>(), It.IsAny<BookingStatus>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
+        // Set up approved driving license for the customer user
+        var verifiedDriver = new Driver { Id = Guid.NewGuid(), UserId = userId, IsVerified = true, VerificationStatus = "Verified", LicenseNumber = "TEST-LICENSE", LicenseExpiryDate = DateTime.UtcNow.AddYears(1) };
+        var driversList = new List<Driver> { verifiedDriver }.AsQueryable();
+        var driversDbSet = driversList.BuildMockDbSet();
+        _contextMock.Setup(x => x.Drivers).Returns(driversDbSet.Object);
+
         // Act
         var result = await _bookingService.CreateBookingAsync(request, userId);
 
@@ -466,6 +489,12 @@ public class BookingServiceTests
 
         _bookingRepositoryMock.Setup(x => x.ReserveVehicleAtomicAsync(It.IsAny<Booking>(), It.IsAny<BookingStatus>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+
+        // Set up approved driving license for the customer user
+        var verifiedDriverBN = new Driver { Id = Guid.NewGuid(), UserId = userId, IsVerified = true, VerificationStatus = "Verified", LicenseNumber = "TEST-LICENSE", LicenseExpiryDate = DateTime.UtcNow.AddYears(1) };
+        var driversListBN = new List<Driver> { verifiedDriverBN }.AsQueryable();
+        var driversDbSetBN = driversListBN.BuildMockDbSet();
+        _contextMock.Setup(x => x.Drivers).Returns(driversDbSetBN.Object);
 
         // Act
         var result1 = await _bookingService.CreateBookingAsync(request, userId);
@@ -1126,6 +1155,12 @@ public class BookingServiceTests
 
         _bookingRepositoryMock.Setup(x => x.ReserveVehicleAtomicAsync(It.IsAny<Booking>(), It.IsAny<BookingStatus>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+
+        // Set up approved driving license for the customer (ownerUserId = customerId when CustomerUserId is set)
+        var verifiedDriverAdmin = new Driver { Id = Guid.NewGuid(), UserId = customerId, IsVerified = true, VerificationStatus = "Verified", LicenseNumber = "TEST-LICENSE", LicenseExpiryDate = DateTime.UtcNow.AddYears(1) };
+        var driversListAdmin = new List<Driver> { verifiedDriverAdmin }.AsQueryable();
+        var driversDbSetAdmin = driversListAdmin.BuildMockDbSet();
+        _contextMock.Setup(x => x.Drivers).Returns(driversDbSetAdmin.Object);
 
         var result = await _bookingService.CreateBookingAsync(request, adminInitiatorId);
 

@@ -121,6 +121,8 @@ export type AdminBookingsLabels = {
     };
     readonly statuses: {
       readonly draft: string;
+      readonly pending: string;
+      readonly scheduled: string;
       readonly paymentPending: string;
       readonly pendingApproval: string;
       readonly confirmed: string;

@@ -367,6 +367,7 @@ public class BookingCreationPropertyTests : IDisposable
         _context.Bookings.RemoveRange(_context.Bookings);
         _context.VehicleImages.RemoveRange(_context.VehicleImages);
         _context.Vehicles.RemoveRange(_context.Vehicles);
+        _context.Drivers.RemoveRange(_context.Drivers);
         _context.Users.RemoveRange(_context.Users);
         _context.SaveChanges();
     }
@@ -396,6 +397,9 @@ public class BookingCreationPropertyTests : IDisposable
         _context.Vehicles.Add(vehicle);
         _context.VehicleImages.Add(new VehicleImage { Id = Guid.NewGuid(), VehicleId = vehicleId, ImageUrl = "test.jpg", IsPrimary = true });
 
+        // Add a verified driving license for the customer so CreateBookingAsync passes the driver-validation gate
+        _context.Drivers.Add(new Driver { Id = Guid.NewGuid(), UserId = customerId, IsVerified = true, VerificationStatus = "Verified", LicenseNumber = "TEST-LICENSE", LicenseExpiryDate = DateTime.UtcNow.AddYears(1) });
+
         _context.SaveChanges();
         return (customerId, vehicleId);
     }
@@ -404,6 +408,10 @@ public class BookingCreationPropertyTests : IDisposable
     {
         var userId = Guid.NewGuid();
         _context.Users.Add(new ApplicationUser { Id = userId, UserName = userId.ToString(), Email = userId + "@test.com" });
+
+        // Add a verified driving license for the customer so CreateBookingAsync passes the driver-validation gate
+        _context.Drivers.Add(new Driver { Id = Guid.NewGuid(), UserId = userId, IsVerified = true, VerificationStatus = "Verified", LicenseNumber = "TEST-LICENSE", LicenseExpiryDate = DateTime.UtcNow.AddYears(1) });
+
         _context.SaveChanges();
         return userId;
     }

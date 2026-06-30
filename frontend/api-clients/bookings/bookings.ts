@@ -246,6 +246,7 @@ export interface CustomerPickerItem {
   fullName: string;
   email?: string | null;
   phone?: string | null;
+  hasApprovedLicense?: boolean;
 }
 
 export interface VehiclePickerItem {
@@ -302,6 +303,46 @@ export async function searchAvailableVehiclesPicker(
   if (args.pickupLocationId) params.set("pickupLocationId", args.pickupLocationId);
   params.set("limit", String(args.limit ?? 20));
   return apiFetchJson<VehiclePickerItem[]>(`/api/admin/bookings/pickers/vehicles?${params.toString()}`, {
+    method: "GET",
+    accessToken,
+    signal,
+  });
+}
+
+export interface DriverPickerItem {
+  driverProfileId: string;
+  firstName?: string;
+  lastName?: string;
+  profilePictureUrl?: string;
+  averageRating: number;
+  totalTrips: number;
+  experienceYears: number;
+  driverFee: number;
+}
+
+export interface AvailableDriversResponse {
+  drivers: DriverPickerItem[];
+  nearbyUnavailableCount: number;
+}
+
+/**
+ * Searchable available-drivers picker. Uses the checkout endpoint to find
+ * available drivers for the specified window.
+ */
+export async function searchAvailableDriversPicker(
+  accessToken: string,
+  args: {
+    pickupDate: string;
+    returnDate: string;
+    bookingId?: string;
+  },
+  signal?: AbortSignal
+): Promise<AvailableDriversResponse> {
+  const params = new URLSearchParams();
+  params.set("pickupDate", args.pickupDate);
+  params.set("returnDate", args.returnDate);
+  if (args.bookingId) params.set("bookingId", args.bookingId);
+  return apiFetchJson<AvailableDriversResponse>(`/api/checkout/drivers?${params.toString()}`, {
     method: "GET",
     accessToken,
     signal,
@@ -398,6 +439,7 @@ export async function createBooking(
     pickupLocationId?: string;
     dropOffLocationId?: string;
     driverId?: string | null;
+    driverProfileId?: string | null;
     payLater?: boolean;
     customerUserId?: string;
     paymentMethod?: string;
@@ -415,11 +457,33 @@ export async function createBooking(
       PickupDate: payload.pickupDate,
       ReturnDate: payload.returnDate,
       DriverId: payload.driverId ?? null,
+      DriverProfileId: payload.driverProfileId ?? null,
       PayLater: payload.payLater ?? false,
       PickupLocation: payload.pickupLocation ?? null,
       DropOffLocation: payload.dropOffLocation ?? null,
       CustomerUserId: payload.customerUserId ?? null,
       PaymentMethod: payload.paymentMethod ?? null,
+    }),
+  });
+}
+
+export async function calculateBookingPrice(
+  accessToken: string,
+  payload: {
+    vehicleId: string;
+    pickupDate: string;
+    returnDate: string;
+    driverProfileId?: string | null;
+  }
+): Promise<{ totalDays: number; vehicleFee: number; driverFee: number; grandTotal: number }> {
+  return apiFetchJson(`/api/admin/bookings/calculate-price`, {
+    method: "POST",
+    accessToken,
+    body: JSON.stringify({
+      VehicleId: payload.vehicleId,
+      PickupDate: payload.pickupDate,
+      ReturnDate: payload.returnDate,
+      DriverProfileId: payload.driverProfileId ?? null,
     }),
   });
 }

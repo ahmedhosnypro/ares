@@ -22,8 +22,6 @@ import BookingsFilterBar from "./BookingsFilterBar";
 import BookingsTable from "./BookingsTable";
 import DeleteBookingDialog from "./DeleteBookingDialog";
 import BookingActionsMenu from "./BookingActionsMenu";
-import ApproveBookingDialog from "./ApproveBookingDialog";
-import RejectBookingDialog from "./RejectBookingDialog";
 
 interface BookingsClientProps {
   readonly initialBookings?: {
@@ -72,16 +70,6 @@ export default function BookingsClient({ initialBookings, initialAnalytics }: Bo
   // Change status modal
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [statusBooking, setStatusBooking] = useState<{ id: string; status: string } | null>(null);
-
-  // Approve dialog
-  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
-  const [approveBookingId, setApproveBookingId] = useState<string | null>(null);
-  const [approveBookingNumber, setApproveBookingNumber] = useState<string | undefined>(undefined);
-
-  // Reject dialog
-  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
-  const [rejectBookingId, setRejectBookingId] = useState<string | null>(null);
-  const [rejectBookingNumber, setRejectBookingNumber] = useState<string | undefined>(undefined);
   const created = searchParams.get("created") === "1";
   const bookingNumber = searchParams.get("bookingNumber");
 
@@ -150,22 +138,6 @@ export default function BookingsClient({ initialBookings, initialAnalytics }: Bo
     if (!activeBooking) return;
     setDeleteId(activeBooking.id);
     setOpenDelete(true);
-    handleCloseMenu();
-  };
-
-  const handleApproveClick = () => {
-    if (!activeBooking) return;
-    setApproveBookingId(activeBooking.id);
-    setApproveBookingNumber(activeBooking.bookingNumber ?? undefined);
-    setApproveDialogOpen(true);
-    handleCloseMenu();
-  };
-
-  const handleRejectClick = () => {
-    if (!activeBooking) return;
-    setRejectBookingId(activeBooking.id);
-    setRejectBookingNumber(activeBooking.bookingNumber ?? undefined);
-    setRejectDialogOpen(true);
     handleCloseMenu();
   };
 
@@ -322,9 +294,6 @@ export default function BookingsClient({ initialBookings, initialAnalytics }: Bo
         onEdit={handleEdit}
         onChangeStatus={handleChangeStatus}
         onDelete={handleDeleteClick}
-        onApprove={handleApproveClick}
-        onReject={handleRejectClick}
-        bookingStatus={activeBooking?.status}
         t={t}
       />
 
@@ -343,40 +312,6 @@ export default function BookingsClient({ initialBookings, initialAnalytics }: Bo
             setStatusOverrides(prev => ({ ...prev, [statusBooking.id]: newStatus }));
           }
         }}
-      />
-
-      <ApproveBookingDialog
-        open={approveDialogOpen}
-        bookingId={approveBookingId ?? ""}
-        bookingNumber={approveBookingNumber}
-        onClose={() => {
-          setApproveDialogOpen(false);
-          setApproveBookingId(null);
-          setApproveBookingNumber(undefined);
-        }}
-        onSuccess={() => {
-          refetch();
-          refetchAnalytics();
-          setSnackbar({ open: true, message: t("approvals.approvedSuccess"), severity: "success" });
-        }}
-        accessToken={session?.accessToken}
-      />
-
-      <RejectBookingDialog
-        open={rejectDialogOpen}
-        bookingId={rejectBookingId ?? ""}
-        bookingNumber={rejectBookingNumber}
-        onClose={() => {
-          setRejectDialogOpen(false);
-          setRejectBookingId(null);
-          setRejectBookingNumber(undefined);
-        }}
-        onSuccess={() => {
-          refetch();
-          refetchAnalytics();
-          setSnackbar({ open: true, message: t("approvals.rejectedSuccess"), severity: "success" });
-        }}
-        accessToken={session?.accessToken}
       />
 
       {/* ── TOAST NOTIFICATIONS ── */}

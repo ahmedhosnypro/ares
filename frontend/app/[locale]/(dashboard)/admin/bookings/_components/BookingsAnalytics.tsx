@@ -22,75 +22,45 @@ export default function BookingsAnalytics({ analytics, loading }: BookingsAnalyt
   const theme = useTheme();
   const t = useTranslations("dashboardAdmin.bookings");
 
-  // Ensure strict ordering and map colors for the Donut Chart
-  const statusOrder = [
-    "Draft",
-    "Payment Pending",
-    "Pending Approval",
-    "Confirmed",
-    "Active",
-    "Completed",
-    "Cancelled",
-    "Cancelled By Admin",
-    "Rejected",
+  // Group booking statuses into UI categories for the Donut Chart
+  const uiGroups = [
+    {
+      name: t("analytics.statuses.pending"),
+      statuses: ["Draft", "Payment Pending", "PaymentPending"],
+      color: theme.palette.status.pending.main,
+    },
+    {
+      name: t("analytics.statuses.scheduled"),
+      statuses: ["Confirmed"],
+      color: theme.palette.status.confirmed.main,
+    },
+    {
+      name: t("analytics.statuses.active"),
+      statuses: ["Active"],
+      color: theme.palette.status.active.main,
+    },
+    {
+      name: t("analytics.statuses.completed"),
+      statuses: ["Completed"],
+      color: theme.palette.status.completed.main,
+    },
+    {
+      name: t("analytics.statuses.cancelled"),
+      statuses: ["Cancelled", "Cancelled By Admin", "CancelledByAdmin", "Expired"],
+      color: theme.palette.status.cancelled.main,
+    },
   ];
 
-  const getColorForStatus = (status: string) => {
-    switch (status) {
-      case "Draft":
-        return theme.palette.text.disabled;
-      case "Payment Pending":
-        return theme.palette.status.pending.main;
-      case "Pending Approval":
-        return theme.palette.status.pendingApproval.main;
-      case "Confirmed":
-        return theme.palette.status.confirmed.main;
-      case "Active":
-        return theme.palette.status.active.main;
-      case "Completed":
-        return theme.palette.status.completed.main;
-      case "Cancelled":
-        return theme.palette.status.cancelled.main;
-      case "Cancelled By Admin":
-        return theme.palette.status.blocked.main;
-      case "Rejected":
-        return theme.palette.status.rejected.main;
-      default:
-        return theme.palette.grey[500];
-    }
-  };
+  const chartData = uiGroups.map(group => {
+    const value = group.statuses.reduce((sum, status) => {
+      const found = analytics?.statusDistribution.find(s => s.status === status);
+      return sum + (found ? found.count : 0);
+    }, 0);
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "Draft":
-        return t("analytics.statuses.draft");
-      case "Payment Pending":
-        return t("analytics.statuses.paymentPending");
-      case "Pending Approval":
-        return t("analytics.statuses.pendingApproval");
-      case "Confirmed":
-        return t("analytics.statuses.confirmed");
-      case "Active":
-        return t("analytics.statuses.active");
-      case "Completed":
-        return t("analytics.statuses.completed");
-      case "Cancelled":
-        return t("analytics.statuses.cancelled");
-      case "Cancelled By Admin":
-        return t("analytics.statuses.cancelledByAdmin");
-      case "Rejected":
-        return t("analytics.statuses.rejected");
-      default:
-        return status;
-    }
-  };
-
-  const chartData = statusOrder.map(status => {
-    const found = analytics?.statusDistribution.find(s => s.status === status);
     return {
-      name: getStatusLabel(status),
-      value: found ? found.count : 0,
-      color: getColorForStatus(status),
+      name: group.name,
+      value,
+      color: group.color,
     };
   });
 

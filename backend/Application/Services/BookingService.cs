@@ -204,8 +204,59 @@ public class BookingService : IBookingService
                 throw new BadRequestException(
                     "A driver is required: you do not have an approved driving license, so you cannot self-drive.");
             }
+            if (request.DriverProfileId == null)
+            {
+                throw new BadRequestException(
+                    "A professional driver must be assigned before creating this booking since the customer does not have an approved driving license.");
+            }
             // NeedDriver null/true → force the driver workflow.
             effectiveNeedDriver = true;
+        }
+
+        if (request.DriverProfileId.HasValue)
+        {
+            effectiveNeedDriver = true;
+            
+            // Validate the driver profile
+            var driverProfile = await _context.DriverProfiles
+                .FirstOrDefaultAsync(dp => dp.Id == request.DriverProfileId.Value, cancellationToken);
+                
+            if (driverProfile == null)
+            {
+                throw new NotFoundException($"Driver profile with ID {request.DriverProfileId.Value} not found.");
+            }
+            if (!driverProfile.IsActive)
+            {
+                throw new ConflictException("The selected driver is not active.");
+            }
+            
+            // The existing IsVerified check for Driver is in the Driver table, but driver profiles also have a Status
+            if (driverProfile.Status != Backend.Domain.Entities.Enums.DriverProfileStatus.Verified)
+            {
+                throw new ConflictException("The selected driver profile is not approved/verified.");
+            }
+            if (driverProfile.Availability != Backend.Domain.Entities.Enums.DriverAvailability.Available)
+            {
+                // Check if they are locked for another assignment
+                if (driverProfile.LockedUntil.HasValue && driverProfile.LockedUntil.Value > DateTime.UtcNow)
+                {
+                    throw new ConflictException("The selected driver is currently unavailable or locked.");
+                }
+            }
+            
+            // Use the repository method to check for overlaps if available, or do it directly
+            bool hasOverlap = await _context.Bookings.AnyAsync(b => 
+                b.AssignedDriverProfileId == request.DriverProfileId.Value &&
+                b.Status != BookingStatus.Cancelled &&
+                b.Status != BookingStatus.Completed &&
+                b.Status != BookingStatus.Rejected &&
+                b.PickupDate < request.ReturnDate &&
+                b.ReturnDate > request.PickupDate, cancellationToken);
+                
+            if (hasOverlap)
+            {
+                throw new ConflictException("The selected driver has an overlapping booking during this period.");
+            }
         }
 
         // Requirement 4.10: Create booking with status "Pending". Payment is
@@ -239,13 +290,9 @@ public class BookingService : IBookingService
             VehicleFee = totalPrice,
             TotalPrice = totalPrice,
             GrandTotal = totalPrice,
-            // The driver-module assignment is NEVER set here. A driver is only
-            // attached through the request → accept → select workflow, which
-            // populates AssignedDriverProfileId (a driver_profiles FK). The
-            // legacy Booking.DriverId column is a FK to the customer-license
-            // Driver entity and must not be conflated with a DriverProfile.
             Status = initialStatus,
             DriverId = request.DriverId, // legacy customer-license Driver FK only
+            AssignedDriverProfileId = request.DriverProfileId,
             RequiresDriver = effectiveNeedDriver == true,
             HoldStartedAt = holdStartedAt,
             HoldExpiresAt = holdExpiresAt

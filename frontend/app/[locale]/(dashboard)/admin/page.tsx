@@ -90,7 +90,7 @@ async function getSummary(
         isUp: false,
         iconName: "BuildCircle",
         color: "error",
-        href: "/admin/vehicle-inspections",
+        href: "/admin/assignment-center",
       },
     ];
     return { summary, rawData: data };
@@ -140,7 +140,7 @@ async function getSummary(
         isUp: false,
         iconName: "BuildCircle",
         color: "error",
-        href: "/admin/vehicle-inspections",
+        href: "/admin/assignment-center",
       },
     ];
     return { summary: defaultSummary, rawData: null };

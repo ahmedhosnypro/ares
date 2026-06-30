@@ -54,11 +54,11 @@ async function token() {
   return session?.accessToken ?? undefined;
 }
 
-export async function listInspectors(activeOnly?: boolean): Promise<Inspector[]> {
+export async function listInspectors(activeOnly?: boolean, accessToken?: string): Promise<Inspector[]> {
   const qs = activeOnly === undefined ? "" : `?activeOnly=${String(activeOnly)}`;
   return apiFetchJson<Inspector[]>(`/api/admin/inspectors${qs}`, {
     method: "GET",
-    accessToken: await token(),
+    accessToken: accessToken ?? (await token()),
   });
 }
 

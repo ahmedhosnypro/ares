@@ -7,7 +7,8 @@ public record CustomerPickerItemDto(
     Guid Id,
     string FullName,
     string? Email,
-    string? Phone);
+    string? Phone,
+    bool HasApprovedLicense = false);
 
 /// <summary>
 /// Lightweight available-vehicle item for the create-booking vehicle picker.

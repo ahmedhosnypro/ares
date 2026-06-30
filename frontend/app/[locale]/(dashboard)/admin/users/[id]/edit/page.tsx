@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useRouter } from "@/shared/i18n/routing";
-import { useTranslations } from "next-intl";
 import {
   Box,
   Typography,
@@ -22,6 +21,7 @@ import {
   Chip,
   useTheme,
   Avatar,
+  Select,
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutlined";
@@ -44,7 +44,6 @@ export default function EditUserPage() {
   const params = useParams();
   const router = useRouter();
   const theme = useTheme();
-  const t = useTranslations("dashboardAdmin.users");
 
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
 
@@ -53,10 +52,25 @@ export default function EditUserPage() {
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string | undefined>>({});
 
+  const phoneCodes = [
+    { code: "+1", label: "US/CA" },
+    { code: "+44", label: "UK" },
+    { code: "+20", label: "EG" },
+    { code: "+971", label: "AE" },
+    { code: "+966", label: "SA" },
+    { code: "+91", label: "IN" },
+    { code: "+92", label: "PK" },
+    { code: "+61", label: "AU" },
+    { code: "+81", label: "JP" },
+    { code: "+49", label: "DE" },
+    { code: "+33", label: "FR" },
+  ];
+
   const [form, setForm] = useState({
     email: "",
     firstName: "",
     lastName: "",
+    phoneCountryCode: "+1",
     phoneNumber: "",
     dateOfBirth: "",
     status: "active",
@@ -77,11 +91,22 @@ export default function EditUserPage() {
         setError("");
         const data = await getUserById(id);
 
+        let loadedPhoneCode = "+1";
+        let loadedPhoneNumber = data.phoneNumber || "";
+        if (loadedPhoneNumber) {
+          const matchedCode = phoneCodes.find(c => loadedPhoneNumber.startsWith(c.code));
+          if (matchedCode) {
+            loadedPhoneCode = matchedCode.code;
+            loadedPhoneNumber = loadedPhoneNumber.substring(matchedCode.code.length).trim();
+          }
+        }
+
         setForm({
           email: data.email || "",
           firstName: data.firstName || "",
           lastName: data.lastName || "",
-          phoneNumber: data.phoneNumber || "",
+          phoneCountryCode: loadedPhoneCode,
+          phoneNumber: loadedPhoneNumber,
           dateOfBirth: (data.dateOfBirth as string) || "",
           status: data.status || "active",
           role: data.roles[0] || "",
@@ -90,13 +115,14 @@ export default function EditUserPage() {
         });
       } catch (err) {
         logger.error("Failed to load user from API, utilizing mock data", err);
-        setError(t("details.mockWarning"));
+        setError("Failed to load user from API. Showing mock data for testing.");
 
         // Mock data fallback matching create user
         setForm({
           email: "alex.mercer@ares.nexus",
           firstName: "Alex",
           lastName: "Mercer",
+          phoneCountryCode: "+1",
           phoneNumber: "5550199222",
           dateOfBirth: "1994-08-23",
           status: "active",
@@ -110,32 +136,16 @@ export default function EditUserPage() {
     };
 
     void fetchUser();
-  }, [id, t]);
+  }, [id]);
 
   // -------------------------
   // COMPLETENESS SCORE
   // -------------------------
   const completenessItems = [
-    {
-      done: Boolean(form.status),
-      label: t("form.completenessItems.statusSelected"),
-      doneLabel: t("form.completenessItems.statusSelected") + " ✓",
-    },
-    {
-      done: Boolean(form.email),
-      label: t("form.completenessItems.emailMissing"),
-      doneLabel: t("form.email") + " ✓",
-    },
-    {
-      done: Boolean(form.role),
-      label: t("form.completenessItems.roleUnassigned"),
-      doneLabel: t("form.role") + " ✓",
-    },
-    {
-      done: Boolean(form.firstName && form.lastName),
-      label: t("form.completenessItems.nameMissing"),
-      doneLabel: t("form.personalDetails") + " ✓",
-    },
+    { label: "Status selected", done: Boolean(form.status) },
+    { label: "Email valid", done: Boolean(form.email) },
+    { label: "Role assigned", done: Boolean(form.role), missingLabel: "Role unassigned" },
+    { label: "Personal details full", done: Boolean(form.firstName && form.lastName) },
   ];
   const completenessScore = Math.round((completenessItems.filter(i => i.done).length / completenessItems.length) * 100);
 
@@ -143,16 +153,16 @@ export default function EditUserPage() {
   // VALIDATION SCHEMA
   // -------------------------
   const editUserSchema = z.object({
-    firstName: z.string().min(1, t("form.validation.firstNameRequired")),
-    lastName: z.string().min(1, t("form.validation.lastNameRequired")),
+    firstName: z.string().min(1, "First name is required"),
+    lastName: z.string().min(1, "Last name is required"),
     phoneNumber: z
       .string()
       .optional()
       .refine(v => !v || /^[0-9+\s\-().]{8,15}$/.test(v), {
-        message: t("form.validation.invalidPhone"),
+        message: "Invalid phone number",
       }),
     status: z.string(),
-    role: z.string().min(1, t("form.validation.roleRequired")),
+    role: z.string().min(1, "Role is required"),
   });
 
   // -------------------------
@@ -176,10 +186,12 @@ export default function EditUserPage() {
         return;
       }
 
+      const finalPhoneNumber = form.phoneNumber ? `${form.phoneCountryCode} ${form.phoneNumber}`.trim() : undefined;
+
       await updateUser(id, {
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
-        phoneNumber: form.phoneNumber || null,
+        phoneNumber: finalPhoneNumber || null,
         status: form.status,
         roles: [form.role],
         dateOfBirth: form.dateOfBirth || undefined,
@@ -196,7 +208,7 @@ export default function EditUserPage() {
 
       router.push("/admin/users");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("form.updateError"));
+      setError(err instanceof Error ? err.message : "Update user failed");
     } finally {
       setSaving(false);
     }
@@ -252,11 +264,11 @@ export default function EditUserPage() {
             router.push("/admin/users");
           }}
         >
-          {t("breadcrumbs.users")}
+          Users
         </Typography>
         <NavigateNextIcon sx={{ fontSize: 16 }} />
         <Typography variant="caption" sx={{ color: theme.palette.text.primary, fontWeight: 600 }}>
-          {t("breadcrumbs.edit")}
+          Edit User
         </Typography>
       </Stack>
 
@@ -283,10 +295,10 @@ export default function EditUserPage() {
                 variant="h5"
                 sx={{ fontWeight: 800, mb: 0.5, fontSize: { xs: "1.15rem", sm: "1.35rem", md: "1.5rem" } }}
               >
-                {t("form.editTitle")}: {form.firstName} {form.lastName}
+                Edit: {form.firstName} {form.lastName}
               </Typography>
               <Typography variant="body2" color="text.secondary" noWrap>
-                {t("form.editSubtitle")} ({form.email || ""})
+                Update and manage settings for account ({form.email || "No Email"})
               </Typography>
             </Box>
           </Stack>
@@ -307,7 +319,7 @@ export default function EditUserPage() {
               "&:hover": { borderColor: theme.palette.text.secondary },
             }}
           >
-            {t("details.cancel")}
+            Cancel
           </Button>
           <Button
             variant="contained"
@@ -322,7 +334,7 @@ export default function EditUserPage() {
               background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
             }}
           >
-            {saving ? <CircularProgress size={20} color="inherit" /> : t("form.saveChanges")}
+            {saving ? <CircularProgress size={20} color="inherit" /> : "Save Changes"}
           </Button>
         </Stack>
       </Stack>
@@ -360,11 +372,9 @@ export default function EditUserPage() {
                 <LockOutlinedIcon />
               </Box>
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>
-                  {t("form.accountCredentials")}
-                </Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>Account Settings</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {t("form.accountCredentialsDesc")}
+                  Primary system credentials.
                 </Typography>
               </Box>
             </Stack>
@@ -372,7 +382,7 @@ export default function EditUserPage() {
             <Stack spacing={{ xs: 2, sm: 3 }}>
               {/* Email (Readonly in Edit) */}
               <Box>
-                <Typography sx={fieldLabel}>{t("form.email")}</Typography>
+                <Typography sx={fieldLabel}>Email Address</Typography>
                 <TextField
                   value={form.email}
                   disabled
@@ -410,11 +420,9 @@ export default function EditUserPage() {
                 <PersonOutlineIcon />
               </Box>
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>
-                  {t("form.personalDetails")}
-                </Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>Personal Details</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {t("form.personalDetailsDesc")}
+                  Identity and contact information.
                 </Typography>
               </Box>
             </Stack>
@@ -423,7 +431,7 @@ export default function EditUserPage() {
               <Grid container spacing={{ xs: 2, sm: 2.5 }}>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography sx={fieldLabel}>
-                    {t("form.firstName")}{" "}
+                    First Name{" "}
                     <Box component="span" sx={{ color: theme.palette.error.main }}>
                       *
                     </Box>
@@ -443,7 +451,7 @@ export default function EditUserPage() {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography sx={fieldLabel}>
-                    {t("form.lastName")}{" "}
+                    Last Name{" "}
                     <Box component="span" sx={{ color: theme.palette.error.main }}>
                       *
                     </Box>
@@ -465,28 +473,32 @@ export default function EditUserPage() {
 
               <Grid container spacing={{ xs: 2, sm: 2.5 }}>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography sx={fieldLabel}>{t("form.phone")}</Typography>
+                  <Typography sx={fieldLabel}>Phone Number</Typography>
                   <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-                    <Box
+                    <Select
+                      value={form.phoneCountryCode}
+                      onChange={e => setForm({ ...form, phoneCountryCode: e.target.value })}
+                      displayEmpty
+                      renderValue={selected => selected}
                       sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: { xs: "flex-start", sm: "center" },
-                        px: 1.5,
-                        border: "1px solid",
-                        borderColor: theme.palette.divider,
-                        borderRadius: 1.5,
                         bgcolor: theme.palette.background.default,
-                        fontSize: 14,
-                        whiteSpace: "nowrap",
+                        borderRadius: 1.5,
                         color: theme.palette.text.secondary,
-                        width: { xs: "100%", sm: "auto" },
-                        minWidth: { sm: 64 },
+                        fontSize: 14,
+                        width: { xs: "100%", sm: "110px" },
+                        minWidth: { sm: 90 },
                         minHeight: 48,
+                        "& .MuiOutlinedInput-notchedOutline": {
+                          borderColor: theme.palette.divider,
+                        },
                       }}
                     >
-                      +1 ▾
-                    </Box>
+                      {phoneCodes.map(c => (
+                        <MenuItem key={c.code} value={c.code}>
+                          {c.code} {c.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
                     <TextField
                       placeholder="(555) 000-0000"
                       value={form.phoneNumber}
@@ -502,7 +514,7 @@ export default function EditUserPage() {
                   </Stack>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography sx={fieldLabel}>{t("form.dob")}</Typography>
+                  <Typography sx={fieldLabel}>Date of Birth</Typography>
                   <TextField
                     type="date"
                     value={form.dateOfBirth}
@@ -533,7 +545,7 @@ export default function EditUserPage() {
               mb: 2,
             }}
           >
-            <Typography sx={{ fontWeight: 700, fontSize: 14, mb: 1 }}>{t("form.profilePhoto")}</Typography>
+            <Typography sx={{ fontWeight: 700, fontSize: 14, mb: 1 }}>Profile Photo</Typography>
             <Box
               component="label"
               htmlFor="profile-photo-input"
@@ -555,7 +567,7 @@ export default function EditUserPage() {
             >
               <PhotoCameraOutlinedIcon sx={{ color: theme.palette.text.disabled, fontSize: 30 }} />
               <Typography variant="caption" sx={{ color: theme.palette.text.disabled, fontWeight: 500 }}>
-                {form.profilePhoto || form.avatarUrl ? t("form.changePhoto") : t("form.uploadPhoto")}
+                {form.profilePhoto || form.avatarUrl ? "Change Photo" : "Upload"}
               </Typography>
               <input
                 id="profile-photo-input"
@@ -572,7 +584,7 @@ export default function EditUserPage() {
               color="text.secondary"
               sx={{ mt: 1.5, display: "block", textAlign: "center", lineHeight: 1.6 }}
             >
-              {t("form.photoHint")}
+              Allowed *.jpeg, *.jpg, *.png, *.gif{"\n"}Max size of 3.1 MB
             </Typography>
           </Paper>
 
@@ -605,16 +617,16 @@ export default function EditUserPage() {
                 <ShieldOutlinedIcon sx={{ fontSize: 18 }} />
               </Box>
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: 14 }}>{t("form.accessControl")}</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: 14 }}>Access Control</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {t("form.accessControlDesc")}
+                  Permissions and status.
                 </Typography>
               </Box>
             </Stack>
 
             <Box sx={{ mb: 2 }}>
               <Typography sx={{ ...fieldLabel, mb: 1 }}>
-                {t("form.systemRole")}{" "}
+                System Role{" "}
                 <Box component="span" sx={{ color: theme.palette.error.main }}>
                   *
                 </Box>
@@ -635,16 +647,16 @@ export default function EditUserPage() {
                 }}
               >
                 <MenuItem value="" disabled>
-                  <em style={{ color: theme.palette.text.disabled }}>{t("form.selectRole")}</em>
+                  <em style={{ color: theme.palette.text.disabled }}>Select a role...</em>
                 </MenuItem>
-                <MenuItem value="Supplier">{t("form.roles.supplier")}</MenuItem>
-                <MenuItem value="Admin">{t("form.roles.admin")}</MenuItem>
-                <MenuItem value="User">{t("form.roles.customer")}</MenuItem>
+                <MenuItem value="Supplier">Supplier</MenuItem>
+                <MenuItem value="Admin">Admin</MenuItem>
+                <MenuItem value="User">User</MenuItem>
               </TextField>
             </Box>
 
             <Box>
-              <Typography sx={{ ...fieldLabel, mb: 1 }}>{t("form.accountStatus")}</Typography>
+              <Typography sx={{ ...fieldLabel, mb: 1 }}>Account Status</Typography>
               <ToggleButtonGroup
                 value={form.status}
                 exclusive
@@ -689,15 +701,15 @@ export default function EditUserPage() {
               >
                 <ToggleButton value="active">
                   <CheckCircleOutlineIcon sx={{ fontSize: { xs: 13, sm: 14 } }} />
-                  {t("form.active")}
+                  Active
                 </ToggleButton>
                 <ToggleButton value="pending">
                   <AccessTimeIcon sx={{ fontSize: { xs: 13, sm: 14 } }} />
-                  {t("form.pending")}
+                  Pending
                 </ToggleButton>
                 <ToggleButton value="blocked">
                   <BlockIcon sx={{ fontSize: { xs: 13, sm: 14 } }} />
-                  {t("form.blocked")}
+                  Blocked
                 </ToggleButton>
               </ToggleButtonGroup>
             </Box>
@@ -715,9 +727,9 @@ export default function EditUserPage() {
             }}
           >
             <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-              <Typography sx={{ fontWeight: 700, fontSize: 14 }}>{t("form.completeness")}</Typography>
+              <Typography sx={{ fontWeight: 700, fontSize: 14 }}>Profile Progress</Typography>
               <Chip
-                label={t("form.updateMode")}
+                label="Update mode"
                 size="small"
                 sx={{
                   fontSize: 10,
@@ -741,7 +753,7 @@ export default function EditUserPage() {
               }}
             />
             <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
-              {completenessScore}% {t("form.completenessDesc")}
+              {completenessScore}% valid data context.
             </Typography>
 
             <Stack spacing={0.75}>
@@ -756,7 +768,7 @@ export default function EditUserPage() {
                     variant="caption"
                     sx={{ color: item.done ? theme.palette.status.active.main : theme.palette.text.disabled }}
                   >
-                    {item.done ? item.doneLabel : item.label}
+                    {item.done ? item.label : (item.missingLabel ?? item.label)}
                   </Typography>
                 </Stack>
               ))}

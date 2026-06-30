@@ -59,8 +59,6 @@ import { useSession } from "next-auth/react";
 import {
   getAdminBookingDetails,
   deleteBookings as deleteBookingsApi,
-  approveBooking,
-  rejectBooking,
   type Booking,
   type BookingInspectionFull,
   type BookingTimelineEvent,
@@ -466,7 +464,7 @@ function InspectionCard({
     );
   }
 
-  const statusValue = inspection?.status ?? fallbackStatus ?? t("inspection.pendingStatus");
+  const statusValue = inspection?.status ?? fallbackStatus ?? "Pending";
   const inspectorName = inspection?.inspectorName ?? fallbackAssignedInspectorName ?? "—";
 
   return (
@@ -666,7 +664,7 @@ function getLocalizedEventContent(evt: BookingTimelineEvent, bookingNumber: stri
       };
     }
     case "InspectorAssigned": {
-      const execResult = /^([^.]+) was assigned to inspect the vehicle\.$/.exec(desc);
+      const execResult = /(.+) was assigned to inspect the vehicle\./.exec(desc);
       const name = execResult ? execResult[1] : desc;
       return {
         title: t("timeline.events.inspectorAssigned.title"),
@@ -677,7 +675,7 @@ function getLocalizedEventContent(evt: BookingTimelineEvent, bookingNumber: stri
       const execResult = /Inspection result: (.+)\./.exec(desc);
       if (execResult) {
         const rawStatus = execResult[1];
-        const localizedStatus = t(`badges.${rawStatus.toLowerCase()}`);
+        const localizedStatus = t(`badges.${rawStatus.toLowerCase()}` as Parameters<typeof t>[0]);
         return {
           title: t("timeline.events.pickupInspectionCompleted.title"),
           description: t("timeline.events.pickupInspectionCompleted.description", { status: localizedStatus }),
@@ -692,7 +690,7 @@ function getLocalizedEventContent(evt: BookingTimelineEvent, bookingNumber: stri
       const execResult = /Inspection result: (.+)\./.exec(desc);
       if (execResult) {
         const rawStatus = execResult[1];
-        const localizedStatus = t(`badges.${rawStatus.toLowerCase()}`);
+        const localizedStatus = t(`badges.${rawStatus.toLowerCase()}` as Parameters<typeof t>[0]);
         return {
           title: t("timeline.events.returnInspectionCompleted.title"),
           description: t("timeline.events.returnInspectionCompleted.description", { status: localizedStatus }),
@@ -704,7 +702,7 @@ function getLocalizedEventContent(evt: BookingTimelineEvent, bookingNumber: stri
       };
     }
     case "PaymentCompleted": {
-      const execResult = /^(\d+(?:\.\d+)?) (\S+) via (.+)\.$/.exec(desc);
+      const execResult = /([0-9.]+) (\S+) via (.+)\./.exec(desc);
       if (execResult) {
         const amount = execResult[1];
         const currency = execResult[2];
@@ -737,7 +735,7 @@ function getLocalizedEventContent(evt: BookingTimelineEvent, bookingNumber: stri
         const rawStatus = execResult[1];
         const amount = execResult[2];
         const currency = execResult[3];
-        const localizedStatus = t(`badges.${rawStatus.toLowerCase()}`);
+        const localizedStatus = t(`badges.${rawStatus.toLowerCase()}` as Parameters<typeof t>[0]);
         return {
           title: t("timeline.events.refundProcessed.title"),
           description: t("timeline.events.refundProcessed.description", { status: localizedStatus, amount, currency }),
@@ -875,8 +873,6 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
 
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [rejecting, setRejecting] = useState(false);
-  const [approving, setApproving] = useState(false);
 
   const loadBooking = useCallback(
     async (showFullSpinner = true) => {
@@ -919,40 +915,6 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
     })();
   };
 
-  const handleApprove = () => {
-    void (async () => {
-      if (!session?.accessToken || !booking || approving) return;
-      setApproving(true);
-      try {
-        await approveBooking(session.accessToken, booking.id);
-        void loadBooking(false);
-      } catch (e) {
-        logger.error("Failed to approve booking", e);
-        setError(e instanceof Error ? e.message : t("errors.loadFailed"));
-      } finally {
-        setApproving(false);
-      }
-    })();
-  };
-
-  const handleReject = () => {
-    void (async () => {
-      if (!session?.accessToken || !booking || rejecting) return;
-      const reason = window.prompt(t("approvalInfo.rejectionReason") + ":");
-      if (!reason?.trim()) return;
-      setRejecting(true);
-      try {
-        await rejectBooking(session.accessToken, booking.id, reason.trim());
-        void loadBooking(false);
-      } catch (e) {
-        logger.error("Failed to reject booking", e);
-        setError(e instanceof Error ? e.message : t("errors.loadFailed"));
-      } finally {
-        setRejecting(false);
-      }
-    })();
-  };
-
   if (loading) {
     return <DetailsSkeleton />;
   }
@@ -989,90 +951,10 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
         statusColorKey={statusColorKey}
         refreshing={refreshing}
         deleting={deleting}
-        approving={approving}
-        rejecting={rejecting}
         onLoadBooking={loadBooking}
         onSetStatusModalOpen={setStatusModalOpen}
         onDelete={handleDelete}
-        onApprove={handleApprove}
-        onReject={handleReject}
       />
-
-      {booking.status.toLowerCase() === "pendingapproval" && (
-        <Paper
-          elevation={0}
-          sx={{
-            p: 2.5,
-            mb: 3,
-            borderRadius: 2,
-            border: "1px solid",
-            borderColor: theme.palette.status.pendingApproval.main,
-            bgcolor: theme.palette.status.pendingApproval.light,
-          }}
-        >
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={2}
-            sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}
-          >
-            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-              <HourglassIcon sx={{ color: theme.palette.status.pendingApproval.main }} />
-              <Typography variant="body2" sx={{ fontWeight: 700, color: theme.palette.status.pendingApproval.main }}>
-                {t("approvalInfo.pendingBanner")}
-              </Typography>
-            </Stack>
-            <Stack direction="row" spacing={1}>
-              <Button
-                variant="contained"
-                size="small"
-                startIcon={<CheckCircleIcon />}
-                disabled={approving}
-                onClick={handleApprove}
-                sx={{
-                  borderRadius: 2,
-                  fontWeight: 700,
-                  bgcolor: theme.palette.success.main,
-                  "&:hover": { bgcolor: theme.palette.success.dark },
-                }}
-              >
-                {approving ? <CircularProgress size={18} color="inherit" /> : t("buttons.approve")}
-              </Button>
-              <Button
-                variant="outlined"
-                size="small"
-                color="error"
-                startIcon={<CancelIcon />}
-                disabled={rejecting}
-                onClick={handleReject}
-                sx={{ borderRadius: 2, fontWeight: 700 }}
-              >
-                {t("buttons.reject")}
-              </Button>
-            </Stack>
-          </Stack>
-        </Paper>
-      )}
-
-      {booking.status.toLowerCase() === "rejected" && (
-        <Paper
-          elevation={0}
-          sx={{
-            p: 2.5,
-            mb: 3,
-            borderRadius: 2,
-            border: "1px solid",
-            borderColor: theme.palette.status.rejected.main,
-            bgcolor: theme.palette.status.rejected.light,
-          }}
-        >
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-            <CancelIcon sx={{ color: theme.palette.status.rejected.main }} />
-            <Typography variant="body2" sx={{ fontWeight: 700, color: theme.palette.status.rejected.main }}>
-              {t("approvalInfo.rejectedBanner")}
-            </Typography>
-          </Stack>
-        </Paper>
-      )}
 
       {/* ── VERTICAL SECTIONS ── */}
       <Stack spacing={3}>
@@ -1085,7 +967,7 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
               value={
                 <Chip
                   size="small"
-                  label={t(`badges.${booking.status.toLowerCase()}`)}
+                  label={t(`badges.${booking.status.toLowerCase()}` as Parameters<BookingDetailsTranslations>[0])}
                   color={statusColorKey}
                   sx={{ fontWeight: 700, textTransform: "capitalize" }}
                 />
@@ -1118,22 +1000,6 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
             />
             <InfoItem label={t("bookingInfo.createdDate")} value={formatDateTime(booking.createdAt ?? null, locale)} />
             <InfoItem label={t("bookingInfo.lastUpdated")} value={formatDateTime(booking.updatedAt ?? null, locale)} />
-            {booking.approvedBy && (
-              <InfoItem label={t("approvalInfo.approvedBy")} value={t("approvalInfo.approvedByAdmin")} />
-            )}
-            {booking.approvedAt && (
-              <InfoItem label={t("approvalInfo.approvedAt")} value={formatDateTime(booking.approvedAt, locale)} />
-            )}
-            {booking.rejectionReason && (
-              <InfoItem
-                label={t("approvalInfo.rejectionReason")}
-                value={
-                  <Typography component="span" color="error.main">
-                    {booking.rejectionReason}
-                  </Typography>
-                }
-              />
-            )}
           </InfoGrid>
         </SectionCard>
 
@@ -1173,7 +1039,9 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
                     <Chip
                       size="small"
                       label={t("customerInfo.idVerification", {
-                        status: t(`badges.${customerVerificationStatus.toLowerCase()}`),
+                        status: t(
+                          `badges.${customerVerificationStatus.toLowerCase()}` as Parameters<BookingDetailsTranslations>[0]
+                        ),
                       })}
                       color={getStatusConfig(customerVerificationStatus)}
                       variant="outlined"
@@ -1242,7 +1110,9 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
                   {booking.car?.availabilityStatus && (
                     <Chip
                       size="small"
-                      label={t(`badges.${booking.car.availabilityStatus.toLowerCase()}`)}
+                      label={t(
+                        `badges.${booking.car.availabilityStatus.toLowerCase()}` as Parameters<BookingDetailsTranslations>[0]
+                      )}
                       color={getStatusConfig(booking.car.availabilityStatus)}
                       variant="outlined"
                       sx={{ fontWeight: 600, textTransform: "capitalize" }}
@@ -1262,7 +1132,9 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
                     label={t("vehicleInfo.availability")}
                     value={
                       booking.car?.availabilityStatus
-                        ? t(`badges.${booking.car.availabilityStatus.toLowerCase()}`)
+                        ? t(
+                            `badges.${booking.car.availabilityStatus.toLowerCase()}` as Parameters<BookingDetailsTranslations>[0]
+                          )
                         : "—"
                     }
                   />
@@ -1312,7 +1184,7 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
             booking.paymentStatus && (
               <Chip
                 size="small"
-                label={t(`badges.${booking.paymentStatus.toLowerCase()}`)}
+                label={t(`badges.${booking.paymentStatus.toLowerCase()}` as Parameters<BookingDetailsTranslations>[0])}
                 color={getPaymentStatusConfig(booking.paymentStatus)}
                 sx={{ fontWeight: 700, textTransform: "capitalize" }}
               />
@@ -1338,7 +1210,9 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
                   value={
                     <Chip
                       size="small"
-                      label={t(`badges.${booking.paymentDetails.status.toLowerCase()}`)}
+                      label={t(
+                        `badges.${booking.paymentDetails.status.toLowerCase()}` as Parameters<BookingDetailsTranslations>[0]
+                      )}
                       color={getPaymentStatusConfig(booking.paymentDetails.status)}
                       sx={{ fontWeight: 700, textTransform: "capitalize" }}
                     />
@@ -1425,7 +1299,9 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
                           booking.paymentDetails.refundStatus ? (
                             <Chip
                               size="small"
-                              label={t(`badges.${booking.paymentDetails.refundStatus.toLowerCase()}`)}
+                              label={t(
+                                `badges.${booking.paymentDetails.refundStatus.toLowerCase()}` as Parameters<BookingDetailsTranslations>[0]
+                              )}
                               color={getStatusConfig(booking.paymentDetails.refundStatus)}
                               variant="outlined"
                               sx={{ fontWeight: 600, textTransform: "capitalize" }}
@@ -1532,13 +1408,9 @@ interface BookingDetailsHeaderProps {
   readonly statusColorKey: "primary" | "secondary" | "error" | "info" | "success" | "warning" | "default";
   readonly refreshing: boolean;
   readonly deleting: boolean;
-  readonly approving: boolean;
-  readonly rejecting: boolean;
   readonly onLoadBooking: (showFullSpinner?: boolean) => Promise<void>;
   readonly onSetStatusModalOpen: (open: boolean) => void;
   readonly onDelete: () => void;
-  readonly onApprove: () => void;
-  readonly onReject: () => void;
 }
 
 function BookingDetailsHeader({
@@ -1546,13 +1418,9 @@ function BookingDetailsHeader({
   statusColorKey,
   refreshing,
   deleting,
-  approving,
-  rejecting,
   onLoadBooking,
   onSetStatusModalOpen,
   onDelete,
-  onApprove,
-  onReject,
 }: BookingDetailsHeaderProps) {
   const t = useTranslations("dashboardAdmin.bookingDetails");
   const locale = useLocale();
@@ -1594,7 +1462,7 @@ function BookingDetailsHeader({
               </Typography>
               <Chip
                 size="small"
-                label={t(`badges.${booking.status.toLowerCase()}`)}
+                label={t(`badges.${booking.status.toLowerCase()}` as Parameters<BookingDetailsTranslations>[0])}
                 color={statusColorKey}
                 sx={{ fontWeight: 700, textTransform: "capitalize" }}
               />
@@ -1606,7 +1474,7 @@ function BookingDetailsHeader({
         </Stack>
 
         <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
-          <Tooltip title={t("buttons.refresh")}>
+          <Tooltip title={locale === "ar" ? "تحديث" : "Refresh"}>
             <span>
               <IconButton
                 onClick={() => {
@@ -1639,30 +1507,6 @@ function BookingDetailsHeader({
           >
             {t("buttons.changeStatus")}
           </Button>
-          {booking.status.toLowerCase() === "pendingapproval" && (
-            <>
-              <Button
-                variant="contained"
-                color="success"
-                startIcon={<CheckCircleIcon />}
-                disabled={approving}
-                onClick={onApprove}
-                sx={{ borderRadius: 2, fontWeight: 700 }}
-              >
-                {approving ? <CircularProgress size={18} color="inherit" /> : t("buttons.approve")}
-              </Button>
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<CancelIcon />}
-                disabled={rejecting}
-                onClick={onReject}
-                sx={{ borderRadius: 2, fontWeight: 700 }}
-              >
-                {t("buttons.reject")}
-              </Button>
-            </>
-          )}
           <Button
             variant="outlined"
             color="error"

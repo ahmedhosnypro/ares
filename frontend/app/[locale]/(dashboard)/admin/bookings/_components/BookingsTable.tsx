@@ -45,35 +45,35 @@ interface BookingsTableProps {
   readonly tCommon: ReturnType<typeof useTranslations>;
 }
 
-const STATUS_MAP: Record<string, { key: string; colorKey: "success" | "info" | "error" | "warning" }> = {
-  active: { key: "filters.statuses.active", colorKey: "success" },
-  confirmed: { key: "filters.statuses.active", colorKey: "success" },
-  pickup: { key: "filters.statuses.active", colorKey: "success" },
-  completed: { key: "filters.statuses.completed", colorKey: "info" },
-  cancelled: { key: "filters.statuses.cancelled", colorKey: "error" },
-  returned: { key: "filters.statuses.cancelled", colorKey: "error" },
-  rejected: { key: "filters.statuses.rejected", colorKey: "error" },
-  draft: { key: "filters.statuses.draft", colorKey: "warning" },
-  pendingapproval: { key: "filters.statuses.pendingApproval", colorKey: "warning" },
-};
-
-const getStatusConfig = (status: string | undefined, t: (key: string) => string) => {
+const getStatusConfig = (status?: string, t?: (key: string) => string) => {
   const s = status?.toLowerCase() ?? "";
-  const entry = STATUS_MAP[s] as { key: string; colorKey: "success" | "info" | "error" | "warning" } | undefined;
-  return entry
-    ? { label: t(entry.key), colorKey: entry.colorKey }
-    : { label: t("filters.statuses.paymentPending"), colorKey: "warning" as const };
+  if (s === "active" || s === "pickup")
+    return { label: t ? t("filters.statuses.active") : "Active", colorPalette: "active" as const };
+  if (s === "confirmed")
+    return { label: t ? t("filters.statuses.confirmed") : "Confirmed", colorPalette: "confirmed" as const };
+  if (s === "completed")
+    return { label: t ? t("filters.statuses.completed") : (status ?? "Completed"), colorPalette: "completed" as const };
+  if (s === "cancelled" || s === "returned")
+    return { label: t ? t("filters.statuses.cancelled") : (status ?? "Cancelled"), colorPalette: "cancelled" as const };
+  if (s === "draft")
+    return { label: t ? t("filters.statuses.draft") : (status ?? "Draft"), colorPalette: "pending" as const };
+  return {
+    label: t ? t("filters.statuses.paymentPending") : (status ?? "PaymentPending"),
+    colorPalette: "pendingApproval" as const,
+  };
 };
 
-const getPaymentStatusConfig = (status: string | undefined, t: (key: string) => string) => {
+const getPaymentStatusConfig = (status?: string, t?: (key: string) => string) => {
   const s = status?.toLowerCase() ?? "";
   if (s === "captured" || s === "paid" || s === "succeeded")
-    return { label: t("paymentStatuses.captured"), colorKey: "success" as const };
-  if (s === "refunded") return { label: t("paymentStatuses.refunded"), colorKey: "error" as const };
-  if (s === "failed") return { label: t("paymentStatuses.failed"), colorKey: "error" as const };
+    return { label: t ? t("paymentStatuses.captured") : (status ?? "Captured"), colorKey: "success" as const };
+  if (s === "refunded")
+    return { label: t ? t("paymentStatuses.refunded") : (status ?? "Refunded"), colorKey: "error" as const };
+  if (s === "failed")
+    return { label: t ? t("paymentStatuses.failed") : (status ?? "Failed"), colorKey: "error" as const };
   if (s === "pending" || s === "paymentpending")
-    return { label: t("paymentStatuses.pending"), colorKey: "warning" as const };
-  return { label: t("paymentStatuses.unpaid"), colorKey: null };
+    return { label: t ? t("paymentStatuses.pending") : (status ?? "Pending"), colorKey: "warning" as const };
+  return { label: t ? t("paymentStatuses.unpaid") : "Unpaid", colorKey: null };
 };
 
 const formatCompactDate = (dateString: string) => {
@@ -150,7 +150,7 @@ export default function BookingsTable({
         {bookings.map((booking: Booking) => {
           const effectiveStatus = statusOverrides[booking.id] ?? booking.status;
           const statusConfig = getStatusConfig(effectiveStatus, t);
-          const statusColor = theme.palette[statusConfig.colorKey].main;
+          const statusColor = theme.palette.status[statusConfig.colorPalette].main;
 
           return (
             <TableRow
@@ -175,13 +175,11 @@ export default function BookingsTable({
                       fontSize: 14,
                     }}
                   >
-                    {getInitials(
-                      booking.customerName ?? booking.customer?.fullName ?? t("table.fallbacks.unknownCustomer")
-                    )}
+                    {getInitials(booking.customerName ?? booking.customer?.fullName ?? "Unknown Customer")}
                   </Avatar>
                   <Box>
                     <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
-                      {booking.customerName ?? booking.customer?.fullName ?? t("table.fallbacks.unknownCustomer")}
+                      {booking.customerName ?? booking.customer?.fullName ?? "Unknown Customer"}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                       #{booking.bookingNumber ?? booking.id.split("-")[0]}
@@ -207,10 +205,10 @@ export default function BookingsTable({
                   </Avatar>
                   <Box>
                     <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
-                      {booking.car?.name ?? t("table.fallbacks.unknownVehicle")}
+                      {booking.car?.name ?? "Unknown Vehicle"}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {booking.car?.plateNumber ?? t("table.fallbacks.noPlate")}
+                      {booking.car?.plateNumber ?? "No Plate"}
                     </Typography>
                   </Box>
                 </Stack>
@@ -257,7 +255,7 @@ export default function BookingsTable({
                 <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
                   <PaymentIcon sx={{ fontSize: 14, color: "text.secondary" }} />
                   <Typography variant="body2" sx={{ fontSize: 13, fontWeight: 500, textTransform: "capitalize" }}>
-                    {booking.paymentMethod ?? t("table.fallbacks.noPaymentMethod")}
+                    {booking.paymentMethod ?? "None"}
                   </Typography>
                 </Stack>
               </TableCell>
@@ -307,8 +305,7 @@ export default function BookingsTable({
                 <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
                   <PriceIcon sx={{ fontSize: 14, color: "success.main" }} />
                   <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                    {t("table.fallbacks.currencySymbol")}
-                    {(booking.price ?? 0).toFixed(2)}
+                    ${(booking.price ?? 0).toFixed(2)}
                   </Typography>
                 </Stack>
               </TableCell>

@@ -29,6 +29,8 @@ import {
   DirectionsCarFilledTwoTone as CarIcon,
   PlaceOutlined as PlaceIcon,
   CheckCircleRounded as CheckIcon,
+  BadgeOutlined as DriverIcon,
+  WarningAmberRounded as WarningIcon,
 } from "@mui/icons-material";
 import { darken } from "@mui/material/styles";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -40,9 +42,12 @@ import { useTranslations } from "next-intl";
 import {
   searchCustomersPicker,
   searchAvailableVehiclesPicker,
+  searchAvailableDriversPicker,
   createBooking,
+  calculateBookingPrice,
   type CustomerPickerItem,
   type VehiclePickerItem,
+  type DriverPickerItem,
 } from "@/api-clients/bookings/bookings";
 import { toApiUrl } from "@/utils/api-client";
 import { toImageUrl } from "@/utils/image-url";
@@ -125,6 +130,7 @@ export default function CreateBookingClient() {
   // ── Form state ─────────────────────────────────────────────────────
   const [customer, setCustomer] = useState<CustomerPickerItem | null>(null);
   const [vehicle, setVehicle] = useState<VehiclePickerItem | null>(null);
+  const [driver, setDriver] = useState<DriverPickerItem | null>(null);
   const [pickupDate, setPickupDate] = useState<Date | null>(null);
   const [returnDate, setReturnDate] = useState<Date | null>(null);
   const [pickupLocation, setPickupLocation] = useState("");
@@ -139,6 +145,9 @@ export default function CreateBookingClient() {
   const [vehicleSearch, setVehicleSearch] = useState("");
   const [vehicleOptions, setVehicleOptions] = useState<VehiclePickerItem[]>([]);
   const [vehicleLoading, setVehicleLoading] = useState(false);
+  const [driverSearch, setDriverSearch] = useState("");
+  const [driverOptions, setDriverOptions] = useState<DriverPickerItem[]>([]);
+  const [driverLoading, setDriverLoading] = useState(false);
   const [pickupLocationOptions, setPickupLocationOptions] = useState<LocationOption[]>([]);
   const [pickupLocationLoading, setPickupLocationLoading] = useState(false);
   const [selectedPickupLocation, setSelectedPickupLocation] = useState<LocationOption | null>(null);
@@ -230,6 +239,67 @@ export default function CreateBookingClient() {
     };
   }, [vehicleSearch, pickupDate, returnDate, session?.accessToken, vehicle, customer?.id, selectedPickupLocation]);
 
+  // ── Async driver search (debounced; re-runs on date change) ──────
+  useEffect(() => {
+    const token = session?.accessToken;
+    if (!token) return;
+
+    if (
+      !pickupDate ||
+      !returnDate ||
+      isNaN(pickupDate.getTime()) ||
+      isNaN(returnDate.getTime()) ||
+      pickupDate >= returnDate
+    ) {
+      setDriverOptions([]);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    const runSearch = async () => {
+      setDriverLoading(true);
+      try {
+        const data = await searchAvailableDriversPicker(
+          token,
+          {
+            pickupDate: pickupDate.toISOString(),
+            returnDate: returnDate.toISOString(),
+          },
+          controller.signal
+        );
+        let drivers = data.drivers || [];
+        if (driverSearch.trim()) {
+          const term = driverSearch.toLowerCase();
+          drivers = drivers.filter(
+            d =>
+              (d.firstName && d.firstName.toLowerCase().includes(term)) ||
+              (d.lastName && d.lastName.toLowerCase().includes(term))
+          );
+        }
+        setDriverOptions(drivers);
+        // If the selected driver disappeared from the results, clear it.
+        if (driver && !drivers.find(d => d.driverProfileId === driver.driverProfileId)) {
+          setDriver(null);
+        }
+      } catch (e) {
+        if (!(e instanceof DOMException && e.name === "AbortError")) {
+          logger.error("Driver picker search failed", e);
+        }
+      } finally {
+        setDriverLoading(false);
+      }
+    };
+
+    const handle = setTimeout(() => {
+      void runSearch();
+    }, 250);
+    return () => {
+      clearTimeout(handle);
+      controller.abort();
+    };
+  }, [driverSearch, pickupDate, returnDate, session?.accessToken, driver]);
+
   // ── Location autocomplete (pickup/dropoff) ─────────────────────────
   const fetchLocationSuggestions = async (query: string, type: "pickup" | "dropoff", signal: AbortSignal) => {
     if (query.length < 3) {
@@ -319,21 +389,72 @@ export default function CreateBookingClient() {
 
   // ── Derived pricing ───────────────────────────────────────────────
   const dailyRate = vehicle?.dailyRate ?? 0;
-  const { totalDays, totalPrice, datesValid } = useMemo(() => {
+
+  const [pricingState, setPricingState] = useState({
+    totalDays: 0,
+    vehicleFee: 0,
+    driverFee: 0,
+    grandTotal: 0,
+    loading: false,
+  });
+
+  const datesValid = useMemo(() => {
     const p = pickupDate;
     const r = returnDate;
-    if (!p || !r || isNaN(p.getTime()) || isNaN(r.getTime()) || p >= r) {
-      return { totalDays: 0, totalPrice: 0, datesValid: false };
+    return !!p && !!r && !isNaN(p.getTime()) && !isNaN(r.getTime()) && p < r;
+  }, [pickupDate, returnDate]);
+
+  useEffect(() => {
+    const token = session?.accessToken;
+    if (!token || !vehicle || !datesValid || !pickupDate || !returnDate) {
+      setPricingState({ totalDays: 0, vehicleFee: 0, driverFee: 0, grandTotal: 0, loading: false });
+      return;
     }
-    const days = Math.round((r.getTime() - p.getTime()) / (1000 * 60 * 60 * 24));
-    return { totalDays: days, totalPrice: days * dailyRate, datesValid: true };
-  }, [pickupDate, returnDate, dailyRate]);
+
+    let active = true;
+    const controller = new AbortController();
+    setPricingState(prev => ({ ...prev, loading: true }));
+
+    const handle = setTimeout(() => {
+      void calculateBookingPrice(token, {
+        vehicleId: vehicle.id,
+        pickupDate: pickupDate.toISOString(),
+        returnDate: returnDate.toISOString(),
+        driverProfileId: driver?.driverProfileId,
+      })
+        .then(result => {
+          if (active) {
+            setPricingState({
+              totalDays: result.totalDays,
+              vehicleFee: result.vehicleFee,
+              driverFee: result.driverFee,
+              grandTotal: result.grandTotal,
+              loading: false,
+            });
+          }
+        })
+        .catch(err => {
+          if (!(err instanceof DOMException && err.name === "AbortError")) {
+            logger.error("Failed to calculate price", err);
+          }
+          if (active) setPricingState(prev => ({ ...prev, loading: false }));
+        });
+    }, 400);
+
+    return () => {
+      active = false;
+      clearTimeout(handle);
+      controller.abort();
+    };
+  }, [vehicle, pickupDate, returnDate, driver, datesValid, session?.accessToken]);
 
   // ── Validity checks for each section ──────────────────────────────
+  const customerLacksLicense = customer ? customer.hasApprovedLicense === false : false;
+  const driverDone = customerLacksLicense ? !!driver : true;
   const customerDone = !!customer;
   const vehicleDone = !!vehicle;
   const datesDone = datesValid && !!pickupLocation && !!dropOffLocation;
-  const canSubmit = customerDone && vehicleDone && datesDone && !submitting;
+  const canSubmit = customerDone && vehicleDone && datesDone && driverDone && !submitting;
   const showDateError = !!pickupDate && !!returnDate && !datesValid;
 
   // ── Submit ────────────────────────────────────────────────────────
@@ -354,6 +475,7 @@ export default function CreateBookingClient() {
           dropOffLocationId: selectedDropOffLocation?.id,
           customerUserId: customer.id,
           paymentMethod,
+          driverProfileId: driver?.driverProfileId,
         });
         if (paymentMethod === "Online") {
           router.push(`/booking/payment/${result.bookingId}`);
@@ -849,8 +971,158 @@ export default function CreateBookingClient() {
             )}
           </SectionCard>
 
-          {/* 4. Payment Method Selection */}
-          <SectionCard step={4} title={t("steps.payment.title")} subtitle={t("steps.payment.subtitle")} done={true}>
+          {/* 4. Driver Selection */}
+          <SectionCard step={4} title="Driver" subtitle="Select a professional driver" done={driverDone}>
+            {customerLacksLicense && (
+              <Alert icon={<WarningIcon />} severity="warning" sx={{ mb: 2 }}>
+                This customer does not have a valid driving license. A professional driver must be assigned before
+                creating this booking.
+              </Alert>
+            )}
+
+            {!driver ? (
+              <Autocomplete
+                disabled={!datesValid}
+                options={driverOptions}
+                value={driver}
+                inputValue={driverSearch}
+                onInputChange={(_, value, reason) => {
+                  if (reason === "input") setDriverSearch(value);
+                  if (reason === "clear") {
+                    setDriverSearch("");
+                    setDriver(null);
+                  }
+                }}
+                onChange={(_, value) => {
+                  setDriver(value);
+                }}
+                loading={driverLoading}
+                isOptionEqualToValue={(option, value) => option.driverProfileId === value.driverProfileId}
+                getOptionLabel={option => `${option.firstName ?? ""} ${option.lastName ?? ""}`.trim()}
+                filterOptions={x => x}
+                noOptionsText={!datesValid ? "Select valid dates first" : "No available drivers found"}
+                slotProps={{
+                  paper: {
+                    sx: { bgcolor: theme => darken(theme.palette.background.paper, 0.04) },
+                  },
+                }}
+                renderOption={(props, option) => (
+                  <li {...props} key={option.driverProfileId}>
+                    <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", width: "100%", py: 0.5 }}>
+                      <Avatar
+                        src={toImageUrl(option.profilePictureUrl ?? undefined)}
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          bgcolor: alpha(theme.palette.primary.main, 0.08),
+                          color: "primary.main",
+                        }}
+                      >
+                        <DriverIcon fontSize="small" />
+                      </Avatar>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography sx={{ fontWeight: 600 }} noWrap>
+                          {`${option.firstName ?? ""} ${option.lastName ?? ""}`.trim() || "Unnamed Driver"}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" noWrap>
+                          ⭐ {option.averageRating > 0 ? option.averageRating.toFixed(1) : "New"} · {option.totalTrips}{" "}
+                          trips
+                        </Typography>
+                      </Box>
+                      <Typography sx={{ fontWeight: 700, color: "success.main", whiteSpace: "nowrap" }}>
+                        {formatCurrency(option.driverFee ?? 0)}/day
+                      </Typography>
+                    </Stack>
+                  </li>
+                )}
+                renderInput={params => (
+                  <TextField
+                    {...params}
+                    label={customerLacksLicense ? "Driver" : "Driver (Optional)"}
+                    placeholder="Search drivers..."
+                    helperText={!customerLacksLicense ? "Leave empty if the customer will drive." : undefined}
+                    fullWidth
+                    slotProps={{
+                      ...params.slotProps,
+                      input: {
+                        ...params.slotProps.input,
+                        startAdornment: (
+                          <>
+                            <InputAdornment position="start">
+                              <SearchIcon sx={{ color: "text.disabled" }} />
+                            </InputAdornment>
+                            {params.slotProps.input.startAdornment}
+                          </>
+                        ),
+                        endAdornment: (
+                          <>
+                            {driverLoading ? <CircularProgress size={16} sx={{ mr: 1 }} /> : null}
+                            {params.slotProps.input.endAdornment}
+                          </>
+                        ),
+                      },
+                    }}
+                  />
+                )}
+              />
+            ) : (
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  borderRadius: 2,
+                  border: "1px solid",
+                  borderColor: "success.main",
+                  bgcolor: theme => alpha(theme.palette.success.main, 0.04),
+                }}
+              >
+                <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+                  <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+                    <Avatar
+                      src={toImageUrl(driver.profilePictureUrl ?? undefined)}
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        bgcolor: alpha(theme.palette.primary.main, 0.08),
+                        color: "primary.main",
+                      }}
+                    >
+                      <DriverIcon />
+                    </Avatar>
+                    <Box>
+                      <Typography sx={{ fontWeight: 700 }}>
+                        {`${driver.firstName ?? ""} ${driver.lastName ?? ""}`.trim() || "Unnamed Driver"}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        ⭐ {driver.averageRating > 0 ? driver.averageRating.toFixed(1) : "New"} · {driver.totalTrips}{" "}
+                        trips
+                      </Typography>
+                    </Box>
+                  </Stack>
+                  <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+                    <Chip
+                      label={`${formatCurrency(driver.driverFee ?? 0)}/day`}
+                      size="small"
+                      color="success"
+                      sx={{ fontWeight: 700 }}
+                    />
+                    <Button
+                      variant="text"
+                      size="small"
+                      onClick={() => {
+                        setDriver(null);
+                      }}
+                    >
+                      Change
+                    </Button>
+                  </Stack>
+                </Stack>
+              </Paper>
+            )}
+          </SectionCard>
+
+          {/* 5. Payment Method Selection */}
+          <SectionCard step={5} title={t("steps.payment.title")} subtitle={t("steps.payment.subtitle")} done={true}>
             <Box
               sx={{
                 display: "grid",
@@ -963,29 +1235,45 @@ export default function CreateBookingClient() {
         >
           <Typography sx={{ fontWeight: 700, mb: 2 }}>{t("summary.title")}</Typography>
           <Stack spacing={1.5}>
-            <Stack direction="row" sx={{ justifyContent: "space-between" }}>
-              <Typography variant="body2" color="text.secondary">
-                {t("summary.dailyRate")}
-              </Typography>
-              <Typography sx={{ fontWeight: 600 }}>{formatCurrency(dailyRate)}</Typography>
-            </Stack>
-            <Stack direction="row" sx={{ justifyContent: "space-between" }}>
-              <Typography variant="body2" color="text.secondary">
-                {t("summary.totalDays")}
-              </Typography>
-              <Typography sx={{ fontWeight: 600 }}>
-                {datesValid ? t("summary.totalDaysPlural", { count: totalDays }) : "—"}
-              </Typography>
-            </Stack>
-            <Divider />
-            <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
-              <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                {t("summary.totalPrice")}
-              </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 800, color: "success.main" }}>
-                {formatCurrency(totalPrice)}
-              </Typography>
-            </Stack>
+            {pricingState.loading ? (
+              <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+                <CircularProgress size={24} />
+              </Box>
+            ) : (
+              <>
+                <Stack direction="row" sx={{ justifyContent: "space-between" }}>
+                  <Typography variant="body2" color="text.secondary">
+                    {t("summary.dailyRate")}
+                  </Typography>
+                  <Typography sx={{ fontWeight: 600 }}>{formatCurrency(dailyRate)}</Typography>
+                </Stack>
+                <Stack direction="row" sx={{ justifyContent: "space-between" }}>
+                  <Typography variant="body2" color="text.secondary">
+                    {t("summary.totalDays")}
+                  </Typography>
+                  <Typography sx={{ fontWeight: 600 }}>
+                    {datesValid ? t("summary.totalDaysPlural", { count: pricingState.totalDays }) : "—"}
+                  </Typography>
+                </Stack>
+                {pricingState.driverFee > 0 && (
+                  <Stack direction="row" sx={{ justifyContent: "space-between" }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Driver Fee
+                    </Typography>
+                    <Typography sx={{ fontWeight: 600 }}>{formatCurrency(pricingState.driverFee)}</Typography>
+                  </Stack>
+                )}
+                <Divider />
+                <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                    {t("summary.totalPrice")}
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 800, color: "success.main" }}>
+                    {formatCurrency(pricingState.grandTotal)}
+                  </Typography>
+                </Stack>
+              </>
+            )}
           </Stack>
           <Stack spacing={0.5} sx={{ mt: 2 }}>
             <Typography variant="caption" color="text.secondary">

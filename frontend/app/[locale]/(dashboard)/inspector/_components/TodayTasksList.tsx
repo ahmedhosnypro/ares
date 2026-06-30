@@ -22,9 +22,9 @@ export default function TodayTasksList({ tasks, loading }: TodaysTasksListProps)
   const [plateSearch, setPlateSearch] = useState("");
 
   const FILTER_TABS: readonly { label: string; value: FilterType }[] = [
-    { label: t("filterAll"), value: "All" },
-    { label: t("filterCheckOuts"), value: "CheckOut" },
-    { label: t("filterCheckIns"), value: "CheckIn" },
+    { label: t("filters.all"), value: "All" },
+    { label: t("filters.checkOuts"), value: "CheckOut" },
+    { label: t("filters.checkIns"), value: "CheckIn" },
   ];
 
   const filteredTasks = useMemo(() => {

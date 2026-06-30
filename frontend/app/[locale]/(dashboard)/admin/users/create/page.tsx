@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "@/shared/i18n/routing";
-import { useTranslations } from "next-intl";
 import {
   Box,
   Typography,
@@ -22,6 +21,7 @@ import {
   ToggleButtonGroup,
   ToggleButton,
   Chip,
+  Select,
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutlined";
@@ -40,10 +40,13 @@ import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { z } from "zod";
 import { passwordSchema } from "@/lib/validation/schemas";
 import { createUser, uploadUserPhoto } from "@/api-clients/users/users";
+import { createInspector } from "@/api-clients/inspectors/inspectors";
+import { createSupplier } from "@/api-clients/suppliers/suppliers";
+import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
+import BusinessIcon from "@mui/icons-material/Business";
 
 export default function CreateUserPage() {
   const router = useRouter();
-  const t = useTranslations("dashboardAdmin.users");
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -51,63 +54,107 @@ export default function CreateUserPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const phoneCodes = [
+    { code: "+1", label: "US/CA" },
+    { code: "+44", label: "UK" },
+    { code: "+20", label: "EG" },
+    { code: "+971", label: "AE" },
+    { code: "+966", label: "SA" },
+    { code: "+91", label: "IN" },
+    { code: "+92", label: "PK" },
+    { code: "+61", label: "AU" },
+    { code: "+81", label: "JP" },
+    { code: "+49", label: "DE" },
+    { code: "+33", label: "FR" },
+  ];
+
   const [form, setForm] = useState({
     email: "",
     password: "",
     confirmPassword: "",
     firstName: "",
     lastName: "",
+    phoneCountryCode: "+1",
     phoneNumber: "",
     dateOfBirth: "",
     status: "active",
     role: "",
     requirePasswordChange: false,
     profilePhoto: null as File | null,
+    // Inspector fields
+    employeeCode: "",
+    isAvailable: true,
+    // Supplier fields
+    companyName: "",
+    commercialRegistrationNumber: "",
+    taxId: "",
   });
 
   const completenessItems = [
-    {
-      done: Boolean(form.status),
-      label: t("form.completenessItems.statusSelected"),
-      doneLabel: t("form.completenessItems.statusSelected") + " ✓",
-    },
-    {
-      done: Boolean(form.email),
-      label: t("form.completenessItems.emailMissing"),
-      doneLabel: t("form.email") + " ✓",
-    },
-    {
-      done: Boolean(form.password),
-      label: t("form.completenessItems.passwordMissing"),
-      doneLabel: t("form.password") + " ✓",
-    },
-    {
-      done: Boolean(form.role),
-      label: t("form.completenessItems.roleUnassigned"),
-      doneLabel: t("form.role") + " ✓",
-    },
+    { label: "Status selected", done: Boolean(form.status) },
+    { label: "Email missing", done: Boolean(form.email), missingLabel: "Email missing" },
+    { label: "Password missing", done: Boolean(form.password), missingLabel: "Password missing" },
+    { label: "Role unassigned", done: Boolean(form.role), missingLabel: "Role unassigned" },
   ];
   const completenessScore = Math.round((completenessItems.filter(i => i.done).length / completenessItems.length) * 100);
 
   const createUserSchema = z
     .object({
-      email: z.email({ message: t("form.validation.invalidEmail") }),
+      email: z.email({ message: "Invalid email" }),
       password: passwordSchema,
       confirmPassword: z.string(),
-      firstName: z.string().min(1, t("form.validation.firstNameRequired")),
-      lastName: z.string().min(1, t("form.validation.lastNameRequired")),
+      firstName: z.string().min(1, "First name is required"),
+      lastName: z.string().min(1, "Last name is required"),
       phoneNumber: z
         .string()
         .optional()
         .refine(v => !v || /^[0-9+\s\-().]{8,15}$/.test(v), {
-          message: t("form.validation.invalidPhone"),
+          message: "Invalid phone number",
         }),
       status: z.string(),
-      role: z.string().min(1, t("form.validation.roleRequired")),
+      role: z.string().min(1, "Role is required"),
+      employeeCode: z.string().optional(),
+      companyName: z.string().optional(),
+      commercialRegistrationNumber: z.string().optional(),
+      taxId: z.string().optional(),
     })
     .refine(data => data.password === data.confirmPassword, {
-      message: t("form.validation.passwordsMatch"),
+      message: "Passwords do not match",
       path: ["confirmPassword"],
+    })
+    .superRefine((data, ctx) => {
+      if (data.role === "Inspector") {
+        if (!data.employeeCode || data.employeeCode.trim() === "") {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Employee code is required",
+            path: ["employeeCode"],
+          });
+        }
+      }
+      if (data.role === "Supplier") {
+        if (!data.companyName || data.companyName.trim() === "") {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Company name is required",
+            path: ["companyName"],
+          });
+        }
+        if (!data.commercialRegistrationNumber || data.commercialRegistrationNumber.trim() === "") {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Commercial Registration Number is required",
+            path: ["commercialRegistrationNumber"],
+          });
+        }
+        if (!data.taxId || data.taxId.trim() === "") {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Tax ID is required",
+            path: ["taxId"],
+          });
+        }
+      }
     });
 
   const handleSubmit = async () => {
@@ -125,22 +172,51 @@ export default function CreateUserPage() {
         setFieldErrors(simplified);
         return;
       }
-      const res = await createUser({
-        email: form.email.trim(),
-        password: form.password,
-        firstName: form.firstName.trim(),
-        lastName: form.lastName.trim(),
-        phoneNumber: form.phoneNumber,
-        status: form.status,
-        roles: [form.role],
-        dateOfBirth: form.dateOfBirth || undefined,
-      });
+
+      let res: any;
+      const finalPhoneNumber = form.phoneNumber ? `${form.phoneCountryCode} ${form.phoneNumber}`.trim() : undefined;
+
+      if (form.role === "Inspector") {
+        res = await createInspector({
+          email: form.email.trim(),
+          password: form.password,
+          firstName: form.firstName.trim(),
+          lastName: form.lastName.trim(),
+          phoneNumber: finalPhoneNumber || null,
+          employeeCode: form.employeeCode.trim(),
+          isAvailable: form.isAvailable,
+        });
+      } else if (form.role === "Supplier") {
+        res = await createSupplier({
+          email: form.email.trim(),
+          password: form.password,
+          firstName: form.firstName.trim(),
+          lastName: form.lastName.trim(),
+          phoneNumber: finalPhoneNumber || "",
+          status: form.status,
+          companyName: form.companyName.trim(),
+          commercialRegistrationNumber: form.commercialRegistrationNumber.trim(),
+          taxId: form.taxId.trim(),
+        });
+      } else {
+        res = await createUser({
+          email: form.email.trim(),
+          password: form.password,
+          firstName: form.firstName.trim(),
+          lastName: form.lastName.trim(),
+          phoneNumber: finalPhoneNumber || "",
+          status: form.status,
+          roles: [form.role],
+          dateOfBirth: form.dateOfBirth || undefined,
+        });
+      }
 
       // Upload photo if selected
       if (form.profilePhoto && res) {
         try {
           const created = res as unknown as { userId?: string };
-          const userId = created.userId;
+          // If it's a supplier it just returns ID string, so we'll check typeof
+          const userId = typeof res === "string" ? res : created.userId;
           if (userId) {
             await uploadUserPhoto(userId, form.profilePhoto);
           }
@@ -151,7 +227,7 @@ export default function CreateUserPage() {
 
       router.push("/admin/users");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("form.createError"));
+      setError(err instanceof Error ? err.message : "Create user failed");
     } finally {
       setSaving(false);
     }
@@ -196,11 +272,11 @@ export default function CreateUserPage() {
             router.push("/admin/users");
           }}
         >
-          {t("breadcrumbs.users")}
+          Users
         </Typography>
         <NavigateNextIcon sx={{ fontSize: 16 }} />
         <Typography variant="caption" sx={{ color: "text.primary", fontWeight: 600 }}>
-          {t("breadcrumbs.create")}
+          Create User
         </Typography>
       </Stack>
 
@@ -219,10 +295,10 @@ export default function CreateUserPage() {
             variant="h5"
             sx={{ fontWeight: 800, mb: 0.5, fontSize: { xs: "1.15rem", sm: "1.35rem", md: "1.5rem" } }}
           >
-            {t("form.createTitle")}
+            Create New User
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {t("form.createSubtitle")}
+            Provision a new account within the ARES Nexus environment.
           </Typography>
         </Box>
 
@@ -242,7 +318,7 @@ export default function CreateUserPage() {
               "&:hover": { borderColor: "text.secondary" },
             }}
           >
-            {t("details.cancel")}
+            Cancel
           </Button>
           <Button
             variant="contained"
@@ -259,7 +335,7 @@ export default function CreateUserPage() {
               whiteSpace: "nowrap",
             }}
           >
-            {saving ? <CircularProgress size={20} color="inherit" /> : t("form.createBtn")}
+            {saving ? <CircularProgress size={20} color="inherit" /> : "Create Account"}
           </Button>
         </Stack>
       </Stack>
@@ -291,11 +367,9 @@ export default function CreateUserPage() {
                 <LockOutlinedIcon />
               </Box>
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>
-                  {t("form.accountCredentials")}
-                </Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>Account Credentials</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {t("form.accountCredentialsDesc")}
+                  Primary authentication details.
                 </Typography>
               </Box>
             </Stack>
@@ -304,7 +378,7 @@ export default function CreateUserPage() {
               {/* Email */}
               <Box>
                 <Typography sx={fieldLabel}>
-                  {t("form.email")}{" "}
+                  Email Address{" "}
                   <Box component="span" sx={{ color: "error.main" }}>
                     *
                   </Box>
@@ -336,7 +410,7 @@ export default function CreateUserPage() {
               <Grid container spacing={{ xs: 2, sm: 2.5 }}>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography sx={fieldLabel}>
-                    {t("form.tempPassword")}{" "}
+                    Temporary Password{" "}
                     <Box component="span" sx={{ color: "error.main" }}>
                       *
                     </Box>
@@ -372,7 +446,7 @@ export default function CreateUserPage() {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography sx={fieldLabel}>
-                    {t("form.confirmPassword")}{" "}
+                    Confirm Password{" "}
                     <Box component="span" sx={{ color: "error.main" }}>
                       *
                     </Box>
@@ -409,7 +483,7 @@ export default function CreateUserPage() {
               </Grid>
 
               <Typography variant="caption" color="text.secondary" sx={{ mt: -1 }}>
-                {t("form.passwordLengthHint")}
+                Must be at least 12 characters.
               </Typography>
 
               <FormControlLabel
@@ -423,7 +497,7 @@ export default function CreateUserPage() {
                 }
                 label={
                   <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: 12, sm: 14 } }}>
-                    {t("form.requirePasswordChange")}
+                    Require password change on first login
                   </Typography>
                 }
                 sx={{ mt: -1 }}
@@ -447,11 +521,9 @@ export default function CreateUserPage() {
                 <PersonOutlineIcon />
               </Box>
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>
-                  {t("form.personalDetails")}
-                </Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>Personal Details</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {t("form.personalDetailsDesc")}
+                  Identity and contact information.
                 </Typography>
               </Box>
             </Stack>
@@ -460,7 +532,7 @@ export default function CreateUserPage() {
               <Grid container spacing={{ xs: 2, sm: 2.5 }}>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography sx={fieldLabel}>
-                    {t("form.firstName")}{" "}
+                    First Name{" "}
                     <Box component="span" sx={{ color: "error.main" }}>
                       *
                     </Box>
@@ -480,7 +552,7 @@ export default function CreateUserPage() {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography sx={fieldLabel}>
-                    {t("form.lastName")}{" "}
+                    Last Name{" "}
                     <Box component="span" sx={{ color: "error.main" }}>
                       *
                     </Box>
@@ -502,30 +574,33 @@ export default function CreateUserPage() {
 
               <Grid container spacing={{ xs: 2, sm: 2.5 }}>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography sx={fieldLabel}>{t("form.phone")}</Typography>
+                  <Typography sx={fieldLabel}>Phone Number</Typography>
                   {/* On xs: stack vertically so the flag box doesn't crush the input */}
                   <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-                    <Box
+                    <Select
+                      value={form.phoneCountryCode}
+                      onChange={e => setForm({ ...form, phoneCountryCode: e.target.value })}
+                      displayEmpty
+                      renderValue={selected => selected}
                       sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: { xs: "flex-start", sm: "center" },
-                        px: 1.5,
-                        border: "1px solid",
-                        borderColor: "divider",
-                        borderRadius: 1.5,
                         bgcolor: "background.neutral",
-                        fontSize: 14,
-                        whiteSpace: "nowrap",
+                        borderRadius: 1.5,
                         color: "text.secondary",
-                        // xs: full-width short row; sm+: fixed-width column
-                        width: { xs: "100%", sm: "auto" },
-                        minWidth: { sm: 64 },
+                        fontSize: 14,
+                        width: { xs: "100%", sm: "110px" },
+                        minWidth: { sm: 90 },
                         minHeight: 48,
+                        "& .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "divider",
+                        },
                       }}
                     >
-                      +1 ▾
-                    </Box>
+                      {phoneCodes.map(c => (
+                        <MenuItem key={c.code} value={c.code}>
+                          {c.code} {c.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
                     <TextField
                       placeholder="(555) 000-0000"
                       value={form.phoneNumber}
@@ -541,7 +616,7 @@ export default function CreateUserPage() {
                   </Stack>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography sx={fieldLabel}>{t("form.dob")}</Typography>
+                  <Typography sx={fieldLabel}>Date of Birth</Typography>
                   <TextField
                     type="date"
                     value={form.dateOfBirth}
@@ -556,6 +631,167 @@ export default function CreateUserPage() {
               </Grid>
             </Stack>
           </Paper>
+
+          {/* Dynamic Role Sections */}
+          {form.role === "Inspector" && (
+            <Paper
+              elevation={0}
+              sx={{
+                p: { xs: 2, sm: 3, md: 4 },
+                borderRadius: 3,
+                border: "1px solid",
+                borderColor: "divider",
+                bgcolor: "background.paper",
+                mt: { xs: 2, md: 2.5 },
+              }}
+            >
+              <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 3 }}>
+                <Box sx={{ ...sectionIconSx, bgcolor: "warning.lighter", color: "warning.main" }}>
+                  <AssignmentIndIcon />
+                </Box>
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>Inspector Details</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Required fields for field inspectors.
+                  </Typography>
+                </Box>
+              </Stack>
+              <Stack spacing={{ xs: 2, sm: 3 }}>
+                <Grid container spacing={{ xs: 2, sm: 2.5 }}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography sx={fieldLabel}>
+                      Employee Code{" "}
+                      <Box component="span" sx={{ color: "error.main" }}>
+                        *
+                      </Box>
+                    </Typography>
+                    <TextField
+                      placeholder="e.g. INS-001"
+                      value={form.employeeCode}
+                      onChange={e => {
+                        setForm({ ...form, employeeCode: e.target.value });
+                        if (fieldErrors.employeeCode) setFieldErrors(p => ({ ...p, employeeCode: undefined }));
+                      }}
+                      fullWidth
+                      error={Boolean(fieldErrors.employeeCode)}
+                      helperText={fieldErrors.employeeCode}
+                      sx={bigInputSx}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography sx={fieldLabel}>Availability</Typography>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={form.isAvailable}
+                          onChange={e => setForm({ ...form, isAvailable: e.target.checked })}
+                        />
+                      }
+                      label={
+                        <Typography variant="body2" color="text.secondary">
+                          Available for Assignments
+                        </Typography>
+                      }
+                      sx={{ mt: 1 }}
+                    />
+                  </Grid>
+                </Grid>
+              </Stack>
+            </Paper>
+          )}
+
+          {form.role === "Supplier" && (
+            <Paper
+              elevation={0}
+              sx={{
+                p: { xs: 2, sm: 3, md: 4 },
+                borderRadius: 3,
+                border: "1px solid",
+                borderColor: "divider",
+                bgcolor: "background.paper",
+                mt: { xs: 2, md: 2.5 },
+              }}
+            >
+              <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 3 }}>
+                <Box sx={{ ...sectionIconSx, bgcolor: "success.lighter", color: "success.main" }}>
+                  <BusinessIcon />
+                </Box>
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 17 } }}>Supplier Details</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Required business information.
+                  </Typography>
+                </Box>
+              </Stack>
+              <Stack spacing={{ xs: 2, sm: 3 }}>
+                <Grid container spacing={{ xs: 2, sm: 2.5 }}>
+                  <Grid size={{ xs: 12, sm: 12 }}>
+                    <Typography sx={fieldLabel}>
+                      Company Name{" "}
+                      <Box component="span" sx={{ color: "error.main" }}>
+                        *
+                      </Box>
+                    </Typography>
+                    <TextField
+                      placeholder="Acme Rentals LLC"
+                      value={form.companyName}
+                      onChange={e => {
+                        setForm({ ...form, companyName: e.target.value });
+                        if (fieldErrors.companyName) setFieldErrors(p => ({ ...p, companyName: undefined }));
+                      }}
+                      fullWidth
+                      error={Boolean(fieldErrors.companyName)}
+                      helperText={fieldErrors.companyName}
+                      sx={bigInputSx}
+                    />
+                  </Grid>
+                </Grid>
+                <Grid container spacing={{ xs: 2, sm: 2.5 }}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography sx={fieldLabel}>
+                      Commercial Registration No.{" "}
+                      <Box component="span" sx={{ color: "error.main" }}>
+                        *
+                      </Box>
+                    </Typography>
+                    <TextField
+                      placeholder="e.g. CR-123456"
+                      value={form.commercialRegistrationNumber}
+                      onChange={e => {
+                        setForm({ ...form, commercialRegistrationNumber: e.target.value });
+                        if (fieldErrors.commercialRegistrationNumber)
+                          setFieldErrors(p => ({ ...p, commercialRegistrationNumber: undefined }));
+                      }}
+                      fullWidth
+                      error={Boolean(fieldErrors.commercialRegistrationNumber)}
+                      helperText={fieldErrors.commercialRegistrationNumber}
+                      sx={bigInputSx}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography sx={fieldLabel}>
+                      Tax ID{" "}
+                      <Box component="span" sx={{ color: "error.main" }}>
+                        *
+                      </Box>
+                    </Typography>
+                    <TextField
+                      placeholder="e.g. TX-987654"
+                      value={form.taxId}
+                      onChange={e => {
+                        setForm({ ...form, taxId: e.target.value });
+                        if (fieldErrors.taxId) setFieldErrors(p => ({ ...p, taxId: undefined }));
+                      }}
+                      fullWidth
+                      error={Boolean(fieldErrors.taxId)}
+                      helperText={fieldErrors.taxId}
+                      sx={bigInputSx}
+                    />
+                  </Grid>
+                </Grid>
+              </Stack>
+            </Paper>
+          )}
         </Grid>
 
         {/* RIGHT: sidebar */}
@@ -572,7 +808,7 @@ export default function CreateUserPage() {
               mb: 2,
             }}
           >
-            <Typography sx={{ fontWeight: 700, fontSize: 14, mb: 1 }}>{t("form.profilePhoto")}</Typography>
+            <Typography sx={{ fontWeight: 700, fontSize: 14, mb: 1 }}>Profile Photo</Typography>
             <Box
               component="label"
               htmlFor="profile-photo-input"
@@ -594,7 +830,7 @@ export default function CreateUserPage() {
             >
               <PhotoCameraOutlinedIcon sx={{ color: "text.disabled", fontSize: 30 }} />
               <Typography variant="caption" sx={{ color: "text.disabled", fontWeight: 500 }}>
-                {t("form.uploadPhoto")}
+                Upload
               </Typography>
               <input
                 id="profile-photo-input"
@@ -611,7 +847,7 @@ export default function CreateUserPage() {
               color="text.disabled"
               sx={{ mt: 1.5, display: "block", textAlign: "center", lineHeight: 1.6 }}
             >
-              {t("form.photoHint")}
+              Allowed *.jpeg, *.jpg, *.png, *.gif{"\n"}Max size of 3.1 MB
             </Typography>
           </Paper>
 
@@ -644,16 +880,16 @@ export default function CreateUserPage() {
                 <ShieldOutlinedIcon sx={{ fontSize: 18 }} />
               </Box>
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: 14 }}>{t("form.accessControl")}</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: 14 }}>Access Control</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {t("form.accessControlDesc")}
+                  Permissions and status.
                 </Typography>
               </Box>
             </Stack>
 
             <Box sx={{ mb: 2 }}>
               <Typography sx={{ ...fieldLabel, mb: 1 }}>
-                {t("form.systemRole")}{" "}
+                System Role{" "}
                 <Box component="span" sx={{ color: "error.main" }}>
                   *
                 </Box>
@@ -674,18 +910,18 @@ export default function CreateUserPage() {
                 }}
               >
                 <MenuItem value="" disabled>
-                  <em style={{ color: "var(--mui-palette-text-disabled)" }}>{t("form.selectRole")}</em>
+                  <em style={{ color: "var(--mui-palette-text-disabled)" }}>Select a role...</em>
                 </MenuItem>
-                <MenuItem value="Admin">{t("form.roles.admin")}</MenuItem>
-                <MenuItem value="Customer">{t("form.roles.customer")}</MenuItem>
-                <MenuItem value="Supplier">{t("form.roles.supplier")}</MenuItem>
-                <MenuItem value="Driver">{t("form.roles.driver")}</MenuItem>
-                <MenuItem value="Inspector">{t("form.roles.inspector")}</MenuItem>
+                <MenuItem value="Admin">Admin</MenuItem>
+                <MenuItem value="Customer">Customer</MenuItem>
+                <MenuItem value="Supplier">Supplier</MenuItem>
+                <MenuItem value="Driver">Driver</MenuItem>
+                <MenuItem value="Inspector">Inspector</MenuItem>
               </TextField>
             </Box>
 
             <Box>
-              <Typography sx={{ ...fieldLabel, mb: 1 }}>{t("form.accountStatus")}</Typography>
+              <Typography sx={{ ...fieldLabel, mb: 1 }}>Account Status</Typography>
               <ToggleButtonGroup
                 value={form.status}
                 exclusive
@@ -732,15 +968,15 @@ export default function CreateUserPage() {
               >
                 <ToggleButton value="active">
                   <CheckCircleOutlineIcon sx={{ fontSize: { xs: 13, sm: 14 } }} />
-                  {t("form.active")}
+                  Active
                 </ToggleButton>
                 <ToggleButton value="pending">
                   <AccessTimeIcon sx={{ fontSize: { xs: 13, sm: 14 } }} />
-                  {t("form.pending")}
+                  Pending
                 </ToggleButton>
                 <ToggleButton value="blocked">
                   <BlockIcon sx={{ fontSize: { xs: 13, sm: 14 } }} />
-                  {t("form.blocked")}
+                  Blocked
                 </ToggleButton>
               </ToggleButtonGroup>
             </Box>
@@ -758,9 +994,9 @@ export default function CreateUserPage() {
             }}
           >
             <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-              <Typography sx={{ fontWeight: 700, fontSize: 14 }}>{t("form.completeness")}</Typography>
+              <Typography sx={{ fontWeight: 700, fontSize: 14 }}>Profile Completeness</Typography>
               <Chip
-                label={t("form.draft")}
+                label="Draft"
                 size="small"
                 sx={{ fontSize: 10, fontWeight: 600, height: 20, bgcolor: "action.hover", color: "text.secondary" }}
               />
@@ -778,8 +1014,8 @@ export default function CreateUserPage() {
               }}
             />
             <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
-              {completenessScore}% {t("form.completenessDesc")}
-              {completenessScore < 100 ? t("form.requiredFieldsMissing") : t("form.readyToOnboard")}
+              {completenessScore}% complete.
+              {completenessScore < 100 ? " Required fields missing." : " Ready to provision."}
             </Typography>
 
             <Stack spacing={0.75}>
@@ -791,7 +1027,9 @@ export default function CreateUserPage() {
                     <RadioButtonUncheckedIcon sx={{ fontSize: 14, color: "divider", flexShrink: 0 }} />
                   )}
                   <Typography variant="caption" sx={{ color: item.done ? "success.main" : "text.disabled" }}>
-                    {item.done ? item.doneLabel : item.label}
+                    {item.done
+                      ? item.label.replace(" missing", " ✓").replace(" unassigned", " assigned")
+                      : (item.missingLabel ?? item.label)}
                   </Typography>
                 </Stack>
               ))}

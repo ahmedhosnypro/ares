@@ -76,12 +76,10 @@ export default function BookingsFilterBar({
           <MenuItem value="All">{t("filters.statuses.all")}</MenuItem>
           <MenuItem value="Draft">{t("filters.statuses.draft")}</MenuItem>
           <MenuItem value="PaymentPending">{t("filters.statuses.paymentPending")}</MenuItem>
-          <MenuItem value="PendingApproval">{t("filters.statuses.pendingApproval")}</MenuItem>
           <MenuItem value="Confirmed">{t("filters.statuses.confirmed")}</MenuItem>
           <MenuItem value="Active">{t("filters.statuses.active")}</MenuItem>
           <MenuItem value="Completed">{t("filters.statuses.completed")}</MenuItem>
           <MenuItem value="Cancelled">{t("filters.statuses.cancelled")}</MenuItem>
-          <MenuItem value="Rejected">{t("filters.statuses.rejected")}</MenuItem>
         </Select>
       </FormControl>
       <TextField

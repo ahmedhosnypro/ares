@@ -26,6 +26,16 @@ export interface InspectionSummary {
   imageCount: number;
 }
 
+export interface PendingAssignment {
+  bookingId: string;
+  bookingNumber: string | null;
+  customerName: string;
+  vehicleDisplayName: string;
+  inspectionType: "Pickup" | "Return";
+  inspectionDate: string;
+  bookingStatus: string;
+}
+
 export interface InspectionDetails {
   inspectionId: string;
   bookingId: string;
@@ -140,6 +150,13 @@ export async function getInspectionHistory(): Promise<InspectionSummary[]> {
   return apiFetchJson<InspectionSummary[]>(`/api/inspector/inspections/history`, {
     method: "GET",
     accessToken: await token(),
+  });
+}
+
+export async function getPendingAssignments(accessToken?: string): Promise<PendingAssignment[]> {
+  return apiFetchJson<PendingAssignment[]>(`/api/admin/bookings/pending-assignments`, {
+    method: "GET",
+    accessToken: accessToken ?? (await token()),
   });
 }
 

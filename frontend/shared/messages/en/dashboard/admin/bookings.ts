@@ -125,6 +125,8 @@ const bookings: AdminBookingsLabels = {
     },
     statuses: {
       draft: "Draft",
+      pending: "Pending",
+      scheduled: "Scheduled",
       paymentPending: "Payment Pending",
       pendingApproval: "Pending Approval",
       confirmed: "Confirmed",

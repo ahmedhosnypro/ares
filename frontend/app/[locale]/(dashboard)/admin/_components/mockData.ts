@@ -72,7 +72,7 @@ export const mockQuickActions: QuickAction[] = [
   { label: "Add User", icon: "PersonAdd", path: "/admin/users/create", color: "info" },
   { label: "Add Vehicle", icon: "Car", path: "/admin/vehicles/create", color: "success" },
   { label: "Review Verifications", icon: "Shield", path: "/admin/verifications", color: "warning" },
-  { label: "Assign Inspector", icon: "AssignmentInd", path: "/admin/bookings", color: "secondary" },
+  { label: "Assign Inspector", icon: "AssignmentInd", path: "/admin/assignment-center", color: "secondary" },
 ];
 
 export const mockTopVehicles: TopVehicle[] = [
