@@ -89,211 +89,211 @@ import type { LoadingPageLabels } from "./root/loading";
 import type { NotFoundLabels } from "./root/not-found";
 
 export type {
-	AboutLabels,
-	AccountBookingsLabels,
-	AccountProfileLabels,
-	ActivateLabels,
-	AdminComplianceLabels,
-	AdminLocationsFormLabels,
-	AdminSecurityLabels,
-	AdminSidebarLabels,
-	AdminVehiclesLabels,
-	AdminVehiclesMgmtLabels,
-	AdminVerificationsLabels,
-	AuthLabels,
-	BankDetailsLabels,
-	BookingConfirmationLabels,
-	BookingDetailLabels,
-	BookingPaymentLabels,
-	ChangePasswordLabels,
-	CheckoutLabels,
-	CheckoutSessionLabels,
-	CommonLabels,
-	ContactLabels,
-	CookiePolicyLabels,
-	CreateSupplierVehicleLabels,
-	CustomerBookingsLabels,
-	CustomerNotificationsLabels,
-	DashboardLabels,
-	DeleteNotificationDialogLabels,
-	DriverCompleteProfileLabels,
-	DriverDashboardLabels,
-	DriverEarningsLabels,
-	DriverNotificationsLabels,
-	DriverProfileLabels,
-	DriverSelectionLabels,
-	DriverSidebarLabels,
-	DriverTripsLabels,
-	ErrorPageLabels,
-	ErrorsLabels,
-	ForgotPasswordLabels,
-	GoogleSignInLabels,
-	HeaderLabels,
-	InspectorHistoryLabels,
-	InspectorInspectionDetailLabels,
-	InspectorInspectionsLabels,
-	InspectorProfileLabels,
-	InspectorSidebarLabels,
-	LoadingPageLabels,
-	LocationsLabels,
-	LogoutDialogLabels,
-	NotFoundLabels,
-	OffersLabels,
-	PrivacyLabels,
-	PromotionsLabels,
-	PublicBookingsLabels,
-	ResetPasswordLabels,
-	SearchLabels,
-	SignInLabels,
-	SignUpPageLabels,
-	SupplierBookingDetailLabels,
-	SupplierBookingsLabels,
-	SupplierDashboardLabels,
-	SupplierEarningsLabels,
-	SupplierNotificationsLabels,
-	SupplierReviewsLabels,
-	SupplierSidebarLabels,
-	SuppliersLabels,
-	SupplierVehicleDetailLabels,
-	SupplierVehiclesLabels,
-	TermsLabels,
-	VehicleDetailLabels,
-	VehiclesLabels,
-	VerifyEmailLabels,
+  AboutLabels,
+  AccountBookingsLabels,
+  AccountProfileLabels,
+  ActivateLabels,
+  AdminComplianceLabels,
+  AdminLocationsFormLabels,
+  AdminSecurityLabels,
+  AdminSidebarLabels,
+  AdminVehiclesLabels,
+  AdminVehiclesMgmtLabels,
+  AdminVerificationsLabels,
+  AuthLabels,
+  BankDetailsLabels,
+  BookingConfirmationLabels,
+  BookingDetailLabels,
+  BookingPaymentLabels,
+  ChangePasswordLabels,
+  CheckoutLabels,
+  CheckoutSessionLabels,
+  CommonLabels,
+  ContactLabels,
+  CookiePolicyLabels,
+  CreateSupplierVehicleLabels,
+  CustomerBookingsLabels,
+  CustomerNotificationsLabels,
+  DashboardLabels,
+  DeleteNotificationDialogLabels,
+  DriverCompleteProfileLabels,
+  DriverDashboardLabels,
+  DriverEarningsLabels,
+  DriverNotificationsLabels,
+  DriverProfileLabels,
+  DriverSelectionLabels,
+  DriverSidebarLabels,
+  DriverTripsLabels,
+  ErrorPageLabels,
+  ErrorsLabels,
+  ForgotPasswordLabels,
+  GoogleSignInLabels,
+  HeaderLabels,
+  InspectorHistoryLabels,
+  InspectorInspectionDetailLabels,
+  InspectorInspectionsLabels,
+  InspectorProfileLabels,
+  InspectorSidebarLabels,
+  LoadingPageLabels,
+  LocationsLabels,
+  LogoutDialogLabels,
+  NotFoundLabels,
+  OffersLabels,
+  PrivacyLabels,
+  PromotionsLabels,
+  PublicBookingsLabels,
+  ResetPasswordLabels,
+  SearchLabels,
+  SignInLabels,
+  SignUpPageLabels,
+  SupplierBookingDetailLabels,
+  SupplierBookingsLabels,
+  SupplierDashboardLabels,
+  SupplierEarningsLabels,
+  SupplierNotificationsLabels,
+  SupplierReviewsLabels,
+  SupplierSidebarLabels,
+  SuppliersLabels,
+  SupplierVehicleDetailLabels,
+  SupplierVehiclesLabels,
+  TermsLabels,
+  VehicleDetailLabels,
+  VehiclesLabels,
+  VerifyEmailLabels,
 };
 
 export type AuthPagesSchema = {
-	readonly signin: SignInLabels;
-	readonly googleSignIn: GoogleSignInLabels;
-	readonly signup: SignUpPageLabels;
-	readonly forgotPassword: ForgotPasswordLabels;
-	readonly resetPassword: ResetPasswordLabels;
-	readonly activate: ActivateLabels;
-	readonly verifyEmail: VerifyEmailLabels;
+  readonly signin: SignInLabels;
+  readonly googleSignIn: GoogleSignInLabels;
+  readonly signup: SignUpPageLabels;
+  readonly forgotPassword: ForgotPasswordLabels;
+  readonly resetPassword: ResetPasswordLabels;
+  readonly activate: ActivateLabels;
+  readonly verifyEmail: VerifyEmailLabels;
 };
 
 export type CustomerSchema = {
-	readonly accountProfile: AccountProfileLabels;
-	readonly accountBookings: AccountBookingsLabels;
-	readonly bookingDetail: BookingDetailLabels;
-	readonly driverSelection: DriverSelectionLabels;
-	readonly bookingPayment: BookingPaymentLabels;
-	readonly bookings: CustomerBookingsLabels;
-	readonly changePassword: ChangePasswordLabels;
-	readonly notifications: CustomerNotificationsLabels;
+  readonly accountProfile: AccountProfileLabels;
+  readonly accountBookings: AccountBookingsLabels;
+  readonly bookingDetail: BookingDetailLabels;
+  readonly driverSelection: DriverSelectionLabels;
+  readonly bookingPayment: BookingPaymentLabels;
+  readonly bookings: CustomerBookingsLabels;
+  readonly changePassword: ChangePasswordLabels;
+  readonly notifications: CustomerNotificationsLabels;
 };
 
 export type DashboardSchema = {
-	readonly shell: DashboardLabels;
-	readonly adminSidebar: AdminSidebarLabels;
-	readonly driverSidebar: DriverSidebarLabels;
-	readonly supplierSidebar: SupplierSidebarLabels;
-	readonly inspectorSidebar: InspectorSidebarLabels;
-	readonly driverCompleteProfile: DriverCompleteProfileLabels;
-	readonly driverDashboard: DriverDashboardLabels;
-	readonly driverEarnings: DriverEarningsLabels;
-	readonly driverNotifications: DriverNotificationsLabels;
-	readonly driverProfile: DriverProfileLabels;
-	readonly driverTrips: DriverTripsLabels;
-	readonly supplierDashboard: SupplierDashboardLabels;
-	readonly supplierEarnings: SupplierEarningsLabels;
-	readonly supplierNotifications: SupplierNotificationsLabels;
-	readonly supplierReviews: SupplierReviewsLabels;
-	readonly supplierBookings: SupplierBookingsLabels;
-	readonly supplierBookingDetail: SupplierBookingDetailLabels;
-	readonly supplierVehicles: SupplierVehiclesLabels;
-	readonly createSupplierVehicle: CreateSupplierVehicleLabels;
-	readonly supplierVehicleDetail: SupplierVehicleDetailLabels;
-	readonly logoutDialog: LogoutDialogLabels;
+  readonly shell: DashboardLabels;
+  readonly adminSidebar: AdminSidebarLabels;
+  readonly driverSidebar: DriverSidebarLabels;
+  readonly supplierSidebar: SupplierSidebarLabels;
+  readonly inspectorSidebar: InspectorSidebarLabels;
+  readonly driverCompleteProfile: DriverCompleteProfileLabels;
+  readonly driverDashboard: DriverDashboardLabels;
+  readonly driverEarnings: DriverEarningsLabels;
+  readonly driverNotifications: DriverNotificationsLabels;
+  readonly driverProfile: DriverProfileLabels;
+  readonly driverTrips: DriverTripsLabels;
+  readonly supplierDashboard: SupplierDashboardLabels;
+  readonly supplierEarnings: SupplierEarningsLabels;
+  readonly supplierNotifications: SupplierNotificationsLabels;
+  readonly supplierReviews: SupplierReviewsLabels;
+  readonly supplierBookings: SupplierBookingsLabels;
+  readonly supplierBookingDetail: SupplierBookingDetailLabels;
+  readonly supplierVehicles: SupplierVehiclesLabels;
+  readonly createSupplierVehicle: CreateSupplierVehicleLabels;
+  readonly supplierVehicleDetail: SupplierVehicleDetailLabels;
+  readonly logoutDialog: LogoutDialogLabels;
 };
 
 export type DashboardAdminAdminSchema = {
-	readonly compliance: AdminComplianceLabels;
-	readonly security: AdminSecurityLabels;
-	readonly vehicles: AdminVehiclesMgmtLabels;
+  readonly compliance: AdminComplianceLabels;
+  readonly security: AdminSecurityLabels;
+  readonly vehicles: AdminVehiclesMgmtLabels;
 };
 
 export type DashboardAdminSchema = {
-	readonly admin: DashboardAdminAdminSchema;
-	readonly bankDetails: BankDetailsLabels;
-	readonly bookings: AdminBookingsLabels;
-	readonly createBooking: CreateBookingLabels;
-	readonly bookingDetails: BookingDetailsLabels;
-	readonly editBooking: EditBookingLabels;
-	readonly categories: CategoriesLabels;
-	readonly categoryDetails: CategoryDetailsLabels;
-	readonly countries: CountriesLabels;
-	readonly createCountry: CreateCountryLabels;
-	readonly countryDetails: CountryDetailsLabels;
-	readonly editCountry: EditCountryLabels;
-	readonly locationsForm: AdminLocationsFormLabels;
-	readonly notifications: AdminNotificationsLabels;
-	readonly scheduler: AdminSchedulerLabels;
-	readonly settings: AdminSettingsLabels;
-	readonly users: AdminUsersLabels;
-	readonly drivers: AdminDriversLabels;
-	readonly inspectors: AdminInspectorsLabels;
-	readonly vehicles: AdminVehiclesLabels;
-	readonly verifications: AdminVerificationsLabels;
-	readonly promotions: PromotionsLabels;
+  readonly admin: DashboardAdminAdminSchema;
+  readonly bankDetails: BankDetailsLabels;
+  readonly bookings: AdminBookingsLabels;
+  readonly createBooking: CreateBookingLabels;
+  readonly bookingDetails: BookingDetailsLabels;
+  readonly editBooking: EditBookingLabels;
+  readonly categories: CategoriesLabels;
+  readonly categoryDetails: CategoryDetailsLabels;
+  readonly countries: CountriesLabels;
+  readonly createCountry: CreateCountryLabels;
+  readonly countryDetails: CountryDetailsLabels;
+  readonly editCountry: EditCountryLabels;
+  readonly locationsForm: AdminLocationsFormLabels;
+  readonly notifications: AdminNotificationsLabels;
+  readonly scheduler: AdminSchedulerLabels;
+  readonly settings: AdminSettingsLabels;
+  readonly users: AdminUsersLabels;
+  readonly drivers: AdminDriversLabels;
+  readonly inspectors: AdminInspectorsLabels;
+  readonly vehicles: AdminVehiclesLabels;
+  readonly verifications: AdminVerificationsLabels;
+  readonly promotions: PromotionsLabels;
 };
 
 export type DashboardInspectorSchema = {
-	readonly history: InspectorHistoryLabels;
-	readonly inspections: InspectorInspectionsLabels;
-	readonly inspectionDetail: InspectorInspectionDetailLabels;
-	readonly profile: InspectorProfileLabels;
+  readonly history: InspectorHistoryLabels;
+  readonly inspections: InspectorInspectionsLabels;
+  readonly inspectionDetail: InspectorInspectionDetailLabels;
+  readonly profile: InspectorProfileLabels;
 };
 
 export type PublicBookingsSchema = {
-	readonly index: PublicBookingsLabels;
-	readonly confirmation: BookingConfirmationLabels;
+  readonly index: PublicBookingsLabels;
+  readonly confirmation: BookingConfirmationLabels;
 };
 
 export type PublicSuppliersSchema = {
-	readonly index: SuppliersLabels;
-	readonly detail: SupplierDetailLabels;
+  readonly index: SuppliersLabels;
+  readonly detail: SupplierDetailLabels;
 };
 
 export type PublicVehiclesSchema = {
-	readonly index: VehiclesLabels;
-	readonly detail: VehicleDetailLabels;
+  readonly index: VehiclesLabels;
+  readonly detail: VehicleDetailLabels;
 };
 
 export type PublicPagesSchema = {
-	readonly about: AboutLabels;
-	readonly privacy: PrivacyLabels;
-	readonly terms: TermsLabels;
-	readonly offers: OffersLabels;
-	readonly bookings: PublicBookingsSchema;
-	readonly checkout: CheckoutLabels;
-	readonly checkoutSession: CheckoutSessionLabels;
-	readonly contact: ContactLabels;
-	readonly cookiePolicy: CookiePolicyLabels;
-	readonly faq: FaqLabels;
-	readonly locations: LocationsLabels;
-	readonly search: SearchLabels;
-	readonly suppliers: PublicSuppliersSchema;
-	readonly vehicles: PublicVehiclesSchema;
+  readonly about: AboutLabels;
+  readonly privacy: PrivacyLabels;
+  readonly terms: TermsLabels;
+  readonly offers: OffersLabels;
+  readonly bookings: PublicBookingsSchema;
+  readonly checkout: CheckoutLabels;
+  readonly checkoutSession: CheckoutSessionLabels;
+  readonly contact: ContactLabels;
+  readonly cookiePolicy: CookiePolicyLabels;
+  readonly faq: FaqLabels;
+  readonly locations: LocationsLabels;
+  readonly search: SearchLabels;
+  readonly suppliers: PublicSuppliersSchema;
+  readonly vehicles: PublicVehiclesSchema;
 };
 
 export type RootPagesSchema = {
-	readonly error: ErrorPageLabels;
-	readonly loading: LoadingPageLabels;
-	readonly notFound: NotFoundLabels;
+  readonly error: ErrorPageLabels;
+  readonly loading: LoadingPageLabels;
+  readonly notFound: NotFoundLabels;
 };
 
 export type MessageSchema = {
-	readonly common: CommonLabels;
-	readonly auth: AuthLabels;
-	readonly errors: ErrorsLabels;
-	readonly authPages: AuthPagesSchema;
-	readonly customer: CustomerSchema;
-	readonly header: HeaderLabels;
-	readonly dashboard: DashboardSchema;
-	readonly dashboardAdmin: DashboardAdminSchema;
-	readonly dashboardInspector: DashboardInspectorSchema;
-	readonly deleteNotificationDialog: DeleteNotificationDialogLabels;
-	readonly publicPages: PublicPagesSchema;
-	readonly rootPages: RootPagesSchema;
+  readonly common: CommonLabels;
+  readonly auth: AuthLabels;
+  readonly errors: ErrorsLabels;
+  readonly authPages: AuthPagesSchema;
+  readonly customer: CustomerSchema;
+  readonly header: HeaderLabels;
+  readonly dashboard: DashboardSchema;
+  readonly dashboardAdmin: DashboardAdminSchema;
+  readonly dashboardInspector: DashboardInspectorSchema;
+  readonly deleteNotificationDialog: DeleteNotificationDialogLabels;
+  readonly publicPages: PublicPagesSchema;
+  readonly rootPages: RootPagesSchema;
 };

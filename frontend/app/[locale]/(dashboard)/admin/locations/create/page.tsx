@@ -3,5 +3,5 @@
 import LocationForm from "../_components/LocationForm";
 
 export default function AdminCreateLocationPage() {
-	return <LocationForm mode="create" />;
+  return <LocationForm mode="create" />;
 }
