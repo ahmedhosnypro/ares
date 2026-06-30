@@ -331,13 +331,9 @@ Example: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'",
         options.RoutePrefix = "swagger";
     });
 
-    // Add global exception handling middleware (must be first)
-    app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
-
-    // Add rate limiting middleware (before authentication)
-    app.UseMiddleware<RateLimitingMiddleware>();
-
-    // Add Serilog request logging
+    // Add Serilog request logging (must be before exception handler so it
+    // captures the status code set by GlobalExceptionHandlerMiddleware, not
+    // the default 500 that ASP.NET Core assigns before re-throwing).
     app.UseSerilogRequestLogging(options =>
     {
         options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
@@ -348,6 +344,12 @@ Example: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'",
             diagnosticContext.Set("RemoteIpAddress", httpContext.Connection.RemoteIpAddress);
         };
     });
+
+    // Add global exception handling middleware (must be before auth/CORS)
+    app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+
+    // Add rate limiting middleware (before authentication)
+    app.UseMiddleware<RateLimitingMiddleware>();
 
     // Enable CORS
     app.UseCors("AllowFrontend");

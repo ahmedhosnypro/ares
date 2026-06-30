@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { supportedLocales, defaultLocale } from "./shared/i18n/constants";
 
-const locales = ["ar", "en"];
-const defaultLocale = "en"; // must match routing.ts defaultLocale
+const locales = supportedLocales;
 
 function getLocale(request: NextRequest): string {
   const cookieLocale = request.cookies.get("NEXT_LOCALE")?.value;
-  if (cookieLocale && locales.includes(cookieLocale)) {
+  if (cookieLocale && (locales as readonly string[]).includes(cookieLocale)) {
     return cookieLocale;
   }
   const acceptLanguage = request.headers.get("accept-language") ?? "";
