@@ -35,6 +35,23 @@ const form: AdminLocationsFormLabels = {
   editErrorMessage: "Failed to update location",
   loadError: "Failed to load location details",
   unauthorizedError: "Unauthorized. Please log in.",
+  pageTitle: "Locations Management",
+  pageSubtitle: "Manage pick-up and drop-off locations",
+  addNewLocation: "Add New Location",
+  totalLocations: "Total Locations",
+  searchPlaceholder: "Search by city, name, or country...",
+  locationNameColumn: "Location Name",
+  cityAndCountryColumn: "City & Country",
+  coordinatesColumn: "Coordinates",
+  primaryColumn: "Primary",
+  primary: "Primary",
+  noLocationsFound: "No locations found",
+  showingCount: "Showing {count} locations",
+  deleteTitle: "Delete Location",
+  deleteConfirmation: "Are you sure you want to delete this location?",
+  deleteCannotBeUndone: "This action cannot be undone.",
+  deleteErrorMessage: "Failed to delete location",
+  viewOnSearch: "View on Search",
 };
 
 export default form;

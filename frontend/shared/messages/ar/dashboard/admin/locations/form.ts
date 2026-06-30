@@ -35,6 +35,23 @@ const form: AdminLocationsFormLabels = {
   editErrorMessage: "فشل تحديث الموقع",
   loadError: "فشل تحميل تفاصيل الموقع",
   unauthorizedError: "غير مصرح به. يرجى تسجيل الدخول.",
+  pageTitle: "إدارة المواقع",
+  pageSubtitle: "إدارة مواقع الاستلام والتسليم",
+  addNewLocation: "إضافة موقع جديد",
+  totalLocations: "إجمالي المواقع",
+  searchPlaceholder: "ابحث بالمدينة أو الاسم أو الدولة...",
+  locationNameColumn: "اسم الموقع",
+  cityAndCountryColumn: "المدينة والدولة",
+  coordinatesColumn: "الإحداثيات",
+  primaryColumn: "رئيسي",
+  primary: "رئيسي",
+  noLocationsFound: "لم يتم العثور على مواقع",
+  showingCount: "عرض {count} مواقع",
+  deleteTitle: "حذف الموقع",
+  deleteConfirmation: "هل أنت متأكد أنك تريد حذف هذا الموقع؟",
+  deleteCannotBeUndone: "لا يمكن التراجع عن هذا الإجراء.",
+  deleteErrorMessage: "فشل حذف الموقع",
+  viewOnSearch: "عرض في البحث",
 };
 
 export default form;
