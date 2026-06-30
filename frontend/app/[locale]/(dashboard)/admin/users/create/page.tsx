@@ -204,7 +204,7 @@ export default function CreateUserPage() {
           password: form.password,
           firstName: form.firstName.trim(),
           lastName: form.lastName.trim(),
-          phoneNumber: finalPhoneNumber,
+          phoneNumber: finalPhoneNumber || "",
           status: form.status,
           roles: [form.role],
           dateOfBirth: form.dateOfBirth || undefined,
