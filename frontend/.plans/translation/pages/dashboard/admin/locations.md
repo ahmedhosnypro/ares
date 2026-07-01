@@ -3,22 +3,20 @@
 ## Page Overview
 
 - Route: `/(dashboard)/admin/locations`
-- Source: app/[locale]/(dashboard)/admin/locations/
+- Source: [page.tsx](<file:///C:/Users/Mohamed/Desktop/Graduation-Project/Graduation-Project/frontend/app/[locale]/(dashboard)/admin/locations/page.tsx>)
 
 ## Translation Status
 
-- [ ] Not started
-- [ ] In progress
-- [ ] Completed
+- [x] Completed
 
 ## Shared Components
 
-(To be filled during execution)
+- None
 
 ## Component Discovery
 
-(To be filled during execution)
+- `AdminLocationsPage` ([page.tsx](<file:///C:/Users/Mohamed/Desktop/Graduation-Project/Graduation-Project/frontend/app/[locale]/(dashboard)/admin/locations/page.tsx>))
 
 ## Translation Tasks
 
-(To be filled during execution)
+- [x] Extract and translate table column headers, status labels, dialog confirmations, actions, and search inputs using the namespace `dashboardAdmin.locationsForm` and `common`.

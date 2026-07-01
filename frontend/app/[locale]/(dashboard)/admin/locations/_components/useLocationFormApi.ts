@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import type { Location } from "@/api-clients/locations/locations";
 import {
   createLocation,
@@ -33,6 +33,7 @@ interface UseLocationFormApiOptions {
   readonly errorMessage: string;
   readonly loadErrorMessage: string;
   readonly imageUploadFailedMessage: string;
+  readonly unauthorizedErrorMessage: string;
 }
 
 function parseApiError(err: unknown, fallback: string): string {
@@ -62,30 +63,11 @@ export function useLocationFormApi({
   errorMessage,
   loadErrorMessage,
   imageUploadFailedMessage,
+  unauthorizedErrorMessage,
 }: UseLocationFormApiOptions) {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(mode === "edit");
   const [initialData, setInitialData] = useState<Location | null>(null);
-
-  const callbacksRef = useRef({
-    onSuccess,
-    onError,
-    onLoadError,
-  });
-  callbacksRef.current = { onSuccess, onError, onLoadError };
-
-  const messagesRef = useRef({
-    successMessage,
-    errorMessage,
-    loadErrorMessage,
-    imageUploadFailedMessage,
-  });
-  messagesRef.current = {
-    successMessage,
-    errorMessage,
-    loadErrorMessage,
-    imageUploadFailedMessage,
-  };
 
   const fetchLocation = useCallback(async () => {
     if (mode !== "edit" || !accessToken || !locationId) return;
@@ -95,13 +77,13 @@ export function useLocationFormApi({
       setInitialData(data);
       return data;
     } catch (err) {
-      callbacksRef.current.onLoadError(messagesRef.current.loadErrorMessage);
+      onLoadError(loadErrorMessage);
       logger.error("Failed to load location", err);
       return null;
     } finally {
       setFetching(false);
     }
-  }, [mode, accessToken, locationId]);
+  }, [mode, accessToken, locationId, onLoadError, loadErrorMessage]);
 
   const saveLocation = useCallback(
     async (formData: LocationFormData, userId: string, token: string): Promise<Location> => {
@@ -136,7 +118,7 @@ export function useLocationFormApi({
   const submitForm = useCallback(
     async (formData: LocationFormData, userId: string, imageFile: File | null) => {
       if (!accessToken) {
-        callbacksRef.current.onError("Unauthorized. Please log in.");
+        onError(unauthorizedErrorMessage);
         return false;
       }
 
@@ -148,21 +130,32 @@ export function useLocationFormApi({
         if (imageFile) {
           const uploaded = await attachImage(accessToken, resultLocation.id, imageFile);
           if (!uploaded && mode === "create") {
-            callbacksRef.current.onError(messagesRef.current.imageUploadFailedMessage);
+            onError(imageUploadFailedMessage);
             return false;
           }
         }
 
-        callbacksRef.current.onSuccess(messagesRef.current.successMessage);
+        onSuccess(successMessage);
         return true;
       } catch (err: unknown) {
-        callbacksRef.current.onError(parseApiError(err, messagesRef.current.errorMessage));
+        onError(parseApiError(err, errorMessage));
         return false;
       } finally {
         setLoading(false);
       }
     },
-    [accessToken, mode, saveLocation, attachImage]
+    [
+      accessToken,
+      mode,
+      saveLocation,
+      attachImage,
+      onError,
+      unauthorizedErrorMessage,
+      imageUploadFailedMessage,
+      onSuccess,
+      successMessage,
+      errorMessage,
+    ]
   );
 
   return {
