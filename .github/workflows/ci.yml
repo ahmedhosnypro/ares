@@ -19,7 +19,7 @@ jobs:
         working-directory: frontend
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
@@ -74,5 +74,27 @@ jobs:
       - name: Build
         run: dotnet build backend/Ares.slnx --no-restore --configuration Release
 
-      - name: Test
-        run: dotnet test backend/Ares.slnx --no-build --configuration Release --verbosity normal
+      - name: Run all tests
+        run: >
+          dotnet test backend/Ares.slnx
+          --no-build
+          --configuration Release
+          --verbosity normal
+          --logger "trx;LogFileName=test-results.trx"
+          --results-directory ./TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: TestResults/*.trx
+          retention-days: 14
+
+      - name: Run category-specific tests (smoke gate)
+        run: >
+          dotnet test backend/Ares.slnx
+          --no-build
+          --configuration Release
+          --filter "FullyQualifiedName~CategoriesControllerTests|FullyQualifiedName~VehicleCategoryTests"
+          --verbosity normal
