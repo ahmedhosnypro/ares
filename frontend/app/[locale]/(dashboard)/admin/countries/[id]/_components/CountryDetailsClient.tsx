@@ -124,9 +124,9 @@ export default function CountryDetailsClient({ countryId }: CountryDetailsClient
     }
   }, [countryId, session, router, t]);
 
-  const handleCloseDelete = useCallback(() => setOpenDelete(false), []);
-  const handleCloseError = useCallback(() => setErrorMsg(null), []);
-  const handleCloseSuccess = useCallback(() => setSuccessMsg(null), []);
+  const handleCloseDelete = useCallback(() => { setOpenDelete(false); }, []);
+  const handleCloseError = useCallback(() => { setErrorMsg(null); }, []);
+  const handleCloseSuccess = useCallback(() => { setSuccessMsg(null); }, []);
 
   if (loading) {
     return (
@@ -144,7 +144,7 @@ export default function CountryDetailsClient({ countryId }: CountryDetailsClient
           sx={{ mt: 2, borderRadius: 2 }}
           variant="outlined"
           startIcon={<ArrowBackIcon />}
-          onClick={() => router.push("/admin/countries")}
+          onClick={() => { router.push("/admin/countries"); }}
         >
           {t("backButtonTooltip")}
         </Button>

@@ -671,7 +671,7 @@ function getLocalizedEventContent(evt: BookingTimelineEvent, bookingNumber: stri
       const execResult = /Inspection result: (.+)\./.exec(desc);
       if (execResult) {
         const rawStatus = execResult[1];
-        const localizedStatus = t(`badges.${rawStatus.toLowerCase()}` as Parameters<typeof t>[0]);
+        const localizedStatus = t(`badges.${rawStatus.toLowerCase()}`);
         return {
           title: t("timeline.events.pickupInspectionCompleted.title"),
           description: t("timeline.events.pickupInspectionCompleted.description", { status: localizedStatus }),
@@ -686,7 +686,7 @@ function getLocalizedEventContent(evt: BookingTimelineEvent, bookingNumber: stri
       const execResult = /Inspection result: (.+)\./.exec(desc);
       if (execResult) {
         const rawStatus = execResult[1];
-        const localizedStatus = t(`badges.${rawStatus.toLowerCase()}` as Parameters<typeof t>[0]);
+        const localizedStatus = t(`badges.${rawStatus.toLowerCase()}`);
         return {
           title: t("timeline.events.returnInspectionCompleted.title"),
           description: t("timeline.events.returnInspectionCompleted.description", { status: localizedStatus }),
@@ -731,7 +731,7 @@ function getLocalizedEventContent(evt: BookingTimelineEvent, bookingNumber: stri
         const rawStatus = execResult[1];
         const amount = execResult[2];
         const currency = execResult[3];
-        const localizedStatus = t(`badges.${rawStatus.toLowerCase()}` as Parameters<typeof t>[0]);
+        const localizedStatus = t(`badges.${rawStatus.toLowerCase()}`);
         return {
           title: t("timeline.events.refundProcessed.title"),
           description: t("timeline.events.refundProcessed.description", { status: localizedStatus, amount, currency }),
@@ -963,7 +963,7 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
               value={
                 <Chip
                   size="small"
-                  label={t(`badges.${booking.status.toLowerCase()}` as Parameters<BookingDetailsTranslations>[0])}
+                  label={t(`badges.${booking.status.toLowerCase()}`)}
                   color={statusColorKey}
                   sx={{ fontWeight: 700, textTransform: "capitalize" }}
                 />
@@ -1036,7 +1036,7 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
                       size="small"
                       label={t("customerInfo.idVerification", {
                         status: t(
-                          `badges.${customerVerificationStatus.toLowerCase()}` as Parameters<BookingDetailsTranslations>[0]
+                          `badges.${customerVerificationStatus.toLowerCase()}`
                         ),
                       })}
                       color={getStatusConfig(customerVerificationStatus)}
@@ -1107,7 +1107,7 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
                     <Chip
                       size="small"
                       label={t(
-                        `badges.${booking.car.availabilityStatus.toLowerCase()}` as Parameters<BookingDetailsTranslations>[0]
+                        `badges.${booking.car.availabilityStatus.toLowerCase()}`
                       )}
                       color={getStatusConfig(booking.car.availabilityStatus)}
                       variant="outlined"
@@ -1129,7 +1129,7 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
                     value={
                       booking.car?.availabilityStatus
                         ? t(
-                            `badges.${booking.car.availabilityStatus.toLowerCase()}` as Parameters<BookingDetailsTranslations>[0]
+                            `badges.${booking.car.availabilityStatus.toLowerCase()}`
                           )
                         : "—"
                     }
@@ -1180,7 +1180,7 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
             booking.paymentStatus && (
               <Chip
                 size="small"
-                label={t(`badges.${booking.paymentStatus.toLowerCase()}` as Parameters<BookingDetailsTranslations>[0])}
+                label={t(`badges.${booking.paymentStatus.toLowerCase()}`)}
                 color={getPaymentStatusConfig(booking.paymentStatus)}
                 sx={{ fontWeight: 700, textTransform: "capitalize" }}
               />
@@ -1207,7 +1207,7 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
                     <Chip
                       size="small"
                       label={t(
-                        `badges.${booking.paymentDetails.status.toLowerCase()}` as Parameters<BookingDetailsTranslations>[0]
+                        `badges.${booking.paymentDetails.status.toLowerCase()}`
                       )}
                       color={getPaymentStatusConfig(booking.paymentDetails.status)}
                       sx={{ fontWeight: 700, textTransform: "capitalize" }}
@@ -1296,7 +1296,7 @@ export default function BookingDetailsClient({ bookingId }: { readonly bookingId
                             <Chip
                               size="small"
                               label={t(
-                                `badges.${booking.paymentDetails.refundStatus.toLowerCase()}` as Parameters<BookingDetailsTranslations>[0]
+                                `badges.${booking.paymentDetails.refundStatus.toLowerCase()}`
                               )}
                               color={getStatusConfig(booking.paymentDetails.refundStatus)}
                               variant="outlined"
@@ -1458,7 +1458,7 @@ function BookingDetailsHeader({
               </Typography>
               <Chip
                 size="small"
-                label={t(`badges.${booking.status.toLowerCase()}` as Parameters<BookingDetailsTranslations>[0])}
+                label={t(`badges.${booking.status.toLowerCase()}`)}
                 color={statusColorKey}
                 sx={{ fontWeight: 700, textTransform: "capitalize" }}
               />

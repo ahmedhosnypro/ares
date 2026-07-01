@@ -51,7 +51,7 @@ export default function UserFiltersBar({
         <TextField
           placeholder={t("searchPlaceholder")}
           value={search}
-          onChange={e => onSearchChange(e.target.value)}
+          onChange={e => { onSearchChange(e.target.value); }}
           size="small"
           sx={{ flexGrow: 1, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
           slotProps={{
@@ -68,7 +68,7 @@ export default function UserFiltersBar({
         <FormControl size="small" sx={{ minWidth: 160 }}>
           <Select
             value={roleFilter}
-            onChange={(e: SelectChangeEvent) => onRoleChange(e.target.value)}
+            onChange={(e: SelectChangeEvent) => { onRoleChange(e.target.value); }}
             displayEmpty
             sx={{ borderRadius: 2 }}
           >
@@ -84,7 +84,7 @@ export default function UserFiltersBar({
         <FormControl size="small" sx={{ minWidth: 160 }}>
           <Select
             value={statusFilter}
-            onChange={(e: SelectChangeEvent) => onStatusChange(e.target.value)}
+            onChange={(e: SelectChangeEvent) => { onStatusChange(e.target.value); }}
             displayEmpty
             sx={{ borderRadius: 2 }}
           >

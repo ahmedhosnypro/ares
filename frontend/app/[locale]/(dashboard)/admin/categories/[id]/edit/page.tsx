@@ -180,7 +180,7 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
     return (
       <Box sx={{ p: 4, textAlign: "center" }}>
         <Alert severity="error">{error || t("errors.notFound")}</Alert>
-        <Button onClick={() => router.push("/admin/categories")} sx={{ mt: 2 }}>
+        <Button onClick={() => { router.push("/admin/categories"); }} sx={{ mt: 2 }}>
           {t("backToCategories")}
         </Button>
       </Box>
@@ -194,7 +194,7 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
         <Stack sx={{ mb: 4, mt: 3 }} spacing={1}>
           <Stack direction="row" sx={{ alignItems: "center" }}>
             <IconButton
-              onClick={() => router.push(`/admin/categories/${resolvedParams.id}`)}
+              onClick={() => { router.push(`/admin/categories/${resolvedParams.id}`); }}
               sx={{
                 bgcolor: "background.paper",
                 boxShadow: 1,
@@ -442,7 +442,7 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
                               <Chip label={v.availabilityStatus || "Unknown"} size="small" color={v.availabilityStatus === "Available" ? "success" : "default"} sx={{ fontWeight: 600, fontSize: "0.75rem" }} />
                             </TableCell>
                             <TableCell align="right">
-                              <Button size="small" variant="outlined" onClick={() => router.push(`/admin/vehicles/${v.id}`)} sx={{ fontWeight: 600, borderRadius: 2 }}>
+                              <Button size="small" variant="outlined" onClick={() => { router.push(`/admin/vehicles/${v.id}`); }} sx={{ fontWeight: 600, borderRadius: 2 }}>
                                 View
                               </Button>
                             </TableCell>
@@ -468,7 +468,7 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
                     <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
                       Showing {category.vehicles.length} of {category.vehicles.length} Vehicles
                     </Typography>
-                    <Button variant="text" size="small" onClick={() => router.push(`/admin/vehicles?categoryId=${category.id}`)} sx={{ fontWeight: 600 }}>
+                    <Button variant="text" size="small" onClick={() => { router.push(`/admin/vehicles?categoryId=${category.id}`); }} sx={{ fontWeight: 600 }}>
                       View All Vehicles
                     </Button>
                   </Box>
@@ -492,7 +492,7 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
                   fullWidth
                   required
                   value={promoForm.name}
-                  onChange={(e) => setPromoForm({ ...promoForm, name: e.target.value })}
+                  onChange={(e) => { setPromoForm({ ...promoForm, name: e.target.value }); }}
                   disabled={promoSaving || !!promoForm.id}
                   placeholder="e.g., Summer Sale"
                 />
@@ -504,7 +504,7 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
                   fullWidth
                   required
                   value={promoForm.discountPercentage}
-                  onChange={(e) => setPromoForm({ ...promoForm, discountPercentage: Number(e.target.value) })}
+                  onChange={(e) => { setPromoForm({ ...promoForm, discountPercentage: Number(e.target.value) }); }}
                   disabled={promoSaving || !!promoForm.id}
                   slotProps={{
                     input: { endAdornment: <InputAdornment position="end">%</InputAdornment> },
@@ -519,7 +519,7 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
                   fullWidth
                   required
                   value={promoForm.startDate}
-                  onChange={(e) => setPromoForm({ ...promoForm, startDate: e.target.value })}
+                  onChange={(e) => { setPromoForm({ ...promoForm, startDate: e.target.value }); }}
                   disabled={promoSaving || !!promoForm.id}
                   slotProps={{ inputLabel: { shrink: true } }}
                 />
@@ -531,7 +531,7 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
                   fullWidth
                   required
                   value={promoForm.endDate}
-                  onChange={(e) => setPromoForm({ ...promoForm, endDate: e.target.value })}
+                  onChange={(e) => { setPromoForm({ ...promoForm, endDate: e.target.value }); }}
                   disabled={promoSaving}
                   slotProps={{ inputLabel: { shrink: true } }}
                 />
@@ -539,7 +539,7 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
             </Grid>
           </DialogContent>
           <DialogActions sx={{ p: 3, pt: 2 }}>
-            <Button onClick={() => setPromoDialogOpen(false)} disabled={promoSaving} sx={{ fontWeight: 600 }}>
+            <Button onClick={() => { setPromoDialogOpen(false); }} disabled={promoSaving} sx={{ fontWeight: 600 }}>
               Cancel
             </Button>
             <Button 

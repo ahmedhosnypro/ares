@@ -61,7 +61,7 @@ export default function CategoryDetailsPage({ params }: { readonly params: Promi
     return (
       <Box sx={{ p: 4, textAlign: "center" }}>
         <Alert severity="error">{error || t("errors.notFound")}</Alert>
-        <Button onClick={() => router.push("/admin/categories")} sx={{ mt: 2 }}>
+        <Button onClick={() => { router.push("/admin/categories"); }} sx={{ mt: 2 }}>
           {t("backToCategories")}
         </Button>
       </Box>
@@ -77,7 +77,7 @@ export default function CategoryDetailsPage({ params }: { readonly params: Promi
         <Stack sx={{ mb: 4, mt: 3 }} spacing={1}>
           <Stack direction="row" sx={{ alignItems: "center" }}>
             <IconButton
-              onClick={() => router.push("/admin/categories")}
+              onClick={() => { router.push("/admin/categories"); }}
               sx={{
                 bgcolor: "background.paper",
                 boxShadow: 1,
@@ -106,7 +106,7 @@ export default function CategoryDetailsPage({ params }: { readonly params: Promi
                 <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary" }}>
                   Category Information
                 </Typography>
-                <Button variant="outlined" size="small" startIcon={<EditIcon />} onClick={() => router.push(`/admin/categories/${category.id}/edit`)} sx={{ borderRadius: 2, fontWeight: 600 }}>
+                <Button variant="outlined" size="small" startIcon={<EditIcon />} onClick={() => { router.push(`/admin/categories/${category.id}/edit`); }} sx={{ borderRadius: 2, fontWeight: 600 }}>
                   Edit Category
                 </Button>
               </Stack>
@@ -242,7 +242,7 @@ export default function CategoryDetailsPage({ params }: { readonly params: Promi
                               <Chip label={v.availabilityStatus || "Unknown"} size="small" color={v.availabilityStatus === "Available" ? "success" : "default"} sx={{ fontWeight: 600, fontSize: "0.75rem" }} />
                             </TableCell>
                             <TableCell align="right">
-                              <Button size="small" variant="outlined" onClick={() => router.push(`/admin/vehicles/${v.id}`)} sx={{ fontWeight: 600, borderRadius: 2 }}>
+                              <Button size="small" variant="outlined" onClick={() => { router.push(`/admin/vehicles/${v.id}`); }} sx={{ fontWeight: 600, borderRadius: 2 }}>
                                 View
                               </Button>
                             </TableCell>
@@ -268,7 +268,7 @@ export default function CategoryDetailsPage({ params }: { readonly params: Promi
                     <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
                       Showing {category.vehicles.length} of {category.vehicles.length} Vehicles
                     </Typography>
-                    <Button variant="text" size="small" onClick={() => router.push(`/admin/vehicles?categoryId=${category.id}`)} sx={{ fontWeight: 600 }}>
+                    <Button variant="text" size="small" onClick={() => { router.push(`/admin/vehicles?categoryId=${category.id}`); }} sx={{ fontWeight: 600 }}>
                       View All Vehicles
                     </Button>
                   </Box>

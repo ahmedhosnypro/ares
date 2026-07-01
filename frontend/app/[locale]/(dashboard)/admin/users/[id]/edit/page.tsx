@@ -477,7 +477,7 @@ export default function EditUserPage() {
                   <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
                     <Select
                       value={form.phoneCountryCode}
-                      onChange={e => setForm({ ...form, phoneCountryCode: e.target.value })}
+                      onChange={e => { setForm({ ...form, phoneCountryCode: e.target.value }); }}
                       displayEmpty
                       renderValue={selected => selected}
                       sx={{
