@@ -122,9 +122,9 @@ namespace Backend.Application.Services
                 .Take(5)
                 .Select(e => new DriverTopBookingDto(
                     BookingId: e.BookingId,
-                    BookingNumber: e.Booking.BookingNumber,
-                    VehicleName: e.Booking.Vehicle.Name,
-                    CustomerName: e.Booking.User.FullName,
+                    BookingNumber: e.Booking != null ? e.Booking.BookingNumber ?? string.Empty : string.Empty,
+                    VehicleName: e.Booking != null && e.Booking.Vehicle != null ? e.Booking.Vehicle.Name ?? string.Empty : string.Empty,
+                    CustomerName: e.Booking != null && e.Booking.User != null ? e.Booking.User.FullName : string.Empty,
                     NetEarning: e.NetEarning,
                     CompletedAt: e.EarnedAt
                 ))
@@ -145,7 +145,7 @@ namespace Backend.Application.Services
                 .Take(pageSize)
                 .Select(e => new DriverEarningRowDto(
                     BookingId: e.BookingId,
-                    BookingNumber: e.Booking.BookingNumber,
+                    BookingNumber: e.Booking != null ? e.Booking.BookingNumber ?? string.Empty : string.Empty,
                     CompletedAt: e.EarnedAt,
                     GrossEarning: e.GrossEarning,
                     PlatformDeduction: e.PlatformDeduction,
