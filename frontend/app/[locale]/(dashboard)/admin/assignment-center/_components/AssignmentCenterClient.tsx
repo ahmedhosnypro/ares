@@ -156,7 +156,7 @@ export default function AssignmentCenterClient({ initialAssignments, inspectors 
       )}
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 6, lg: 3 }}>
           <StatCard
             title="Pending Pickups"
             value={pendingPickups.toString()}
@@ -164,7 +164,7 @@ export default function AssignmentCenterClient({ initialAssignments, inspectors 
             icon={<DirectionsCarIcon fontSize="small" />}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 6, lg: 3 }}>
           <StatCard
             title="Pending Returns"
             value={pendingReturns.toString()}
@@ -172,7 +172,7 @@ export default function AssignmentCenterClient({ initialAssignments, inspectors 
             icon={<AssignmentReturnIcon fontSize="small" />}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 6, lg: 3 }}>
           <StatCard
             title="Available Inspectors"
             value={availableInspectors.toString()}
@@ -180,7 +180,7 @@ export default function AssignmentCenterClient({ initialAssignments, inspectors 
             icon={<EngineeringIcon fontSize="small" />}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 6, lg: 3 }}>
           <StatCard
             title="Total Pending"
             value={assignments.length.toString()}
