@@ -5,7 +5,8 @@ import { redirect } from "@/shared/i18n/routing";
 import { getLocale } from "next-intl/server";
 import { apiFetchJson } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
-import FinancialReportsClient, { type FinancialReportsData } from "./_components/FinancialReportsClient";
+import FinancialReportsClient from "./_components/FinancialReportsClient";
+import { type FinancialReportsData } from "./_components/types";
 
 export const metadata: Metadata = {
   title: "Financial Reports | ARES Admin",

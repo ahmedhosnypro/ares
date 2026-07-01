@@ -3,22 +3,20 @@
 ## Page Overview
 
 - Route: `/(dashboard)/admin/locations/[id]/edit`
-- Source: app/[locale]/(dashboard)/admin/locations/[id]/edit/
+- Source: [page.tsx](<file:///C:/Users/Mohamed/Desktop/Graduation-Project/Graduation-Project/frontend/app/[locale]/(dashboard)/admin/locations/[id]/edit/page.tsx>)
 
 ## Translation Status
 
-- [ ] Not started
-- [ ] In progress
-- [ ] Completed
+- [x] Completed
 
 ## Shared Components
 
-(To be filled during execution)
+- [LocationForm](<file:///C:/Users/Mohamed/Desktop/Graduation-Project/Graduation-Project/frontend/app/[locale]/(dashboard)/admin/locations/_components/LocationForm.tsx>)
 
 ## Component Discovery
 
-(To be filled during execution)
+- `AdminEditLocationPage` ([page.tsx](<file:///C:/Users/Mohamed/Desktop/Graduation-Project/Graduation-Project/frontend/app/[locale]/(dashboard)/admin/locations/[id]/edit/page.tsx>))
 
 ## Translation Tasks
 
-(To be filled during execution)
+- [x] Localize all edit form headers, values, image fields, actions, and API call error notifications using the `dashboardAdmin.locationsForm` and `common` namespaces via next-intl.

@@ -236,7 +236,7 @@ export default function VehicleStats({
   } else if (finalItems.length === 2) {
     gridSizes = { xs: 12, sm: 6 };
   } else if (finalItems.length === 4) {
-    gridSizes = { xs: 12, sm: 6, md: 3 };
+    gridSizes = { xs: 12, sm: 6, md: 6, lg: 3 };
   } else if (finalItems.length === 6) {
     gridSizes = { xs: 12, sm: 4, lg: 2 };
   } else {

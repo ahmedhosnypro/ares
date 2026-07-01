@@ -3,14 +3,14 @@
 ## Overall Progress
 
 - Total Pages: 94
-- Completed Pages: 73
-- Progress: 78%
+- Completed Pages: 77
+- Progress: 82%
 
 ## Messages Structure Progress
 
-- **Types**: 73/94 split (common, auth, errors + 6 auth + 10 customer + 16 admin + 7 driver + 4 inspector + 9 supplier + 16 public/root page types done; 21 remaining)
-- **English**: 73/94 split (common, auth, errors + 6 auth + 10 customer + 16 admin + 7 driver + 4 inspector + 9 supplier + 16 public/root page translations done; 21 remaining)
-- **Arabic**: 73/94 split (common, auth, errors + 6 auth + 10 customer + 16 admin + 7 driver + 4 inspector + 9 supplier + 16 public/root page translations done; 21 remaining)
+- **Types**: 77/94 split (common, auth, errors + 6 auth + 10 customer + 20 admin + 7 driver + 4 inspector + 9 supplier + 16 public/root page types done; 17 remaining)
+- **English**: 77/94 split (common, auth, errors + 6 auth + 10 customer + 20 admin + 7 driver + 4 inspector + 9 supplier + 16 public/root page translations done; 17 remaining)
+- **Arabic**: 77/94 split (common, auth, errors + 6 auth + 10 customer + 20 admin + 7 driver + 4 inspector + 9 supplier + 16 public/root page translations done; 17 remaining)
 
 > See `shared/Messages_README.md` for messages directory conventions.
 
@@ -58,10 +58,10 @@
 - [x] [Driver Detail](pages/dashboard/admin/drivers/_id.md) — `/(dashboard)/admin/drivers/[id]`
 - [x] [Admin Inspectors](pages/dashboard/admin/inspectors.md) — `/(dashboard)/admin/inspectors`
 - [x] [Inspector Detail](pages/dashboard/admin/inspectors/_id.md) — `/(dashboard)/admin/inspectors/[id]`
-- [ ] [Admin Locations](pages/dashboard/admin/locations.md) — `/(dashboard)/admin/locations`
-- [ ] [Create Location](pages/dashboard/admin/locations/create.md) — `/(dashboard)/admin/locations/create`
-- [ ] [Location Detail](pages/dashboard/admin/locations/_id.md) — `/(dashboard)/admin/locations/[id]`
-- [ ] [Edit Location](pages/dashboard/admin/locations/_id/edit.md) — `/(dashboard)/admin/locations/[id]/edit`
+- [x] [Admin Locations](pages/dashboard/admin/locations.md) — `/(dashboard)/admin/locations`
+- [x] [Create Location](pages/dashboard/admin/locations/create.md) — `/(dashboard)/admin/locations/create`
+- [x] [Location Detail](pages/dashboard/admin/locations/_id.md) — `/(dashboard)/admin/locations/[id]`
+- [x] [Edit Location](pages/dashboard/admin/locations/_id/edit.md) — `/(dashboard)/admin/locations/[id]/edit`
 - [ ] [Admin Notifications](pages/dashboard/admin/notifications.md) — `/(dashboard)/admin/notifications`
 - [ ] [Scheduler](pages/dashboard/admin/scheduler.md) — `/(dashboard)/admin/scheduler`
 - [ ] [Admin Settings](pages/dashboard/admin/settings.md) — `/(dashboard)/admin/settings`

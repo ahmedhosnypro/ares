@@ -91,17 +91,15 @@ function UsersHubInner() {
       {/* SUMMARY CARDS */}
       <Box
         sx={{
-          display: "flex",
-          flexWrap: "nowrap",
-          overflowX: "auto",
-          gap: 3,
-          mb: 5,
-          pb: 1, // Add some padding for scrollbar
-          "& > *": {
-            flexShrink: 0,
-            flexBasis: { xs: "280px", sm: "240px", md: "calc((100% - 5 * 24px) / 6)" },
-            minWidth: { xs: "280px", sm: "240px", md: "auto" },
+          display: "grid",
+          gap: { xs: 2, sm: 3 }, // المسافة بين الكروت
+          gridTemplateColumns: {
+            xs: "repeat(2, 1fr)", // الموبايل: كارتين في كل صف
+            sm: "repeat(3, 1fr)", // التابلت: 3 كروت في كل صف
+            md: "repeat(3, 1fr)", // الشاشات الكبيرة: الـ 6 كروت جنب بعض
+            lg: "repeat(6, 1fr)",
           },
+          mb: 5,
         }}
       >
         {statCards.map((card, idx) => (

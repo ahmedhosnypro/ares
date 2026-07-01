@@ -72,6 +72,7 @@ export default function LocationForm({ mode, locationId }: LocationFormProps) {
     errorMessage: mode === "create" ? t("createErrorMessage") : t("editErrorMessage"),
     loadErrorMessage: t("loadError"),
     imageUploadFailedMessage: t("imageUploadFailed"),
+    unauthorizedErrorMessage: t("unauthorizedError"),
   });
 
   const imageRemovedRef = useRef(false);
