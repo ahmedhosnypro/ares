@@ -233,6 +233,7 @@ namespace Backend.Api.Controllers
         [HttpGet("{id}/details")]
         public async Task<IActionResult> GetDetails(Guid id, CancellationToken cancellationToken)
         {
+            var now = DateTime.UtcNow;
             var category = await _context.Categories
                 .Where(c => c.Id == id)
                 .Select(c => new
@@ -242,10 +243,41 @@ namespace Backend.Api.Controllers
                     c.Description,
                     c.CommissionPercentage,
                     c.IsActive,
-                    Vehicles = _context.Vehicles.Where(v => v.CategoryId == c.Id).Select(v => new { v.Id, v.Make, v.Model, v.LicensePlate }),
+                    c.ImageUrl,
+                    Vehicles = _context.Vehicles.Where(v => v.CategoryId == c.Id).Select(v => new { 
+                        v.Id, 
+                        v.Make, 
+                        v.Model, 
+                        v.LicensePlate,
+                        v.PricePerDay,
+                        v.Status,
+                        v.AvailabilityStatus,
+                        ImageUrl = v.Images.OrderByDescending(i => i.IsPrimary).ThenBy(i => i.DisplayOrder).Select(i => i.ImageUrl).FirstOrDefault()
+                    }).ToList(),
                     VehicleCount = _context.Vehicles.Count(v => v.CategoryId == c.Id),
                     BookingCount = _context.Bookings.Count(b => b.Vehicle!.CategoryId == c.Id),
-                    Revenue = _context.Payments.Where(p => p.Booking!.Vehicle!.CategoryId == c.Id && p.Status == "Captured").Sum(p => (decimal?)p.Amount) ?? 0m
+                    Revenue = _context.Payments.Where(p => p.Booking!.Vehicle!.CategoryId == c.Id && p.Status == "Captured").Sum(p => (decimal?)p.Amount) ?? 0m,
+                    ActivePromotion = c.DiscountVehicleCategories
+                        .Select(dvc => new {
+                            Id = dvc.Discount!.Id,
+                            Name = dvc.Discount.Code,
+                            DiscountPercentage = dvc.Discount.DiscountValue,
+                            StartDate = dvc.Discount.ValidFrom,
+                            EndDate = dvc.Discount.ValidTo,
+                            IsActiveOffer = dvc.Discount.IsActive && dvc.Discount.ValidTo >= now,
+                            CreatedAt = dvc.Discount.CreatedAt
+                        })
+                        .OrderByDescending(x => x.IsActiveOffer)
+                        .ThenByDescending(x => x.CreatedAt)
+                        .Select(x => new {
+                            x.Id,
+                            x.Name,
+                            x.DiscountPercentage,
+                            x.StartDate,
+                            x.EndDate,
+                            Status = x.IsActiveOffer ? "Active" : "Expired"
+                        })
+                        .FirstOrDefault()
                 })
                 .FirstOrDefaultAsync(cancellationToken);
 
