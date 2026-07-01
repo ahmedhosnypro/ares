@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Text.Json.Serialization;
+
 namespace Backend.Application.DTOs.UserManagement;
 
 /// <summary>
@@ -17,7 +21,6 @@ public record UserManagementDto(
     DateTime UpdatedAt,
     string? DateOfBirth = null,
     string? AvatarUrl = null,
-    string? CompanyName = null,
-    int? VehiclesCount = null,
-    int? TotalBookings = null
+    DriverDetailsDto? DriverDetails = null,
+    SupplierDetailsDto? SupplierDetails = null
 );
