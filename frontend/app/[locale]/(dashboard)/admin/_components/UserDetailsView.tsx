@@ -52,6 +52,7 @@ import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import ContactPhoneOutlinedIcon from "@mui/icons-material/ContactPhoneOutlined";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
+import RoleSpecificInformation from "./UserDetails/RoleSpecificInformation";
 
 export type UserType = "user" | "supplier" | "driver" | "inspector";
 
@@ -112,6 +113,22 @@ export interface UserDetailsViewProps {
     readonly totalTrips?: number;
     readonly averageRating?: number;
     readonly availability?: string;
+    
+    // New Role Specific Details (Composition)
+    readonly driverDetails?: {
+      readonly licenseNumber?: string | null;
+      readonly licenseExpiryDate?: string | null;
+      readonly availability?: string | null;
+      readonly assignedBookings?: number;
+      readonly completedTrips?: number;
+    } | null;
+    readonly supplierDetails?: {
+      readonly companyName?: string | null;
+      readonly commercialRegistration?: string | null;
+      readonly taxNumber?: string | null;
+      readonly vehiclesCount?: number;
+      readonly totalBookings?: number;
+    } | null;
   };
   readonly isMock?: boolean;
   readonly onBack: () => void;
@@ -155,7 +172,7 @@ function StatCard({
 }
 
 // ─── Section Label Component ──────────────────────────────────────────────────
-function SectionLabel({ children }: { readonly children: React.ReactNode }) {
+export function SectionLabel({ children }: { readonly children: React.ReactNode }) {
   const theme = useTheme();
   return (
     <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 2 }}>
@@ -387,14 +404,14 @@ function ExtraActionButtons({
   return null;
 }
 
-interface FieldRowProps {
+export interface FieldRowProps {
   readonly icon: React.ReactNode;
   readonly label: string;
-  readonly value: string;
+  readonly value: string | React.ReactNode;
   readonly accentColor: string;
 }
 
-function FieldRow({ icon, label, value, accentColor }: FieldRowProps) {
+export function FieldRow({ icon, label, value, accentColor }: FieldRowProps) {
   const theme = useTheme();
 
   const fieldLabel = {
@@ -1633,6 +1650,14 @@ export default function UserDetailsView({
           )}
         </Grid>
       </Grid>
+
+      <RoleSpecificInformation
+        userType={userType}
+        roles={data.roles as string[] | undefined}
+        driverDetails={data.driverDetails}
+        supplierDetails={data.supplierDetails}
+        t={t}
+      />
 
       {/* Rejection Dialog for Drivers */}
       <Dialog

@@ -129,13 +129,25 @@ function UserMobileCard({ u, theme, fetchUsers, onRequestDelete, activeTab }: Us
       {activeTab === "suppliers" ? (
         <Stack spacing={0.5} sx={{ mb: 1.5 }}>
           <Typography variant="caption" color="text.secondary">
-            Company: <strong>{(u.companyName as string) || "—"}</strong>
+            Company: <strong>{(u.supplierDetails?.companyName as string) || "—"}</strong>
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Vehicles: <strong>{(u.vehiclesCount as number) ?? 0}</strong>
+            Vehicles: <strong>{u.supplierDetails?.vehiclesCount ?? 0}</strong>
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Total Bookings: <strong>{(u.totalBookings as number) ?? 0}</strong>
+            Total Bookings: <strong>{u.supplierDetails?.totalBookings ?? 0}</strong>
+          </Typography>
+        </Stack>
+      ) : activeTab === "drivers" ? (
+        <Stack spacing={0.5} sx={{ mb: 1.5 }}>
+          <Typography variant="caption" color="text.secondary">
+            License: <strong>{(u.driverDetails?.licenseNumber as string) || "—"}</strong>
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Completed Trips: <strong>{u.driverDetails?.completedTrips ?? 0}</strong>
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Availability: <strong>{(u.driverDetails?.availability as string) || "—"}</strong>
           </Typography>
         </Stack>
       ) : (
@@ -240,17 +252,35 @@ function UserTableRow({ u, activeTab, isActive, handleStatusToggle, requestDelet
         <>
           <TableCell sx={{ py: 2 }}>
             <Typography variant="body2" color="text.secondary">
-              {(u.companyName as string) || "—"}
+              {(u.supplierDetails?.companyName as string) || "—"}
             </Typography>
           </TableCell>
           <TableCell sx={{ py: 2 }}>
             <Typography variant="body2" color="text.secondary">
-              {(u.vehiclesCount as number | null | undefined) ?? 0}
+              {(u.supplierDetails?.vehiclesCount as number | null | undefined) ?? 0}
             </Typography>
           </TableCell>
           <TableCell sx={{ py: 2 }}>
             <Typography variant="body2" color="text.secondary">
-              {(u.totalBookings as number | null | undefined) ?? 0}
+              {(u.supplierDetails?.totalBookings as number | null | undefined) ?? 0}
+            </Typography>
+          </TableCell>
+        </>
+      ) : activeTab === "drivers" ? (
+        <>
+          <TableCell sx={{ py: 2 }}>
+            <Typography variant="body2" color="text.secondary">
+              {(u.driverDetails?.licenseNumber as string) || "—"}
+            </Typography>
+          </TableCell>
+          <TableCell sx={{ py: 2 }}>
+            <Typography variant="body2" color="text.secondary">
+              {(u.driverDetails?.completedTrips as number | null | undefined) ?? 0}
+            </Typography>
+          </TableCell>
+          <TableCell sx={{ py: 2 }}>
+            <Typography variant="body2" color="text.secondary">
+              {(u.driverDetails?.availability as string) || "—"}
             </Typography>
           </TableCell>
         </>
@@ -392,8 +422,8 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
   }, [activeTab]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 300);
-    return () => clearTimeout(timer);
+    const timer = setTimeout(() => { setDebouncedSearch(search); }, 300);
+    return () => { clearTimeout(timer); };
   }, [search]);
 
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
@@ -415,7 +445,7 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
         status: statusFilter,
       });
 
-      const normalized: User[] = (data.items || []).map(u => ({
+      const normalized: User[] = data.items.map(u => ({
         ...u,
         status: (u.status || "").toLowerCase(),
         roles: Array.isArray(u.roles)
@@ -660,6 +690,12 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
                         <TableCell>Company</TableCell>
                         <TableCell>Vehicles</TableCell>
                         <TableCell>Total Bookings</TableCell>
+                      </>
+                    ) : activeTab === "drivers" ? (
+                      <>
+                        <TableCell>License</TableCell>
+                        <TableCell>Completed Trips</TableCell>
+                        <TableCell>Availability</TableCell>
                       </>
                     ) : (
                       <>
