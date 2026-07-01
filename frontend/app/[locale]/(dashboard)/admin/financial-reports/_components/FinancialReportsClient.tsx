@@ -71,7 +71,7 @@ export interface PaymentMethodItem {
   paidAmount: number;
   percentage: number;
   amount?: number; // Optional fallback mapping
-  fill?: string;   // Optional style mapping
+  fill?: string; // Optional style mapping
 }
 
 export interface RecentPaymentItem {
@@ -275,9 +275,7 @@ function FinancialMetricCards({ data, isRtl, t, theme }: Readonly<FinancialMetri
                     alignItems: "center",
                     gap: 0.25,
                     bgcolor: alpha(
-                      metric.change >= 0
-                        ? theme.palette.status.active.main
-                        : theme.palette.status.cancelled.main,
+                      metric.change >= 0 ? theme.palette.status.active.main : theme.palette.status.cancelled.main,
                       0.1
                     ),
                     color: metric.change >= 0 ? "status.active.main" : "status.cancelled.main",
@@ -286,11 +284,7 @@ function FinancialMetricCards({ data, isRtl, t, theme }: Readonly<FinancialMetri
                     borderRadius: 1,
                   }}
                 >
-                  {metric.change >= 0 ? (
-                    <ArrowUpIcon sx={{ fontSize: 14 }} />
-                  ) : (
-                    <ArrowDownIcon sx={{ fontSize: 14 }} />
-                  )}
+                  {metric.change >= 0 ? <ArrowUpIcon sx={{ fontSize: 14 }} /> : <ArrowDownIcon sx={{ fontSize: 14 }} />}
                   <Typography
                     variant="caption"
                     sx={{
@@ -889,9 +883,7 @@ function TopVehiclesTable({ data, isRtl, t, theme }: Readonly<TopVehiclesTablePr
       }}
     >
       <Box sx={{ p: 2.5, pb: 1.5 }}>
-        <Typography sx={{ fontWeight: 800, color: "text.primary", fontSize: "0.95rem" }}>
-          {t("topVehicles")}
-        </Typography>
+        <Typography sx={{ fontWeight: 800, color: "text.primary", fontSize: "0.95rem" }}>{t("topVehicles")}</Typography>
       </Box>
       <TableContainer sx={{ border: "none" }}>
         <Table size="small">
@@ -1258,53 +1250,53 @@ function ReportGenerator({
               control={
                 <Checkbox
                   checked={incRevenue}
-                  onChange={e => { setIncRevenue(e.target.checked); }}
+                  onChange={e => {
+                    setIncRevenue(e.target.checked);
+                  }}
                   color="primary"
                   size="small"
                 />
               }
-              label={
-                <Typography sx={{ fontWeight: 700, fontSize: "0.75rem" }}>{t("includeRevenue")}</Typography>
-              }
+              label={<Typography sx={{ fontWeight: 700, fontSize: "0.75rem" }}>{t("includeRevenue")}</Typography>}
             />
             <FormControlLabel
               control={
                 <Checkbox
                   checked={incBookings}
-                  onChange={e => { setIncBookings(e.target.checked); }}
+                  onChange={e => {
+                    setIncBookings(e.target.checked);
+                  }}
                   color="primary"
                   size="small"
                 />
               }
-              label={
-                <Typography sx={{ fontWeight: 700, fontSize: "0.75rem" }}>{t("includeBookings")}</Typography>
-              }
+              label={<Typography sx={{ fontWeight: 700, fontSize: "0.75rem" }}>{t("includeBookings")}</Typography>}
             />
             <FormControlLabel
               control={
                 <Checkbox
                   checked={incPayments}
-                  onChange={e => { setIncPayments(e.target.checked); }}
+                  onChange={e => {
+                    setIncPayments(e.target.checked);
+                  }}
                   color="primary"
                   size="small"
                 />
               }
-              label={
-                <Typography sx={{ fontWeight: 700, fontSize: "0.75rem" }}>{t("includePayments")}</Typography>
-              }
+              label={<Typography sx={{ fontWeight: 700, fontSize: "0.75rem" }}>{t("includePayments")}</Typography>}
             />
             <FormControlLabel
               control={
                 <Checkbox
                   checked={incSuppliers}
-                  onChange={e => { setIncSuppliers(e.target.checked); }}
+                  onChange={e => {
+                    setIncSuppliers(e.target.checked);
+                  }}
                   color="primary"
                   size="small"
                 />
               }
-              label={
-                <Typography sx={{ fontWeight: 700, fontSize: "0.75rem" }}>{t("includeSuppliers")}</Typography>
-              }
+              label={<Typography sx={{ fontWeight: 700, fontSize: "0.75rem" }}>{t("includeSuppliers")}</Typography>}
             />
           </Box>
         </Box>
@@ -1369,10 +1361,13 @@ export default function FinancialReportsClient({
       if (startDate) queryParams.append("startDate", new Date(startDate).toISOString());
       if (endDate) queryParams.append("endDate", new Date(endDate).toISOString());
 
-      const res = await apiFetchJson<FinancialReportsData>(`/api/dashboard/financial-reports?${queryParams.toString()}`, {
-        method: "GET",
-        accessToken,
-      });
+      const res = await apiFetchJson<FinancialReportsData>(
+        `/api/dashboard/financial-reports?${queryParams.toString()}`,
+        {
+          method: "GET",
+          accessToken,
+        }
+      );
       setData(res);
     } catch (err) {
       logger.error("Failed to fetch filtered financial report", err);
@@ -1427,7 +1422,9 @@ export default function FinancialReportsClient({
             </Typography>
             <Button
               variant="contained"
-              onClick={() => { void handleRetry(); }}
+              onClick={() => {
+                void handleRetry();
+              }}
               sx={{ fontSize: "0.8rem", borderRadius: 1.5 }}
             >
               {t("updateFilter")}
@@ -1513,7 +1510,9 @@ export default function FinancialReportsClient({
             type="date"
             label={t("dateFrom")}
             value={startDate}
-            onChange={e => { setStartDate(e.target.value); }}
+            onChange={e => {
+              setStartDate(e.target.value);
+            }}
             slotProps={{ inputLabel: { shrink: true } }}
             size="small"
             sx={{
@@ -1531,7 +1530,9 @@ export default function FinancialReportsClient({
             type="date"
             label={t("dateTo")}
             value={endDate}
-            onChange={e => { setEndDate(e.target.value); }}
+            onChange={e => {
+              setEndDate(e.target.value);
+            }}
             slotProps={{ inputLabel: { shrink: true } }}
             size="small"
             sx={{
@@ -1548,7 +1549,9 @@ export default function FinancialReportsClient({
           <Button
             variant="contained"
             color="primary"
-            onClick={() => { void handleUpdateFilter(); }}
+            onClick={() => {
+              void handleUpdateFilter();
+            }}
             disabled={loading}
             sx={{
               borderRadius: 2,

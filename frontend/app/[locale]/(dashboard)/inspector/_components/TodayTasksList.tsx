@@ -2,7 +2,18 @@
 
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Box, Grid, InputAdornment, Paper, Skeleton, Stack, TextField, Typography, useTheme, alpha } from "@mui/material";
+import {
+  Box,
+  Grid,
+  InputAdornment,
+  Paper,
+  Skeleton,
+  Stack,
+  TextField,
+  Typography,
+  useTheme,
+  alpha,
+} from "@mui/material";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import SearchIcon from "@mui/icons-material/Search";
 import type { InspectorTask, InspectionTaskType } from "@/api-clients/inspections/inspections";
