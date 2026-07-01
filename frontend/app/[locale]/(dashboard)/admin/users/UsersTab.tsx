@@ -321,9 +321,7 @@ function UserTableRow({ u, activeTab, isActive, handleStatusToggle, requestDelet
           sx={{
             textTransform: "capitalize",
             borderRadius: 1.5,
-            bgcolor: isActive
-              ? t => alpha(t.palette.success.main, 0.15)
-              : t => alpha(t.palette.error.main, 0.15),
+            bgcolor: isActive ? t => alpha(t.palette.success.main, 0.15) : t => alpha(t.palette.error.main, 0.15),
             color: isActive ? "success.main" : "error.main",
             fontWeight: 600,
             fontSize: 12,
@@ -422,8 +420,12 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
   }, [activeTab]);
 
   useEffect(() => {
-    const timer = setTimeout(() => { setDebouncedSearch(search); }, 300);
-    return () => { clearTimeout(timer); };
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => {
+      clearTimeout(timer);
+    };
   }, [search]);
 
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
@@ -515,14 +517,17 @@ export default function UsersTab({ activeTab, onStatsUpdated }: UsersTabProps) {
     }
   }, [deleteTarget, fetchUsers]);
 
-  const handleStatusToggle = useCallback(async (userId: string) => {
-    try {
-      await toggleUserStatus(userId);
-      await fetchUsers();
-    } catch (err) {
-      logger.error("Failed to toggle status", err);
-    }
-  }, [fetchUsers]);
+  const handleStatusToggle = useCallback(
+    async (userId: string) => {
+      try {
+        await toggleUserStatus(userId);
+        await fetchUsers();
+      } catch (err) {
+        logger.error("Failed to toggle status", err);
+      }
+    },
+    [fetchUsers]
+  );
 
   const pageData = users;
 

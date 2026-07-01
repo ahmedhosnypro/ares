@@ -133,12 +133,24 @@ export default function AssignmentCenterClient({ initialAssignments, inspectors 
       </Stack>
 
       {successMsg && (
-        <Alert severity="success" sx={{ mb: 3 }} onClose={() => { setSuccessMsg(null); }}>
+        <Alert
+          severity="success"
+          sx={{ mb: 3 }}
+          onClose={() => {
+            setSuccessMsg(null);
+          }}
+        >
           {successMsg}
         </Alert>
       )}
       {errorMsg && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => { setErrorMsg(null); }}>
+        <Alert
+          severity="error"
+          sx={{ mb: 3 }}
+          onClose={() => {
+            setErrorMsg(null);
+          }}
+        >
           {errorMsg}
         </Alert>
       )}
@@ -186,7 +198,9 @@ export default function AssignmentCenterClient({ initialAssignments, inspectors 
               size="small"
               placeholder="Search booking, customer, vehicle..."
               value={search}
-              onChange={e => { setSearch(e.target.value); }}
+              onChange={e => {
+                setSearch(e.target.value);
+              }}
               slotProps={{
                 input: {
                   startAdornment: (
@@ -201,7 +215,13 @@ export default function AssignmentCenterClient({ initialAssignments, inspectors 
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <FormControl fullWidth size="small">
               <InputLabel>Inspection Type</InputLabel>
-              <Select value={typeFilter} label="Inspection Type" onChange={e => { setTypeFilter(e.target.value); }}>
+              <Select
+                value={typeFilter}
+                label="Inspection Type"
+                onChange={e => {
+                  setTypeFilter(e.target.value);
+                }}
+              >
                 <MenuItem value="All">All</MenuItem>
                 <MenuItem value="Pickup">Pickup</MenuItem>
                 <MenuItem value="Return">Return</MenuItem>
@@ -272,9 +292,9 @@ export default function AssignmentCenterClient({ initialAssignments, inspectors 
                         <Select
                           displayEmpty
                           value={selections[row.bookingId] || ""}
-                          onChange={e =>
-                            { setSelections(prev => ({ ...prev, [row.bookingId]: e.target.value })); }
-                          }
+                          onChange={e => {
+                            setSelections(prev => ({ ...prev, [row.bookingId]: e.target.value }));
+                          }}
                           renderValue={selected => {
                             if (!selected)
                               return (

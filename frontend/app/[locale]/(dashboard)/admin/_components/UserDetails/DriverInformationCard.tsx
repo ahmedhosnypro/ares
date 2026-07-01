@@ -31,7 +31,7 @@ export default function DriverInformationCard({ driverDetails, t }: DriverInform
     >
       <Box sx={{ p: 3, borderBottom: "1px solid", borderColor: theme.palette.divider }}>
         <SectionLabel>{t("details.driverInformation") || "Driver Information"}</SectionLabel>
-        
+
         <Box sx={{ mt: 2 }}>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 6 }}>

@@ -113,7 +113,7 @@ export interface UserDetailsViewProps {
     readonly totalTrips?: number;
     readonly averageRating?: number;
     readonly availability?: string;
-    
+
     // New Role Specific Details (Composition)
     readonly driverDetails?: {
       readonly licenseNumber?: string | null;

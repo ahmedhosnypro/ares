@@ -579,7 +579,9 @@ export default function CreateUserPage() {
                   <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
                     <Select
                       value={form.phoneCountryCode}
-                      onChange={e => { setForm({ ...form, phoneCountryCode: e.target.value }); }}
+                      onChange={e => {
+                        setForm({ ...form, phoneCountryCode: e.target.value });
+                      }}
                       displayEmpty
                       renderValue={selected => selected}
                       sx={{
@@ -684,7 +686,9 @@ export default function CreateUserPage() {
                       control={
                         <Checkbox
                           checked={form.isAvailable}
-                          onChange={e => { setForm({ ...form, isAvailable: e.target.checked }); }}
+                          onChange={e => {
+                            setForm({ ...form, isAvailable: e.target.checked });
+                          }}
                         />
                       }
                       label={

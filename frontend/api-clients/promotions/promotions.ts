@@ -140,7 +140,9 @@ export async function deleteDiscountCode(id: string, permanent: boolean, token: 
   if (permanent) queryParams.append("permanent", "true");
 
   const queryString = queryParams.toString();
-  const endpoint = queryString ? `/api/v1/promotions/discounts/${id}?${queryString}` : `/api/v1/promotions/discounts/${id}`;
+  const endpoint = queryString
+    ? `/api/v1/promotions/discounts/${id}?${queryString}`
+    : `/api/v1/promotions/discounts/${id}`;
 
   return apiFetchJson(endpoint, {
     method: "DELETE",

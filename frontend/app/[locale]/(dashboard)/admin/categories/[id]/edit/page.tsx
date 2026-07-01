@@ -2,16 +2,52 @@
 
 import { useState, useEffect, useCallback, use } from "react";
 import {
-  Box, Typography, Container, Stack, CircularProgress, Button, Chip,
-  IconButton, Table, TableBody, TableCell, TableContainer, TableHead,
-  TableRow, alpha, useTheme, Card, CardContent, Divider, Paper, Avatar, Alert,
-  TextField, Switch, FormControlLabel, InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions
+  Box,
+  Typography,
+  Container,
+  Stack,
+  CircularProgress,
+  Button,
+  Chip,
+  IconButton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  alpha,
+  useTheme,
+  Card,
+  CardContent,
+  Divider,
+  Paper,
+  Avatar,
+  Alert,
+  TextField,
+  Switch,
+  FormControlLabel,
+  InputAdornment,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
-import { ArrowBackIosNew as BackIcon, Image as ImageIcon, Save as SaveIcon, Upload as UploadIcon } from "@mui/icons-material";
+import {
+  ArrowBackIosNew as BackIcon,
+  Image as ImageIcon,
+  Save as SaveIcon,
+  Upload as UploadIcon,
+} from "@mui/icons-material";
 import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
-import { getCategoryDetails, updateCategory, uploadCategoryImage, CategoryDetails } from "@/api-clients/categories/categories";
+import {
+  getCategoryDetails,
+  updateCategory,
+  uploadCategoryImage,
+  CategoryDetails,
+} from "@/api-clients/categories/categories";
 import { createDiscountCode, updateDiscountCode, deleteDiscountCode } from "@/api-clients/promotions/promotions";
 import { useTranslations } from "next-intl";
 import { ApiError } from "@/utils/api-client";
@@ -39,7 +75,7 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
   });
 
   const [activePromotion, setActivePromotion] = useState<CategoryDetails["activePromotion"] | null>(null);
-  
+
   const [promoDialogOpen, setPromoDialogOpen] = useState(false);
   const [promoForm, setPromoForm] = useState({ id: "", name: "", discountPercentage: 0, startDate: "", endDate: "" });
   const [promoSaving, setPromoSaving] = useState(false);
@@ -125,28 +161,35 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
       setPromoError("Please fill in all required fields.");
       return;
     }
-    
+
     setPromoError(null);
     setPromoSaving(true);
     try {
       if (promoForm.id) {
-        await updateDiscountCode(promoForm.id, {
-          description: promoForm.name,
-          validTo: new Date(promoForm.endDate).toISOString(),
-        }, token);
+        await updateDiscountCode(
+          promoForm.id,
+          {
+            description: promoForm.name,
+            validTo: new Date(promoForm.endDate).toISOString(),
+          },
+          token
+        );
       } else {
-        await createDiscountCode({
-          code: promoForm.name,
-          description: promoForm.name,
-          discountType: "percentage",
-          discountValue: promoForm.discountPercentage,
-          validFrom: new Date(promoForm.startDate).toISOString(),
-          validTo: new Date(promoForm.endDate).toISOString(),
-          vehicleCategoryIds: [resolvedParams.id],
-        }, token);
+        await createDiscountCode(
+          {
+            code: promoForm.name,
+            description: promoForm.name,
+            discountType: "percentage",
+            discountValue: promoForm.discountPercentage,
+            validFrom: new Date(promoForm.startDate).toISOString(),
+            validTo: new Date(promoForm.endDate).toISOString(),
+            vehicleCategoryIds: [resolvedParams.id],
+          },
+          token
+        );
       }
       setPromoDialogOpen(false);
-      // Only refresh the promotion section instead of the whole page if possible, 
+      // Only refresh the promotion section instead of the whole page if possible,
       // but fetchCategoryDetails is easiest and reliable.
       const data = await getCategoryDetails(resolvedParams.id);
       setActivePromotion(data.activePromotion || null);
@@ -180,7 +223,12 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
     return (
       <Box sx={{ p: 4, textAlign: "center" }}>
         <Alert severity="error">{error || t("errors.notFound")}</Alert>
-        <Button onClick={() => { router.push("/admin/categories"); }} sx={{ mt: 2 }}>
+        <Button
+          onClick={() => {
+            router.push("/admin/categories");
+          }}
+          sx={{ mt: 2 }}
+        >
           {t("backToCategories")}
         </Button>
       </Box>
@@ -194,7 +242,9 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
         <Stack sx={{ mb: 4, mt: 3 }} spacing={1}>
           <Stack direction="row" sx={{ alignItems: "center" }}>
             <IconButton
-              onClick={() => { router.push(`/admin/categories/${resolvedParams.id}`); }}
+              onClick={() => {
+                router.push(`/admin/categories/${resolvedParams.id}`);
+              }}
               sx={{
                 bgcolor: "background.paper",
                 boxShadow: 1,
@@ -217,37 +267,87 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
         <form onSubmit={handleSubmit}>
           <Stack spacing={4}>
             {/* Category Information */}
-            <Card sx={{ borderRadius: 3, boxShadow: theme.palette.shadow?.card || 1, bgcolor: "background.paper", border: `1px solid ${theme.palette.border?.main || theme.palette.divider}`, overflow: "hidden" }}>
-              <Box sx={{ height: 6, background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)` }} />
+            <Card
+              sx={{
+                borderRadius: 3,
+                boxShadow: theme.palette.shadow?.card || 1,
+                bgcolor: "background.paper",
+                border: `1px solid ${theme.palette.border?.main || theme.palette.divider}`,
+                overflow: "hidden",
+              }}
+            >
+              <Box
+                sx={{
+                  height: 6,
+                  background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                }}
+              />
               <CardContent sx={{ p: 4 }}>
                 <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "flex-start", mb: 3 }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary" }}>
                     Category Information
                   </Typography>
-                  <Button type="submit" variant="contained" disabled={saving} startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />} sx={{ borderRadius: 2, fontWeight: 600 }}>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={saving}
+                    startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
+                    sx={{ borderRadius: 2, fontWeight: 600 }}
+                  >
                     Save Changes
                   </Button>
                 </Stack>
                 <Divider sx={{ mb: 3 }} />
 
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={4} sx={{ alignItems: { xs: "center", sm: "flex-start" } }}>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={4}
+                  sx={{ alignItems: { xs: "center", sm: "flex-start" } }}
+                >
                   {/* Image Upload Component */}
                   <Stack spacing={2} sx={{ flexShrink: 0, alignItems: "center" }}>
                     {category?.imageUrl ? (
                       <Box sx={{ width: 140, height: 140, borderRadius: 2, overflow: "hidden", position: "relative" }}>
-                        <Image src={toImageUrl(category.imageUrl) as string} alt={category.name} width={140} height={140} style={{ objectFit: "cover", width: "100%", height: "100%" }} />
+                        <Image
+                          src={toImageUrl(category.imageUrl) as string}
+                          alt={category.name}
+                          width={140}
+                          height={140}
+                          style={{ objectFit: "cover", width: "100%", height: "100%" }}
+                        />
                       </Box>
                     ) : (
-                      <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1), color: "primary.main", width: 140, height: 140, borderRadius: 2, fontWeight: 700, fontSize: "4rem" }}>
+                      <Avatar
+                        sx={{
+                          bgcolor: alpha(theme.palette.primary.main, 0.1),
+                          color: "primary.main",
+                          width: 140,
+                          height: 140,
+                          borderRadius: 2,
+                          fontWeight: 700,
+                          fontSize: "4rem",
+                        }}
+                      >
                         {formData.name ? formData.name.charAt(0).toUpperCase() : "?"}
                       </Avatar>
                     )}
-                    <Button variant="outlined" component="label" size="small" startIcon={<UploadIcon />} sx={{ fontWeight: 600, borderRadius: 2 }}>
+                    <Button
+                      variant="outlined"
+                      component="label"
+                      size="small"
+                      startIcon={<UploadIcon />}
+                      sx={{ fontWeight: 600, borderRadius: 2 }}
+                    >
                       Upload Image
-                      <input type="file" hidden accept="image/jpeg, image/png, image/webp" onChange={handleImageUpload} />
+                      <input
+                        type="file"
+                        hidden
+                        accept="image/jpeg, image/png, image/webp"
+                        onChange={handleImageUpload}
+                      />
                     </Button>
                   </Stack>
-                  
+
                   <Box sx={{ width: "100%" }}>
                     <Grid container spacing={3}>
                       <Grid size={{ xs: 12, sm: 6 }}>
@@ -264,8 +364,20 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
                       </Grid>
                       <Grid size={{ xs: 12, sm: 6 }} sx={{ display: "flex", alignItems: "center" }}>
                         <FormControlLabel
-                          control={<Switch checked={formData.isActive} onChange={handleChange} name="isActive" disabled={saving} color="primary" />}
-                          label={<Typography sx={{ fontWeight: 600, color: "text.primary" }}>{formData.isActive ? "Category Active" : "Category Inactive"}</Typography>}
+                          control={
+                            <Switch
+                              checked={formData.isActive}
+                              onChange={handleChange}
+                              name="isActive"
+                              disabled={saving}
+                              color="primary"
+                            />
+                          }
+                          label={
+                            <Typography sx={{ fontWeight: 600, color: "text.primary" }}>
+                              {formData.isActive ? "Category Active" : "Category Inactive"}
+                            </Typography>
+                          }
                           sx={{ ml: 1 }}
                         />
                       </Grid>
@@ -302,7 +414,9 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
                       </Grid>
                     </Grid>
                     {error && (
-                      <Alert severity="error" sx={{ mt: 3, borderRadius: 2 }}>{error}</Alert>
+                      <Alert severity="error" sx={{ mt: 3, borderRadius: 2 }}>
+                        {error}
+                      </Alert>
                     )}
                   </Box>
                 </Stack>
@@ -313,15 +427,37 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
 
         <Stack spacing={4} sx={{ mt: 4 }}>
           {/* Promotion Section */}
-          <Card sx={{ borderRadius: 3, boxShadow: theme.palette.shadow?.card || 1, bgcolor: "background.paper", border: `1px solid ${theme.palette.border?.main || theme.palette.divider}`, overflow: "hidden" }}>
-            <Box sx={{ height: 6, background: `linear-gradient(90deg, ${theme.palette.info.main} 0%, ${theme.palette.primary.main} 100%)` }} />
+          <Card
+            sx={{
+              borderRadius: 3,
+              boxShadow: theme.palette.shadow?.card || 1,
+              bgcolor: "background.paper",
+              border: `1px solid ${theme.palette.border?.main || theme.palette.divider}`,
+              overflow: "hidden",
+            }}
+          >
+            <Box
+              sx={{
+                height: 6,
+                background: `linear-gradient(90deg, ${theme.palette.info.main} 0%, ${theme.palette.primary.main} 100%)`,
+              }}
+            />
             <CardContent sx={{ p: 4 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary", mb: 3 }}>
                 Promotion
               </Typography>
 
               {!activePromotion ? (
-                <Box sx={{ textAlign: "center", py: 5, bgcolor: "background.default", borderRadius: 2, border: "1px dashed", borderColor: theme.palette.divider }}>
+                <Box
+                  sx={{
+                    textAlign: "center",
+                    py: 5,
+                    bgcolor: "background.default",
+                    borderRadius: 2,
+                    border: "1px dashed",
+                    borderColor: theme.palette.divider,
+                  }}
+                >
                   <Typography variant="body1" sx={{ color: "text.secondary", mb: 1, fontWeight: 600 }}>
                     No Active Promotion
                   </Typography>
@@ -337,24 +473,56 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
                   </Button>
                 </Box>
               ) : (
-                <Paper elevation={0} sx={{ p: 3, borderRadius: 2, border: "1px solid", borderColor: theme.palette.divider, bgcolor: "background.default" }}>
-                  <Stack direction={{ xs: "column", sm: "row" }} sx={{ justifyContent: "space-between", alignItems: { xs: "flex-start", sm: "center" }, gap: 3 }}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 3,
+                    borderRadius: 2,
+                    border: "1px solid",
+                    borderColor: theme.palette.divider,
+                    bgcolor: "background.default",
+                  }}
+                >
+                  <Stack
+                    direction={{ xs: "column", sm: "row" }}
+                    sx={{ justifyContent: "space-between", alignItems: { xs: "flex-start", sm: "center" }, gap: 3 }}
+                  >
                     <Box>
                       <Stack direction="row" spacing={2} sx={{ mb: 1.5, alignItems: "center" }}>
                         <Typography variant="h6" sx={{ fontWeight: 700, color: "primary.main" }}>
                           {activePromotion.name}
                         </Typography>
-                        <Chip label={activePromotion.status} size="small" color={activePromotion.status === "Active" ? "success" : "default"} sx={{ fontWeight: 700 }} />
+                        <Chip
+                          label={activePromotion.status}
+                          size="small"
+                          color={activePromotion.status === "Active" ? "success" : "default"}
+                          sx={{ fontWeight: 700 }}
+                        />
                       </Stack>
                       <Stack direction="row" spacing={4}>
                         <Box>
-                          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: "block" }}>Discount</Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 700 }}>{activePromotion.discountPercentage}% OFF</Typography>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ fontWeight: 600, display: "block" }}
+                          >
+                            Discount
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                            {activePromotion.discountPercentage}% OFF
+                          </Typography>
                         </Box>
                         <Box>
-                          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: "block" }}>Duration</Typography>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ fontWeight: 600, display: "block" }}
+                          >
+                            Duration
+                          </Typography>
                           <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                            {new Date(activePromotion.startDate).toLocaleDateString()} &mdash; {new Date(activePromotion.endDate).toLocaleDateString()}
+                            {new Date(activePromotion.startDate).toLocaleDateString()} &mdash;{" "}
+                            {new Date(activePromotion.endDate).toLocaleDateString()}
                           </Typography>
                         </Box>
                       </Stack>
@@ -368,8 +536,8 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
                             id: activePromotion.id,
                             name: activePromotion.name,
                             discountPercentage: activePromotion.discountPercentage,
-                            startDate: activePromotion.startDate.split('T')[0],
-                            endDate: activePromotion.endDate.split('T')[0],
+                            startDate: activePromotion.startDate.split("T")[0],
+                            endDate: activePromotion.endDate.split("T")[0],
                           });
                           setPromoDialogOpen(true);
                         }}
@@ -394,16 +562,32 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
           </Card>
 
           {/* Vehicles Section (Read Only) */}
-          <Card sx={{ borderRadius: 3, boxShadow: theme.palette.shadow?.card || 1, bgcolor: "background.paper", border: `1px solid ${theme.palette.border?.main || theme.palette.divider}`, overflow: "hidden" }}>
-            <Box sx={{ height: 6, background: `linear-gradient(90deg, ${theme.palette.success.main} 0%, ${theme.palette.info.main} 100%)` }} />
+          <Card
+            sx={{
+              borderRadius: 3,
+              boxShadow: theme.palette.shadow?.card || 1,
+              bgcolor: "background.paper",
+              border: `1px solid ${theme.palette.border?.main || theme.palette.divider}`,
+              overflow: "hidden",
+            }}
+          >
+            <Box
+              sx={{
+                height: 6,
+                background: `linear-gradient(90deg, ${theme.palette.success.main} 0%, ${theme.palette.info.main} 100%)`,
+              }}
+            />
             <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
               <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 3 }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary" }}>
                   Vehicles
                 </Typography>
               </Stack>
-              
-              <Paper elevation={0} sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
+
+              <Paper
+                elevation={0}
+                sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider", overflow: "hidden" }}
+              >
                 <TableContainer>
                   <Table sx={{ minWidth: 700 }}>
                     <TableHead>
@@ -414,7 +598,9 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
                         <TableCell sx={{ fontWeight: 600 }}>Daily Price</TableCell>
                         <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
                         <TableCell sx={{ fontWeight: 600 }}>Availability</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600 }}>Actions</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600 }}>
+                          Actions
+                        </TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -424,25 +610,61 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
                             <TableCell>
                               {v.imageUrl ? (
                                 <Box sx={{ width: 60, height: 40, borderRadius: 1, overflow: "hidden" }}>
-                                  <Image src={toImageUrl(v.imageUrl) as string} alt={v.make} width={60} height={40} style={{ objectFit: "cover", width: "100%", height: "100%" }} />
+                                  <Image
+                                    src={toImageUrl(v.imageUrl) as string}
+                                    alt={v.make}
+                                    width={60}
+                                    height={40}
+                                    style={{ objectFit: "cover", width: "100%", height: "100%" }}
+                                  />
                                 </Box>
                               ) : (
-                                <Avatar variant="rounded" sx={{ width: 60, height: 40, bgcolor: alpha(theme.palette.primary.main, 0.1), color: "primary.main" }}>
+                                <Avatar
+                                  variant="rounded"
+                                  sx={{
+                                    width: 60,
+                                    height: 40,
+                                    bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                    color: "primary.main",
+                                  }}
+                                >
                                   <ImageIcon fontSize="small" />
                                 </Avatar>
                               )}
                             </TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>{v.make} {v.model}</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>
+                              {v.make} {v.model}
+                            </TableCell>
                             <TableCell>{v.licensePlate || "—"}</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>{v.pricePerDay ? `$${v.pricePerDay}` : "—"}</TableCell>
                             <TableCell>
-                              <Chip label={v.status || "Unknown"} size="small" sx={{ fontWeight: 600, fontSize: "0.75rem", bgcolor: alpha(theme.palette.text.disabled, 0.1) }} />
+                              <Chip
+                                label={v.status || "Unknown"}
+                                size="small"
+                                sx={{
+                                  fontWeight: 600,
+                                  fontSize: "0.75rem",
+                                  bgcolor: alpha(theme.palette.text.disabled, 0.1),
+                                }}
+                              />
                             </TableCell>
                             <TableCell>
-                              <Chip label={v.availabilityStatus || "Unknown"} size="small" color={v.availabilityStatus === "Available" ? "success" : "default"} sx={{ fontWeight: 600, fontSize: "0.75rem" }} />
+                              <Chip
+                                label={v.availabilityStatus || "Unknown"}
+                                size="small"
+                                color={v.availabilityStatus === "Available" ? "success" : "default"}
+                                sx={{ fontWeight: 600, fontSize: "0.75rem" }}
+                              />
                             </TableCell>
                             <TableCell align="right">
-                              <Button size="small" variant="outlined" onClick={() => { router.push(`/admin/vehicles/${v.id}`); }} sx={{ fontWeight: 600, borderRadius: 2 }}>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                onClick={() => {
+                                  router.push(`/admin/vehicles/${v.id}`);
+                                }}
+                                sx={{ fontWeight: 600, borderRadius: 2 }}
+                              >
                                 View
                               </Button>
                             </TableCell>
@@ -452,7 +674,9 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
                         <TableRow>
                           <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
                             <Box sx={{ textAlign: "center", py: 2 }}>
-                              <Typography color="text.secondary" sx={{ mb: 1, fontWeight: 600 }}>No Vehicles Found</Typography>
+                              <Typography color="text.secondary" sx={{ mb: 1, fontWeight: 600 }}>
+                                No Vehicles Found
+                              </Typography>
                               <Typography variant="body2" color="text.secondary">
                                 This category doesn't have any vehicles assigned yet.
                               </Typography>
@@ -464,11 +688,28 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
                   </Table>
                 </TableContainer>
                 {category?.vehicles && category.vehicles.length > 0 && (
-                  <Box sx={{ p: 2, borderTop: "1px solid", borderColor: "divider", display: "flex", justifyContent: "space-between", alignItems: "center", bgcolor: "background.default" }}>
+                  <Box
+                    sx={{
+                      p: 2,
+                      borderTop: "1px solid",
+                      borderColor: "divider",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      bgcolor: "background.default",
+                    }}
+                  >
                     <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
                       Showing {category.vehicles.length} of {category.vehicles.length} Vehicles
                     </Typography>
-                    <Button variant="text" size="small" onClick={() => { router.push(`/admin/vehicles?categoryId=${category.id}`); }} sx={{ fontWeight: 600 }}>
+                    <Button
+                      variant="text"
+                      size="small"
+                      onClick={() => {
+                        router.push(`/admin/vehicles?categoryId=${category.id}`);
+                      }}
+                      sx={{ fontWeight: 600 }}
+                    >
                       View All Vehicles
                     </Button>
                   </Box>
@@ -479,11 +720,19 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
         </Stack>
 
         {/* Promotion Dialog */}
-        <Dialog open={promoDialogOpen} onClose={() => !promoSaving && setPromoDialogOpen(false)} maxWidth="sm" fullWidth sx={{ '& .MuiDialog-paper': { borderRadius: 3 } }}>
+        <Dialog
+          open={promoDialogOpen}
+          onClose={() => !promoSaving && setPromoDialogOpen(false)}
+          maxWidth="sm"
+          fullWidth
+          sx={{ "& .MuiDialog-paper": { borderRadius: 3 } }}
+        >
           <DialogTitle sx={{ fontWeight: 700 }}>{promoForm.id ? "Edit Promotion" : "Create Promotion"}</DialogTitle>
           <DialogContent dividers>
             {promoError && (
-              <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>{promoError}</Alert>
+              <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+                {promoError}
+              </Alert>
             )}
             <Grid container spacing={3} sx={{ mt: 0 }}>
               <Grid size={{ xs: 12 }}>
@@ -492,7 +741,9 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
                   fullWidth
                   required
                   value={promoForm.name}
-                  onChange={(e) => { setPromoForm({ ...promoForm, name: e.target.value }); }}
+                  onChange={e => {
+                    setPromoForm({ ...promoForm, name: e.target.value });
+                  }}
                   disabled={promoSaving || !!promoForm.id}
                   placeholder="e.g., Summer Sale"
                 />
@@ -504,11 +755,13 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
                   fullWidth
                   required
                   value={promoForm.discountPercentage}
-                  onChange={(e) => { setPromoForm({ ...promoForm, discountPercentage: Number(e.target.value) }); }}
+                  onChange={e => {
+                    setPromoForm({ ...promoForm, discountPercentage: Number(e.target.value) });
+                  }}
                   disabled={promoSaving || !!promoForm.id}
                   slotProps={{
                     input: { endAdornment: <InputAdornment position="end">%</InputAdornment> },
-                    htmlInput: { min: 0, max: 100 }
+                    htmlInput: { min: 0, max: 100 },
                   }}
                 />
               </Grid>
@@ -519,7 +772,9 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
                   fullWidth
                   required
                   value={promoForm.startDate}
-                  onChange={(e) => { setPromoForm({ ...promoForm, startDate: e.target.value }); }}
+                  onChange={e => {
+                    setPromoForm({ ...promoForm, startDate: e.target.value });
+                  }}
                   disabled={promoSaving || !!promoForm.id}
                   slotProps={{ inputLabel: { shrink: true } }}
                 />
@@ -531,7 +786,9 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
                   fullWidth
                   required
                   value={promoForm.endDate}
-                  onChange={(e) => { setPromoForm({ ...promoForm, endDate: e.target.value }); }}
+                  onChange={e => {
+                    setPromoForm({ ...promoForm, endDate: e.target.value });
+                  }}
                   disabled={promoSaving}
                   slotProps={{ inputLabel: { shrink: true } }}
                 />
@@ -539,12 +796,18 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
             </Grid>
           </DialogContent>
           <DialogActions sx={{ p: 3, pt: 2 }}>
-            <Button onClick={() => { setPromoDialogOpen(false); }} disabled={promoSaving} sx={{ fontWeight: 600 }}>
+            <Button
+              onClick={() => {
+                setPromoDialogOpen(false);
+              }}
+              disabled={promoSaving}
+              sx={{ fontWeight: 600 }}
+            >
               Cancel
             </Button>
-            <Button 
-              variant="contained" 
-              onClick={handlePromoSubmit} 
+            <Button
+              variant="contained"
+              onClick={handlePromoSubmit}
               disabled={promoSaving || !promoForm.name.trim() || !promoForm.startDate || !promoForm.endDate}
               startIcon={promoSaving && <CircularProgress size={20} color="inherit" />}
               sx={{ fontWeight: 700, borderRadius: 2 }}
@@ -553,7 +816,6 @@ export default function EditCategoryPage({ params }: { readonly params: Promise<
             </Button>
           </DialogActions>
         </Dialog>
-
       </Container>
     </Box>
   );

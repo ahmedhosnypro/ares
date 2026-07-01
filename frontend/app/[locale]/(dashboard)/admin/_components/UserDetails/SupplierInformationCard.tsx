@@ -31,7 +31,7 @@ export default function SupplierInformationCard({ supplierDetails, t }: Supplier
     >
       <Box sx={{ p: 3, borderBottom: "1px solid", borderColor: theme.palette.divider }}>
         <SectionLabel>{t("details.supplierInformation") || "Supplier Information"}</SectionLabel>
-        
+
         <Box sx={{ mt: 2 }}>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 6 }}>
