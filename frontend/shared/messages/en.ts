@@ -31,6 +31,7 @@ import editCountry from "./en/dashboard/admin/countries/_id/edit";
 import createCountry from "./en/dashboard/admin/countries/create";
 import drivers from "./en/dashboard/admin/drivers";
 import inspectors from "./en/dashboard/admin/inspectors";
+import financialReports from "./en/dashboard/admin/financial-reports";
 import locationsForm from "./en/dashboard/admin/locations/form";
 import adminNotifications from "./en/dashboard/admin/notifications";
 import promotions from "./en/dashboard/admin/promotions";
@@ -160,6 +161,7 @@ const en: MessageSchema = {
     users,
     drivers,
     inspectors,
+    financialReports,
     vehicles: vehiclesAdmin,
     verifications,
     promotions,

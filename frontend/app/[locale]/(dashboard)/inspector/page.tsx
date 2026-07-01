@@ -73,7 +73,7 @@ export default function InspectorDashboardPage() {
   ];
 
   return (
-    <Box sx={{ maxWidth: 720, mx: "auto" }}>
+    <Box sx={{ maxWidth: 1200, mx: "auto", px: { xs: 2, sm: 3 } }}>
       {/* Page header */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" sx={{ fontWeight: 800 }}>

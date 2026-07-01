@@ -207,4 +207,21 @@ public class DashboardController : ControllerBase
         var result = await _dashboardService.GetRevenueOverviewAsync(filter, cancellationToken);
         return Ok(result);
     }
+
+    /// <summary>
+    /// Gets detailed financial reports for the Admin Dashboard
+    /// </summary>
+    [HttpGet("financial-reports")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(FinancialReportDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<FinancialReportDto>> GetFinancialReports(
+        [FromQuery] DateTime? startDate = null,
+        [FromQuery] DateTime? endDate = null,
+        CancellationToken cancellationToken = default)
+    {
+        var report = await _dashboardService.GetFinancialReportAsync(startDate, endDate, cancellationToken);
+        return Ok(report);
+    }
 }

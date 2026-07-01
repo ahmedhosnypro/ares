@@ -469,4 +469,292 @@ public class DashboardService : IDashboardService
             ChartData: chartData
         );
     }
+
+    public async Task<FinancialReportDto> GetFinancialReportAsync(
+        DateTime? startDate,
+        DateTime? endDate,
+        CancellationToken cancellationToken = default)
+    {
+        var now = DateTime.UtcNow;
+        var currentEndDate = endDate ?? now;
+        var currentStartDate = startDate ?? currentEndDate.AddDays(-30);
+        var duration = currentEndDate - currentStartDate;
+
+        var prevEndDate = currentStartDate.AddSeconds(-1);
+        var prevStartDate = currentStartDate.Subtract(duration);
+
+        // 1. Calculate Metrics
+        var totalRevenue = await _context.Bookings
+            .Where(b => b.CreatedAt >= currentStartDate && b.CreatedAt <= currentEndDate &&
+                        (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Active || b.Status == BookingStatus.Completed))
+            .SumAsync(b => b.TotalPrice ?? 0, cancellationToken);
+
+        var prevTotalRevenue = await _context.Bookings
+            .Where(b => b.CreatedAt >= prevStartDate && b.CreatedAt <= prevEndDate &&
+                        (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Active || b.Status == BookingStatus.Completed))
+            .SumAsync(b => b.TotalPrice ?? 0, cancellationToken);
+
+        var totalRevenueChange = GetPercentageChange(totalRevenue, prevTotalRevenue);
+
+        var paidAmount = await _context.Payments
+            .Where(p => p.CreatedAt >= currentStartDate && p.CreatedAt <= currentEndDate &&
+                        (p.Status == "Captured" || p.Status == "Authorized"))
+            .SumAsync(p => p.Amount, cancellationToken);
+
+        var prevPaidAmount = await _context.Payments
+            .Where(p => p.CreatedAt >= prevStartDate && p.CreatedAt <= prevEndDate &&
+                        (p.Status == "Captured" || p.Status == "Authorized"))
+            .SumAsync(p => p.Amount, cancellationToken);
+
+        var paidAmountChange = GetPercentageChange(paidAmount, prevPaidAmount);
+
+        var pendingAmount = await _context.Bookings
+            .Where(b => b.CreatedAt >= currentStartDate && b.CreatedAt <= currentEndDate &&
+                        (b.Status == BookingStatus.PaymentPending || b.Status == BookingStatus.PendingApproval))
+            .SumAsync(b => b.TotalPrice ?? 0, cancellationToken);
+
+        var prevPendingAmount = await _context.Bookings
+            .Where(b => b.CreatedAt >= prevStartDate && b.CreatedAt <= prevEndDate &&
+                        (b.Status == BookingStatus.PaymentPending || b.Status == BookingStatus.PendingApproval))
+            .SumAsync(b => b.TotalPrice ?? 0, cancellationToken);
+
+        var pendingAmountChange = GetPercentageChange(pendingAmount, prevPendingAmount);
+
+        var refundedAmount = await _context.BookingCancellations
+            .Where(c => c.CreatedAt >= currentStartDate && c.CreatedAt <= currentEndDate)
+            .SumAsync(c => c.OriginalAmount - c.CancellationFee, cancellationToken);
+
+        var prevRefundedAmount = await _context.BookingCancellations
+            .Where(c => c.CreatedAt >= prevStartDate && c.CreatedAt <= prevEndDate)
+            .SumAsync(c => c.OriginalAmount - c.CancellationFee, cancellationToken);
+
+        var refundedAmountChange = GetPercentageChange(refundedAmount, prevRefundedAmount);
+
+        // 2. Booking Financial Summary
+        var currentBookings = await _context.Bookings
+            .Where(b => b.CreatedAt >= currentStartDate && b.CreatedAt <= currentEndDate)
+            .Select(b => new { b.Status, TotalPrice = b.TotalPrice ?? 0 })
+            .ToListAsync(cancellationToken);
+
+        var totalBookingsAmount = currentBookings.Sum(b => b.TotalPrice);
+
+        var completedGroup = currentBookings.Where(b => b.Status == BookingStatus.Completed).ToList();
+        var activeGroup = currentBookings.Where(b => b.Status == BookingStatus.Active).ToList();
+        var pendingGroup = currentBookings.Where(b => b.Status == BookingStatus.PaymentPending || b.Status == BookingStatus.PendingApproval).ToList();
+        var cancelledGroup = currentBookings.Where(b => b.Status == BookingStatus.Cancelled || b.Status == BookingStatus.CancelledByAdmin).ToList();
+
+        var bookingSummary = new List<BookingSummaryItemDto>
+        {
+            new BookingSummaryItemDto(
+                Status: "Completed",
+                Bookings: completedGroup.Count,
+                Amount: completedGroup.Sum(g => g.TotalPrice),
+                Percentage: totalBookingsAmount > 0 ? Math.Round((completedGroup.Sum(g => g.TotalPrice) / totalBookingsAmount) * 100m, 2) : 0m
+            ),
+            new BookingSummaryItemDto(
+                Status: "Active",
+                Bookings: activeGroup.Count,
+                Amount: activeGroup.Sum(g => g.TotalPrice),
+                Percentage: totalBookingsAmount > 0 ? Math.Round((activeGroup.Sum(g => g.TotalPrice) / totalBookingsAmount) * 100m, 2) : 0m
+            ),
+            new BookingSummaryItemDto(
+                Status: "Pending Payment",
+                Bookings: pendingGroup.Count,
+                Amount: pendingGroup.Sum(g => g.TotalPrice),
+                Percentage: totalBookingsAmount > 0 ? Math.Round((pendingGroup.Sum(g => g.TotalPrice) / totalBookingsAmount) * 100m, 2) : 0m
+            ),
+            new BookingSummaryItemDto(
+                Status: "Cancelled",
+                Bookings: cancelledGroup.Count,
+                Amount: cancelledGroup.Sum(g => g.TotalPrice),
+                Percentage: totalBookingsAmount > 0 ? Math.Round((cancelledGroup.Sum(g => g.TotalPrice) / totalBookingsAmount) * 100m, 2) : 0m
+            )
+        };
+
+        // 3. Monthly Revenue (Current Calendar Year)
+        var startOfYear = new DateTime(currentEndDate.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var endOfYear = new DateTime(currentEndDate.Year, 12, 31, 23, 59, 59, DateTimeKind.Utc);
+        var bookingsForYear = await _context.Bookings
+            .Where(b => b.CreatedAt >= startOfYear && b.CreatedAt <= endOfYear &&
+                        (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Active || b.Status == BookingStatus.Completed))
+            .Select(b => new { b.CreatedAt, TotalPrice = b.TotalPrice ?? 0 })
+            .ToListAsync(cancellationToken);
+
+        var monthlyRevenue = new List<MonthlyRevenuePointDto>();
+        var months = new[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+        for (int i = 1; i <= 12; i++)
+        {
+            var monthName = months[i - 1];
+            var rev = bookingsForYear.Where(b => b.CreatedAt.Month == i).Sum(b => b.TotalPrice);
+            monthlyRevenue.Add(new MonthlyRevenuePointDto(monthName, rev));
+        }
+
+        // 4. Payment Methods
+        var paymentsInPeriod = await _context.Payments
+            .Where(p => p.CreatedAt >= currentStartDate && p.CreatedAt <= currentEndDate &&
+                        (p.Status == "Captured" || p.Status == "Authorized"))
+            .Select(p => new { p.PaymentMethod, p.Amount })
+            .ToListAsync(cancellationToken);
+
+        var totalPaymentsAmount = paymentsInPeriod.Sum(p => p.Amount);
+        var paymentMethods = paymentsInPeriod
+            .GroupBy(p => p.PaymentMethod?.ToLower() ?? "other")
+            .Select(g => {
+                var rawMethod = g.Key;
+                var displayName = rawMethod switch
+                {
+                    "card" => "Visa / Card",
+                    "cash" => "Cash",
+                    "wallet" => "Wallet",
+                    "bank" => "Bank Transfer",
+                    _ => char.ToUpper(rawMethod[0]) + rawMethod[1..]
+                };
+                var amount = g.Sum(x => x.Amount);
+                return new PaymentMethodSummaryDto(
+                    Method: displayName,
+                    Count: g.Count(),
+                    PaidAmount: amount,
+                    Amount: amount,
+                    Percentage: totalPaymentsAmount > 0 ? Math.Round((amount / totalPaymentsAmount) * 100m, 2) : 0m
+                );
+            })
+            .ToList();
+
+        // 5. Recent Payments
+        var recentPaymentsDb = await _context.Payments
+            .Include(p => p.Booking)
+                .ThenInclude(b => b!.User)
+            .Include(p => p.Booking)
+                .ThenInclude(b => b!.Vehicle)
+            .Where(p => p.CreatedAt >= currentStartDate && p.CreatedAt <= currentEndDate)
+            .OrderByDescending(p => p.CreatedAt)
+            .Take(5)
+            .ToListAsync(cancellationToken);
+
+        var recentPayments = recentPaymentsDb.Select(p => {
+            var customerName = p.Booking?.User != null 
+                ? $"{p.Booking.User.FirstName} {p.Booking.User.LastName}".Trim() 
+                : "Unknown Customer";
+            var vehicleName = p.Booking?.Vehicle != null 
+                ? $"{p.Booking.Vehicle.Make} {p.Booking.Vehicle.Model}" 
+                : "Unknown Vehicle";
+            var bookingNum = p.Booking?.BookingNumber 
+                ?? "#" + p.BookingId.ToString()[..8].ToUpperInvariant();
+            return new RecentPaymentDto(
+                BookingNumber: bookingNum,
+                CustomerName: customerName,
+                VehicleName: vehicleName,
+                Amount: p.Amount,
+                Method: p.PaymentMethod ?? "card",
+                Status: p.Status ?? "Pending",
+                Date: p.CreatedAt
+            );
+        }).ToList();
+
+        // 6. Top Vehicles
+        var topVehiclesDb = await _context.Bookings
+            .Include(b => b.Vehicle)
+                .ThenInclude(v => v!.Images)
+            .Where(b => b.CreatedAt >= currentStartDate && b.CreatedAt <= currentEndDate && b.Status == BookingStatus.Completed && b.Vehicle != null)
+            .GroupBy(b => b.VehicleId)
+            .Select(g => new
+            {
+                VehicleId = g.Key,
+                Vehicle = g.First().Vehicle!,
+                BookingsCount = g.Count(),
+                Revenue = g.Sum(b => b.TotalPrice ?? 0)
+            })
+            .OrderByDescending(x => x.Revenue)
+            .Take(5)
+            .ToListAsync(cancellationToken);
+
+        int rank = 1;
+        var topVehicles = topVehiclesDb.Select(v => new FinancialTopVehicleDto(
+            Rank: rank++,
+            VehicleName: $"{v.Vehicle.Make} {v.Vehicle.Model} ({v.Vehicle.Year})",
+            CompletedBookings: v.BookingsCount,
+            Revenue: v.Revenue,
+            ImageUrl: v.Vehicle.Images.FirstOrDefault()?.ImageUrl
+        )).ToList();
+
+        // 7. Supplier Earnings
+        var completedBookings = await _context.Bookings
+            .Include(b => b.Vehicle)
+            .Where(b => b.CreatedAt >= currentStartDate && b.CreatedAt <= currentEndDate && b.Status == BookingStatus.Completed && b.Vehicle != null)
+            .ToListAsync(cancellationToken);
+
+        var activeVehicles = await _context.Vehicles
+            .Where(v => v.IsActive)
+            .ToListAsync(cancellationToken);
+
+        var companyProfiles = await _context.CompanyProfiles
+            .Include(cp => cp.User)
+            .ToListAsync(cancellationToken);
+
+        var supplierIdsInPeriod = completedBookings.Select(b => b.Vehicle!.UserId)
+            .Union(activeVehicles.Select(v => v.UserId))
+            .Distinct()
+            .ToList();
+
+        var companyProfilesDict = companyProfiles.ToDictionary(cp => cp.UserId, cp => cp.CompanyName);
+
+        var users = await _context.Users
+            .Where(u => supplierIdsInPeriod.Contains(u.Id))
+            .ToListAsync(cancellationToken);
+
+        var supplierEarnings = supplierIdsInPeriod.Select(supplierId => {
+            var supplierUser = users.FirstOrDefault(u => u.Id == supplierId);
+            var supplierName = companyProfilesDict.TryGetValue(supplierId, out var cName)
+                ? cName
+                : (supplierUser != null ? $"{supplierUser.FirstName} {supplierUser.LastName}".Trim() : "Unknown Supplier");
+            
+            if (string.IsNullOrEmpty(supplierName))
+            {
+                supplierName = supplierUser?.Email ?? "Unknown Supplier";
+            }
+
+            var supplierVehicles = activeVehicles.Count(v => v.UserId == supplierId);
+            var supplierBookings = completedBookings.Where(b => b.Vehicle!.UserId == supplierId).ToList();
+            
+            var revenue = supplierBookings.Sum(b => b.TotalPrice ?? 0m);
+            var commission = supplierBookings.Sum(b => b.CommissionAmount ?? (b.TotalPrice ?? 0m) * 0.15m);
+            var netAmount = revenue - commission;
+
+            return new SupplierEarningItemDto(
+                SupplierName: supplierName,
+                TotalVehicles: supplierVehicles,
+                CompletedBookings: supplierBookings.Count,
+                Revenue: revenue,
+                Commission: commission,
+                NetAmount: netAmount
+            );
+        })
+        .Where(s => s.CompletedBookings > 0 || s.TotalVehicles > 0)
+        .OrderByDescending(s => s.Revenue)
+        .ToList();
+
+        return new FinancialReportDto(
+            TotalRevenue: totalRevenue,
+            TotalRevenueChange: totalRevenueChange,
+            PaidAmount: paidAmount,
+            PaidAmountChange: paidAmountChange,
+            PendingAmount: pendingAmount,
+            PendingAmountChange: pendingAmountChange,
+            RefundedAmount: refundedAmount,
+            RefundedAmountChange: refundedAmountChange,
+            BookingSummary: bookingSummary.AsReadOnly(),
+            MonthlyRevenue: monthlyRevenue.AsReadOnly(),
+            PaymentMethods: paymentMethods.AsReadOnly(),
+            RecentPayments: recentPayments.AsReadOnly(),
+            TopVehicles: topVehicles.AsReadOnly(),
+            SupplierEarnings: supplierEarnings.AsReadOnly()
+        );
+    }
+
+    private static decimal GetPercentageChange(decimal current, decimal previous)
+    {
+        if (previous == 0)
+            return current > 0 ? 100m : 0m;
+        return Math.Round(((current - previous) / previous) * 100m, 2);
+    }
 }

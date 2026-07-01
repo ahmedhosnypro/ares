@@ -146,7 +146,7 @@ export default function CategoriesPage() {
               return (
                 <Grid key={cat.id} size={{ xs: 12, sm: 6, lg: 4 }}>
                   <MuiLink
-                    href={`/search?category=${cat.id}`}
+                    href={`/search?category=${cat.name}`}
                     component={Link}
                     underline="none"
                     sx={{

@@ -17,6 +17,7 @@ const header: HeaderLabels = {
   switchLanguage: "تغيير اللغة",
   fallbackUserInitial: "م",
   fallbackUserName: "مستخدم",
+  allCategories: "كل الفئات",
 };
 
 export default header;

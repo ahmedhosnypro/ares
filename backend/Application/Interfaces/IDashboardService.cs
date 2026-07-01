@@ -25,4 +25,6 @@ public interface IDashboardService
     Task<SystemStatusDto> GetSystemStatusAsync(CancellationToken cancellationToken = default);
 
     Task<RevenueOverviewDto> GetRevenueOverviewAsync(string filter, CancellationToken cancellationToken = default);
+
+    Task<FinancialReportDto> GetFinancialReportAsync(DateTime? startDate, DateTime? endDate, CancellationToken cancellationToken = default);
 }

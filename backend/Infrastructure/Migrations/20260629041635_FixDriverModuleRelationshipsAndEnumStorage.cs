@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -132,21 +132,6 @@ namespace Infrastructure.Migrations
                 column: "BookingId",
                 unique: true);
 
-            migrationBuilder.CreateIndex(
-                name: "IX_DiscountValidationLogs_DiscountId_ValidatedAt",
-                table: "DiscountValidationLogs",
-                columns: new[] { "DiscountId", "ValidatedAt" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_DiscountCodes_Code",
-                table: "DiscountCodes",
-                column: "Code",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_DiscountCodes_IsActive_IsAutomatic_ValidFrom_ValidTo",
-                table: "DiscountCodes",
-                columns: new[] { "IsActive", "IsAutomatic", "ValidFrom", "ValidTo" });
 
             migrationBuilder.AddForeignKey(
                 name: "FK_driver_earnings_driver_payouts_PayoutId",
@@ -172,17 +157,6 @@ namespace Infrastructure.Migrations
                 name: "IX_driver_earnings_BookingId",
                 table: "driver_earnings");
 
-            migrationBuilder.DropIndex(
-                name: "IX_DiscountValidationLogs_DiscountId_ValidatedAt",
-                table: "DiscountValidationLogs");
-
-            migrationBuilder.DropIndex(
-                name: "IX_DiscountCodes_Code",
-                table: "DiscountCodes");
-
-            migrationBuilder.DropIndex(
-                name: "IX_DiscountCodes_IsActive_IsAutomatic_ValidFrom_ValidTo",
-                table: "DiscountCodes");
 
             migrationBuilder.Sql(
                 "UPDATE driver_payouts SET Status = CASE Status " +

@@ -242,7 +242,7 @@ export default function InspectorsPage() {
               }}
               sx={{ borderRadius: 2 }}
             >
-              {t("reset")}
+              {t("filters.reset")}
             </Button>
           </Stack>
         </Stack>

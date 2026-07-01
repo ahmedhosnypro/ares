@@ -30,6 +30,7 @@ export default function AdminLayout({ children }: { readonly children: React.Rea
     { text: t("locations"), icon: <LocationsIcon />, path: "/admin/locations" },
     { text: t("countries"), icon: <CountriesIcon />, path: "/admin/countries" },
     { text: t("notifications"), icon: <NotificationsIcon />, path: "/admin/notifications" },
+    { text: t("financialReports"), icon: <AccountBalanceWalletIcon />, path: "/admin/financial-reports" },
     { text: t("settings"), icon: <SettingsIcon />, path: "/admin/settings" },
   ];
 

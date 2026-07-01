@@ -10,6 +10,7 @@ export type AdminSidebarLabels = {
   readonly countries: string;
   readonly notifications: string;
   readonly settings: string;
+  readonly financialReports: string;
   readonly sidebarLabel: string;
   readonly userFallbackName: string;
   readonly userFallbackInitial: string;

@@ -15,4 +15,5 @@ export type HeaderLabels = {
   readonly switchLanguage: string;
   readonly fallbackUserInitial: string;
   readonly fallbackUserName: string;
+  readonly allCategories: string;
 };

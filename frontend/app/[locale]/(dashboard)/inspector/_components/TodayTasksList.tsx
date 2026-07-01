@@ -2,7 +2,18 @@
 
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Box, InputAdornment, Paper, Skeleton, Stack, TextField, Typography, useTheme, alpha } from "@mui/material";
+import {
+  Box,
+  Grid,
+  InputAdornment,
+  Paper,
+  Skeleton,
+  Stack,
+  TextField,
+  Typography,
+  useTheme,
+  alpha,
+} from "@mui/material";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import SearchIcon from "@mui/icons-material/Search";
 import type { InspectorTask, InspectionTaskType } from "@/api-clients/inspections/inspections";
@@ -44,80 +55,91 @@ export default function TodayTasksList({ tasks, loading }: TodaysTasksListProps)
 
   return (
     <Box>
-      {/* Filter tabs */}
-      <Stack direction="row" sx={{ gap: 1, mb: 2, flexWrap: "wrap" }}>
-        {FILTER_TABS.map(tab => {
-          const isActive = activeFilter === tab.value;
-          return (
-            <Box
-              key={tab.value}
-              component="button"
-              onClick={() => {
-                setActiveFilter(tab.value);
-              }}
-              sx={{
-                px: 2,
-                py: 0.75,
-                borderRadius: 99,
-                border: "1px solid",
-                borderColor: isActive ? "primary.main" : "divider",
-                bgcolor: isActive ? "primary.main" : "background.paper",
-                color: isActive ? "primary.contrastText" : "text.secondary",
-                fontWeight: 600,
-                fontSize: "0.8125rem",
-                cursor: "pointer",
-                transition: "all 0.18s ease",
-                boxShadow: isActive ? theme.palette.shadow.button : "none",
-                "&:hover": {
-                  borderColor: "primary.main",
-                  bgcolor: isActive ? "primary.main" : alpha(theme.palette.primary.main, 0.06),
-                  color: isActive ? "primary.contrastText" : "primary.main",
-                },
-              }}
-            >
-              {tab.label}
-            </Box>
-          );
-        })}
-      </Stack>
+      {/* Search and Filters Header */}
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={2}
+        sx={{ justifyContent: "space-between", alignItems: { xs: "stretch", sm: "center" }, mb: 3 }}
+      >
+        {/* Filter tabs */}
+        <Stack direction="row" sx={{ gap: 1, flexWrap: "wrap" }}>
+          {FILTER_TABS.map(tab => {
+            const isActive = activeFilter === tab.value;
+            return (
+              <Box
+                key={tab.value}
+                component="button"
+                onClick={() => {
+                  setActiveFilter(tab.value);
+                }}
+                sx={{
+                  px: 2,
+                  py: 0.75,
+                  borderRadius: 99,
+                  border: "1px solid",
+                  borderColor: isActive ? "primary.main" : "divider",
+                  bgcolor: isActive ? "primary.main" : "background.paper",
+                  color: isActive ? "primary.contrastText" : "text.secondary",
+                  fontWeight: 600,
+                  fontSize: "0.8125rem",
+                  cursor: "pointer",
+                  transition: "all 0.18s ease",
+                  boxShadow: isActive ? theme.palette.shadow.button : "none",
+                  "&:hover": {
+                    borderColor: "primary.main",
+                    bgcolor: isActive ? "primary.main" : alpha(theme.palette.primary.main, 0.06),
+                    color: isActive ? "primary.contrastText" : "primary.main",
+                  },
+                }}
+              >
+                {tab.label}
+              </Box>
+            );
+          })}
+        </Stack>
 
-      {/* Plate number search */}
-      <TextField
-        id="plate-search"
-        placeholder={t("searchPlaceholder")}
-        value={plateSearch}
-        onChange={e => {
-          setPlateSearch(e.target.value);
-        }}
-        size="small"
-        sx={{ mb: 2.5 }}
-        slotProps={{
-          input: {
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" sx={{ color: "text.secondary" }} />
-              </InputAdornment>
-            ),
-          },
-        }}
-        aria-label={t("searchAriaLabel")}
-      />
+        {/* Plate number search */}
+        <TextField
+          id="plate-search"
+          placeholder={t("searchPlaceholder")}
+          value={plateSearch}
+          onChange={e => {
+            setPlateSearch(e.target.value);
+          }}
+          size="small"
+          sx={{ minWidth: { xs: "100%", sm: 260 } }}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                </InputAdornment>
+              ),
+            },
+          }}
+          aria-label={t("searchAriaLabel")}
+        />
+      </Stack>
 
       {/* Task list */}
       {loading ? (
-        <Stack spacing={1.5}>
+        <Grid container spacing={2}>
           {[1, 2, 3, 4].map(n => (
-            <Skeleton key={n} variant="rectangular" height={160} sx={{ borderRadius: 3 }} />
+            <Grid key={n} size={{ xs: 12, md: 6, lg: 4 }}>
+              <Skeleton variant="rectangular" height={160} sx={{ borderRadius: 3 }} />
+            </Grid>
           ))}
-        </Stack>
+        </Grid>
       ) : filteredTasks.length === 0 ? (
         <EmptyState hasSearch={plateSearch.length > 0 || activeFilter !== "All"} />
       ) : (
-        <Stack spacing={1.5}>
+        <Grid container spacing={2}>
           {filteredTasks.map(task => (
-            <TodayTaskCard key={task.inspectionId} task={task} />
+            <Grid key={task.inspectionId} size={{ xs: 12, md: 6, lg: 4 }}>
+              <TodayTaskCard task={task} />
+            </Grid>
           ))}
-        </Stack>
+        </Grid>
       )}
     </Box>
   );

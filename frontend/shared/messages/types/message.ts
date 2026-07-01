@@ -31,6 +31,7 @@ import type { EditCountryLabels } from "./dashboard/admin/countries/_id/edit";
 import type { CreateCountryLabels } from "./dashboard/admin/countries/create";
 import type { AdminDriversLabels } from "./dashboard/admin/drivers";
 import type { AdminInspectorsLabels } from "./dashboard/admin/inspectors";
+import type { FinancialReportsLabels } from "./dashboard/admin/financial-reports";
 import type { AdminLocationsFormLabels } from "./dashboard/admin/locations/form";
 import type { AdminNotificationsLabels } from "./dashboard/admin/notifications";
 import type { PromotionsLabels } from "./dashboard/admin/promotions";
@@ -126,6 +127,7 @@ export type {
   DriverTripsLabels,
   ErrorPageLabels,
   ErrorsLabels,
+  FinancialReportsLabels,
   ForgotPasswordLabels,
   GoogleSignInLabels,
   HeaderLabels,
@@ -233,6 +235,7 @@ export type DashboardAdminSchema = {
   readonly users: AdminUsersLabels;
   readonly drivers: AdminDriversLabels;
   readonly inspectors: AdminInspectorsLabels;
+  readonly financialReports: FinancialReportsLabels;
   readonly vehicles: AdminVehiclesLabels;
   readonly verifications: AdminVerificationsLabels;
   readonly promotions: PromotionsLabels;

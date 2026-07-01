@@ -12,6 +12,7 @@ const adminSidebar: AdminSidebarLabels = {
   countries: "Countries",
   notifications: "Notifications",
   settings: "Settings",
+  financialReports: "Financial Reports",
   sidebarLabel: "Admin",
   userFallbackName: "Admin User",
   userFallbackInitial: "A",

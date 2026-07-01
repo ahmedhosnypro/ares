@@ -12,6 +12,7 @@ const adminSidebar: AdminSidebarLabels = {
   countries: "الدول",
   notifications: "الإشعارات",
   settings: "الإعدادات",
+  financialReports: "التقارير المالية",
   sidebarLabel: "المسؤول",
   userFallbackName: "مستخدم مسؤول",
   userFallbackInitial: "م",
