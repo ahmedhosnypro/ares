@@ -63,7 +63,7 @@ import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
-import { formatUtcDate } from "@/utils/dateTime";
+import { formatUtcDateTime } from "@/utils/dateTime";
 
 import {
   getSupplierReviews,
@@ -114,7 +114,7 @@ interface SnackbarState {
 
 function formatDate(iso: string | null | undefined, locale: string): string {
   if (!iso) return "—";
-  return formatUtcDate(iso, locale);
+  return formatUtcDateTime(iso, locale);
 }
 
 function truncate(value: string | null | undefined, max = 90): string {

@@ -9,7 +9,7 @@ import DriveEtaRoundedIcon from "@mui/icons-material/DriveEtaRounded";
 import UploadFileRoundedIcon from "@mui/icons-material/UploadFileRounded";
 import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
-import { formatUtcDate } from "@/utils/dateTime";
+import { formatUtcDate, formatUtcDateTime } from "@/utils/dateTime";
 
 import {
   getMyDriverLicense,
@@ -35,6 +35,11 @@ type LoadState = "loading" | "ready" | "error";
 function formatDate(value: string | null | undefined, locale: string): string {
   if (!value) return "";
   return formatUtcDate(value, locale, { year: "numeric", month: "short", day: "numeric" }, "");
+}
+
+function formatDateTime(value: string | null | undefined, locale: string): string {
+  if (!value) return "";
+  return formatUtcDateTime(value, locale, { year: "numeric", month: "short", day: "numeric" }, "");
 }
 
 function deriveState(license: DriverLicenseDto | null): DriverLicenseVerificationState {
@@ -209,7 +214,7 @@ export default function DriverLicenseCard({
               </Typography>
               {license?.submittedAt && (
                 <Typography variant="caption" color="text.secondary">
-                  {t("driverLicense.submitted")} {formatDate(license.submittedAt, locale)}
+                  {t("driverLicense.submitted")} {formatDateTime(license.submittedAt, locale)}
                 </Typography>
               )}
             </>

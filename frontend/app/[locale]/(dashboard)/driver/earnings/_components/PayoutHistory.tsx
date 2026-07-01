@@ -16,7 +16,7 @@ import PaymentsOutlinedIcon from "@mui/icons-material/PaymentsOutlined";
 import type { DriverPayout } from "@/api-clients/driver-earnings/driver-earnings";
 import { useLocale } from "next-intl";
 
-import { formatUtcDate } from "@/utils/dateTime";
+import { formatUtcDateTime } from "@/utils/dateTime";
 
 function formatCurrency(value: number): string {
   if (!Number.isFinite(value)) return "$0";
@@ -27,7 +27,7 @@ function formatCurrency(value: number): string {
 }
 
 function formatDate(iso: string, locale: string): string {
-  return formatUtcDate(iso, locale, { year: "numeric", month: "short", day: "numeric" }, iso);
+  return formatUtcDateTime(iso, locale, { year: "numeric", month: "short", day: "numeric" }, iso);
 }
 
 function getPayoutChipColor(status: string): "warning" | "info" | "success" | "error" {

@@ -40,7 +40,7 @@ import {
 import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
-import { formatUtcDate } from "@/utils/dateTime";
+import { formatUtcDate, formatUtcDateTime } from "@/utils/dateTime";
 import {
   useSupplierBookings,
   type SupplierBookingListItemDto,
@@ -73,6 +73,11 @@ const getPaymentStatusLabel = (status: string | undefined | null, t: TFunction):
 const formatCompactDate = (dateString: string | undefined, locale: string): string => {
   if (!dateString) return "—";
   return formatUtcDate(dateString, locale, { month: "short", day: "numeric", year: "numeric" }, "—");
+};
+
+const formatCompactDateTime = (dateString: string | undefined, locale: string): string => {
+  if (!dateString) return "—";
+  return formatUtcDateTime(dateString, locale, { month: "short", day: "numeric", year: "numeric" }, "—");
 };
 
 /**
@@ -302,7 +307,7 @@ export default function SupplierBookingsClient() {
           {/* Created At */}
           <TableCell>
             <Typography variant="body2" sx={{ fontSize: 13, color: "text.secondary" }}>
-              {formatCompactDate(booking.createdAt, locale)}
+              {formatCompactDateTime(booking.createdAt, locale)}
             </Typography>
           </TableCell>
 

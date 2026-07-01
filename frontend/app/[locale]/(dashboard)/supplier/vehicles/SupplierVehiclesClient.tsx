@@ -60,7 +60,7 @@ import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
-import { formatUtcDate } from "@/utils/dateTime";
+import { formatUtcDateTime } from "@/utils/dateTime";
 
 import {
   deleteSupplierVehicle,
@@ -625,7 +625,7 @@ function VehicleTableRow({
   const isAvailable = v.availabilityStatus.toLowerCase() === "available";
   const isToggling = togglingId === v.vehicleId;
 
-  const formatDate = (iso: string) => formatUtcDate(iso, locale, undefined, "—");
+  const formatDate = (iso: string) => formatUtcDateTime(iso, locale, undefined, "—");
 
   const switchTooltip = (() => {
     if (isRestricted) return t("tooltips.accountRestricted");

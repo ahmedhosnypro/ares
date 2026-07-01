@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
 import { useLocale } from "next-intl";
-import { formatUtcDate } from "@/utils/dateTime";
+import { formatUtcDateTime } from "@/utils/dateTime";
 import {
   alpha,
   Alert,
@@ -56,7 +56,7 @@ function formatCurrency(value: number): string {
 }
 
 function formatDate(iso: string, locale: string): string {
-  return formatUtcDate(iso, locale);
+  return formatUtcDateTime(iso, locale);
 }
 
 function safeNum(v: unknown): number {

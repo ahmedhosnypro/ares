@@ -23,7 +23,7 @@ import ChatBubbleOutlinedRoundedIcon from "@mui/icons-material/ChatBubbleOutline
 import PersonOutlinedRoundedIcon from "@mui/icons-material/PersonOutlineRounded";
 import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
-import { formatUtcDate } from "@/utils/dateTime";
+import { formatUtcDateTime } from "@/utils/dateTime";
 import RatingStars from "./RatingStars";
 import type { SupplierReviewListItem } from "@/api-clients/supplier-reviews/supplier-reviews";
 
@@ -39,7 +39,7 @@ export interface ReplyReviewDialogProps {
 
 function formatReviewDate(iso: string | null | undefined, locale: string): string {
   if (!iso) return "—";
-  return formatUtcDate(iso, locale);
+  return formatUtcDateTime(iso, locale);
 }
 
 export default function ReplyReviewDialog({ open, review, submitting, onClose, onSubmit }: ReplyReviewDialogProps) {

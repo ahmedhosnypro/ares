@@ -62,7 +62,7 @@ import {
 import { logger } from "@/utils/logger";
 import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
-import { formatUtcDate } from "@/utils/dateTime";
+import { formatUtcDate, formatUtcDateTime } from "@/utils/dateTime";
 
 const PAGE_SIZE = 10;
 
@@ -81,6 +81,11 @@ function getStatusColor(theme: Theme, status: string): string {
 function formatDate(iso: string | null | undefined, locale: string): string {
   if (!iso) return "—";
   return formatUtcDate(iso, locale, undefined, "—");
+}
+
+function formatDateTime(iso: string | null | undefined, locale: string): string {
+  if (!iso) return "—";
+  return formatUtcDateTime(iso, locale, undefined, "—");
 }
 
 function resolveImageSrc(serverRelativeUrl: string | null): string | null {
@@ -276,7 +281,7 @@ export default function DriverLicenseTab() {
                   {t("table.expiryDate")}: <strong>{formatDate(l.licenseExpiryDate, locale)}</strong>
                 </Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
-                  {t("table.submittedDate")}: {formatDate(l.submittedAt, locale)}
+                  {t("table.submittedDate")}: {formatDateTime(l.submittedAt, locale)}
                 </Typography>
 
                 <Stack direction="row" spacing={1}>
@@ -409,7 +414,7 @@ export default function DriverLicenseTab() {
                     </TableCell>
 
                     <TableCell>
-                      <Typography variant="body2">{formatDate(l.submittedAt, locale)}</Typography>
+                      <Typography variant="body2">{formatDateTime(l.submittedAt, locale)}</Typography>
                     </TableCell>
 
                     <TableCell align="right">

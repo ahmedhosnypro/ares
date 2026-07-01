@@ -20,7 +20,7 @@ import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import type { DriverEarningRow } from "@/api-clients/driver-earnings/driver-earnings";
 import { useLocale } from "next-intl";
-import { formatUtcDate } from "@/utils/dateTime";
+import { formatUtcDateTime } from "@/utils/dateTime";
 
 function formatCurrency(value: number): string {
   if (!Number.isFinite(value)) return "$0";
@@ -74,7 +74,7 @@ interface EarningsHistoryTableProps {
 }
 
 function formatDate(iso: string, locale: string): string {
-  return formatUtcDate(iso, locale, { year: "numeric", month: "short", day: "numeric" }, iso);
+  return formatUtcDateTime(iso, locale, { year: "numeric", month: "short", day: "numeric" }, iso);
 }
 
 export default function EarningsHistoryTable({

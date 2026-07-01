@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { formatUtcDate } from "@/utils/dateTime";
+import { formatUtcDate, formatUtcDateTime } from "@/utils/dateTime";
 import {
   Box,
   Typography,
@@ -41,6 +41,11 @@ import { ApiError } from "@/utils/api-client";
 const formatDateLong = (s?: string | null, locale?: string) => {
   if (!s) return "—";
   return formatUtcDate(s, locale ?? "en", { month: "short", day: "numeric", year: "numeric" }, "—");
+};
+
+const formatDateTimeLong = (s?: string | null, locale?: string) => {
+  if (!s) return "—";
+  return formatUtcDateTime(s, locale ?? "en", { month: "short", day: "numeric", year: "numeric" }, "—");
 };
 
 const formatCurrency = (n?: number | null) => {
@@ -225,7 +230,7 @@ export default function SupplierBookingDetailsClient({ bookingId }: { readonly b
                 sx={{ fontWeight: 700, textTransform: "capitalize" }}
               />
               <Typography variant="body2" color="text.secondary">
-                {t("header.created", { date: formatDateLong(booking.createdAt, locale) })}
+                {t("header.created", { date: formatDateTimeLong(booking.createdAt, locale) })}
               </Typography>
             </Stack>
           </Box>
@@ -335,7 +340,7 @@ export default function SupplierBookingDetailsClient({ bookingId }: { readonly b
           <FieldRow label={t("paymentInfo.method")} value={booking.payment?.paymentMethod ?? "—"} />
           <FieldRow
             label={t("paymentInfo.processedAt")}
-            value={formatDateLong(booking.payment?.processedTimestamp, locale)}
+            value={formatDateTimeLong(booking.payment?.processedTimestamp, locale)}
           />
         </SectionCard>
       </Box>

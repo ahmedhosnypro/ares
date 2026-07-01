@@ -22,7 +22,7 @@ import {
 } from "@mui/material";
 import LaunchOutlinedIcon from "@mui/icons-material/LaunchOutlined";
 import { useLocale } from "next-intl";
-import { formatUtcDate } from "@/utils/dateTime";
+import { formatUtcDateTime } from "@/utils/dateTime";
 
 export interface BookingListItem {
   readonly bookingId: string;
@@ -170,7 +170,7 @@ export default function RecentBookings({ bookings = [] }: RecentBookingsProps) {
                       </Typography>
                     </Box>
                   </TableCell>
-                  <TableCell>{formatUtcDate(row.bookingDate, locale)}</TableCell>
+                  <TableCell>{formatUtcDateTime(row.bookingDate, locale)}</TableCell>
                   <TableCell sx={{ textAlign: "right" }}>
                     <Chip
                       label={row.status}
