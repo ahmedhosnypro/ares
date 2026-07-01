@@ -23,6 +23,8 @@ import DoneAllIcon from "@mui/icons-material/DoneAll";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 
+import { useLocale } from "next-intl";
+import { parseUtcDate, formatUtcDateTime } from "@/utils/dateTime";
 import { useRouter, Link } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
 import {
@@ -39,8 +41,8 @@ import DeleteNotificationDialog from "@/components/notifications/DeleteNotificat
 const POLL_INTERVAL_MS = 60_000;
 const PREVIEW_LIMIT = 6;
 
-function timeAgo(input: string): string {
-  const date = new Date(input);
+function timeAgo(input: string, locale: string): string {
+  const date = parseUtcDate(input);
   if (Number.isNaN(date.getTime())) return "";
   const diffMs = Date.now() - date.getTime();
   const seconds = Math.floor(diffMs / 1000);
@@ -51,7 +53,7 @@ function timeAgo(input: string): string {
   if (hours < 24) return `${hours.toString()}h ago`;
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days.toString()}d ago`;
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return formatUtcDateTime(input, locale, { month: "short", day: "numeric" });
 }
 
 interface NotificationsPanelProps {
@@ -60,6 +62,7 @@ interface NotificationsPanelProps {
 
 export default function NotificationsPanel({ iconColor = "inherit" }: NotificationsPanelProps) {
   const theme = useTheme();
+  const locale = useLocale();
   const router = useRouter();
   const { data: session } = useSession();
   const token = session?.accessToken;
@@ -88,7 +91,7 @@ export default function NotificationsPanel({ iconColor = "inherit" }: Notificati
         setError(false);
         const data = await getNotifications(token);
         const list: NotificationItem[] = Array.isArray(data) ? data : data.notifications;
-        list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        list.sort((a, b) => parseUtcDate(b.createdAt).getTime() - parseUtcDate(a.createdAt).getTime());
         setItems(list);
       } catch (err) {
         logger.error("NotificationsPanel: fetch failed", err);
@@ -469,7 +472,7 @@ export default function NotificationsPanel({ iconColor = "inherit" }: Notificati
                       variant="caption"
                       sx={{ display: "block", mt: 0.5, color: "text.disabled", fontSize: "0.7rem" }}
                     >
-                      {timeAgo(n.createdAt)}
+                      {timeAgo(n.createdAt, locale)}
                     </Typography>
                   </Box>
                 </Box>

@@ -20,8 +20,10 @@ import PaymentIcon from "@mui/icons-material/Payment";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import { useSession } from "next-auth/react";
+import { useLocale } from "next-intl";
 import { apiFetchJson, ApiError } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
+import { parseUtcDate, formatUtcDateTime } from "@/utils/dateTime";
 import { getAdminVerifications } from "@/api-clients/admin-verifications/admin-verifications";
 
 // ── Shape from GET /api/dashboard/recent-summary ──────────────────────────────
@@ -78,9 +80,9 @@ const TYPE_META: Record<
 };
 
 // ── Timestamp display ─────────────────────────────────────────────────────────
-function formatTimestamp(iso: string | null | undefined): string {
+function formatTimestamp(iso: string | null | undefined, locale: string): string {
   if (!iso) return "–";
-  const date = new Date(iso);
+  const date = parseUtcDate(iso);
   if (Number.isNaN(date.getTime())) return "–";
 
   const now = new Date();
@@ -100,11 +102,16 @@ function formatTimestamp(iso: string | null | undefined): string {
     return `${hours.toString()} hr ago`;
   }
 
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    ...(date.getFullYear() !== now.getFullYear() ? { year: "numeric" } : {}),
-  });
+  return formatUtcDateTime(
+    iso,
+    locale,
+    {
+      month: "short",
+      day: "numeric",
+      ...(date.getFullYear() !== now.getFullYear() ? { year: "numeric" } : {}),
+    },
+    "–"
+  );
 }
 
 // ── Fallback helpers ──────────────────────────────────────────────────────────
@@ -170,7 +177,7 @@ async function fetchViaFallbackApis(
 
   const keepLatest = (item: RecentActivityItem) => {
     const prev = latestByType.get(item.type);
-    if (!prev || new Date(item.createdAt) > new Date(prev.createdAt)) {
+    if (!prev || parseUtcDate(item.createdAt) > parseUtcDate(prev.createdAt)) {
       latestByType.set(item.type, item);
     }
   };
@@ -243,7 +250,8 @@ async function fetchViaFallbackApis(
   }
 
   return [...latestByType.values()].sort(
-    (a, b) => (b.createdAt ? new Date(b.createdAt).getTime() : 0) - (a.createdAt ? new Date(a.createdAt).getTime() : 0)
+    (a, b) =>
+      (b.createdAt ? parseUtcDate(b.createdAt).getTime() : 0) - (a.createdAt ? parseUtcDate(a.createdAt).getTime() : 0)
   );
 }
 
@@ -252,6 +260,7 @@ async function fetchViaFallbackApis(
 export default function LiveActivity({ activities: _ }: { readonly activities?: readonly unknown[] } = {}) {
   const theme = useTheme();
   const { data: session } = useSession();
+  const locale = useLocale();
 
   const [items, setItems] = useState<RecentActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -268,13 +277,14 @@ export default function LiveActivity({ activities: _ }: { readonly activities?: 
       const byType = new Map<RecentActivityItem["type"], RecentActivityItem>();
       for (const item of data) {
         const prev = byType.get(item.type);
-        if (!prev || new Date(item.createdAt) > new Date(prev.createdAt)) {
+        if (!prev || parseUtcDate(item.createdAt) > parseUtcDate(prev.createdAt)) {
           byType.set(item.type, item);
         }
       }
       return [...byType.values()].sort(
         (a, b) =>
-          (b.createdAt ? new Date(b.createdAt).getTime() : 0) - (a.createdAt ? new Date(a.createdAt).getTime() : 0)
+          (b.createdAt ? parseUtcDate(b.createdAt).getTime() : 0) -
+          (a.createdAt ? parseUtcDate(a.createdAt).getTime() : 0)
       );
     } catch (err: unknown) {
       const status = err instanceof ApiError ? err.status : 0;
@@ -419,7 +429,7 @@ export default function LiveActivity({ activities: _ }: { readonly activities?: 
                   color="text.secondary"
                   sx={{ fontSize: "0.7rem", flexShrink: 0, whiteSpace: "nowrap" }}
                 >
-                  {formatTimestamp(item.createdAt)}
+                  {formatTimestamp(item.createdAt, locale)}
                 </Typography>
               </Box>
             </Box>

@@ -56,6 +56,8 @@ import {
 } from "@/api-clients/admin-verifications/admin-verifications";
 import { logger } from "@/utils/logger";
 import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
+import { formatUtcDateTime } from "@/utils/dateTime";
 
 const PAGE_SIZE = 10;
 
@@ -71,6 +73,7 @@ export default function IdentityVerificationTab() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const t = useTranslations("dashboardAdmin.verifications");
+  const locale = useLocale();
 
   const [verifications, setVerifications] = useState<AdminVerificationDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -245,7 +248,7 @@ export default function IdentityVerificationTab() {
                   {t("viewModal.docTypeLabel")}: <strong>{v.documentType}</strong>
                 </Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
-                  {t("table.submittedDate")}: {new Date(v.submittedAt).toLocaleDateString()}
+                  {t("table.submittedDate")}: {formatUtcDateTime(v.submittedAt, locale)}
                 </Typography>
 
                 <Stack direction="row" spacing={1}>
@@ -356,7 +359,7 @@ export default function IdentityVerificationTab() {
                     </TableCell>
 
                     <TableCell>
-                      <Typography variant="body2">{new Date(v.submittedAt).toLocaleDateString()}</Typography>
+                      <Typography variant="body2">{formatUtcDateTime(v.submittedAt, locale)}</Typography>
                     </TableCell>
 
                     <TableCell>

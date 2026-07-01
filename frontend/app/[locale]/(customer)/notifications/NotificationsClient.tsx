@@ -29,12 +29,14 @@ import {
   type NotificationItem,
 } from "@/api-clients/notfications/notfications";
 import { logger } from "@/utils/logger";
+import { formatUtcDateTime, parseUtcDate } from "@/utils/dateTime";
 import { getNotificationTypeConfig } from "@/utils/notification-type-config";
 import DeleteNotificationDialog from "@/components/notifications/DeleteNotificationDialog";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 
 export default function NotificationsClient() {
   const t = useTranslations("customer.notifications");
+  const locale = useLocale();
   const { data: session, status } = useSession();
   const token = session?.accessToken;
   const router = useRouter();
@@ -62,7 +64,7 @@ export default function NotificationsClient() {
         if (!background) setLoading(true);
         const data = await getNotifications(token);
         const list: NotificationItem[] = Array.isArray(data) ? data : data.notifications;
-        list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        list.sort((a, b) => parseUtcDate(b.createdAt).getTime() - parseUtcDate(a.createdAt).getTime());
         setNotifications(list);
         setError(null);
       } catch (err) {
@@ -304,7 +306,7 @@ export default function NotificationsClient() {
                   {n.message}
                 </Typography>
                 <Typography variant="caption" sx={{ color: "text.disabled" }}>
-                  {new Date(n.createdAt).toLocaleString("en-US", {
+                  {formatUtcDateTime(n.createdAt, locale, {
                     month: "short",
                     day: "numeric",
                     hour: "2-digit",

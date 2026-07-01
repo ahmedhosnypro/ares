@@ -10,6 +10,7 @@ import { useTranslations } from "next-intl";
 import { personalInfoSchema, type PersonalInfoFormData } from "@/lib/validation/schemas";
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
+import { toApiDate, parseDateOnly } from "@/utils/dateTime";
 
 interface PersonalInfoFormProps {
   readonly userId: string;
@@ -62,10 +63,10 @@ export default function PersonalInfoForm({
   const [firstName, setFirstName] = useState(initialFirstName);
   const [lastName, setLastName] = useState(initialLastName);
   const [phone, setPhone] = useState(initialPhone);
-  const [dob, setDob] = useState(dateOfBirth ? new Date(dateOfBirth) : null);
+  const [dob, setDob] = useState(dateOfBirth ? parseDateOnly(dateOfBirth) : null);
 
   // Convert Date | null → ISO date string for Zod (YYYY-MM-DD)
-  const dobString = dob instanceof Date && !isNaN(dob.getTime()) ? dob.toISOString().split("T")[0] : undefined;
+  const dobString = dob instanceof Date && !isNaN(dob.getTime()) ? toApiDate(dob) : undefined;
 
   const validateField = (field: keyof PersonalInfoFormData, value: string) => {
     const result = personalInfoSchema.shape[field].safeParse(value);
@@ -245,10 +246,7 @@ export default function PersonalInfoForm({
                 onChange={newValue => {
                   setDob(newValue);
                   setTouched(prev => ({ ...prev, dateOfBirth: true }));
-                  const str =
-                    newValue instanceof Date && !isNaN(newValue.getTime())
-                      ? newValue.toISOString().split("T")[0]
-                      : undefined;
+                  const str = newValue instanceof Date && !isNaN(newValue.getTime()) ? toApiDate(newValue) : undefined;
                   validateField("dateOfBirth", str ?? "");
                 }}
                 maxDate={new Date()}

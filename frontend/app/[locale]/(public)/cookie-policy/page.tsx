@@ -1,5 +1,6 @@
 import { Box, Container, Divider, Typography } from "@mui/material";
 import { apiFetchJson } from "@/utils/api-client";
+import { parseUtcDate } from "@/utils/dateTime";
 import { getTranslations } from "next-intl/server";
 
 interface CookiePolicySection {
@@ -23,7 +24,7 @@ export default async function CookiePolicyPage({ params }: Readonly<{ params: Pr
   const sections = await getCookiePolicySections(locale);
   const lastUpdated = sections[0]?.updatedAt
     ? new Intl.DateTimeFormat(locale, { year: "numeric", month: "long", day: "numeric" }).format(
-        new Date(sections[0].updatedAt)
+        parseUtcDate(sections[0].updatedAt)
       )
     : null;
   const t = await getTranslations("publicPages.cookiePolicy");

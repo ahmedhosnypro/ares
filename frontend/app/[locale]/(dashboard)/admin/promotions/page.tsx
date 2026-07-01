@@ -42,6 +42,8 @@ import {
 import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
+import { formatUtcDate, parseUtcDate } from "@/utils/dateTime";
 import { ApiError } from "@/utils/api-client";
 import {
   getDiscountCodes,
@@ -55,7 +57,7 @@ import Alert from "@mui/material/Alert";
 function getDiscountStatus(discount: DiscountCodeResponse): "active" | "expired" | "inactive" {
   if (!discount.isActive) return "inactive";
   const now = new Date();
-  const validTo = new Date(discount.validTo);
+  const validTo = parseUtcDate(discount.validTo);
   if (validTo < now) return "expired";
   return "active";
 }
@@ -104,6 +106,7 @@ export default function AdminPromotionsPage() {
   const { data: session } = useSession();
   const theme = useTheme();
   const t = useTranslations("dashboardAdmin.promotions");
+  const locale = useLocale();
 
   const [discounts, setDiscounts] = useState<DiscountCodeResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -521,7 +524,7 @@ export default function AdminPromotionsPage() {
                         </TableCell>
                         <TableCell>
                           <Typography variant="caption" color="text.secondary" noWrap>
-                            {new Date(d.validFrom).toLocaleDateString()} - {new Date(d.validTo).toLocaleDateString()}
+                            {formatUtcDate(d.validFrom, locale)} - {formatUtcDate(d.validTo, locale)}
                           </Typography>
                         </TableCell>
                         <TableCell align="right">

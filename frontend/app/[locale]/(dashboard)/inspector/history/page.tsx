@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
 import {
   Box,
   Typography,
@@ -33,6 +34,7 @@ import VisibilityOutlinedIcon from "@mui/icons-material/LaunchOutlined";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import { type InspectionSummary } from "@/api-clients/inspections/inspections";
 import { logger } from "@/utils/logger";
+import { formatUtcDateTime } from "@/utils/dateTime";
 import InspectionStatusBadge from "../_components/InspectionStatusBadge";
 
 const MOCK_HISTORY: readonly InspectionSummary[] = [
@@ -170,6 +172,7 @@ async function mockFetchPaginatedData(
 export default function InspectionHistoryPage() {
   const theme = useTheme();
   const t = useTranslations("dashboardInspector.history");
+  const locale = useLocale();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [items, setItems] = useState<InspectionSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -360,7 +363,7 @@ export default function InspectionHistoryPage() {
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   {i.submittedAt
-                    ? t("mobileCard.submittedAt", { date: new Date(i.submittedAt).toLocaleString() })
+                    ? t("mobileCard.submittedAt", { date: formatUtcDateTime(i.submittedAt, locale) })
                     : t("mobileCard.submittedFallback")}
                 </Typography>
               </Stack>
@@ -400,7 +403,7 @@ export default function InspectionHistoryPage() {
                   </TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>{i.vehicleDisplayName}</TableCell>
                   <TableCell color="text.secondary">
-                    {i.submittedAt ? new Date(i.submittedAt).toLocaleString() : t("mobileCard.submittedFallback")}
+                    {i.submittedAt ? formatUtcDateTime(i.submittedAt, locale) : t("mobileCard.submittedFallback")}
                   </TableCell>
                   <TableCell>{i.imageCount}</TableCell>
                   <TableCell>

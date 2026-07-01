@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
+import { useLocale } from "next-intl";
+import { formatUtcDate } from "@/utils/dateTime";
 import {
   Alert,
   alpha,
@@ -64,8 +66,8 @@ function formatCurrency(value: number): string {
   })}`;
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString();
+function formatDate(iso: string, locale: string): string {
+  return formatUtcDate(iso, locale);
 }
 
 function safeNum(v: unknown): number {
@@ -82,6 +84,7 @@ function getPayoutStatusColor(status: string, theme: Theme): string {
 
 export default function AdminDriverEarningsClient() {
   const theme = useTheme();
+  const locale = useLocale();
   const { data: session, status: sessionStatus } = useSession();
   const accessToken = session?.accessToken;
 
@@ -459,7 +462,7 @@ export default function AdminDriverEarningsClient() {
                               />
                             </TableCell>
                             <TableCell>
-                              <Typography variant="body2">{formatDate(payout.requestedAt)}</Typography>
+                              <Typography variant="body2">{formatDate(payout.requestedAt, locale)}</Typography>
                             </TableCell>
                             <TableCell align="right">
                               <Stack direction="row" spacing={0.5} sx={{ justifyContent: "flex-end" }}>

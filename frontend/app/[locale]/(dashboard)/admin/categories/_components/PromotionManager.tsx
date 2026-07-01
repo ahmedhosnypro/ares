@@ -7,11 +7,14 @@ import { getDiscountCodes, type DiscountCodeResponse } from "@/api-clients/promo
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
+import { formatUtcDate } from "@/utils/dateTime";
 import { getSession } from "next-auth/react";
 
 export default function PromotionManager({ categoryId }: { readonly categoryId: string }) {
   const theme = useTheme();
   const t = useTranslations("dashboardAdmin.categoryDetails");
+  const locale = useLocale();
   const [discounts, setDiscounts] = useState<DiscountCodeResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -107,8 +110,8 @@ export default function PromotionManager({ categoryId }: { readonly categoryId: 
                         {discount.discountType === "percentage" ? t("promotions.percentOff") : " off"}
                       </Typography>
                       <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
-                        {discount.validFrom ? new Date(discount.validFrom).toLocaleDateString() : ""} -{" "}
-                        {discount.validTo ? new Date(discount.validTo).toLocaleDateString() : ""}
+                        {discount.validFrom ? formatUtcDate(discount.validFrom, locale) : ""} -{" "}
+                        {discount.validTo ? formatUtcDate(discount.validTo, locale) : ""}
                       </Typography>
                     </Box>
                     <Stack spacing={1} sx={{ alignItems: "flex-end" }}>

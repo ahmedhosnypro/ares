@@ -26,6 +26,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { useTranslations } from "next-intl";
 import { logger } from "@/utils/logger";
+import { toApiDate, parseDateOnly } from "@/utils/dateTime";
 import { fetchPublicCategories, type PublicCategory } from "@/utils/public-data";
 import type { DiscountCodeCreateRequest, DiscountCodeResponse } from "@/api-clients/promotions/promotions";
 
@@ -54,9 +55,9 @@ export default function DiscountCodeForm({ initialData, onSubmit, onCancel, load
   const [discountType, setDiscountType] = useState<"percentage" | "fixed">(initialData?.discountType ?? "percentage");
   const [discountValue, setDiscountValue] = useState(String(initialData?.discountValue ?? ""));
   const [validFrom, setValidFrom] = useState<Date | null>(
-    initialData?.validFrom ? new Date(initialData.validFrom) : null
+    initialData?.validFrom ? parseDateOnly(initialData.validFrom) : null
   );
-  const [validTo, setValidTo] = useState<Date | null>(initialData?.validTo ? new Date(initialData.validTo) : null);
+  const [validTo, setValidTo] = useState<Date | null>(initialData?.validTo ? parseDateOnly(initialData.validTo) : null);
   const [usageLimitTotal, setUsageLimitTotal] = useState(
     initialData?.usageLimitTotal != null ? String(initialData.usageLimitTotal) : ""
   );
@@ -132,8 +133,8 @@ export default function DiscountCodeForm({ initialData, onSubmit, onCancel, load
         description,
         discountType,
         discountValue: parsedValue,
-        validFrom: validFrom ? validFrom.toISOString() : "",
-        validTo: validTo ? validTo.toISOString() : "",
+        validFrom: validFrom ? toApiDate(validFrom) : "",
+        validTo: validTo ? toApiDate(validTo) : "",
         usageLimitTotal: usageLimitTotal ? Number(usageLimitTotal) : null,
         usageLimitPerCustomer: Number(usageLimitPerCustomer),
         customerSegments,

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { formatUtcDate } from "@/utils/dateTime";
 import {
   Box,
   Typography,
@@ -37,15 +38,9 @@ import { toImageUrl } from "@/utils/image-url";
 import { logger } from "@/utils/logger";
 import { ApiError } from "@/utils/api-client";
 
-const formatDateLong = (s?: string | null) => {
+const formatDateLong = (s?: string | null, locale?: string) => {
   if (!s) return "—";
-  const d = new Date(s);
-  if (isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatUtcDate(s, locale ?? "en", { month: "short", day: "numeric", year: "numeric" }, "—");
 };
 
 const formatCurrency = (n?: number | null) => {
@@ -128,6 +123,7 @@ export default function SupplierBookingDetailsClient({ bookingId }: { readonly b
   const theme = useTheme();
   const { data: session } = useSession();
   const t = useTranslations("dashboard.supplierBookingDetail");
+  const locale = useLocale();
 
   const [booking, setBooking] = useState<SupplierBookingDetailsDto | null>(null);
   const [loading, setLoading] = useState(true);
@@ -229,7 +225,7 @@ export default function SupplierBookingDetailsClient({ bookingId }: { readonly b
                 sx={{ fontWeight: 700, textTransform: "capitalize" }}
               />
               <Typography variant="body2" color="text.secondary">
-                {t("header.created", { date: formatDateLong(booking.createdAt) })}
+                {t("header.created", { date: formatDateLong(booking.createdAt, locale) })}
               </Typography>
             </Stack>
           </Box>
@@ -279,8 +275,8 @@ export default function SupplierBookingDetailsClient({ bookingId }: { readonly b
 
         {/* Booking */}
         <SectionCard icon={<EventIcon />} title={t("bookingInfo.title")}>
-          <FieldRow label={t("bookingInfo.pickupDate")} value={formatDateLong(booking.pickupDate)} />
-          <FieldRow label={t("bookingInfo.returnDate")} value={formatDateLong(booking.returnDate)} />
+          <FieldRow label={t("bookingInfo.pickupDate")} value={formatDateLong(booking.pickupDate, locale)} />
+          <FieldRow label={t("bookingInfo.returnDate")} value={formatDateLong(booking.returnDate, locale)} />
           <FieldRow
             label={t("bookingInfo.totalDays")}
             value={booking.totalDays != null ? t("bookingInfo.daysUnit", { count: booking.totalDays }) : "—"}
@@ -337,7 +333,10 @@ export default function SupplierBookingDetailsClient({ bookingId }: { readonly b
             }
           />
           <FieldRow label={t("paymentInfo.method")} value={booking.payment?.paymentMethod ?? "—"} />
-          <FieldRow label={t("paymentInfo.processedAt")} value={formatDateLong(booking.payment?.processedTimestamp)} />
+          <FieldRow
+            label={t("paymentInfo.processedAt")}
+            value={formatDateLong(booking.payment?.processedTimestamp, locale)}
+          />
         </SectionCard>
       </Box>
     </Box>

@@ -22,6 +22,8 @@ import {
 import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
+import { formatUtcDate, parseUtcDate } from "@/utils/dateTime";
 import { ApiError } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
 import {
@@ -43,7 +45,7 @@ import DiscountAnalyticsView from "../_components/DiscountAnalyticsView";
 function getDiscountStatus(discount: DiscountCodeResponse): "active" | "expired" | "inactive" {
   if (!discount.isActive) return "inactive";
   const now = new Date();
-  const validTo = new Date(discount.validTo);
+  const validTo = parseUtcDate(discount.validTo);
   if (validTo < now) return "expired";
   return "active";
 }
@@ -55,6 +57,7 @@ export default function PromotionDetailPage({ params }: { readonly params: Promi
   const { data: session } = useSession();
   const theme = useTheme();
   const t = useTranslations("dashboardAdmin.promotions");
+  const locale = useLocale();
 
   const [discount, setDiscount] = useState<DiscountCodeResponse | null>(null);
   const [analytics, setAnalytics] = useState<DiscountAnalyticsResponse | null>(null);
@@ -370,8 +373,8 @@ export default function PromotionDetailPage({ params }: { readonly params: Promi
                 : `${discount.currentUsageCount}/\u221E`
             }
           />
-          <DetailItem label={t("formValidFrom")} value={new Date(discount.validFrom).toLocaleDateString()} />
-          <DetailItem label={t("formValidTo")} value={new Date(discount.validTo).toLocaleDateString()} />
+          <DetailItem label={t("formValidFrom")} value={formatUtcDate(discount.validFrom, locale)} />
+          <DetailItem label={t("formValidTo")} value={formatUtcDate(discount.validTo, locale)} />
           <DetailItem label={t("formUsageLimitPerCustomer")} value={String(discount.usageLimitPerCustomer)} />
           <DetailItem label={t("formCustomerSegments")} value={discount.customerSegments.join(", ") || "all"} />
           <DetailItem label={t("formPriority")} value={String(discount.priority)} />

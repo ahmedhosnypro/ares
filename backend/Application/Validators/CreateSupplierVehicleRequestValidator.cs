@@ -25,7 +25,7 @@ public class CreateSupplierVehicleRequestValidator : AbstractValidator<CreateSup
 
         RuleFor(x => x.Year)
             .GreaterThan(1900).WithMessage("Year must be greater than 1900")
-            .LessThanOrEqualTo(DateTime.Now.Year + 1).WithMessage("Year cannot be in the future");
+            .LessThanOrEqualTo(DateTime.UtcNow.Year + 1).WithMessage("Year cannot be in the future");
 
         RuleFor(x => x.Color)
             .NotEmpty().WithMessage("Color is required")

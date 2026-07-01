@@ -15,8 +15,8 @@ import {
   fetchLandingContent,
   fetchPublicLocations,
   fetchPublicSuppliers,
-  formatDateInputValue,
 } from "@/utils/public-data";
+import { toApiDate } from "@/utils/dateTime";
 
 export const dynamic = "force-dynamic";
 
@@ -28,8 +28,8 @@ function getDefaultDates() {
   returnDate.setDate(returnDate.getDate() + 4);
 
   return {
-    pickupDate: formatDateInputValue(pickupDate),
-    returnDate: formatDateInputValue(returnDate),
+    pickupDate: toApiDate(pickupDate),
+    returnDate: toApiDate(returnDate),
   };
 }
 

@@ -47,6 +47,7 @@ import {
 import { toApiUrl } from "@/utils/api-client";
 import { toImageUrl } from "@/utils/image-url";
 import { logger } from "@/utils/logger";
+import { toApiDate } from "@/utils/dateTime";
 
 const formatCurrency = (n?: number | null) => {
   if (n == null || isNaN(n)) return "$0.00";
@@ -199,8 +200,8 @@ export default function CreateBookingClient() {
           token,
           {
             search: vehicleSearch,
-            pickupDate: pickupDate ? pickupDate.toISOString() : undefined,
-            returnDate: returnDate ? returnDate.toISOString() : undefined,
+            pickupDate: pickupDate ? toApiDate(pickupDate) : undefined,
+            returnDate: returnDate ? toApiDate(returnDate) : undefined,
             customerUserId: customer?.id,
             pickupLocationId: selectedPickupLocation.id,
             limit: 20,
@@ -346,8 +347,8 @@ export default function CreateBookingClient() {
       try {
         const result = await createBooking(session.accessToken, {
           vehicleId: vehicle.id,
-          pickupDate: pickupDate.toISOString(),
-          returnDate: returnDate.toISOString(),
+          pickupDate: pickupDate ? toApiDate(pickupDate) : "",
+          returnDate: returnDate ? toApiDate(returnDate) : "",
           pickupLocation,
           dropOffLocation,
           pickupLocationId: selectedPickupLocation?.id,

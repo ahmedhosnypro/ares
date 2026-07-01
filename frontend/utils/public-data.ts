@@ -546,7 +546,3 @@ export function formatCurrency(value: number, currency = "USD"): string {
     maximumFractionDigits: 0,
   }).format(value);
 }
-
-export function formatDateInputValue(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}

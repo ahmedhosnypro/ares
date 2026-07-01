@@ -28,7 +28,7 @@ import {
 } from "@mui/icons-material";
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
-import { useDateFnsLocale } from "@/hooks/useDateFnsLocale";
+import { formatUtcDate } from "@/utils/dateTime";
 import SharedProfileContainer from "@/components/profile/SharedProfileContainer";
 import ProfileCard from "@/components/profile/ProfileCard";
 import { type ProfileData } from "@/app/[locale]/(customer)/account/profile/types";
@@ -112,7 +112,6 @@ export default function DriverProfileClient() {
   const { data: session } = useSession();
   const t = useTranslations("dashboard.driverProfile");
   const tc = useTranslations("common");
-  const { formatLocalized } = useDateFnsLocale();
   const currentLocale = useLocale();
 
   const [isLoading, setIsLoading] = useState(true);
@@ -245,7 +244,11 @@ export default function DriverProfileClient() {
                   </Typography>
                   <Typography variant="body1" sx={{ fontWeight: 600 }}>
                     {profile.licenseExpiryDate
-                      ? formatLocalized(new Date(profile.licenseExpiryDate), "MMMM d, yyyy")
+                      ? formatUtcDate(profile.licenseExpiryDate, currentLocale, {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })
                       : tc("na")}
                   </Typography>
                 </Box>

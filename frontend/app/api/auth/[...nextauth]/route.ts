@@ -3,6 +3,7 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { JWT } from "next-auth/jwt";
 import { getApiBaseUrl } from "@/utils/api-client";
+import { parseUtcDate } from "@/utils/dateTime";
 import { logger } from "@/utils/logger";
 
 // Validate NEXTAUTH_SECRET at build time
@@ -102,7 +103,7 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       accessToken: refreshedTokens.token ?? token.accessToken,
       refreshToken: refreshedTokens.refreshToken ?? token.refreshToken,
       accessTokenExpires: refreshedTokens.expiresAt
-        ? new Date(refreshedTokens.expiresAt).getTime()
+        ? parseUtcDate(refreshedTokens.expiresAt).getTime()
         : token.accessTokenExpires,
     };
   } catch (error) {
@@ -176,7 +177,7 @@ export const authOptions: NextAuthOptions = {
         token.roles = user.roles;
         token.accessToken = user.accessToken;
         token.refreshToken = user.refreshToken;
-        token.accessTokenExpires = new Date(user.expiresAt).getTime();
+        token.accessTokenExpires = parseUtcDate(user.expiresAt).getTime();
         token.status = user.status ?? null;
         token.phone = user.phone ?? null;
         token.picture = user.image ?? null;

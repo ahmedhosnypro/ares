@@ -9,6 +9,7 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import PersonIcon from "@mui/icons-material/Person";
 import PhoneIcon from "@mui/icons-material/Phone";
 import PlaceIcon from "@mui/icons-material/Place";
+import { parseUtcDate } from "@/utils/dateTime";
 import type { InspectorTask } from "@/api-clients/inspections/inspections";
 
 interface TodayTaskCardProps {
@@ -29,7 +30,7 @@ export default function TodayTaskCard({ task }: TodayTaskCardProps) {
   const typeLabel = isCheckOut ? t("card.checkOutBadge") : t("card.checkInBadge");
   const TypeIcon = isCheckOut ? DirectionsCarIcon : CarRepairIcon;
 
-  const scheduledDate = new Date(task.scheduledTime);
+  const scheduledDate = parseUtcDate(task.scheduledTime);
   const formattedTime = scheduledDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
   const mapsHref = task.address

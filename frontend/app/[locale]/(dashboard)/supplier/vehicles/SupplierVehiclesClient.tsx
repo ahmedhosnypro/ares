@@ -59,6 +59,8 @@ import Image from "next/image";
 import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
+import { formatUtcDate } from "@/utils/dateTime";
 
 import {
   deleteSupplierVehicle,
@@ -618,14 +620,12 @@ function VehicleTableRow({
 }) {
   const t = useTranslations("dashboard.supplierVehicles");
   const tc = useTranslations("common");
+  const locale = useLocale();
   const canBeAvailable = isApprovedStatus(v.status);
   const isAvailable = v.availabilityStatus.toLowerCase() === "available";
   const isToggling = togglingId === v.vehicleId;
 
-  const formatDate = (iso: string) => {
-    const d = new Date(iso);
-    return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString();
-  };
+  const formatDate = (iso: string) => formatUtcDate(iso, locale, undefined, "—");
 
   const switchTooltip = (() => {
     if (isRestricted) return t("tooltips.accountRestricted");

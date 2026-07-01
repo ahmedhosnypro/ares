@@ -10,6 +10,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import VehicleAutocomplete from "./VehicleAutocomplete";
 import { PublicCategory, PublicVehicleCard } from "@/utils/public-data";
+import { toApiDate, parseDateOnly } from "@/utils/dateTime";
 
 interface Location {
   id: string;
@@ -43,8 +44,8 @@ export default function SearchFormFilter({
   const theme = useTheme();
   const t = useTranslations("publicPages.search");
   const [pickupLocationId, setPickupLocationId] = useState(defaultLocationId);
-  const [pickupDate, setPickupDate] = useState<Date | null>(new Date(defaultPickupDate));
-  const [returnDate, setReturnDate] = useState<Date | null>(new Date(defaultReturnDate));
+  const [pickupDate, setPickupDate] = useState<Date | null>(parseDateOnly(defaultPickupDate));
+  const [returnDate, setReturnDate] = useState<Date | null>(parseDateOnly(defaultReturnDate));
   const [category, setCategory] = useState(defaultCategory || "");
   const [transmission, setTransmission] = useState(defaultTransmission || "");
   const [sort, setSort] = useState(defaultSort || "");
@@ -69,7 +70,7 @@ export default function SearchFormFilter({
 
   const formatDateForUrl = (date: Date | null) => {
     if (!date) return "";
-    return date.toISOString().split("T")[0];
+    return toApiDate(date);
   };
 
   const handleSearch = (

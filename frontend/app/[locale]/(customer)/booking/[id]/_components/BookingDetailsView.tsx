@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Link } from "@/shared/i18n/routing";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import {
   Box,
   Button,
@@ -25,6 +25,7 @@ import {
   Engineering as InspectorIcon,
 } from "@mui/icons-material";
 import { toImageUrl } from "@/utils/image-url";
+import { formatUtcDateTime, parseUtcDate } from "@/utils/dateTime";
 import { type BookingDetails } from "./types";
 import BookingReviewSection from "./BookingReviewSection";
 
@@ -42,18 +43,20 @@ interface BookingDetailsViewProps {
   };
 }
 
-function formatDate(input?: string, naText = "N/A"): string {
-  if (!input) {
-    return naText;
-  }
-
-  return new Date(input).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+function formatDate(input: string | undefined, locale: string, naText = "N/A"): string {
+  if (!input) return naText;
+  return formatUtcDateTime(
+    input,
+    locale,
+    {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    },
+    naText
+  );
 }
 
 function formatCurrency(amount?: number, naText = "N/A"): string {
@@ -73,8 +76,8 @@ function getDurationDays(from?: string, to?: string): number | null {
     return null;
   }
 
-  const fromDate = new Date(from);
-  const toDate = new Date(to);
+  const fromDate = parseUtcDate(from);
+  const toDate = parseUtcDate(to);
   const msPerDay = 1000 * 60 * 60 * 24;
   const diffDays = Math.ceil((toDate.getTime() - fromDate.getTime()) / msPerDay);
 
@@ -136,7 +139,9 @@ export default function BookingDetailsView({
   feedback,
 }: Readonly<BookingDetailsViewProps>) {
   const t = useTranslations("customer.bookingDetail");
+  const locale = useLocale();
   const na = t("notAvailable");
+  const fmtDate = (input?: string) => formatDate(input, locale, na);
   const bookingRef = booking.id ?? routeBookingId;
   const imageUrl = toImageUrl(booking.car?.image) ?? "/placeholder-car.jpg";
   const durationDays = getDurationDays(booking.from, booking.to);
@@ -345,7 +350,7 @@ export default function BookingDetailsView({
                           {booking.pickupLocation?.name ?? na}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {formatDate(booking.from, na)}
+                          {fmtDate(booking.from)}
                         </Typography>
                       </Box>
                     </Stack>
@@ -364,7 +369,7 @@ export default function BookingDetailsView({
                           {booking.dropOffLocation?.name ?? na}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {formatDate(booking.to, na)}
+                          {fmtDate(booking.to)}
                         </Typography>
                       </Box>
                     </Stack>
@@ -454,7 +459,7 @@ export default function BookingDetailsView({
                         </Box>
                         {booking.inspection.preInspectionDate ? (
                           <Typography variant="caption" color="text.secondary">
-                            {t("inspection.dateLabel")}: {formatDate(booking.inspection.preInspectionDate, na)}
+                            {t("inspection.dateLabel")}: {fmtDate(booking.inspection.preInspectionDate)}
                           </Typography>
                         ) : null}
                       </Stack>
@@ -484,7 +489,7 @@ export default function BookingDetailsView({
                         </Box>
                         {booking.inspection.postInspectionDate ? (
                           <Typography variant="caption" color="text.secondary">
-                            {t("inspection.dateLabel")}: {formatDate(booking.inspection.postInspectionDate, na)}
+                            {t("inspection.dateLabel")}: {fmtDate(booking.inspection.postInspectionDate)}
                           </Typography>
                         ) : null}
                       </Stack>

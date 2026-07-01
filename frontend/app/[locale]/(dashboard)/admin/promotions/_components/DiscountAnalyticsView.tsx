@@ -24,6 +24,8 @@ import {
   PersonAddTwoTone as PersonAddIcon,
 } from "@mui/icons-material";
 import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
+import { formatUtcDate } from "@/utils/dateTime";
 import { formatCurrency } from "@/utils/currency-helpers";
 import type { DiscountAnalyticsResponse } from "@/api-clients/promotions/promotions";
 
@@ -34,6 +36,7 @@ interface DiscountAnalyticsViewProps {
 export default function DiscountAnalyticsView({ analytics }: DiscountAnalyticsViewProps) {
   const theme = useTheme();
   const t = useTranslations("dashboardAdmin.promotions");
+  const locale = useLocale();
 
   const formatPercent = (value: number) => `${(value * 100).toFixed(1)}%`;
   const formatROI = (value: number) => `${value.toFixed(1)}x`;
@@ -192,7 +195,7 @@ export default function DiscountAnalyticsView({ analytics }: DiscountAnalyticsVi
                     transition: "background 0.15s",
                   }}
                 >
-                  <TableCell>{new Date(entry.date).toLocaleDateString()}</TableCell>
+                  <TableCell>{formatUtcDate(entry.date, locale)}</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 600 }}>
                     {entry.uses}
                   </TableCell>

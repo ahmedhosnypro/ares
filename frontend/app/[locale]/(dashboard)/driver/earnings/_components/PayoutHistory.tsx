@@ -14,6 +14,9 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import PaymentsOutlinedIcon from "@mui/icons-material/PaymentsOutlined";
 import type { DriverPayout } from "@/api-clients/driver-earnings/driver-earnings";
+import { useLocale } from "next-intl";
+
+import { formatUtcDate } from "@/utils/dateTime";
 
 function formatCurrency(value: number): string {
   if (!Number.isFinite(value)) return "$0";
@@ -23,10 +26,8 @@ function formatCurrency(value: number): string {
   })}`;
 }
 
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  if (!Number.isFinite(d.getTime())) return iso;
-  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+function formatDate(iso: string, locale: string): string {
+  return formatUtcDate(iso, locale, { year: "numeric", month: "short", day: "numeric" }, iso);
 }
 
 function getPayoutChipColor(status: string): "warning" | "info" | "success" | "error" {
@@ -78,6 +79,7 @@ function resolveStatusLabel(status: string, labels: PayoutHistoryProps["labels"]
 }
 
 export default function PayoutHistory({ payouts, loading, error, labels }: PayoutHistoryProps) {
+  const locale = useLocale();
   return (
     <Card
       elevation={0}
@@ -140,23 +142,23 @@ export default function PayoutHistory({ payouts, loading, error, labels }: Payou
                       />
                     </Box>
                     <Typography variant="caption" color="text.secondary">
-                      {formatDate(payout.requestedAt)}
+                      {formatDate(payout.requestedAt, locale)}
                     </Typography>
                   </Box>
                 </AccordionSummary>
                 <AccordionDetails sx={{ pt: 0, px: 2 }}>
                   <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
                     <Typography variant="caption" color="text.secondary">
-                      Requested: {formatDate(payout.requestedAt)}
+                      Requested: {formatDate(payout.requestedAt, locale)}
                     </Typography>
                     {payout.reviewedAt && (
                       <Typography variant="caption" color="text.secondary">
-                        Reviewed: {formatDate(payout.reviewedAt)}
+                        Reviewed: {formatDate(payout.reviewedAt, locale)}
                       </Typography>
                     )}
                     {payout.completedAt && (
                       <Typography variant="caption" color="text.secondary">
-                        Completed: {formatDate(payout.completedAt)}
+                        Completed: {formatDate(payout.completedAt, locale)}
                       </Typography>
                     )}
                     {payout.rejectionReason && (

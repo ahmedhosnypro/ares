@@ -25,6 +25,7 @@ import { LocationOn as LocationIcon, Event as EventIcon, Person as PersonIcon } 
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
 import { useDateFnsLocale } from "@/hooks/useDateFnsLocale";
+import { parseUtcDate } from "@/utils/dateTime";
 
 interface DriverAssignment {
   bookingId: string;
@@ -175,8 +176,8 @@ export default function DriverTripsClient() {
       ) : (
         <Grid container spacing={3}>
           {currentTrips.map(trip => {
-            const pDate = new Date(trip.pickupDate);
-            const rDate = new Date(trip.returnDate);
+            const pDate = parseUtcDate(trip.pickupDate);
+            const rDate = parseUtcDate(trip.returnDate);
 
             return (
               <Grid size={{ xs: 12, md: 6 }} key={trip.bookingId}>

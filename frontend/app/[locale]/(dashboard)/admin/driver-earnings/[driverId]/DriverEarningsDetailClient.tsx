@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
+import { useLocale } from "next-intl";
+import { formatUtcDate } from "@/utils/dateTime";
 import {
   alpha,
   Alert,
@@ -53,8 +55,8 @@ function formatCurrency(value: number): string {
   })}`;
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString();
+function formatDate(iso: string, locale: string): string {
+  return formatUtcDate(iso, locale);
 }
 
 function safeNum(v: unknown): number {
@@ -71,6 +73,7 @@ function getEarningStatusColor(status: string, theme: Theme): string {
 
 export default function DriverEarningsDetailClient() {
   const theme = useTheme();
+  const locale = useLocale();
   const router = useRouter();
   const params = useParams();
   const driverId = Array.isArray(params.driverId) ? params.driverId[0] : (params.driverId as string);
@@ -347,7 +350,7 @@ export default function DriverEarningsDetailClient() {
                                 </Typography>
                               </TableCell>
                               <TableCell>
-                                <Typography variant="body2">{formatDate(row.completedAt)}</Typography>
+                                <Typography variant="body2">{formatDate(row.completedAt, locale)}</Typography>
                               </TableCell>
                               <TableCell align="right">
                                 <Typography variant="body2">{formatCurrency(row.grossEarning)}</Typography>

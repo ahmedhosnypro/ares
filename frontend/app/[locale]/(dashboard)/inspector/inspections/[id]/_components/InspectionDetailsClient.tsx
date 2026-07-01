@@ -26,6 +26,8 @@ import {
 import Grid from "@mui/material/Grid";
 import { useRouter } from "@/shared/i18n/routing";
 import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
+import { formatUtcDateTime } from "@/utils/dateTime";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlineRounded";
@@ -390,6 +392,7 @@ function InfoRow({ label, value }: { readonly label: string; readonly value: str
 
 function BookingInfoSection({ details }: { readonly details: InspectionDetails }) {
   const t = useTranslations("dashboardInspector.inspectionDetail");
+  const locale = useLocale();
 
   return (
     <Paper
@@ -411,9 +414,9 @@ function BookingInfoSection({ details }: { readonly details: InspectionDetails }
         <InfoRow label={t("labels.bookingNumber")} value={details.bookingNumber || "—"} />
         <InfoRow label={t("labels.vehicle")} value={details.vehicleDisplayName} />
         <InfoRow label={t("labels.assignedTo")} value={details.inspectorFullName} />
-        <InfoRow label={t("labels.scheduledDate")} value={new Date(details.inspectionDate).toLocaleString()} />
+        <InfoRow label={t("labels.scheduledDate")} value={formatUtcDateTime(details.inspectionDate, locale)} />
         {details.submittedAt && (
-          <InfoRow label={t("labels.submittedAt")} value={new Date(details.submittedAt).toLocaleString()} />
+          <InfoRow label={t("labels.submittedAt")} value={formatUtcDateTime(details.submittedAt, locale)} />
         )}
       </Stack>
     </Paper>

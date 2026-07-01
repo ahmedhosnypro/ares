@@ -6,7 +6,7 @@ import { AddRounded as AddIcon } from "@mui/icons-material";
 import { useSearchParams } from "next/navigation";
 import { useRouter, Link } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import {
   useBookings,
   useAdminBookingAnalytics,
@@ -40,6 +40,7 @@ export default function BookingsClient({ initialBookings, initialAnalytics }: Bo
   const { data: session } = useSession();
   const t = useTranslations("dashboardAdmin.bookings");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
 
   // Filters / paging
   const [search, setSearch] = useState("");
@@ -100,8 +101,8 @@ export default function BookingsClient({ initialBookings, initialAnalytics }: Bo
     size,
     search,
     statusFilter,
-    fromDate ? new Date(fromDate).toISOString() : null,
-    toDate ? new Date(toDate).toISOString() : null,
+    fromDate || null,
+    toDate || null,
     initialBookings
   );
 
@@ -299,6 +300,7 @@ export default function BookingsClient({ initialBookings, initialAnalytics }: Bo
           onOpenMenu={handleOpenMenu}
           t={t}
           tCommon={tCommon}
+          locale={locale}
         />
       </Paper>
 

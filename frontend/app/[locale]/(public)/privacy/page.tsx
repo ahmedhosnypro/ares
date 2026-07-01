@@ -1,5 +1,6 @@
 import { Box, Container, Divider, Typography } from "@mui/material";
 import { apiFetchJson } from "@/utils/api-client";
+import { parseUtcDate } from "@/utils/dateTime";
 import { getTranslations } from "next-intl/server";
 
 interface PrivacySection {
@@ -23,7 +24,7 @@ export default async function PrivacyPage({ params }: Readonly<{ params: Promise
   const sections = await getPrivacySections(locale);
   const lastUpdated = sections[0]?.updatedAt
     ? new Intl.DateTimeFormat(locale, { year: "numeric", month: "long", day: "numeric" }).format(
-        new Date(sections[0].updatedAt)
+        parseUtcDate(sections[0].updatedAt)
       )
     : null;
   const t = await getTranslations("publicPages.privacy");

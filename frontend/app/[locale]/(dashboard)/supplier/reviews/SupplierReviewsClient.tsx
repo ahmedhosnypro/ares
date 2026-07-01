@@ -62,6 +62,8 @@ import {
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
+import { formatUtcDate } from "@/utils/dateTime";
 
 import {
   getSupplierReviews,
@@ -110,10 +112,9 @@ interface SnackbarState {
   severity: "success" | "error" | "info";
 }
 
-function formatDate(iso: string | null | undefined): string {
+function formatDate(iso: string | null | undefined, locale: string): string {
   if (!iso) return "—";
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString();
+  return formatUtcDate(iso, locale);
 }
 
 function truncate(value: string | null | undefined, max = 90): string {
@@ -706,6 +707,7 @@ interface ReviewTableRowProps {
 function ReviewTableRow({ row, onView, onReply, onReport }: ReviewTableRowProps) {
   const theme = useTheme();
   const t = useTranslations("dashboard.supplierReviews");
+  const locale = useLocale();
   const vehicleImage = toImageUrl(row.vehicleImageUrl);
 
   return (
@@ -803,7 +805,7 @@ function ReviewTableRow({ row, onView, onReply, onReport }: ReviewTableRowProps)
 
       <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>
         <Typography variant="body2" color="text.secondary">
-          {formatDate(row.createdAt)}
+          {formatDate(row.createdAt, locale)}
         </Typography>
       </TableCell>
 

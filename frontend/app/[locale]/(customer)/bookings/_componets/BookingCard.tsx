@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Link } from "@/shared/i18n/routing";
 import Image from "next/image";
 import { Box, Button, Chip, Divider, Typography } from "@mui/material";
@@ -11,6 +11,7 @@ import {
   ArrowForward as ArrowForwardIcon,
 } from "@mui/icons-material";
 import { toImageUrl } from "@/utils/image-url";
+import { formatUtcDate } from "@/utils/dateTime";
 
 export interface BookingItem {
   readonly id?: string;
@@ -65,19 +66,25 @@ function getStatusColor(status?: string): "success" | "warning" | "error" | "def
   }
 }
 
-function formatDate(dateStr?: string, fallback: string = "N/A"): string {
+function formatDate(dateStr: string | undefined, locale: string, fallback = "N/A"): string {
   if (!dateStr) return fallback;
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatUtcDate(
+    dateStr,
+    locale,
+    {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    },
+    fallback
+  );
 }
 
 export default function BookingCard({ booking }: Readonly<{ booking: BookingItem }>) {
   const t = useTranslations("customer.bookings");
-  const fromDate = formatDate(booking.from, t("card.notAvailable"));
-  const toDate = formatDate(booking.to, t("card.notAvailable"));
+  const locale = useLocale();
+  const fromDate = formatDate(booking.from, locale, t("card.notAvailable"));
+  const toDate = formatDate(booking.to, locale, t("card.notAvailable"));
   const imageUrl = toImageUrl(booking.car?.image) ?? "/placeholder-car.jpg";
 
   return (

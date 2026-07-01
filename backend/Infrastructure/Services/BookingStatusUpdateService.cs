@@ -53,8 +53,7 @@ public class BookingStatusUpdateService : BackgroundService
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var supplierRestrictionService = scope.ServiceProvider.GetRequiredService<Backend.Application.Interfaces.ISupplierRestrictionService>();
 
-        var now = DateTime.Now; // Using local time to match DB values in typical local dev
-        var nowUtc = DateTime.UtcNow; // Hold timestamps are stored in UTC
+        var now = DateTime.UtcNow; // All booking dates are stored in UTC
         _logger.LogDebug($"Checking for booking status updates at {now}");
 
         // 1. Confirmed -> Active (Pickup date reached, and workflow statuses permit)
@@ -152,13 +151,13 @@ public class BookingStatusUpdateService : BackgroundService
         var holdsToExpire = await context.Bookings
             .Where(b => b.Status == BookingStatus.PaymentPending &&
                         b.HoldExpiresAt.HasValue &&
-                        b.HoldExpiresAt.Value <= nowUtc)
+                        b.HoldExpiresAt.Value <= now)
             .ToListAsync(cancellationToken);
 
         foreach (var booking in holdsToExpire)
         {
             booking.Status = BookingStatus.Expired;
-            booking.UpdatedAt = nowUtc;
+            booking.UpdatedAt = now;
             _logger.LogInformation($"Booking {booking.Id} (Num: {booking.BookingNumber}) hold expired (PaymentPending -> Expired); vehicle released.");
         }
 
@@ -168,7 +167,7 @@ public class BookingStatusUpdateService : BackgroundService
         var pendingApprovalExpired = await context.Bookings
             .Where(b => b.Status == BookingStatus.PendingApproval &&
                         b.HoldExpiresAt.HasValue &&
-                        b.HoldExpiresAt.Value <= nowUtc)
+                        b.HoldExpiresAt.Value <= now)
             .ToListAsync(cancellationToken);
 
         var pendingApprovalPaymentIds = pendingApprovalExpired.Select(b => b.Id).ToHashSet();
@@ -181,7 +180,7 @@ public class BookingStatusUpdateService : BackgroundService
         foreach (var booking in pendingApprovalExpired)
         {
             booking.Status = BookingStatus.Expired;
-            booking.UpdatedAt = nowUtc;
+            booking.UpdatedAt = now;
 
             if (pendingApprovalPayments.TryGetValue(booking.Id, out var payment) && payment.PaymobTransactionId.HasValue)
             {
@@ -237,7 +236,7 @@ public class BookingStatusUpdateService : BackgroundService
         // 5. Abandoned Draft -> Cancelled (no progress for 24h).
         //    Keeps the funnel tidy and prevents stale drafts from being resumed
         //    indefinitely. These never reserved the vehicle, so nothing to release.
-        var abandonCutoffUtc = nowUtc.AddHours(-24);
+        var abandonCutoffUtc = now.AddHours(-24);
         var abandonedDrafts = await context.Bookings
             .Where(b => b.Status == BookingStatus.Draft &&
                         b.UpdatedAt <= abandonCutoffUtc)
@@ -247,8 +246,8 @@ public class BookingStatusUpdateService : BackgroundService
         {
             booking.Status = BookingStatus.Cancelled;
             booking.CancellationReason = "Automatic cancellation: checkout abandoned.";
-            booking.CancelledAt = nowUtc;
-            booking.UpdatedAt = nowUtc;
+            booking.CancelledAt = now;
+            booking.UpdatedAt = now;
             _logger.LogInformation($"Booking {booking.Id} (Num: {booking.BookingNumber}) auto-cancelled (abandoned {booking.Status} checkout).");
         }
 

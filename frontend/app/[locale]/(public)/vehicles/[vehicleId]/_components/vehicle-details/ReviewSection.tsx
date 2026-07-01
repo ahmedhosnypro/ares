@@ -1,6 +1,7 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { formatUtcDateTime } from "@/utils/dateTime";
 import { Box, Paper, Rating, Stack, Typography } from "@mui/material";
 import type { VehicleReviewViewModel } from "./types";
 
@@ -8,21 +9,17 @@ interface ReviewSectionProps {
   readonly reviews: readonly VehicleReviewViewModel[];
 }
 
-function formatReviewDate(value: string): string {
+function formatReviewDate(value: string, locale: string): string {
   if (!value) {
     return "";
   }
 
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+  return formatUtcDateTime(value, locale, { year: "numeric", month: "short", day: "numeric" }, value);
 }
 
 export default function ReviewSection({ reviews }: ReviewSectionProps) {
   const t = useTranslations("publicPages.vehicles.detail");
+  const locale = useLocale();
   return (
     <Stack spacing={2}>
       <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
@@ -46,7 +43,7 @@ export default function ReviewSection({ reviews }: ReviewSectionProps) {
                     {review.userName}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {formatReviewDate(review.createdAt)}
+                    {formatReviewDate(review.createdAt, locale)}
                   </Typography>
                 </Stack>
                 <Rating value={review.rating} readOnly size="small" />
@@ -62,7 +59,7 @@ export default function ReviewSection({ reviews }: ReviewSectionProps) {
                         </Typography>
                         {review.repliedAt && (
                           <Typography variant="caption" color="text.secondary">
-                            {formatReviewDate(review.repliedAt)}
+                            {formatReviewDate(review.repliedAt, locale)}
                           </Typography>
                         )}
                       </Stack>

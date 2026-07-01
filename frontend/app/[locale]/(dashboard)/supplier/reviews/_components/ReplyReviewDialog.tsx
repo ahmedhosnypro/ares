@@ -22,6 +22,8 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import ChatBubbleOutlinedRoundedIcon from "@mui/icons-material/ChatBubbleOutlineRounded";
 import PersonOutlinedRoundedIcon from "@mui/icons-material/PersonOutlineRounded";
 import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
+import { formatUtcDate } from "@/utils/dateTime";
 import RatingStars from "./RatingStars";
 import type { SupplierReviewListItem } from "@/api-clients/supplier-reviews/supplier-reviews";
 
@@ -35,10 +37,9 @@ export interface ReplyReviewDialogProps {
   readonly onSubmit: (reviewId: string, reply: string) => Promise<void>;
 }
 
-function formatReviewDate(iso: string | null | undefined): string {
+function formatReviewDate(iso: string | null | undefined, locale: string): string {
   if (!iso) return "—";
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString();
+  return formatUtcDate(iso, locale);
 }
 
 export default function ReplyReviewDialog({ open, review, submitting, onClose, onSubmit }: ReplyReviewDialogProps) {
@@ -67,6 +68,7 @@ function ReplyReviewDialogInner({ open, review, submitting, onClose, onSubmit }:
   const theme = useTheme();
   const t = useTranslations("dashboard.supplierReviews");
   const tc = useTranslations("common");
+  const locale = useLocale();
   const [reply, setReply] = useState(review.supplierReply ?? "");
   const [touched, setTouched] = useState(false);
 
@@ -156,7 +158,7 @@ function ReplyReviewDialogInner({ open, review, submitting, onClose, onSubmit }:
                   {review.customerName || t("replyDialog.customerDefault")}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {formatReviewDate(review.createdAt)}
+                  {formatReviewDate(review.createdAt, locale)}
                 </Typography>
               </Box>
             </Stack>

@@ -4,10 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useRouter } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Box, CircularProgress, Alert, Button, Snackbar } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { format } from "date-fns";
+import { formatUtcDate } from "@/utils/dateTime";
 import { toApiUrl } from "@/utils/api-client";
 import { toImageUrl } from "@/utils/image-url";
 import { logger } from "@/utils/logger";
@@ -52,6 +52,7 @@ export default function DriverDetailsPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const t = useTranslations("dashboardAdmin.users");
+  const locale = useLocale();
   const token = session?.accessToken;
 
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -195,7 +196,7 @@ export default function DriverDetailsPage() {
     profilePictureUrl: details.profilePictureUrl ? toImageUrl(details.profilePictureUrl) : undefined,
     licenseNumber: details.licenseNumber,
     licenseExpiryDate: details.licenseExpiryDate
-      ? format(new Date(details.licenseExpiryDate), "MMM d, yyyy")
+      ? formatUtcDate(details.licenseExpiryDate, locale, { year: "numeric", month: "short", day: "numeric" })
       : undefined,
     licenseImage: details.licenseImage ? toImageUrl(details.licenseImage) : undefined,
     nationalIdFrontImage: details.nationalIdFrontImage ? toImageUrl(details.nationalIdFrontImage) : undefined,

@@ -52,6 +52,7 @@ import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 import Image from "next/image";
 import { toImageUrl } from "@/utils/image-url";
+import { parseUtcDate } from "@/utils/dateTime";
 
 function EmptyState({
   filtersActive,
@@ -208,7 +209,7 @@ export default function AdminCategoriesPage() {
 
   const getRemainingDays = (endDateString?: string) => {
     if (!endDateString) return 0;
-    const end = new Date(endDateString);
+    const end = parseUtcDate(endDateString);
     const now = new Date();
     const diffTime = end.getTime() - now.getTime();
     return Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));

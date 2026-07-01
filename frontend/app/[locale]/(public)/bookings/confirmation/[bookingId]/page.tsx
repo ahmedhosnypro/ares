@@ -11,6 +11,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { toApiUrl } from "@/utils/api-client";
 import { formatCurrency } from "@/utils/currency-helpers";
 import { logger } from "@/utils/logger";
+import { formatUtcDate } from "@/utils/dateTime";
 import BookingCleanup from "@/app/(public)/bookings/confirmation/[bookingId]/_components/BookingCleanup";
 
 interface PageProps {
@@ -89,8 +90,6 @@ export default async function ConfirmationPage({ params }: PageProps) {
   }
 
   const transactionId = await fetchTransactionId(bookingId, session.accessToken);
-  const pickupDate = new Date(booking.from);
-  const returnDate = new Date(booking.to);
 
   return (
     <Box component="main" sx={{ minHeight: "100vh", bgcolor: "background.default", py: { xs: 4, md: 10 } }}>
@@ -138,7 +137,7 @@ export default async function ConfirmationPage({ params }: PageProps) {
                     </Typography>
                   </Box>
                   <Typography variant="body2">
-                    {pickupDate.toLocaleDateString()} - {returnDate.toLocaleDateString()}
+                    {formatUtcDate(booking.from, locale)} - {formatUtcDate(booking.to, locale)}
                   </Typography>
                 </Stack>
               </Grid>

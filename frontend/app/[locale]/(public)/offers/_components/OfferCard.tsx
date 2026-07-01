@@ -1,6 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
+import { formatUtcDate } from "@/utils/dateTime";
 import { Box, Card, Typography, Stack, Chip, Button } from "@mui/material";
 import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
 import ContentCopyOutlinedIcon from "@mui/icons-material/ContentCopyOutlined";
@@ -25,8 +26,7 @@ function getDiscountLabel(
 }
 
 function formatDate(dateString: string, locale: string): string {
-  const date = new Date(dateString);
-  return date.toLocaleDateString(locale === "ar" ? "ar-EG" : "en-US", {
+  return formatUtcDate(dateString, locale, {
     year: "numeric",
     month: "short",
     day: "numeric",

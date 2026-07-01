@@ -19,6 +19,8 @@ import {
 import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import type { DriverEarningRow } from "@/api-clients/driver-earnings/driver-earnings";
+import { useLocale } from "next-intl";
+import { formatUtcDate } from "@/utils/dateTime";
 
 function formatCurrency(value: number): string {
   if (!Number.isFinite(value)) return "$0";
@@ -71,10 +73,8 @@ interface EarningsHistoryTableProps {
   };
 }
 
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  if (!Number.isFinite(d.getTime())) return iso;
-  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+function formatDate(iso: string, locale: string): string {
+  return formatUtcDate(iso, locale, { year: "numeric", month: "short", day: "numeric" }, iso);
 }
 
 export default function EarningsHistoryTable({
@@ -86,6 +86,7 @@ export default function EarningsHistoryTable({
   onPageChange,
   labels,
 }: EarningsHistoryTableProps) {
+  const locale = useLocale();
   const handlePrev = useCallback(() => {
     onPageChange(Math.max(1, page - 1));
   }, [page, onPageChange]);
@@ -147,7 +148,7 @@ export default function EarningsHistoryTable({
                   {rows && rows.length > 0 ? (
                     rows.map(row => (
                       <TableRow key={row.bookingId} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
-                        <TableCell>{formatDate(row.completedAt)}</TableCell>
+                        <TableCell>{formatDate(row.completedAt, locale)}</TableCell>
                         <TableCell sx={{ fontWeight: 600, fontFamily: "monospace" }}>{row.bookingNumber}</TableCell>
                         <TableCell>{formatCurrency(row.grossEarning)}</TableCell>
                         <TableCell sx={{ color: "text.secondary" }}>-{formatCurrency(row.platformDeduction)}</TableCell>

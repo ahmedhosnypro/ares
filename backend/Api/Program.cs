@@ -317,6 +317,13 @@ Example: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'",
     builder.Services.AddControllers(options =>
     {
         options.Filters.Add<Backend.Api.Filters.RestrictedSupplierActionFilter>();
+    }).AddJsonOptions(options =>
+    {
+        // Ensure all DateTime values serialize with timezone info (Z suffix for UTC).
+        // Without this, System.Text.Json omits "Z" for DateTimeKind.Unspecified values,
+        // causing the frontend to interpret them as local time.
+        options.JsonSerializerOptions.Converters.Add(new Backend.Api.Converters.UtcDateTimeConverter());
+        options.JsonSerializerOptions.Converters.Add(new Backend.Api.Converters.UtcNullableDateTimeConverter());
     });
 
     var app = builder.Build();

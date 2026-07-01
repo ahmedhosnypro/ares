@@ -8,6 +8,8 @@ import ErrorOutlinedRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 import BadgeRoundedIcon from "@mui/icons-material/BadgeRounded";
 import UploadFileRoundedIcon from "@mui/icons-material/UploadFileRounded";
 import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
+import { formatUtcDateTime } from "@/utils/dateTime";
 
 import { getMyVerification, type UserVerificationDto } from "@/api-clients/verifications/verifications";
 import { logger } from "@/utils/logger";
@@ -26,10 +28,8 @@ interface IdentityVerificationCardProps {
 
 type LoadState = "loading" | "ready" | "error";
 
-function formatSubmittedAt(value: string): string {
-  const date = new Date(value);
-  if (isNaN(date.getTime())) return "";
-  return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+function formatSubmittedAt(value: string, locale: string): string {
+  return formatUtcDateTime(value, locale, { year: "numeric", month: "short", day: "numeric" }, "");
 }
 
 export default function IdentityVerificationCard({
@@ -43,6 +43,7 @@ export default function IdentityVerificationCard({
   onSubmitted,
 }: IdentityVerificationCardProps) {
   const t = useTranslations("customer.accountProfile");
+  const locale = useLocale();
   const [internalState, setInternalState] = useState<LoadState>("loading");
   const [internalVerification, setInternalVerification] = useState<UserVerificationDto | null>(null);
   const [internalLoadError, setInternalLoadError] = useState<string>("");
@@ -200,7 +201,7 @@ export default function IdentityVerificationCard({
               </Typography>
               {verification?.submittedAt && (
                 <Typography variant="caption" color="text.secondary">
-                  {t("identityVerification.submitted")} {formatSubmittedAt(verification.submittedAt)}
+                  {t("identityVerification.submitted")} {formatSubmittedAt(verification.submittedAt, locale)}
                 </Typography>
               )}
             </>

@@ -28,6 +28,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { useSession } from "next-auth/react";
 import { getAdminBookingDetails, updateBooking, type Booking } from "@/api-clients/bookings/bookings";
 import { logger } from "@/utils/logger";
+import { parseUtcDate } from "@/utils/dateTime";
 import { toImageUrl } from "@/utils/image-url";
 
 const OPERATIONAL_STATUSES = ["PaymentPending", "Confirmed", "Active", "Completed", "Cancelled"] as const;
@@ -43,9 +44,9 @@ const formatCurrency = (n?: number | null, locale = "en") => {
 
 const toLocalDateInput = (value?: string | null) => {
   if (!value) return "";
-  const d = new Date(value);
+  const d = parseUtcDate(value);
   if (isNaN(d.getTime())) return "";
-  // YYYY-MM-DD for <input type="date">
+  // YYYY-MM-DD for <input type="date"> — extract UTC date part
   return d.toISOString().slice(0, 10);
 };
 
@@ -159,10 +160,10 @@ export default function EditBookingClient({ bookingId }: { readonly bookingId: s
         } = {};
 
         if (form.pickupDate !== toLocalDateInput(booking.from)) {
-          payload.pickupDate = new Date(form.pickupDate).toISOString();
+          payload.pickupDate = form.pickupDate; // Already YYYY-MM-DD
         }
         if (form.returnDate !== toLocalDateInput(booking.to)) {
-          payload.returnDate = new Date(form.returnDate).toISOString();
+          payload.returnDate = form.returnDate; // Already YYYY-MM-DD
         }
         if (form.pickupLocation !== (booking.pickupLocation?.name ?? "")) {
           payload.pickupLocation = form.pickupLocation;

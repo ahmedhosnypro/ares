@@ -18,6 +18,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
+import { toApiDate, parseDateOnly } from "@/utils/dateTime";
 
 interface LocationOption {
   id: string;
@@ -52,13 +53,13 @@ export default function SearchForm({
   const [locationQuery, setLocationQuery] = useState(fallbackLocation ? fallbackLocation.label : "");
   const [loadingLocations, setLoadingLocations] = useState(false);
   const [pickupLocation, setPickupLocation] = useState(defaultLocationId);
-  const [pickupDate, setPickupDate] = useState<Date | null>(new Date(defaultPickupDate));
-  const [returnDate, setReturnDate] = useState<Date | null>(new Date(defaultReturnDate));
+  const [pickupDate, setPickupDate] = useState<Date | null>(parseDateOnly(defaultPickupDate));
+  const [returnDate, setReturnDate] = useState<Date | null>(parseDateOnly(defaultReturnDate));
   const [activePreset, setActivePreset] = useState<string | null>(null);
 
   const formatDateForUrl = (date: Date | null) => {
     if (!date) return "";
-    return date.toISOString().split("T")[0];
+    return toApiDate(date);
   };
 
   const selectedLocation = useMemo(() => {

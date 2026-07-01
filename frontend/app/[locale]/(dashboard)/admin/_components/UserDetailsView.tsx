@@ -4,6 +4,8 @@
 
 import React, { useState } from "react";
 import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
+import { formatUtcDateTime } from "@/utils/dateTime";
 import {
   Box,
   Typography,
@@ -527,6 +529,7 @@ export default function UserDetailsView({
   const [rejectReason, setRejectReason] = useState("");
 
   const t = useTranslations("dashboardAdmin.users");
+  const locale = useLocale();
 
   const fieldLabel = {
     fontWeight: 600,
@@ -1396,8 +1399,8 @@ export default function UserDetailsView({
                         return (
                           <TableRow key={r.inspectionId} hover>
                             <TableCell>{r.bookingNumber || r.bookingId.split("-")[0]}</TableCell>
-                            <TableCell>{new Date(r.inspectionDate).toLocaleString()}</TableCell>
-                            <TableCell>{r.submittedAt ? new Date(r.submittedAt).toLocaleString() : "—"}</TableCell>
+                            <TableCell>{formatUtcDateTime(r.inspectionDate, locale)}</TableCell>
+                            <TableCell>{r.submittedAt ? formatUtcDateTime(r.submittedAt, locale) : "—"}</TableCell>
                             <TableCell align="right">
                               <Chip
                                 label={chip.label}

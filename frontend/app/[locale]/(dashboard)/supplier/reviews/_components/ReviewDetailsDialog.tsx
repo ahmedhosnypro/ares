@@ -22,13 +22,14 @@ import ReportProblemRoundedIcon from "@mui/icons-material/ReportProblemRounded";
 import DirectionsCarFilledTwoToneIcon from "@mui/icons-material/DirectionsCarFilledTwoTone";
 import PersonOutlinedRoundedIcon from "@mui/icons-material/PersonOutlineRounded";
 import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
+import { formatUtcDateTime } from "@/utils/dateTime";
 import RatingStars from "./RatingStars";
 import type { SupplierReviewListItem } from "@/api-clients/supplier-reviews/supplier-reviews";
 
-function formatDate(iso: string | null | undefined): string {
+function formatDate(iso: string | null | undefined, locale: string): string {
   if (!iso) return "—";
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString();
+  return formatUtcDateTime(iso, locale);
 }
 
 export interface ReviewDetailsDialogProps {
@@ -42,6 +43,7 @@ export interface ReviewDetailsDialogProps {
 export default function ReviewDetailsDialog({ open, review, onClose, onReply, onReport }: ReviewDetailsDialogProps) {
   const theme = useTheme();
   const t = useTranslations("dashboard.supplierReviews");
+  const locale = useLocale();
   if (!review) return null;
 
   return (
@@ -82,7 +84,7 @@ export default function ReviewDetailsDialog({ open, review, onClose, onReply, on
                 {review.customerName || t("detailsDialog.customerDefault")}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {t("detailsDialog.reviewedOn")} {formatDate(review.createdAt)}
+                {t("detailsDialog.reviewedOn")} {formatDate(review.createdAt, locale)}
               </Typography>
             </Box>
           </Stack>
@@ -150,7 +152,7 @@ export default function ReviewDetailsDialog({ open, review, onClose, onReply, on
           {review.hasReply && (
             <Chip
               size="small"
-              label={`${t("detailsDialog.replied")} ${formatDate(review.repliedAt)}`}
+              label={`${t("detailsDialog.replied")} ${formatDate(review.repliedAt, locale)}`}
               sx={{
                 fontWeight: 600,
                 bgcolor: alpha(theme.palette.success.main, 0.12),
@@ -184,7 +186,7 @@ export default function ReviewDetailsDialog({ open, review, onClose, onReply, on
             <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 0.5 }}>
               <ReportProblemRoundedIcon fontSize="small" color="error" />
               <Typography variant="body2" sx={{ fontWeight: 700, color: "error.main" }}>
-                {t("detailsDialog.reportedLabel")} {formatDate(review.reportedAt)}
+                {t("detailsDialog.reportedLabel")} {formatDate(review.reportedAt, locale)}
               </Typography>
             </Stack>
             <Typography variant="body2" sx={{ whiteSpace: "pre-line" }}>

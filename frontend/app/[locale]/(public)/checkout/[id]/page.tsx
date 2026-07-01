@@ -5,6 +5,8 @@ import { useParams } from "next/navigation";
 import { useRouter, Link } from "@/shared/i18n/routing";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
+import { parseUtcDate, formatUtcDate } from "@/utils/dateTime";
 
 import {
   Alert,
@@ -45,12 +47,12 @@ function parseIntent(raw: string | null): BookingIntent | null {
   }
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+function formatDate(iso: string, locale: string): string {
+  return formatUtcDate(iso, locale, { year: "numeric", month: "short", day: "numeric" });
 }
 
 function calcDays(from: string, to: string): number {
-  return Math.max(1, Math.ceil((new Date(to).getTime() - new Date(from).getTime()) / (1000 * 60 * 60 * 24)));
+  return Math.max(1, Math.ceil((parseUtcDate(to).getTime() - parseUtcDate(from).getTime()) / (1000 * 60 * 60 * 24)));
 }
 
 // ── Booking summary sidebar ────────────────────────────────────────────────────
@@ -61,6 +63,7 @@ interface BookingSummaryProps {
 
 function BookingSummary({ intent }: BookingSummaryProps) {
   const t = useTranslations("publicPages.checkout");
+  const locale = useLocale();
   const days = calcDays(intent.pickupDate, intent.returnDate);
 
   return (
@@ -94,7 +97,7 @@ function BookingSummary({ intent }: BookingSummaryProps) {
               {t("pickup")}
             </Typography>
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              {formatDate(intent.pickupDate)}
+              {formatDate(intent.pickupDate, locale)}
             </Typography>
           </Box>
         </Stack>
@@ -106,7 +109,7 @@ function BookingSummary({ intent }: BookingSummaryProps) {
               {t("return")}
             </Typography>
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              {formatDate(intent.returnDate)}
+              {formatDate(intent.returnDate, locale)}
             </Typography>
           </Box>
         </Stack>

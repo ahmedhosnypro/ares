@@ -68,6 +68,7 @@ import {
 import { toImageUrl } from "@/utils/image-url";
 import { logger } from "@/utils/logger";
 import { toApiUrl } from "@/utils/api-client";
+import { resolveLocale, formatUtcDate, formatUtcDateTime } from "@/utils/dateTime";
 import ChangeStatusModal from "../../_components/ChangeStatusModal";
 import BookingInspectionPanel from "../../_components/BookingInspectionPanel";
 
@@ -237,32 +238,29 @@ function RefundSection({ bookingId, paymentAmount, accessToken, onRefunded }: Re
 
 const formatDateLong = (s?: string | null, locale = "en") => {
   if (!s) return "—";
-  const d = new Date(s);
-  if (isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString(locale === "ar" ? "ar-EG" : "en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatUtcDate(s, locale, { month: "short", day: "numeric", year: "numeric" }, "—");
 };
 
 const formatDateTime = (s?: string | null, locale = "en") => {
   if (!s) return "—";
-  const d = new Date(s);
-  if (isNaN(d.getTime())) return "—";
-  return d.toLocaleString(locale === "ar" ? "ar-EG" : "en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  return formatUtcDateTime(
+    s,
+    locale,
+    {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    },
+    "—"
+  );
 };
 
 const formatCurrency = (n?: number | null, currency = "USD", locale = "en") => {
   if (n == null || isNaN(n)) return "—";
   try {
-    return new Intl.NumberFormat(locale === "ar" ? "ar-EG" : "en-US", { style: "currency", currency }).format(n);
+    return new Intl.NumberFormat(resolveLocale(locale), { style: "currency", currency }).format(n);
   } catch {
     return `$${n.toFixed(2)}`;
   }
@@ -508,9 +506,7 @@ function InspectionCard({
           />
           <InfoItem
             label={t("inspection.mileage")}
-            value={
-              inspection ? `${inspection.odometerReading.toLocaleString(locale === "ar" ? "ar-EG" : "en-US")} km` : "—"
-            }
+            value={inspection ? `${inspection.odometerReading.toLocaleString(resolveLocale(locale))} km` : "—"}
             icon={<SpeedIcon sx={{ fontSize: 16 }} />}
           />
           <InfoItem

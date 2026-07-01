@@ -21,7 +21,8 @@ import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { formatUtcDateTime } from "@/utils/dateTime";
 import {
   getNotifications,
   markNotificationAsRead,
@@ -48,6 +49,7 @@ interface NotificationResponse {
 export default function NotificationsPage() {
   const { data: session, status } = useSession();
   const t = useTranslations("dashboardAdmin.notifications");
+  const locale = useLocale();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -257,7 +259,7 @@ export default function NotificationsPage() {
                   {n.message}
                 </Typography>
                 <Typography variant="caption" sx={{ color: "text.disabled" }}>
-                  {new Date(n.createdAt).toLocaleString("en-US", {
+                  {formatUtcDateTime(n.createdAt, locale, {
                     month: "short",
                     day: "numeric",
                     hour: "2-digit",

@@ -7,6 +7,8 @@ import StarIcon from "@mui/icons-material/Star";
 import { formatCurrency } from "@/utils/currency-helpers";
 import { toImageUrl } from "@/utils/image-url";
 import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
+import { parseUtcDate, formatUtcDateTime } from "@/utils/dateTime";
 
 interface OrderSummaryProps {
   readonly booking: {
@@ -31,8 +33,9 @@ interface OrderSummaryProps {
 
 export default function OrderSummary({ booking, discountCodeApplied }: OrderSummaryProps) {
   const t = useTranslations("customer.bookingPayment.orderSummary");
-  const pickupDate = new Date(booking.from);
-  const returnDate = new Date(booking.to);
+  const locale = useLocale();
+  const pickupDate = parseUtcDate(booking.from);
+  const returnDate = parseUtcDate(booking.to);
   const days = Math.max(1, Math.ceil((returnDate.getTime() - pickupDate.getTime()) / (1000 * 60 * 60 * 24)));
 
   return (
@@ -104,7 +107,7 @@ export default function OrderSummary({ booking, discountCodeApplied }: OrderSumm
                 {booking.pickupLocation.name}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {pickupDate.toLocaleDateString(undefined, {
+                {formatUtcDateTime(booking.from, locale, {
                   month: "short",
                   day: "numeric",
                   hour: "numeric",
@@ -128,7 +131,7 @@ export default function OrderSummary({ booking, discountCodeApplied }: OrderSumm
                 {booking.dropOffLocation.name}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {returnDate.toLocaleDateString(undefined, {
+                {formatUtcDateTime(booking.to, locale, {
                   month: "short",
                   day: "numeric",
                   hour: "numeric",

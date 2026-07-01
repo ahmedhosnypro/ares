@@ -21,6 +21,8 @@ import {
   Tooltip,
 } from "@mui/material";
 import LaunchOutlinedIcon from "@mui/icons-material/LaunchOutlined";
+import { useLocale } from "next-intl";
+import { formatUtcDate } from "@/utils/dateTime";
 
 export interface BookingListItem {
   readonly bookingId: string;
@@ -37,6 +39,7 @@ interface RecentBookingsProps {
 }
 
 export default function RecentBookings({ bookings = [] }: RecentBookingsProps) {
+  const locale = useLocale();
   return (
     <Card
       elevation={0}
@@ -167,7 +170,7 @@ export default function RecentBookings({ bookings = [] }: RecentBookingsProps) {
                       </Typography>
                     </Box>
                   </TableCell>
-                  <TableCell>{new Date(row.bookingDate).toLocaleDateString()}</TableCell>
+                  <TableCell>{formatUtcDate(row.bookingDate, locale)}</TableCell>
                   <TableCell sx={{ textAlign: "right" }}>
                     <Chip
                       label={row.status}

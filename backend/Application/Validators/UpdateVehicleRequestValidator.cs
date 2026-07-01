@@ -23,7 +23,7 @@ public class UpdateVehicleRequestValidator : AbstractValidator<UpdateVehicleRequ
         RuleFor(x => x.Year)
             .GreaterThan(1900)
             .WithMessage("Year must be greater than 1900")
-            .LessThanOrEqualTo(DateTime.Now.Year + 1)
+            .LessThanOrEqualTo(DateTime.UtcNow.Year + 1)
             .WithMessage("Year cannot be in the future")
             .When(x => x.Year.HasValue);
 

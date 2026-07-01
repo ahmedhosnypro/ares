@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { parseUtcDate, formatUtcDateTime } from "@/utils/dateTime";
 import {
   Box,
   IconButton,
@@ -39,8 +40,8 @@ const PREVIEW_LIMIT = 6;
 
 const DEFAULT_NOTIFICATIONS_HREF = "/admin/notifications";
 
-function timeAgo(input: string, t: ReturnType<typeof useTranslations>): string {
-  const date = new Date(input);
+function timeAgo(input: string, t: ReturnType<typeof useTranslations>, locale: string): string {
+  const date = parseUtcDate(input);
   if (Number.isNaN(date.getTime())) return "";
   const diffMs = Date.now() - date.getTime();
   const seconds = Math.floor(diffMs / 1000);
@@ -51,7 +52,7 @@ function timeAgo(input: string, t: ReturnType<typeof useTranslations>): string {
   if (hours < 24) return `${hours.toString()}${t("hoursAgo")}`;
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days.toString()}${t("daysAgo")}`;
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return formatUtcDateTime(input, locale, { month: "short", day: "numeric" });
 }
 
 type NotificationsBellProps = {
@@ -66,6 +67,7 @@ export default function NotificationsBell({
   const theme = useTheme();
   const { data: session } = useSession();
   const token = session?.accessToken;
+  const locale = useLocale();
   const t = useTranslations("common");
   const allNotificationsLabelDefault = allNotificationsLabelProp ?? t("viewAllNotifications");
 
@@ -93,7 +95,7 @@ export default function NotificationsBell({
         setError(false);
         const data = await getNotifications(token);
         const list: NotificationItem[] = Array.isArray(data) ? data : data.notifications;
-        list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        list.sort((a, b) => parseUtcDate(b.createdAt).getTime() - parseUtcDate(a.createdAt).getTime());
         setItems(list);
       } catch (err) {
         logger.error("NotificationsBell: fetch failed", err);
@@ -446,7 +448,7 @@ export default function NotificationsBell({
                       variant="caption"
                       sx={{ display: "block", mt: 0.5, color: "text.disabled", fontSize: "0.7rem" }}
                     >
-                      {timeAgo(n.createdAt, t)}
+                      {timeAgo(n.createdAt, t, locale)}
                     </Typography>
                   </Box>
                 </Box>

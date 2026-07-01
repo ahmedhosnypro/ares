@@ -14,7 +14,8 @@ import {
   Typography,
 } from "@mui/material";
 import { RateReview as RateReviewIcon } from "@mui/icons-material";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { formatUtcDateTime } from "@/utils/dateTime";
 import { ApiError, toApiUrl } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
 
@@ -44,21 +45,22 @@ function isCompletedStatus(status?: string): boolean {
   return status?.toLowerCase() === "completed";
 }
 
-function formatDeadline(value?: string): string {
+function formatDeadline(value: string | undefined, locale: string): string {
   if (!value) {
     return "";
   }
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-  return date.toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return formatUtcDateTime(
+    value,
+    locale,
+    {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    },
+    value
+  );
 }
 
 function isReviewPayload(value: unknown): value is BookingReviewDto {
@@ -152,6 +154,7 @@ interface ReviewViewStateProps {
 
 function ReviewViewState({ review, onEdit }: ReviewViewStateProps) {
   const t = useTranslations("customer.bookingDetail");
+  const locale = useLocale();
 
   return (
     <Stack spacing={1.5}>
@@ -163,7 +166,7 @@ function ReviewViewState({ review, onEdit }: ReviewViewStateProps) {
         <Rating value={review.rating} readOnly />
         <Typography variant="caption" color="text.secondary">
           {review.canEdit
-            ? `${t("review.editableUntil")} ${formatDeadline(review.editDeadline)}`
+            ? `${t("review.editableUntil")} ${formatDeadline(review.editDeadline, locale)}`
             : t("review.editWindowPassed")}
         </Typography>
       </Stack>

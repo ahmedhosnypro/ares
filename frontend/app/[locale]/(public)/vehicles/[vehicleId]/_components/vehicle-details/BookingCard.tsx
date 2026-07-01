@@ -22,6 +22,7 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { toApiUrl } from "@/utils/api-client";
 import { formatCurrency } from "@/utils/currency-helpers";
 import { logger } from "@/utils/logger";
+import { toApiDate } from "@/utils/dateTime";
 import { useVerificationStatus } from "@/hooks/useVerificationStatus";
 import type { BookingLocationOption, VehicleDetailsViewModel } from "./types";
 
@@ -44,7 +45,7 @@ interface FormErrors {
 }
 
 function formatDateForApi(value: Date): string {
-  return value.toISOString();
+  return toApiDate(value);
 }
 
 function getFallbackVehicle(vehicleId?: string, basePrice?: number): VehicleDetailsViewModel {

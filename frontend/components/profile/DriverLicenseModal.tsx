@@ -24,6 +24,7 @@ import { useTranslations } from "next-intl";
 import { submitDriverLicense, type DriverLicenseDto } from "@/api-clients/driver-license/driver-license";
 import { ApiError } from "@/utils/api-client";
 import { logger } from "@/utils/logger";
+import { parseUtcDate } from "@/utils/dateTime";
 
 interface DriverLicenseModalProps {
   readonly open: boolean;
@@ -49,7 +50,7 @@ function isValidImage(file: File): "invalidFileType" | "fileTooLarge" | null {
 
 function toDateInputValue(iso: string | null | undefined): string {
   if (!iso) return "";
-  const date = new Date(iso);
+  const date = parseUtcDate(iso);
   if (isNaN(date.getTime())) return "";
   // yyyy-MM-dd in UTC so the date input maps to the calendar day the user picked.
   const year = String(date.getUTCFullYear());
