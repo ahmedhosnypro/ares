@@ -33,7 +33,6 @@ namespace Backend.Application.Services
             CancellationToken cancellationToken = default)
         {
             DiscountCode? discount = null;
-            bool isValid = false;
             string? errorCode = null;
             string? errorMessage = null;
 
@@ -132,7 +131,6 @@ namespace Backend.Application.Services
                     return LogAndReturn(DiscountValidationResult.Invalid(errorCode, errorMessage));
                 }
 
-                isValid = true;
                 decimal discountAmount;
                 if (discount.DiscountType == "percentage")
                 {

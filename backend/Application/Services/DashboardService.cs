@@ -236,7 +236,7 @@ public class DashboardService : IDashboardService
             .AsNoTracking()
             .Include(b => b.User)
             .Include(b => b.Vehicle)
-            .ThenInclude(v => v.Images)
+            .ThenInclude(v => v!.Images)
             .AsQueryable();
 
         if (supplierId.HasValue)

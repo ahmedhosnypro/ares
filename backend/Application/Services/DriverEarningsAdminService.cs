@@ -445,7 +445,7 @@ public class DriverEarningsAdminService : IDriverEarningsAdminService
             .Take(pageSize)
             .Select(e => new DriverEarningRowDto(
                 BookingId: e.BookingId,
-                BookingNumber: e.Booking != null ? e.Booking.BookingNumber : string.Empty,
+                BookingNumber: e.Booking != null ? e.Booking.BookingNumber ?? string.Empty : string.Empty,
                 CompletedAt: e.EarnedAt,
                 GrossEarning: e.GrossEarning,
                 PlatformDeduction: e.PlatformDeduction,
