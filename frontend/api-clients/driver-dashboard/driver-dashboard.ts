@@ -168,16 +168,80 @@ export const mockDashboardSummary: DriverDashboardSummaryDto = {
 
 // API Fetch Calls with Seamless Fallback
 
+export interface DriverAssignmentDto {
+  readonly bookingId: string;
+  readonly bookingNumber: string;
+  readonly pickupDate: string;
+  readonly returnDate: string;
+  readonly pickupLocation: string;
+  readonly dropoffLocation: string;
+  readonly customerName: string;
+  readonly customerPhone: string;
+  readonly vehicleName: string;
+  readonly earnings: number;
+  readonly status: string;
+}
+
+export interface DriverPayoutDto {
+  readonly id: string;
+  readonly requestedAt: string;
+  readonly amount: number;
+  readonly status: string;
+  readonly reviewedAt?: string;
+  readonly rejectionReason?: string;
+  readonly paymobTransactionId?: string;
+  readonly completedAt?: string;
+}
+
+// API Fetch Calls with Seamless Fallback
+
 /**
  * Fetch active rental assignment details for the logged-in driver.
  * Returns null if there is no active assignment (404).
  */
 export async function getDriverActiveAssignment(accessToken: string): Promise<TripAssignment | null> {
   try {
-    return await apiFetchJson<TripAssignment>("/api/driver/dashboard/active-assignment", {
+    const list = await apiFetchJson<DriverAssignmentDto[]>("/api/driver/assignments", {
       method: "GET",
       accessToken,
     });
+
+    // Find the first assignment with Status === "Active"
+    const active = list.find(a => a.status === "Active");
+    if (!active) return null;
+
+    const daysRemaining = Math.max(
+      0,
+      Math.ceil((new Date(active.returnDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    );
+
+    const clientAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(active.customerName)}&background=random`;
+    const formatD = (dateStr: string) => {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    };
+
+    return {
+      clientName: active.customerName,
+      clientAvatar,
+      clientEmail: "", // Not returned by endpoint
+      clientPhone: active.customerPhone,
+      vehicleModel: active.vehicleName,
+      vehiclePlate: "LXR-9988", // Default placeholder plate
+      vehicleColor: "Obsidian Black Metallic", // Default placeholder color
+      vehicleImage: "/img/placeholder_car.jpg", // Default placeholder image
+      pickupDate: formatD(active.pickupDate),
+      dropoffDate: formatD(active.returnDate),
+      pickupLocation: active.pickupLocation,
+      dropoffLocation: active.dropoffLocation,
+      rentalDuration: `${daysRemaining} Days Remaining`,
+    };
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
       return null;
@@ -192,9 +256,32 @@ export async function getDriverActiveAssignment(accessToken: string): Promise<Tr
  */
 export async function getDriverUpcomingSchedule(accessToken: string): Promise<readonly UpcomingTrip[]> {
   try {
-    return await apiFetchJson<UpcomingTrip[]>("/api/driver/dashboard/upcoming-schedule", {
+    const list = await apiFetchJson<DriverAssignmentDto[]>("/api/driver/assignments", {
       method: "GET",
       accessToken,
+    });
+
+    // Filter to Confirmed (upcoming) assignments
+    const upcoming = list.filter(a => a.status === "Confirmed");
+
+    const formatM = (dateStr: string) => {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString("en-US", { month: "short", day: "2-digit" });
+    };
+
+    return upcoming.map(a => {
+      const pDate = new Date(a.pickupDate);
+      const rDate = new Date(a.returnDate);
+      const durationDays = Math.ceil((rDate.getTime() - pDate.getTime()) / (1000 * 60 * 60 * 24));
+
+      return {
+        id: a.bookingNumber,
+        date: `${formatM(a.pickupDate)} - ${formatM(a.returnDate)}`,
+        clientName: a.customerName,
+        vehicleModel: a.vehicleName,
+        payout: `$${a.earnings.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        duration: `${durationDays} Days`,
+      };
     });
   } catch (error) {
     logger.warn("Failed to fetch driver upcoming schedule.", error);
@@ -207,9 +294,31 @@ export async function getDriverUpcomingSchedule(accessToken: string): Promise<re
  */
 export async function getDriverPayoutLogs(accessToken: string): Promise<readonly HistoricalPayout[]> {
   try {
-    return await apiFetchJson<HistoricalPayout[]>("/api/driver/dashboard/payout-logs", {
+    const rawPayouts = await apiFetchJson<DriverPayoutDto[]>("/api/driver/earnings/payouts", {
       method: "GET",
       accessToken,
+    });
+
+    return rawPayouts.map(p => {
+      const isPaid = p.status === "Completed" || p.status === "Approved";
+      const dateVal = p.completedAt || p.requestedAt;
+      const formattedDate = dateVal
+        ? new Date(dateVal).toLocaleDateString("en-US", {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          })
+        : "—";
+
+      return {
+        tripId: p.paymobTransactionId || `WD-${p.id.substring(0, 8).toUpperCase()}`,
+        date: formattedDate,
+        clientName: "System Withdrawal",
+        vehicleModel: "Payout Wallet Transfer",
+        duration: "—",
+        amount: `$${p.amount.toFixed(2)}`,
+        status: isPaid ? ("Paid" as const) : ("Pending" as const),
+      };
     });
   } catch (error) {
     logger.warn("Failed to fetch driver payout logs.", error);
