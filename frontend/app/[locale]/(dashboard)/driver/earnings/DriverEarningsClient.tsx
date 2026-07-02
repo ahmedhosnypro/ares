@@ -294,10 +294,10 @@ export default function DriverEarningsClient() {
   const chartLabels = useMemo(
     () => ({
       monthlyEarnings: t("monthlyEarnings"),
-      noRevenueRecorded: t("noRevenueRecorded"),
+      noRevenueRecorded: t("noRevenueRecorded", { year }),
       completedBookingsWillAppear: t("completedBookingsWillAppear"),
     }),
-    [t]
+    [t, year]
   );
 
   const topBookingsLabels = useMemo(
@@ -330,8 +330,8 @@ export default function DriverEarningsClient() {
   const payoutModalLabels = useMemo(
     () => ({
       requestPayout: t("requestPayout"),
-      availablePayoutBalance: t("availablePayoutBalance"),
-      minimumPayout: t("minimumPayout"),
+      availablePayoutBalance: t("availablePayoutBalance", { balance: "{balance}" }),
+      minimumPayout: t("minimumPayout", { amount: "{amount}" }),
       amountToWithdraw: t("amountToWithdraw"),
       cancel: t("cancel"),
       confirm: t("confirm"),
