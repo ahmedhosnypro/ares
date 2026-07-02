@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent, Grid, Stack, Avatar, Box, Typography, useTheme } from "@mui/material";
+import { Card, CardContent, Stack, Avatar, Box, Typography, useTheme } from "@mui/material";
 import { useTranslations } from "next-intl";
 import DriverAvailabilityToggle from "../../_components/DriverAvailabilityToggle";
 
@@ -23,54 +23,73 @@ export default function DashboardHeader({ userName, initialAvailability, onAvail
         borderColor: "border.light",
         bgcolor: "overlay.blur",
         backdropFilter: "blur(20px)",
-        boxShadow: theme.palette.shadow.card,
+        boxShadow: theme.palette.shadow?.card || 1,
       }}
     >
       <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
-        <Grid container spacing={3} sx={{ alignItems: "center" }}>
-          <Grid size={{ xs: 12, md: 8 }}>
-            <Stack direction="row" spacing={3} sx={{ alignItems: "center" }}>
-              <Avatar
-                sx={{
-                  width: { xs: 60, sm: 72 },
-                  height: { xs: 60, sm: 72 },
-                  bgcolor: "primary.main",
-                  color: "primary.contrastText",
-                  fontWeight: 700,
-                  fontSize: "1.5rem",
-                }}
-              >
-                {userName?.[0] || t("defaultInitial")}
-              </Avatar>
-              <Box>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: "text.primary", mb: 0.5 }}>
-                  {t("welcomeBack", { userName: userName || t("defaultUserName") })}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {t("portalDescription")}
-                </Typography>
-              </Box>
-            </Stack>
-          </Grid>
-          <Grid size={{ xs: 12, md: 4 }} sx={{ display: "flex", justifyContent: { xs: "flex-start", md: "flex-end" } }}>
-            <Box
+        <Box
+          sx={{
+            display: "flex",
+            flexWrap: "wrap", // التعديل السحري: هينزل الزرار تحت لو الشاشة ضاقت
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 3,
+          }}
+        >
+          {/* الجزء الأيسر: معلومات السائق */}
+          <Stack
+            direction="row"
+            spacing={3}
+            sx={{
+              alignItems: "center",
+              flex: "1 1 300px", // بيدي مساحة مبدئية مرنة للنص
+              minWidth: 0, // بيمنع النص إنه يكسر الكونتينر
+            }}
+          >
+            <Avatar
               sx={{
-                bgcolor: "background.paper",
-                px: 2.5,
-                py: 1.5,
-                borderRadius: 3,
-                border: "1px solid",
-                borderColor: "border.light",
-                boxShadow: theme.palette.shadow.card,
+                width: { xs: 60, sm: 72 },
+                height: { xs: 60, sm: 72 },
+                bgcolor: "primary.main",
+                color: "primary.contrastText",
+                fontWeight: 700,
+                fontSize: "1.5rem",
+                flexShrink: 0, // بيمنع الأفاتار إنه يصغر أو يتبهدل
               }}
             >
-              <DriverAvailabilityToggle
-                initialAvailability={initialAvailability}
-                onAvailabilityChange={onAvailabilityChange}
-              />
+              {userName?.[0] || t("defaultInitial")}
+            </Avatar>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="h5" sx={{ fontWeight: 700, color: "text.primary", mb: 0.5 }}>
+                {t("welcomeBack", { userName: userName || t("defaultUserName") })}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {t("portalDescription")}
+              </Typography>
             </Box>
-          </Grid>
-        </Grid>
+          </Stack>
+
+          {/* الجزء الأيمن: زر الحالة */}
+          <Box
+            sx={{
+              bgcolor: "background.paper",
+              px: 2.5,
+              py: 1.5,
+              borderRadius: 3,
+              border: "1px solid",
+              borderColor: "border.light",
+              boxShadow: theme.palette.shadow?.card || 1,
+              width: { xs: "100%", sm: "auto" }, // بياخد العرض كله في الموبايل
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
+            <DriverAvailabilityToggle
+              initialAvailability={initialAvailability}
+              onAvailabilityChange={onAvailabilityChange}
+            />
+          </Box>
+        </Box>
       </CardContent>
     </Card>
   );

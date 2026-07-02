@@ -38,7 +38,7 @@ export default function KpiMetricsGrid({
       </Typography>
       <Grid container spacing={3}>
         {/* Earnings Card */}
-        <Grid size={{ xs: 12, sm: 6, md: availableBalance ? 2.4 : 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 6, lg: availableBalance ? 2.4 : 3 }}>
           <Card
             sx={{
               borderRadius: 4,
@@ -71,7 +71,7 @@ export default function KpiMetricsGrid({
         </Grid>
 
         {/* Trips Completed Card */}
-        <Grid size={{ xs: 12, sm: 6, md: availableBalance ? 2.4 : 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 6, lg: availableBalance ? 2.4 : 3 }}>
           <Card
             sx={{
               borderRadius: 4,
@@ -104,7 +104,7 @@ export default function KpiMetricsGrid({
         </Grid>
 
         {/* Active/Upcoming Card */}
-        <Grid size={{ xs: 12, sm: 6, md: availableBalance ? 2.4 : 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 6, lg: availableBalance ? 2.4 : 3 }}>
           <Card
             sx={{
               borderRadius: 4,
@@ -137,7 +137,7 @@ export default function KpiMetricsGrid({
         </Grid>
 
         {/* Rating Card */}
-        <Grid size={{ xs: 12, sm: 6, md: availableBalance ? 2.4 : 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 6, lg: availableBalance ? 2.4 : 3 }}>
           <Card
             sx={{
               borderRadius: 4,
@@ -171,7 +171,7 @@ export default function KpiMetricsGrid({
 
         {/* Available Balance Card */}
         {availableBalance && (
-          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 8, lg: availableBalance ? 2.4 : 3 }}>
             <Card
               sx={{
                 borderRadius: 4,
